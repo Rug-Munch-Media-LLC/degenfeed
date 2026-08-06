@@ -58,33 +58,58 @@ export const metadata: Metadata = {
   },
 };
 
-/* ─── LOGO (inlined from public/icon.svg, green brand) ────────────────── */
+/* ─── LOGOS ───────────────────────────────────────────────────────────── */
 
-const LOGO_SVG = (
+/**
+ * RugMunch skull mark — the company brand. Rendered inline as an SVG
+ * (no external asset, works under the nonce CSP). Skull + crossed bones
+ * drawn with the DegenFeed green gradient so it sits on both dark and
+ * light surfaces.
+ */
+const RUGMUNCH_LOGO_SVG = (
   <svg
     xmlns="http://www.w3.org/2000/svg"
     viewBox="0 0 512 512"
     width="36"
     height="36"
     role="img"
-    aria-label="DegenFeed logo"
+    aria-label="Rug Munch Media logo"
   >
     <defs>
-      <linearGradient id="lgb" x1="0" y1="0" x2="1" y2="1">
+      <linearGradient id="rm-bg" x1="0" y1="0" x2="1" y2="1">
         <stop offset="0%" stopColor="#0d0d0d" />
         <stop offset="100%" stopColor="#000000" />
       </linearGradient>
-      <linearGradient id="lgd" x1="0" y1="0" x2="1" y2="1">
+      <linearGradient id="rm-s" x1="0" y1="0" x2="1" y2="1">
         <stop offset="0%" stopColor="#00ff41" />
         <stop offset="100%" stopColor="#00cc34" />
       </linearGradient>
     </defs>
-    <rect width="512" height="512" fill="url(#lgb)" rx={96} />
-    <g stroke="url(#lgd)" strokeWidth={52} strokeLinecap="round" strokeLinejoin="round" fill="none">
-      <line x1={160} y1={92} x2={160} y2={420} />
-      <path d="M 160 92 A 148 164 0 0 1 160 420" />
+    <rect width="512" height="512" fill="url(#rm-bg)" rx={96} />
+    {/* Skull cranium */}
+    <path
+      d="M176 180c0-44 36-76 80-76s80 32 80 76c0 30-12 52-26 66v34c0 12-10 22-22 22h-64c-12 0-22-10-22-22v-34c-14-14-26-36-26-66z"
+      fill="url(#rm-s)"
+    />
+    {/* Eye sockets */}
+    <circle cx="224" cy="196" r="16" fill="#000" />
+    <circle cx="288" cy="196" r="16" fill="#000" />
+    {/* Nose */}
+    <path d="M256 216l-10 20a10 10 0 0020 0z" fill="#000" />
+    {/* Teeth */}
+    <rect x="224" y="278" width="8" height="14" rx="2" fill="#000" />
+    <rect x="240" y="278" width="8" height="14" rx="2" fill="#000" />
+    <rect x="256" y="278" width="8" height="14" rx="2" fill="#000" />
+    <rect x="272" y="278" width="8" height="14" rx="2" fill="#000" />
+    {/* Crossed bones behind skull */}
+    <g stroke="url(#rm-s)" strokeWidth="18" strokeLinecap="round">
+      <path d="M150 392 L266 276" />
+      <path d="M266 392 L150 276" />
+      <circle cx="150" cy="276" r="10" fill="url(#rm-s)" stroke="none" />
+      <circle cx="266" cy="276" r="10" fill="url(#rm-s)" stroke="none" />
+      <circle cx="150" cy="392" r="10" fill="url(#rm-s)" stroke="none" />
+      <circle cx="266" cy="392" r="10" fill="url(#rm-s)" stroke="none" />
     </g>
-    <circle cx={230} cy={256} r={100} fill="#00ff41" opacity={0.08} />
   </svg>
 );
 
@@ -198,6 +223,16 @@ const THEME_STYLES = `
     font-weight: 800;
     font-size: 20px;
     color: var(--fg);
+  }
+  .header-brand-sub {
+    display: block;
+    font-family: var(--font-mono);
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--fg-tertiary);
+    margin-top: 1px;
   }
   .header-brand svg { flex-shrink: 0; }
   .header-nav { display: flex; align-items: center; gap: 24px; }
@@ -1246,7 +1281,7 @@ const PROTOCOLS: Protocol[] = [
   {
     name: 'Bluesky',
     color: '#1185fe',
-    tag: 'Protocol',
+    tag: 'AT Protocol',
     icon: (
       <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
         <path d="M12 10.5c-1.5-3-4.5-5-7-4.5-2.5.5-3.5 3-3 5 .5 2 2 3 3.5 3.5-1.5.5-3 1.5-3.5 3.5-.5 2 .5 4.5 3 5 2.5.5 5.5-1.5 7-4.5 1.5 3 4.5 5 7 4.5 2.5-.5 3.5-3 3-5-.5-2-2-3-3.5-3.5 1.5-.5 3-1.5 3.5-3.5.5-2-.5-4.5-3-5-2.5-.5-5.5 1.5-7 4.5z" />
@@ -1254,12 +1289,39 @@ const PROTOCOLS: Protocol[] = [
     ),
   },
   {
+    name: 'AT Protocol',
+    color: '#0a7cff',
+    tag: 'Protocol',
+    icon: (
+      <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M13 2L3 14h7l-1 8 10-12h-7l1-8z" />
+      </svg>
+    ),
+  },
+  {
     name: 'Mastodon',
     color: '#6364ff',
-    tag: 'Fediverse',
+    tag: 'ActivityPub',
     icon: (
       <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
         <path d="M12 2C7.6 2 4 3.6 4 7.5v8.3c0 1.8.8 3.1 2.4 4 .8.5 2.6 1 4.8 1.1l.2-2.2c-1.4-.2-2.3-.6-2.9-1 .6.6 1.5 1.1 2.7 1.3l.4.1c2.3.3 5.4-.1 7.4-2 1.6-.9 2.4-2.2 2.4-4V7.5C20 3.6 16.4 2 12 2zm5.3 12.2l-2.6-.4c-.2 0-.4.2-.4.4l.1 1.7c0 .2-.2.4-.4.3-2.4-.7-4.4-2.6-4.6-6.1-.1-1.5.9-2.5 2.2-2.5 1.2 0 2.3.8 2.5 2 .2 1.2.2 2.8.2 2.8h3.3s0-1.6.2-2.8c.2-1.2 1.3-2 2.5-2 1.3 0 2.3 1 2.2 2.5-.2 3.5-2.2 5.4-4.6 6.1-.2.1-.4-.1-.4-.3l.1-1.7c.1-.2 0-.4-.3-.4z" />
+      </svg>
+    ),
+  },
+  {
+    name: 'ActivityPub',
+    color: '#7c5cff',
+    tag: 'Fediverse',
+    icon: (
+      <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M4 6a3 3 0 013-3h10a3 3 0 013 3v7a3 3 0 01-3 3h-4l-5 4v-4H7a3 3 0 01-3-3V6z" />
+        <path
+          d="M8 9h8M8 12h5"
+          stroke="#0d0d0d"
+          strokeWidth="1.6"
+          strokeLinecap="round"
+          fill="none"
+        />
       </svg>
     ),
   },
@@ -1538,7 +1600,7 @@ interface Faq {
 const FAQS: Faq[] = [
   {
     q: 'What protocols does DegenFeed support?',
-    a: 'DegenFeed reads the entire open social graph: Nostr, Farcaster, Lens, Bluesky, Mastodon, Threads, Reddit, Minds, RSS/Atom, PeerTube, Owncast, Lemmy, YouTube, Odysee, Rumble, Substack, Mirror, Paragraph, and more. The full bridge is live today — browse everything from a single feed with zero sign-up.',
+    a: 'DegenFeed reads the entire open social graph: Nostr, Farcaster, Lens, Bluesky (AT Protocol), Mastodon, Threads, Reddit, Minds, RSS/Atom, PeerTube, Owncast, Lemmy, YouTube, Odysee, Rumble, Substack, Mirror, Paragraph, and more — over the AT Protocol and ActivityPub as well. The full bridge is live today — browse everything from a single feed with zero sign-up.',
   },
   {
     q: 'How does cross-posting work?',
@@ -1692,9 +1754,12 @@ export default async function LandingPage() {
       {/* ════════════ HEADER ════════════ */}
       <header className="header">
         <div className="header-inner">
-          <Link href="/" className="header-brand" aria-label="DegenFeed home">
-            {LOGO_SVG}
-            <span>DegenFeed</span>
+          <Link href="/" className="header-brand" aria-label="DegenFeed home — by Rug Munch Media">
+            {RUGMUNCH_LOGO_SVG}
+            <span>
+              DegenFeed
+              <span className="header-brand-sub">by Rug Munch Media</span>
+            </span>
           </Link>
           <nav className="header-nav" aria-label="Primary">
             <Link href="https://app.degenfeed.xyz/feed">Feed</Link>
@@ -1755,9 +1820,9 @@ export default async function LandingPage() {
           </div>
 
           <h1 id="hero-title" className="hero-title">
-            One Protocol for
+            All Your Feeds,
             <br />
-            <span className="accent">All Web3 Social</span>
+            <span className="accent">One Place</span>
           </h1>
 
           <p className="hero-sub">
@@ -1850,7 +1915,7 @@ export default async function LandingPage() {
             One Window Into <span className="accent">Every</span> Protocol
           </h2>
           <p className="section-sub">
-            Read and interact across the entire open social graph from a single interface — 18+
+            Read and interact across the entire open social graph from a single interface — 20+
             networks online right now, and more on the way.
           </p>
           <div className="protocol-grid">
@@ -2136,7 +2201,7 @@ export default async function LandingPage() {
           <div className="footer-grid">
             <div className="footer-brand-area">
               <div className="footer-brand-row">
-                {LOGO_SVG}
+                {RUGMUNCH_LOGO_SVG}
                 <span>DegenFeed</span>
               </div>
               <p className="footer-desc">

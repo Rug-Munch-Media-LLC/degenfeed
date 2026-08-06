@@ -40,18 +40,25 @@ const CURATED_BLOGS: BlogSource[] = [
   { alias: 'degen', instance: 'https://write.as', displayName: 'Degen Write.as' },
   { alias: 'freedog', instance: 'https://write.as', displayName: 'FreeDog' },
   { alias: 'press', instance: 'https://write.as', displayName: 'Write.as Press' },
-  { alias: 'tech', instance: 'https://writing.exchange', displayName: 'Writing Exchange' },
   // Additional federated WriteFreely blog (verified reachable 2026-08-04)
   // with unique, non-cross-posted articles — helps the feed exceed the
   // 10-post floor once cross-post duplicates are deduped.
   { alias: 'tedomum', instance: 'https://write.tedomum.net', displayName: 'Tedomum Blog' },
+  // WriteFreely project blog — real instance-level RSS at /feed/ (verified
+  // 200, 2026-08-06). Serves project news + release posts.
+  { alias: 'writefreely', instance: 'https://blog.writefreely.org', displayName: 'WriteFreely Project' },
+  // paper.wf — federated WriteFreely instance (verified reachable 2026-08-06).
+  { alias: 'blog', instance: 'https://paper.wf', displayName: 'Paper.wf Blog' },
+  // quil.pm — requested WriteFreely instance; NXDOMAIN as of 2026-08-06, kept
+  // for when the domain returns (provider degrades gracefully on fetch error).
+  { alias: 'quil', instance: 'https://quil.pm', displayName: 'Quil.pm' },
 ];
 
 const _PUBLIC_INSTANCES = [
   'https://write.as',
-  'https://writing.exchange',
-  'https://publish.arrr.xyz',
-  'https://feddit.de',
+  'https://blog.writefreely.org',
+  'https://write.tedomum.net',
+  'https://paper.wf',
 ];
 
 // ─── Types ─────────────────────────────────────────────────────────────
@@ -256,50 +263,70 @@ async function fetchBlogPosts(blog: BlogSource, limit: number): Promise<UnifiedP
 }
 
 async function fetchRssFallback(blog: BlogSource, limit: number): Promise<UnifiedPost[]> {
-  try {
-    const res = await $fetch(`${blog.instance}/api/collections/${blog.alias}/feed.xml`, {
-      headers: { 'User-Agent': 'DegenFeed-Bridge/0.1 (WriteFreely)' },
-      signal: AbortSignal.timeout(8000),
-    });
-    if (!res.ok) return [];
-    const xml = await res.text();
-    const items = parseRssItems(xml);
-    return items.slice(0, limit).map((item) => {
-      const title = item.title || '';
-      const text = stripHtml(item.description || title);
-      return {
-        id: `writefreely:rss:${item.guid || item.link || text.slice(0, 40)}`,
-        protocol: 'writefreely',
-        author: {
-          id: `writefreely:rss:${blog.alias}`,
-          primary: { protocol: 'writefreely', id: blog.alias },
-          handles: { writefreely: blog.alias },
-          displayName: item.author || item.creator || blog.displayName,
-          bio: '',
-          avatarUrl: '',
-          followerCount: 0,
-          followingCount: 0,
-          links: [],
-          keys: {},
-        },
-        text,
-        contentType: 'article',
-        embeds: item.link ? [{ kind: 'link' as const, url: item.link }] : [],
-        createdAt: item.pubDate ? new Date(item.pubDate).getTime() : Date.now(),
-        metrics: { likes: 0, reposts: 0, replies: 0, quotes: 0 },
-        engagement: {
-          viewerLiked: false,
-          viewerReposted: false,
-          viewerBookmarked: false,
-          raw: { likes: 0, reposts: 0, replies: 0, quotes: 0 },
-        },
-        raw: item,
-        niches: guessNiches(text, title),
-      };
-    });
-  } catch {
-    return [];
+  // Try several RSS locations in order:
+  //  1. Instance-level feed  (/feed/) — used by blog.writefreely.org
+  //  2. Instance-level feed  (/feed.xml)
+  //  3. Collection-level feed (/api/collections/{alias}/feed.xml)
+  const candidates = [
+    `${blog.instance}/feed/`,
+    `${blog.instance}/feed.xml`,
+    `${blog.instance}/api/collections/${blog.alias}/feed.xml`,
+  ];
+  let xml = '';
+  for (const url of candidates) {
+    try {
+      const res = await $fetch(url, {
+        headers: { 'User-Agent': 'DegenFeed-Bridge/0.1 (WriteFreely)' },
+        signal: AbortSignal.timeout(8000),
+        redirect: 'follow',
+      });
+      if (!res.ok) continue;
+      const body = await res.text();
+      // Only accept actual RSS XML (some instances return an HTML 404 page
+      // with a 200 status — e.g. "Post not found."). Guard on <rss or <feed.
+      if (/<rss[\s>]|<feed[\s>]/i.test(body)) {
+        xml = body;
+        break;
+      }
+    } catch {
+      continue;
+    }
   }
+  if (!xml) return [];
+  const items = parseRssItems(xml);
+  return items.slice(0, limit).map((item) => {
+    const title = item.title || '';
+    const text = stripHtml(item.description || title);
+    return {
+      id: `writefreely:rss:${item.guid || item.link || text.slice(0, 40)}`,
+      protocol: 'writefreely',
+      author: {
+        id: `writefreely:rss:${blog.alias}`,
+        primary: { protocol: 'writefreely', id: blog.alias },
+        handles: { writefreely: blog.alias },
+        displayName: item.author || item.creator || blog.displayName,
+        bio: '',
+        avatarUrl: '',
+        followerCount: 0,
+        followingCount: 0,
+        links: [],
+        keys: {},
+      },
+      text,
+      contentType: 'article',
+      embeds: item.link ? [{ kind: 'link' as const, url: item.link }] : [],
+      createdAt: item.pubDate ? new Date(item.pubDate).getTime() : Date.now(),
+      metrics: { likes: 0, reposts: 0, replies: 0, quotes: 0 },
+      engagement: {
+        viewerLiked: false,
+        viewerReposted: false,
+        viewerBookmarked: false,
+        raw: { likes: 0, reposts: 0, replies: 0, quotes: 0 },
+      },
+      raw: item,
+      niches: guessNiches(text, title),
+    };
+  });
 }
 
 // ─── Main ──────────────────────────────────────────────────────────────
@@ -314,22 +341,25 @@ export const schema: SchemaGuard = {
 };
 
 export async function fetchWriteFreelyPosts(limit = 20): Promise<UnifiedPost[]> {
-  // The local DegenFeed collection is the most reliable source (69+ posts
-  // across 7+ pages). Prioritize it so we can surface 10+ posts even when
-  // remote Write.as blogs are unreachable, then fill the remainder from
-  // the remote blogs.
+  // Federated content first: fetch remote instances (write.as, tedomum,
+  // writefreely.org, paper.wf, quil.pm) before the local collection so the
+  // feed surfaces content from across the fediverse, not just our own blog.
+  // The local DegenFeed collection (69+ posts) is the reliable safety net
+  // that tops up any shortfall and guarantees a non-empty feed.
   const localBlog = CURATED_BLOGS[0];
   const remoteBlogs = CURATED_BLOGS.slice(1);
-  const localShare = Math.min(Math.max(limit, 15), 100);
-  const remoteShare = Math.max(3, Math.ceil(Math.max(0, limit - localShare) / remoteBlogs.length));
+  // Give remote blogs a real share: half the requested posts, split across
+  // all remote sources (min 3 each so small instances still contribute).
+  const remoteShare = Math.max(3, Math.ceil(limit / 2 / Math.max(1, remoteBlogs.length)));
+  const localShare = limit;
 
   const results = await Promise.allSettled([
-    fetchBlogPosts(localBlog, localShare),
     ...remoteBlogs.map(async (blog) => {
       const posts = await fetchBlogPosts(blog, remoteShare);
       if (posts.length > 0) return posts;
       return fetchRssFallback(blog, remoteShare);
     }),
+    fetchBlogPosts(localBlog, localShare),
   ]);
 
   const all: UnifiedPost[] = [];
@@ -337,7 +367,8 @@ export async function fetchWriteFreelyPosts(limit = 20): Promise<UnifiedPost[]> 
     if (r.status === 'fulfilled') all.push(...r.value);
   }
 
-  // Deduplicate
+  // Deduplicate — remote posts come first so they win the dedup slots;
+  // the local collection fills whatever capacity remains.
   const seen = new Set<string>();
   const deduped: UnifiedPost[] = [];
   for (const p of all) {

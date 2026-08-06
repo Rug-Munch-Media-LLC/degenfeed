@@ -1,150 +1,154 @@
 /**
  * Vimeo Provider — Professional Video Platform
  *
- * Vimeo has a public API for accessing videos, channels, and categories.
- * 200M+ users. Not fully open-source but API-accessible.
+ * 200M+ users. The Vimeo API requires a bearer token for public data
+ * (datacenter fetches get error 8003 "app didn't receive credentials"),
+ * so this provider uses Vimeo's public channel RSS feeds instead:
  *
- * What it adds: High-quality curated videos (tech talks, creative, music videos)
- * API: Vimeo API (no auth for public data, higher rate limits with token)
- * Rate limit: 500 req/day (no auth), 10k req/day (with token)
+ *   https://vimeo.com/channels/{slug}/videos/rss
+ *
+ * Channel RSS is unauthenticated, returns ~10 recent videos per channel,
+ * and includes duration, thumbnail and author credit via media: tags.
+ *
+ * Rate limit: channels fetch sequentially; 10 req/refresh is well within
+ * any limit.
  */
 
 import { checkRateLimit } from '../rate-limiter';
 import type { SchemaGuard, UnifiedPost } from '../server/types';
 
 const $fetch = globalThis.fetch;
+const USER_AGENT = 'DegenFeed-Bridge/0.2 (Vimeo RSS)';
 
-const VIMEO_API = process.env.VIMEO_API_URL || 'https://api.vimeo.com';
-const VIMEO_TOKEN = process.env.VIMEO_ACCESS_TOKEN || '';
+/** 90s TTL — collapse repeated feed-build calls into one real fetch window. */
+const VIMEO_CACHE_TTL_MS = 90_000;
+let vimeoCache: { posts: UnifiedPost[]; expiresAt: number } | null = null;
 
-const VIMEO_CATEGORIES = [
-  'tech',
+const VIMEO_CHANNELS = [
+  'staffpicks',
   'music',
-  'creative',
-  'documentary',
-  'experimental',
   'animation',
-  'design',
-  'talks',
+  'documentary',
+  'art',
+  'video',
+  'lessons',
 ];
 
-interface VimeoVideo {
-  uri: string;
-  name: string;
-  description: string;
+interface VimeoRSSItem {
+  title: string;
   link: string;
+  pubDate: string;
+  description: string;
+  videoId: string;
   duration: number;
-  width: number;
-  height: number;
-  created_time: string;
-  modified_time: string;
-  language: string;
-  categories?: Array<{ name: string }>;
-  pictures?: {
-    sizes?: Array<{ link: string; width: number; height: number }>;
-  };
-  user?: {
-    name: string;
-    link: string;
-    pictures?: { sizes?: Array<{ link: string }> };
-  };
-  stats?: {
-    plays?: number;
-    likes?: number;
-    comments?: number;
-  };
-  tags?: Array<{ tag: string; canonical: string }>;
-  embed?: {
-    html?: string;
-    badges?: { hdr?: boolean };
-  };
+  author: string;
+  thumbnail: string;
 }
 
-interface VimeoResponse {
-  data?: VimeoVideo[];
-  total?: number;
+function decodeHtmlEntities(text: string): string {
+  return text
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#0?39;/g, "'")
+    .replace(/&apos;/g, "'")
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&#(\d+);/g, (_, code) => String.fromCharCode(Number(code)))
+    .replace(/&hellip;/g, '…')
+    .replace(/&mdash;/g, '—')
+    .replace(/&ndash;/g, '–');
 }
 
-const headers: Record<string, string> = {
-  Accept: 'application/vnd.vimeo.*+json;version=3.4',
-  'User-Agent': 'DegenFeed-Bridge/0.1',
-};
-if (VIMEO_TOKEN) headers.Authorization = `Bearer ${VIMEO_TOKEN}`;
+/** Parse a Vimeo channel RSS document into normalized items. */
+function parseVimeoRSS(xml: string): VimeoRSSItem[] {
+  const items: VimeoRSSItem[] = [];
+  const itemRe = /<item>([\s\S]*?)<\/item>/g;
+  let m: RegExpExecArray | null = itemRe.exec(xml);
+  while (m !== null) {
+    const block = m[1];
+    if (block) {
+      const title =
+        block.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1]?.trim() ?? '';
+      const link = block.match(/<link[^>]*>([\s\S]*?)<\/link>/i)?.[1]?.trim() ?? '';
+      const pubDate = block.match(/<pubDate[^>]*>([\s\S]*?)<\/pubDate>/i)?.[1]?.trim() ?? '';
+      const description =
+        block.match(/<description[^>]*>([\s\S]*?)<\/description>/i)?.[1]?.trim() ?? '';
+      const mediaThumb =
+        block.match(/<media:thumbnail[^>]*url="([^"]+)"/i)?.[1]?.trim() ?? '';
+      const mediaAuthor =
+        block.match(/<media:credit[^>]*>([\s\S]*?)<\/media:credit>/i)?.[1]?.trim() ?? '';
+      const durationRaw = block.match(/<media:content[^>]*duration="(\d+)"/i)?.[1];
+      const videoId =
+        link.match(/\/videos\/(\d+)/)?.[1] ?? link.match(/\/video\/(\d+)/)?.[1] ?? '';
+      const duration = durationRaw ? Number.parseInt(durationRaw, 10) : 0;
 
-async function fetchCategory(category: string, limit: number): Promise<UnifiedPost[]> {
+      if (title && link) {
+        items.push({
+          title: decodeHtmlEntities(title),
+          link,
+          pubDate,
+          description: decodeHtmlEntities(description).slice(0, 500),
+          videoId,
+          duration: Number.isFinite(duration) ? duration : 0,
+          author: decodeHtmlEntities(mediaAuthor),
+          thumbnail: mediaThumb,
+        });
+      }
+    }
+    m = itemRe.exec(xml);
+  }
+  return items;
+}
+
+async function fetchChannel(channel: string, limit: number): Promise<UnifiedPost[]> {
   try {
-    const url = `${VIMEO_API}/categories/${category}/videos?per_page=${Math.min(limit, 20)}&sort=date&direction=desc`;
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 8000);
-    const res = await $fetch(url, { headers, signal: controller.signal });
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
+    const res = await $fetch(`https://vimeo.com/channels/${channel}/videos/rss`, {
+      headers: { 'User-Agent': USER_AGENT },
+      signal: controller.signal,
+    });
     clearTimeout(timeoutId);
     if (!res.ok) return [];
 
-    const json: VimeoResponse = await res.json();
-    const videos = json.data ?? [];
+    const xml = await res.text();
+    const items = parseVimeoRSS(xml);
     const posts: UnifiedPost[] = [];
 
-    for (const video of videos.slice(0, limit)) {
-      const thumb =
-        video.pictures?.sizes?.find((s) => s.width >= 640)?.link ??
-        video.pictures?.sizes?.[video.pictures.sizes.length - 1]?.link ??
-        '';
-      const authorName = video.user?.name ?? 'Vimeo Creator';
-      const authorLink = video.user?.link ?? '';
-      const videoTags = [
-        category,
-        ...(video.categories?.map((c) => c.name.toLowerCase()) ?? []),
-        ...(video.tags?.map((t) => t.tag.toLowerCase()) ?? []),
-      ];
-
+    for (const item of items.slice(0, limit)) {
+      const createdAt = item.pubDate ? new Date(item.pubDate).getTime() : Date.now();
       posts.push({
-        id: `vimeo-${
-          video.uri?.replace('/videos/', '') ??
-          Buffer.from(video.link ?? '')
-            .toString('base64')
-            .slice(0, 16)
-        }`,
+        id: `vimeo:${item.videoId || Buffer.from(item.link).toString('base64').slice(0, 16)}`,
         protocol: 'vimeo',
         author: {
-          id: `vimeo:${authorLink}`,
-          primary: { protocol: 'vimeo', id: authorLink },
-          handles: { vimeo: authorLink.split('/').pop() ?? authorName },
-          displayName: authorName,
-          bio: '',
-          avatarUrl: video.user?.pictures?.sizes?.[0]?.link ?? '',
+          id: `vimeo:channel:${channel}`,
+          primary: { protocol: 'vimeo', id: item.author || channel },
+          handles: { vimeo: channel },
+          displayName: item.author || channel,
+          bio: `${channel} channel video`,
+          avatarUrl: '',
           followerCount: 0,
           followingCount: 0,
           links: [],
           keys: {},
         },
-        text: `🎬 ${video.name}${video.description ? `\n${video.description.slice(0, 200)}` : ''}`,
-        html: `<p>${video.description ?? ''}</p>`,
+        text: `🎬 ${item.title}`,
+        html: item.description ? `<p>${item.description}</p>` : undefined,
         embeds: [
-          { kind: 'video' as const, url: video.link ?? '' },
-          { kind: 'image' as const, url: thumb },
-          ...(video.embed?.html ? [{ kind: 'link' as const, url: video.link }] : []),
+          { kind: 'video' as const, url: item.link, meta: { duration: item.duration } },
+          ...(item.thumbnail ? [{ kind: 'image' as const, url: item.thumbnail }] : []),
         ],
-        createdAt: new Date(video.created_time).getTime(),
-        metrics: {
-          likes: video.stats?.likes ?? 0,
-          reposts: 0,
-          replies: video.stats?.comments ?? 0,
-          quotes: 0,
-          views: video.stats?.plays ?? 0,
-        },
+        createdAt,
+        metrics: { likes: 0, reposts: 0, replies: 0, quotes: 0, views: 0 },
         engagement: {
           viewerLiked: false,
           viewerReposted: false,
           viewerBookmarked: false,
-          raw: {
-            likes: video.stats?.likes ?? 0,
-            reposts: 0,
-            replies: video.stats?.comments ?? 0,
-            quotes: 0,
-          },
+          raw: { likes: 0, reposts: 0, replies: 0, quotes: 0 },
         },
-        raw: video,
-        niches: ['video', ...videoTags],
+        raw: item,
+        niches: ['video', channel],
         contentType: 'video',
       });
     }
@@ -158,23 +162,44 @@ export async function fetchVimeoPosts(limit: number = 20): Promise<UnifiedPost[]
   const key = 'provider:vimeo';
   if (!checkRateLimit(key, { maxRequests: 30, windowMs: 60_000 })) return [];
 
-  const perCategory = Math.max(3, Math.ceil(limit / VIMEO_CATEGORIES.length));
-  const results = await Promise.allSettled(
-    VIMEO_CATEGORIES.map((cat) => fetchCategory(cat, perCategory)),
-  );
+  // Serve from cache first — the prewarmer + refresher call this repeatedly.
+  const cached = vimeoCache && Date.now() < vimeoCache.expiresAt ? vimeoCache.posts : null;
+  if (cached) return cached.slice(0, limit);
 
+  const perChannel = Math.max(3, Math.ceil(limit / VIMEO_CHANNELS.length));
+
+  // Fetch in small batches (3) — Vimeo RSS can be flaky under concurrency.
   const posts: UnifiedPost[] = [];
-  for (const r of results) {
-    if (r.status === 'fulfilled') posts.push(...r.value);
+  const BATCH = 3;
+  for (let i = 0; i < VIMEO_CHANNELS.length; i += BATCH) {
+    const batch = VIMEO_CHANNELS.slice(i, i + BATCH);
+    const results = await Promise.allSettled(batch.map((channel) => fetchChannel(channel, perChannel)));
+    for (const r of results) {
+      if (r.status === 'fulfilled') posts.push(...r.value);
+    }
   }
 
-  return posts.sort((a, b) => b.createdAt - a.createdAt).slice(0, limit);
+  const seen = new Set<string>();
+  const deduped: UnifiedPost[] = [];
+  for (const p of posts.sort((a, b) => b.createdAt - a.createdAt)) {
+    if (seen.has(p.id)) continue;
+    seen.add(p.id);
+    deduped.push(p);
+    if (deduped.length >= limit) break;
+  }
+
+  console.log(`[bridge] Vimeo: ${deduped.length} posts from ${VIMEO_CHANNELS.length} channels`);
+  // Only cache non-empty results so a bad window is retried next cycle.
+  if (deduped.length > 0) {
+    vimeoCache = { posts: deduped, expiresAt: Date.now() + VIMEO_CACHE_TTL_MS };
+  }
+  return deduped;
 }
 
 export const schema: SchemaGuard = {
   id: 'vimeo',
   name: 'Vimeo',
-  description: 'High-quality curated videos — tech talks, music, creative & documentaries',
+  description: 'High-quality curated videos — staff picks, music, animation, documentaries',
   endpoint: '/api/feed/vimeo',
   requiresAuth: false,
   contentType: 'video',

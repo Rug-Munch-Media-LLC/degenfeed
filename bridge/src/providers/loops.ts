@@ -26,6 +26,25 @@ const $fetch = globalThis.fetch;
 const LOOPS_BASE = process.env.LOOPS_BASE_URL || 'http://127.0.0.1:8136';
 const LOOPS_TOKEN = process.env.LOOPS_ACCESS_TOKEN || '';
 
+/**
+ * Remote Loops instances used as fallback when the local instance has no
+ * content. The flagship instance (loops.video) serves the same Laravel
+ * paginated envelope as the self-hosted fork, so the same mapping applies.
+ * Verified reachable 2026-08-06 with non-empty /api/web/feed responses:
+ *   - loops.video        (flagship, ~4 posts)
+ *   - ff93.space         (~8 posts)
+ *   - brioco.video       (~2 posts)
+ *   - loops.one          (~1 post)
+ * The local instance (loops.degenfeed.xyz) is checked first, then these
+ * federated peers so the feed surfaces content across the Loops network.
+ */
+const LOOPS_REMOTE_INSTANCES = [
+  { base: 'https://loops.video', label: 'loops.video' },
+  { base: 'https://ff93.space', label: 'ff93.space' },
+  { base: 'https://brioco.video', label: 'brioco.video' },
+  { base: 'https://loops.one', label: 'loops.one' },
+];
+
 /** Compact account shape from AccountService::compact(). */
 interface LoopsAccount {
   id: string;
@@ -177,7 +196,10 @@ export function formatCount(count: number): string {
 
 // ─── Mapping ───────────────────────────────────────────────────────────
 
-export function loopsVideoToPost(video: LoopsVideo): UnifiedPost {
+export function loopsVideoToPost(
+  video: LoopsVideo,
+  sourceLabel = 'Loops via @degenfeed',
+): UnifiedPost {
   const account = video.account;
   const authorName = account?.name || account?.username || 'Loops';
   const authorHandle = account?.username || '';
@@ -283,6 +305,44 @@ export async function fetchLoopsPosts(limit = 20): Promise<UnifiedPost[]> {
     return [];
   }
 
+  // Fetch the local instance first, then any remote instances as fallback.
+  const instances = [
+    { base: LOOPS_BASE, label: 'local' },
+    ...LOOPS_REMOTE_INSTANCES,
+  ];
+
+  const allPosts: UnifiedPost[] = [];
+  for (const instance of instances) {
+    if (allPosts.length >= limit) break;
+    const posts = await fetchLoopsFeed(instance.base, instance.label, limit - allPosts.length);
+    if (posts.length > 0) {
+      console.log(`[loops] ${instance.label}: ${posts.length} posts`);
+      allPosts.push(...posts);
+    }
+  }
+
+  // Deduplicate by video id (local + remote may share federated content).
+  const seen = new Set<string>();
+  const deduped: UnifiedPost[] = [];
+  for (const p of allPosts) {
+    if (seen.has(p.id)) continue;
+    seen.add(p.id);
+    deduped.push(p);
+    if (deduped.length >= limit) break;
+  }
+
+  console.log(`[bridge] Loops: ${deduped.length} posts (${instances.length} instances)`);
+  // Only cache non-empty results so an empty window is retried next cycle.
+  if (deduped.length > 0) setCachedPosts(deduped);
+  return deduped;
+}
+
+/** Fetch and map a single Loops instance's public web feed. */
+async function fetchLoopsFeed(
+  base: string,
+  label: string,
+  limit: number,
+): Promise<UnifiedPost[]> {
   try {
     const headers: Record<string, string> = {
       'User-Agent': 'DegenFeed-Bridge/0.1',
@@ -290,34 +350,28 @@ export async function fetchLoopsPosts(limit = 20): Promise<UnifiedPost[]> {
     };
     if (LOOPS_TOKEN) headers.Authorization = `Bearer ${LOOPS_TOKEN}`;
 
-    const res = await $fetch(`${LOOPS_BASE}/api/web/feed`, {
+    const res = await $fetch(`${base}/api/web/feed`, {
       headers,
-      signal: AbortSignal.timeout(5000),
+      signal: AbortSignal.timeout(6000),
     });
 
     if (!res.ok) {
-      console.log(`[loops] HTTP ${res.status}`);
-      setCachedPosts([]);
+      console.log(`[loops] ${label}: HTTP ${res.status}`);
       return [];
     }
 
     const raw: unknown = await res.json();
     if (!isValidLoopsResponse(raw)) {
-      console.log('[loops] Unexpected response shape — refusing to map');
-      setCachedPosts([]);
+      console.log(`[loops] ${label}: Unexpected response shape — refusing to map`);
       return [];
     }
 
-    const posts = raw.data
+    return raw.data
       .slice(0, limit)
       .filter((v) => v?.id)
       .map(loopsVideoToPost);
-
-    console.log(`[bridge] Loops: ${posts.length} posts`);
-    setCachedPosts(posts);
-    return posts;
   } catch (err) {
-    console.log(`[bridge] Loops: error - ${(err as Error).message}`);
+    console.log(`[loops] ${label}: error - ${(err as Error).message}`);
     return [];
   }
 }

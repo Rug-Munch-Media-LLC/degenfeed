@@ -304,9 +304,13 @@ export async function handleNewsFeed(request: Request, env: Env): Promise<Respon
     if (!opts.limit) opts.limit = 50;
 
     const result = await getCachedOrFetch(env, opts);
+    const stories = result.stories.map(mapStory);
 
     return ok({
-      data: result.stories.map(mapStory),
+      data: stories,
+      // Backward-compatible alias: the canonical feed contract is `data`,
+      // but legacy consumers (and feed health checks) read `stories`.
+      stories,
       clusters: result.clusters.map(mapCluster),
       meta: buildMeta(result, opts),
     });

@@ -94,6 +94,8 @@ describe('handleUnifiedFeed', () => {
   beforeEach(() => {
     mockFetchFeed.mockReset();
     mockHealthCheck.mockReset();
+    // Any protocol not explicitly queued returns empty — never undefined.
+    mockFetchFeed.mockImplementation(async () => ({ posts: [] }));
   });
 
   it('returns real aggregated posts from 3+ protocols (no demo) on default request', async () => {
@@ -124,11 +126,15 @@ describe('handleUnifiedFeed', () => {
     const protocols = new Set(body.data.map((p) => p.protocol));
     expect(protocols.size).toBeGreaterThanOrEqual(3);
 
-    // Quality scores attached (0-100)
+    // Quality scores attached (object contract: { score, max, ratio, reasons })
     for (const post of body.data) {
-      expect(typeof post.qualityScore).toBe('number');
-      expect(post.qualityScore!).toBeGreaterThanOrEqual(0);
-      expect(post.qualityScore!).toBeLessThanOrEqual(100);
+      const qs = post.qualityScore as
+        | { score?: number; max?: number; ratio?: number }
+        | undefined;
+      expect(typeof qs).toBe('object');
+      expect(typeof qs?.score).toBe('number');
+      expect(qs!.score!).toBeGreaterThanOrEqual(0);
+      expect(qs!.score!).toBeLessThanOrEqual(100);
     }
   });
 
@@ -172,7 +178,7 @@ describe('handleUnifiedFeed', () => {
     expect(authorCount).toBeLessThanOrEqual(2);
   });
 
-  it('falls back to demo content only when every source returns empty', async () => {
+  it('returns an explicit empty feed (never demo content) when every source returns empty', async () => {
     for (const _protocol of PROTOCOLS) {
       mockFetchFeed.mockReturnValueOnce({ posts: [] });
     }
@@ -184,9 +190,9 @@ describe('handleUnifiedFeed', () => {
       meta: { isDemo?: boolean };
     };
 
-    expect(body.meta.isDemo).toBe(true);
-    expect(body.data.length).toBeGreaterThan(0);
-    expect(body.data[0]?.protocol).toBe('_demo');
+    // Demo/seed content must never masquerade as real posts.
+    expect(body.meta.isDemo).toBe(false);
+    expect(body.data.length).toBe(0);
   });
 
   it('accepts niches + timeRange params and filters by them', async () => {

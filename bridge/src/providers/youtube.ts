@@ -18,7 +18,6 @@
  * include it) and fall back to `undefined` — the UI omits the badge then.
  */
 
-import { filterFreshPosts } from '../lib/freshness';
 import { checkRateLimit } from '../rate-limiter';
 import type { SchemaGuard, UnifiedPost } from '../server/types';
 
@@ -26,6 +25,31 @@ const $fetch = globalThis.fetch;
 
 const YOUTUBE_FEED_BASE = 'https://www.youtube.com/feeds/videos.xml';
 const USER_AGENT = 'DegenFeed-Bridge/0.2 (YouTube RSS)';
+
+/**
+ * YouTube videos stay relevant for weeks (unlike microblog posts), so the
+ * global 48h freshness filter would empty the feed for channels that don't
+ * upload daily. Use a 30-day window for video content — still fresh enough
+ * to be useful, but doesn't starve the feed. Override with
+ * YOUTUBE_MAX_AGE_HOURS (0 disables).
+ */
+export const YOUTUBE_MAX_AGE_HOURS = (() => {
+  try {
+    const raw = process.env.YOUTUBE_MAX_AGE_HOURS;
+    if (raw !== undefined) {
+      const n = Number(raw);
+      if (Number.isFinite(n) && n >= 0) return n;
+    }
+  } catch {
+    /* fall through to default */
+  }
+  return 30 * 24; // 30 days
+})();
+
+/** 90s TTL — collapse repeated feed-build calls (prewarm + refresher) into
+ *  one real fetch per window so YouTube RSS is not hammered under load. */
+const YOUTUBE_CACHE_TTL_MS = 90_000;
+let youtubeCache: { posts: UnifiedPost[]; expiresAt: number } | null = null;
 
 export type YouTubeCategory = 'crypto' | 'ai' | 'tech';
 
@@ -273,7 +297,7 @@ async function fetchChannelVideos(
         'User-Agent': USER_AGENT,
         Accept: 'application/atom+xml, application/xml, text/xml',
       },
-      signal: AbortSignal.timeout(8000),
+      signal: AbortSignal.timeout(15000),
     });
     if (!res.ok) {
       console.log(`[youtube] ${channel.name}: HTTP ${res.status}`);
@@ -298,12 +322,18 @@ export async function fetchYouTubePosts(limit = 30): Promise<UnifiedPost[]> {
   const key = 'provider:youtube';
   if (!checkRateLimit(key, { maxRequests: 30, windowMs: 60_000 })) return [];
 
+  // Serve from cache first — the prewarmer + refresher call this repeatedly.
+  const cached = youtubeCache && Date.now() < youtubeCache.expiresAt ? youtubeCache.posts : null;
+  if (cached) return cached.slice(0, limit);
+
   const perChannel = Math.max(2, Math.ceil(limit / YOUTUBE_CHANNELS.length));
   const posts: UnifiedPost[] = [];
 
   // Fetch channels with a small concurrency window + gentle pacing to avoid
   // hammering YouTube (15 feeds per refresh is well inside any rate limit).
-  const CONCURRENCY = 5;
+  // Concurrency kept low (3) because the service runs CPU-quota-limited and
+  // parallel TLS handshakes otherwise time out.
+  const CONCURRENCY = 3;
   const results: Array<ParsedYouTubeVideo[]> = [];
   for (let i = 0; i < YOUTUBE_CHANNELS.length; i += CONCURRENCY) {
     const batch = YOUTUBE_CHANNELS.slice(i, i + CONCURRENCY);
@@ -322,11 +352,19 @@ export async function fetchYouTubePosts(limit = 30): Promise<UnifiedPost[]> {
     }
   }
 
-  // Freshness: discard videos published outside the FEED_MAX_AGE_HOURS
-  // window (48h), then newest-first and capped at the requested limit.
-  return filterFreshPosts(posts)
-    .sort((a, b) => b.createdAt - a.createdAt)
-    .slice(0, limit);
+  // Freshness: discard videos published outside the YouTube-specific window
+  // (30 days by default), then newest-first and capped at the requested limit.
+  const fresh = posts.filter((p) => {
+    if (YOUTUBE_MAX_AGE_HOURS <= 0) return true;
+    return Date.now() - p.createdAt <= YOUTUBE_MAX_AGE_HOURS * 3_600_000;
+  });
+  const result = fresh.sort((a, b) => b.createdAt - a.createdAt).slice(0, limit);
+
+  // Only cache non-empty results so a bad window is retried next cycle.
+  if (result.length > 0) {
+    youtubeCache = { posts: result, expiresAt: Date.now() + YOUTUBE_CACHE_TTL_MS };
+  }
+  return result;
 }
 
 /** Normalize a parsed YouTube video into a UnifiedPost. */

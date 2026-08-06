@@ -46,12 +46,39 @@ export class FarcasterProvider implements FeedProvider {
   private readonly primaryUrl: string;
   private readonly publicApiUrl: string;
   private readonly curatedFids: number[];
+  private readonly fallbackHubUrls: string[];
   private readonly breaker = new CircuitBreaker('farcaster');
 
   constructor(options: FarcasterProviderOptions = {}) {
     this.primaryUrl = options.hubUrl || DEFAULT_HUB_URL;
     this.publicApiUrl = options.publicApiUrl || DEFAULT_FARCASTER_PUBLIC_API;
     this.curatedFids = options.curatedFids ?? CURATED_FARCASTER_FIDS;
+    this.fallbackHubUrls = options.fallbackHubUrls ?? FALLBACK_HUB_URLS;
+  }
+
+  /**
+   * Resolve the first reachable hub at runtime.
+   *
+   * Probes the primary hub, then each configured fallback hub with a cheap
+   * castsByFid request. Returns the first hub that responds; if every hub
+   * fails, returns the primary URL so the caller's normal error handling
+   * (empty posts + notice) applies.
+   */
+  private async resolveHub(timeoutMs: number): Promise<string> {
+    const candidates = [this.primaryUrl, ...this.fallbackHubUrls];
+    for (const url of candidates) {
+      try {
+        await withTimeout(
+          fetchJson(buildUrl(url, '/v1/castsByFid', { fid: '3', pageSize: '1' })),
+          Math.min(timeoutMs, 3000),
+          `farcaster:hub-select:${new URL(url).hostname}`,
+        );
+        return url;
+      } catch {
+        // Try the next hub.
+      }
+    }
+    return this.primaryUrl;
   }
 
   async fetchFeed(opts: FetchOptions = {}): Promise<FeedResult> {
@@ -59,7 +86,11 @@ export class FarcasterProvider implements FeedProvider {
       return await this.breaker.execute(async () => {
         const timeoutMs = opts.timeoutMs ?? DEFAULT_TIMEOUT_MS;
         const fids = this.curatedFids;
-        const hub = this.primaryUrl;
+        // Runtime hub selection: try the primary hub first, then each
+        // fallback hub in order. `resolveHub` returns the first hub that
+        // answers a cheap probe, so casts never hard-depend on the
+        // primary (often localhost) hub being reachable from the worker.
+        const hub = await this.resolveHub(timeoutMs);
         const userDataMap = new Map<
           number,
           { username?: string; displayName?: string; pfp?: string }
@@ -267,7 +298,7 @@ export class FarcasterProvider implements FeedProvider {
     const timeoutMs = opts.timeoutMs ?? DEFAULT_TIMEOUT_MS;
 
     // Probe multiple hubs in parallel — only one needs to respond.
-    const hubUrls = [this.primaryUrl, ...FALLBACK_HUB_URLS.slice(0, 3)];
+    const hubUrls = [this.primaryUrl, ...this.fallbackHubUrls.slice(0, 3)];
     const probe = async (url: string): Promise<boolean> => {
       try {
         await withTimeout(

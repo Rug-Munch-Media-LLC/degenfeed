@@ -19,6 +19,10 @@ export type Protocol =
   | 'solana'
   | 'peertube'
   | 'youtube'
+  | 'soundcloud'
+  | 'vimeo'
+  | 'loops'
+  | 'wordpress'
   | 'kbin'
   | 'tildes'
   | 'ghost'
@@ -104,6 +108,7 @@ export type Protocol =
   | 'unlock'
   | 'lit'
   | 'polymarket'
+  | 'soundcloud'
   | 'infra';
 
 export interface UnifiedIdentity {

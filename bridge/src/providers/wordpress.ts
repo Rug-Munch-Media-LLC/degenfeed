@@ -18,14 +18,43 @@ import type { SchemaGuard, UnifiedPost } from '../server/types';
 const $fetch = globalThis.fetch;
 const USER_AGENT = 'DegenFeed-Bridge/0.1 (WordPress/ActivityPub)';
 
-const WORDPRESS_SITES: Array<{ url: string; label: string; niches: string[] }> = [
-  // Web3 & Crypto blogs with ActivityPub or public REST API
-  { url: 'https://wordpress.org/news', label: 'WordPress News', niches: ['tech', 'cms'] },
-  { url: 'https://ma.tt', label: 'Matt Mullenweg', niches: ['tech', 'blog'] },
-  // Self-hosted instance (if set up)
+const WORDPRESS_SITES: Array<{
+  url: string;
+  label: string;
+  niches: string[];
+  mode: 'rest' | 'wpcom';
+}> = [
+  // Self-hosted WordPress (REST API)
+  { url: 'https://wordpress.org/news', label: 'WordPress News', niches: ['tech', 'cms'], mode: 'rest' },
+  { url: 'https://ma.tt', label: 'Matt Mullenweg', niches: ['tech', 'blog'], mode: 'rest' },
+  // WordPress.com (public-api REST)
+  {
+    url: 'https://public-api.wordpress.com/wp/v2/sites/en.blog.wordpress.com/posts',
+    label: 'WordPress.com News',
+    niches: ['tech', 'cms'],
+    mode: 'wpcom',
+  },
+  {
+    url: 'https://public-api.wordpress.com/wp/v2/sites/techcrunch.com/posts',
+    label: 'TechCrunch',
+    niches: ['tech', 'news'],
+    mode: 'wpcom',
+  },
+  {
+    url: 'https://public-api.wordpress.com/wp/v2/sites/engadget.com/posts',
+    label: 'Engadget',
+    niches: ['tech', 'news'],
+    mode: 'wpcom',
+  },
+  // Self-hosted instance (if set up) — format: url|label|niche1,niche2
   ...(process.env.WORDPRESS_SITES?.split(',').map((s) => {
     const [url, label, ...niches] = s.split('|');
-    return { url: url || '', label: label || url || '', niches: niches || ['blog'] };
+    return {
+      url: url || '',
+      label: label || url || '',
+      niches: (niches.join(',') || 'blog').split(','),
+      mode: 'rest' as const,
+    };
   }) ?? []),
 ];
 
@@ -66,16 +95,19 @@ interface WPRESTResponse {
 }
 
 async function fetchSitePosts(
-  site: { url: string; label: string; niches: string[] },
+  site: { url: string; label: string; niches: string[]; mode: 'rest' | 'wpcom' },
   limit: number,
 ): Promise<UnifiedPost[]> {
   try {
-    const apiUrl = site.url.replace(/\/?$/, '');
-    // Try ActivityPub outbox first, fall back to REST API
-    const restUrl = `${apiUrl}/wp-json/wp/v2/posts?per_page=${Math.min(limit, 20)}&_embed=author,wp:featuredmedia,wp:term`;
+    // Self-hosted: {site}/wp-json/wp/v2/posts. WordPress.com: the url already
+    // points at the public-api REST endpoint.
+    const restUrl =
+      site.mode === 'wpcom'
+        ? `${site.url}?per_page=${Math.min(limit, 20)}`
+        : `${site.url.replace(/\/?$/, '')}/wp-json/wp/v2/posts?per_page=${Math.min(limit, 20)}&_embed=author,wp:featuredmedia,wp:term`;
 
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 8000);
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
     const res = await $fetch(restUrl, {
       headers: { Accept: 'application/json', 'User-Agent': USER_AGENT },
       signal: controller.signal,

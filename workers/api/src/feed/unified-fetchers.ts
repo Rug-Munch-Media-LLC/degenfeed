@@ -187,10 +187,28 @@ interface PeerTubeApiResponse {
   data: PeerTubeApiVideo[];
 }
 
-const PEERTUBE_INSTANCE = 'https://video.degenfeed.xyz';
+const DEFAULT_PEERTUBE_INSTANCE = 'https://video.degenfeed.xyz';
 
-export async function fetchPeerTubeVideos(limit = 30): Promise<UnifiedPost[]> {
-  const url = `${PEERTUBE_INSTANCE}/api/v1/videos?count=${limit}&sort=-publishedAt&nsfw=false`;
+/**
+ * Resolve the PeerTube instance URL at runtime.
+ * Prefers an explicitly passed instance URL, then the PEERTUBE_INSTANCE_URL
+ * binding, then the default self-hosted instance.
+ */
+export function resolvePeerTubeInstance(
+  instanceUrl?: string,
+  env?: { PEERTUBE_INSTANCE_URL?: string },
+): string {
+  const candidate = instanceUrl || env?.PEERTUBE_INSTANCE_URL || DEFAULT_PEERTUBE_INSTANCE;
+  return candidate.replace(/\/+$/, '');
+}
+
+export async function fetchPeerTubeVideos(
+  limit = 30,
+  instanceUrl?: string,
+  env?: { PEERTUBE_INSTANCE_URL?: string },
+): Promise<UnifiedPost[]> {
+  const instance = resolvePeerTubeInstance(instanceUrl, env);
+  const url = `${instance}/api/v1/videos?count=${limit}&sort=-publishedAt&nsfw=false`;
   const res = await fetch(url, {
     headers: { accept: 'application/json', 'user-agent': 'DegenFeed/1.0' },
   });
@@ -202,8 +220,8 @@ export async function fetchPeerTubeVideos(limit = 30): Promise<UnifiedPost[]> {
     const authorName = author?.displayName ?? author?.name ?? 'Unknown';
     const published = Date.parse(v.publishedAt);
     const thumbnailUrl = v.thumbnailPath
-      ? `${PEERTUBE_INSTANCE}${v.thumbnailPath}`
-      : `${PEERTUBE_INSTANCE}/static/thumbnails/${v.uuid}.jpg`;
+      ? `${instance}${v.thumbnailPath}`
+      : `${instance}/static/thumbnails/${v.uuid}.jpg`;
 
     return {
       id: `peertube:${v.uuid}`,
@@ -219,7 +237,7 @@ export async function fetchPeerTubeVideos(limit = 30): Promise<UnifiedPost[]> {
       embeds: [
         {
           kind: 'video',
-          url: `${PEERTUBE_INSTANCE}/w/${v.uuid}`,
+          url: `${instance}/w/${v.uuid}`,
           meta: { duration: v.duration, thumbnail: thumbnailUrl },
         },
       ],
@@ -231,7 +249,7 @@ export async function fetchPeerTubeVideos(limit = 30): Promise<UnifiedPost[]> {
       },
       raw: v,
       niches: [],
-      embedUrl: `${PEERTUBE_INSTANCE}/w/${v.uuid}`,
+      embedUrl: `${instance}/w/${v.uuid}`,
       thumbnail: thumbnailUrl,
       duration: v.duration,
       views: v.views,

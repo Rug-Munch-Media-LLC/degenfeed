@@ -12,13 +12,16 @@
  */
 
 import { Hono } from 'hono';
-import { aggregateAllStreams } from '../feed/live-aggregator';
+import { aggregateAllStreams, aggregateUpcomingStreams } from '../feed/live-aggregator';
+import { listPostizSchedules } from '../lib/postiz-bridge';
 import {
   announceStreamToAllProtocols,
   type StreamAnnouncement,
   type StreamType,
 } from '../lib/stream-announcer';
+import { requirePremiumTier } from '../premium';
 import { jsonResponse, noCacheJsonResponse } from '../response-helpers';
+import { handleGoLive } from './live/handlers-core';
 import { requireSession } from '../session';
 import type { Env } from '../types';
 import { broadcastToAll } from '../ws-broadcast';
@@ -167,6 +170,123 @@ function sourceColorMap(source: string): string {
   };
   return colors[source] || '#888';
 }
+
+// ═══════════════════════════════════════════════════════════════════════
+// GET /schedule — Scheduled / upcoming streams (aggregator + Postiz)
+// ═══════════════════════════════════════════════════════════════════════
+
+/**
+ * GET /schedule — Upcoming streams from all sources, plus Postiz-scheduled
+ * cross-platform posts (premium scheduling).
+ *
+ * Query params:
+ *   ?source=spaces — filter by source (comma-separated)
+ *   ?includePostiz=true — include Postiz schedules (default true)
+ *   ?limit=N — max items (default 50)
+ */
+streams.get('/schedule', async (c) => {
+  try {
+    const url = new URL(c.req.url);
+    const sourceFilter = url.searchParams.get('source');
+    const includePostiz = url.searchParams.get('includePostiz') !== 'false';
+    const limit = Math.min(Number.parseInt(url.searchParams.get('limit') || '50', 10) || 50, 100);
+
+    const [upcoming, postizSchedules] = await Promise.all([
+      aggregateUpcomingStreams(c.env),
+      includePostiz
+        ? listPostizSchedules(c.env, 'scheduled', limit).catch(() => [])
+        : Promise.resolve([]),
+    ]);
+
+    let items: Array<{
+      id: string;
+      title: string;
+      source: string;
+      streamer: { id: string; handle: string; displayName: string };
+      scheduledAt: number;
+      category: string;
+      tags: string[];
+      thumbnailUrl: string;
+      platformMeta?: Record<string, unknown>;
+    }> = upcoming.map((s) => ({
+      id: s.id,
+      title: s.title,
+      source: s.source,
+      streamer: s.streamer,
+      scheduledAt: s.scheduledAt,
+      category: s.category,
+      tags: s.tags,
+      thumbnailUrl: s.thumbnailUrl,
+    }));
+
+    // Merge Postiz schedules as 'postiz' source entries
+    const postizItems = postizSchedules.map((p) => ({
+      id: `postiz:${p.id}`,
+      title: p.platforms?.join(' + ') || 'Scheduled post',
+      source: 'postiz',
+      streamer: { id: 'postiz', handle: 'Postiz', displayName: 'Postiz' },
+      scheduledAt: p.scheduledAt ? new Date(p.scheduledAt).getTime() : Date.now(),
+      category: 'general',
+      tags: [],
+      thumbnailUrl: '',
+      platformMeta: { postiz: true, status: p.status, platforms: p.platforms },
+    }));
+
+    items = [...items, ...postizItems];
+
+    if (sourceFilter) {
+      const sources = sourceFilter.split(',');
+      items = items.filter((s) => sources.includes(s.source));
+    }
+
+    items.sort((a, b) => a.scheduledAt - b.scheduledAt);
+
+    return noCacheJsonResponse({
+      streams: items.slice(0, limit),
+      total: items.length,
+      sources: { aggregator: upcoming.length, postiz: postizItems.length },
+    });
+  } catch (err) {
+    const error = err instanceof Error ? err.message : String(err);
+    console.error('[streams] GET /schedule failed:', error);
+    return jsonResponse({ streams: [], total: 0, sources: {}, error });
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════════════
+// POST /go-live — Premium: start a live stream on Owncast/PeerTube
+// ═══════════════════════════════════════════════════════════════════════
+
+/**
+ * POST /go-live — Start a live stream. Requires a logged-in session; the
+ * multi-platform (Owncast + PeerTube) path is premium-gated.
+ *
+ * Body (same shape as POST /api/live/go-live):
+ *   { title, description?, category?, tags?, platform: 'owncast'|'peertube'|'both' }
+ *
+ * Delegates to the shared handler in routes/live/handlers-core.ts — no
+ * duplicated orchestration logic.
+ */
+streams.post('/go-live', async (c) => {
+  const session = await requireSession(c.req.raw, c.env);
+  if (session instanceof Response) return session;
+
+  try {
+    const body = (await c.req.json().catch(() => ({}))) as Record<string, unknown>;
+    const platform = (body.platform as string) || 'owncast';
+
+    // Multi-platform ('both') requires premium
+    if (platform === 'both') {
+      const gate = await requirePremiumTier(session.address, c.env, 'pro');
+      if (gate) return gate;
+    }
+
+    return await handleGoLive(c.req.raw, c.env);
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return jsonResponse({ ok: false, error: `Go live failed: ${msg}` }, 500);
+  }
+});
 
 // ─── Constants ───────────────────────────────────────────────────────────
 
