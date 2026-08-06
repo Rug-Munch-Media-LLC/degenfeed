@@ -113,6 +113,8 @@ export type Protocol =
   | 'kick'
   | 'substack'
   | 'medium'
+  // ─── Nostr NIP-29 groups / communities ────────────────────
+  | 'nostr-groups'
   | 'infra';
 
 export interface UnifiedIdentity {

@@ -67,6 +67,12 @@ export interface Env {
   DISCOVER_MASTODON_INSTANCES?: string;
   /** Self-hosted RSS-Bridge instance for proxied RSS feed fetching */
   RSS_BRIDGE_URL?: string;
+  /** FlareSolverr instance for Cloudflare-challenge bypass (Medium etc.) */
+  FLARESOLVERR_URL?: string;
+  /** Paragraph bridge base URL (fallback for the native RSS path) */
+  PARAGRAPH_BRIDGE_URL?: string;
+  /** Mirror bridge base URL (fallback for the Arweave GraphQL path) */
+  MIRROR_BRIDGE_URL?: string;
   /** Owncast instance URL for live streaming clips */
   OWCAST_INSTANCE_URL?: string;
   /** Comma-separated list of Lemmy instances to fetch from */

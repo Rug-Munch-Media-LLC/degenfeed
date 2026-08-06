@@ -22,9 +22,11 @@ import {
   KickProvider,
   LemmyProvider,
   LensProvider,
+  LobstersProvider,
   MastodonProvider,
   MediumProvider,
   MirrorProvider,
+  NostrGroupsProvider,
   NostrProvider,
   OpenSeaProvider,
   ParagraphProvider,
@@ -126,6 +128,8 @@ export const ALL_PROTOCOLS: Protocol[] = [
   'mbin',
   'immich',
   'discourse',
+  // ABANDONED: using WriteFreely for blogging instead — Ghost bridge kept
+  // only for legacy routes; do not add new Ghost integrations.
   'ghost',
   'kbin',
   // ── Governance / Markets / NFT (NEW 2026-08-06) ─────────
@@ -146,6 +150,9 @@ export const ALL_PROTOCOLS: Protocol[] = [
   'substack',
   'medium',
   'paragraph',
+  // ── Link Aggregators / Communities (NEW 2026-08-06) ─────
+  'lobsters',
+  'nostr-groups',
 ];
 
 /** Default protocols used when no explicit filter is provided */
@@ -177,6 +184,8 @@ export const DIRECT_FEED_PROTOCOLS: Protocol[] = [
   'medium',
   'paragraph',
   'mirror',
+  'lobsters',
+  'nostr-groups',
 ];
 
 export const DEFAULT_TIMEOUT_MS = 6000;
@@ -275,6 +284,9 @@ export const PROVIDER_TIMEOUTS: Record<Protocol, number> = {
   // ── Publishing / Newsletters (NEW 2026-08-06) ───────────
   substack: 5000,
   medium: 7000, // Cloudflare-bypass fallback can be slow
+  // ── Link Aggregators / Communities (NEW 2026-08-06) ─────
+  lobsters: 5000,
+  'nostr-groups': 7000, // NIP-29 relay fan-out can be slow
 };
 
 // ─── Per-provider fetch timer ────────────────────────────────────
@@ -428,11 +440,33 @@ export function getProvider(protocol: Protocol, env: Env): FeedProvider {
     case 'substack':
       return new SubstackProvider({});
     case 'medium':
-      return new MediumProvider({});
+      // Wire the worker's FlareSolverr + RSS-Bridge env config into the
+      // provider so the Cloudflare-bypass fallback chain actually targets
+      // the right services (defaults point at localhost, unreachable from
+      // the edge — which previously made Medium return 0 posts).
+      return new MediumProvider({
+        flareSolverrUrl: env.FLARESOLVERR_URL,
+        rssBridgeUrl: env.RSS_BRIDGE_URL,
+      });
     case 'paragraph':
-      return new ParagraphProvider({});
+      // Bridge (127.0.0.1:8241) is unreachable from the Cloudflare edge —
+      // the fixed native RSS fallback (https://paragraph.xyz/@{slug}/rss)
+      // is the reliable path here.
+      return new ParagraphProvider({
+        bridgeUrl: env.PARAGRAPH_BRIDGE_URL || undefined,
+      });
     case 'mirror':
-      return new MirrorProvider({});
+      // Arweave GraphQL native path works from the edge; bridge fallback
+      // (127.0.0.1:8240) is only reachable when running locally.
+      return new MirrorProvider({
+        bridgeUrl: env.MIRROR_BRIDGE_URL || undefined,
+      });
+    case 'lobsters':
+      return new LobstersProvider({});
+    case 'nostr-groups':
+      return new NostrGroupsProvider({
+        relays: (env.RELAY_URLS ?? '').split(',').filter(Boolean),
+      });
     default:
       // Fall back to bridge API for all other protocols (50+)
       return new BridgeFeedProvider(protocol, env);
@@ -504,22 +538,22 @@ export class BridgeFeedProvider implements FeedProvider {
         const posts = body.data ?? body.posts ?? [];
 
         // Detect demo/seed content — the bridge marks it with meta.isDemo
-        // and per-post `_demo` flags. Never silently serve demo content as if
-        // it were real; surface it in the notice so callers can distinguish.
+        // and per-post `_demo` flags. Demo content is BANNED: never pass it
+        // through to clients. Log a warning and return an empty result.
         const isDemo =
           body.meta?.isDemo === true ||
           posts.some((p) => (p as Record<string, unknown>)?._demo === true);
         if (isDemo) {
-          log('warn', `bridge:${this.protocol}: provider returned empty — demo content served`, {
+          log('warn', `bridge:${this.protocol}: bridge returned demo/seed content — discarding`, {
             provider: this.protocol,
             demoNote: body.meta?.demoNote,
             bridgeErrors: body.meta?.errors,
           });
           return {
-            posts: posts.slice(0, 50),
+            posts: [],
             notice:
-              `Bridge served demo content for ${this.protocol} (provider returned empty)` +
-              (body.meta?.demoNote ? ` — ${body.meta.demoNote}` : ''),
+              `Bridge served demo content for ${this.protocol}; discarded. ` +
+              `Provider returned empty — no posts available.`,
           };
         }
 

@@ -66,6 +66,25 @@ const TipModal = dynamic(
 
 type Tab = 'for-you' | 'following' | 'trending' | 'news' | 'custom-mix';
 
+/**
+ * Compact inline fallback for non-critical feed widgets (controls, filter
+ * bars, modals). If one widget throws, the rest of the timeline keeps
+ * rendering — a broken tuner must never take down the whole feed.
+ */
+function WidgetErrorBoundary({ children }: { children: React.ReactNode }) {
+  return (
+    <ErrorBoundary
+      fallback={() => (
+        <div className="my-2 rounded-lg border border-yellow-500/20 bg-yellow-500/5 px-3 py-2 text-center text-xs text-yellow-400">
+          This control couldn&apos;t be displayed. The rest of the feed is unaffected.
+        </div>
+      )}
+    >
+      {children}
+    </ErrorBoundary>
+  );
+}
+
 const ADMIN_WALLETS_RAW =
   typeof process !== 'undefined' ? process.env.NEXT_PUBLIC_ADMIN_WALLETS || '' : '';
 const ADMIN_WALLETS = new Set(
@@ -419,14 +438,6 @@ export default function FeedPage() {
     return undefined;
   }, [contextMenuPostId]);
 
-  const loadMore = useCallback(() => {
-    if (loadingMore || !hasMore || state !== 'loaded') return;
-    setLoadingMore(true);
-    const next = page + 1;
-    setPage(next);
-    void fetchFeed(false, next, true);
-  }, [loadingMore, hasMore, state, page, fetchFeed]);
-
   // useViewportPrefetch(posts, (post) => post);
   // useHoverPrefetch(posts, (post) => post);
 
@@ -690,6 +701,15 @@ export default function FeedPage() {
     ],
   );
 
+  /** Load the next page of posts (infinite scroll / "Load more" button). */
+  const loadMore = useCallback(() => {
+    if (loadingMore || !hasMore || state !== 'loaded') return;
+    setLoadingMore(true);
+    const next = page + 1;
+    setPage(next);
+    void fetchFeed(false, next, true);
+  }, [loadingMore, hasMore, state, page, fetchFeed]);
+
   const refreshNow = useCallback(() => {
     setNewAvailable(false);
     setPage(1);
@@ -784,11 +804,13 @@ export default function FeedPage() {
           {returnUser && <GuidedTour />}
 
           {/* Feed controls: sort, protocols, content type, time, niches, algorithm */}
-          <FeedControls
-            controls={controls}
-            onChange={handleControlsChange}
-            resultCount={state === 'loaded' ? posts.length : undefined}
-          />
+          <WidgetErrorBoundary>
+            <FeedControls
+              controls={controls}
+              onChange={handleControlsChange}
+              resultCount={state === 'loaded' ? posts.length : undefined}
+            />
+          </WidgetErrorBoundary>
 
           {/* Live indicator */}
           <div className="mb-3 flex items-center gap-2">
@@ -846,38 +868,40 @@ export default function FeedPage() {
             </div>
           </div>
 
-          <FeedFilterBar
-            hideLowQuality={hideLowQuality}
-            onToggleHideLowQuality={toggleHideLowQuality}
-            allowNonCrypto={allowNonCrypto}
-            onToggleAllowNonCrypto={() => {
-              setAllowNonCrypto((p) => {
-                const n = !p;
-                persistPrefs({ allowNonCrypto: n });
-                return n;
-              });
-            }}
-            showOriginalContent={showOriginalContent}
-            onToggleShowOriginal={() => {
-              setShowOriginalContent((p) => {
-                const n = !p;
-                persistPrefs({ showOriginalContent: n });
-                return n;
-              });
-            }}
-            minEngagement={minEngagement}
-            onMinEngagementChange={(v) => {
-              setMinEngagement(v);
-              persistPrefs({ minEngagement: v });
-            }}
-            protocolFilter={
-              controls.protocols.length === 1 ? (controls.protocols[0] ?? null) : null
-            }
-            onProtocolFilterChange={(v) =>
-              handleControlsChange({ ...controls, protocols: v ? [v] : [] })
-            }
-            onOpenTuner={() => setShowTuner(true)}
-          />
+          <WidgetErrorBoundary>
+            <FeedFilterBar
+              hideLowQuality={hideLowQuality}
+              onToggleHideLowQuality={toggleHideLowQuality}
+              allowNonCrypto={allowNonCrypto}
+              onToggleAllowNonCrypto={() => {
+                setAllowNonCrypto((p) => {
+                  const n = !p;
+                  persistPrefs({ allowNonCrypto: n });
+                  return n;
+                });
+              }}
+              showOriginalContent={showOriginalContent}
+              onToggleShowOriginal={() => {
+                setShowOriginalContent((p) => {
+                  const n = !p;
+                  persistPrefs({ showOriginalContent: n });
+                  return n;
+                });
+              }}
+              minEngagement={minEngagement}
+              onMinEngagementChange={(v) => {
+                setMinEngagement(v);
+                persistPrefs({ minEngagement: v });
+              }}
+              protocolFilter={
+                controls.protocols.length === 1 ? (controls.protocols[0] ?? null) : null
+              }
+              onProtocolFilterChange={(v) =>
+                handleControlsChange({ ...controls, protocols: v ? [v] : [] })
+              }
+              onOpenTuner={() => setShowTuner(true)}
+            />
+          </WidgetErrorBoundary>
 
           <FeedProtocolSummary meta={feedMeta} />
           {feedMeta?.notices?.map((n, i) => (
@@ -961,7 +985,7 @@ export default function FeedPage() {
                   </div>
                 ))}
               </div>
-              {posts.length >= loadedLimit && (
+              {hasMore && posts.length > 0 && (
                 <div className="mt-8 text-center">
                   <button type="button" onClick={loadMore} className="btn-secondary text-sm">
                     Load more
@@ -1001,55 +1025,63 @@ export default function FeedPage() {
 
           {/* Composer */}
           {showComposer && (
-            <FeedComposer
-              signedInProtocols={signedInProtocols}
-              onPost={publish}
-              onRequestSignIn={openSignIn}
-            />
+            <WidgetErrorBoundary>
+              <FeedComposer
+                signedInProtocols={signedInProtocols}
+                onPost={publish}
+                onRequestSignIn={openSignIn}
+              />
+            </WidgetErrorBoundary>
           )}
 
           {/* Tip modal */}
           {tipPost && (
-            <TipModal
-              open={true}
-              onClose={() => setTipPost(null)}
-              recipientProtocol={tipPost.protocol}
-              recipientAuthorId={tipPost.author.id}
-              recipientDisplayName={tipPost.author.displayName}
-              publicationId={tipPost.id}
-            />
+            <WidgetErrorBoundary>
+              <TipModal
+                open={true}
+                onClose={() => setTipPost(null)}
+                recipientProtocol={tipPost.protocol}
+                recipientAuthorId={tipPost.author.id}
+                recipientDisplayName={tipPost.author.displayName}
+                publicationId={tipPost.id}
+              />
+            </WidgetErrorBoundary>
           )}
 
           {/* Share sheet */}
           {popupPost && (
-            <ShareSheet post={popupPost} open={!!popupPost} onClose={() => setPopupPost(null)} />
+            <WidgetErrorBoundary>
+              <ShareSheet post={popupPost} open={!!popupPost} onClose={() => setPopupPost(null)} />
+            </WidgetErrorBoundary>
           )}
 
           {/* Feed tuner */}
           {showTuner && (
-            <FeedTuner
-              topicWeights={topicWeights}
-              onWeightsChange={handleTunerWeightsChange}
-              onReset={handleTunerReset}
-              feedMixConfig={feedMixConfig}
-              onFeedMixChange={handleFeedMixChange}
-              onFeedMixReset={handleFeedMixReset}
-              savedMixes={savedMixes}
-              onSaveMix={handleSaveMix}
-              onLoadMix={handleLoadMix}
-              onDeleteMix={handleDeleteMix}
-              algorithmTransparent={algorithmTransparent}
-              onAlgorithmTransparencyChange={setAlgorithmTransparent}
-              freshnessPreference={freshnessPreference}
-              onFreshnessChange={setFreshnessPreference}
-              creatorDiversity={creatorDiversity}
-              onCreatorDiversityChange={setCreatorDiversity}
-              exploreRatio={exploreRatio}
-              onExploreRatioChange={setExploreRatio}
-              activePreset={activePreset}
-              onApplyPreset={applyFeedPreset}
-              feedPresets={FEED_PRESETS}
-            />
+            <WidgetErrorBoundary>
+              <FeedTuner
+                topicWeights={topicWeights}
+                onWeightsChange={handleTunerWeightsChange}
+                onReset={handleTunerReset}
+                feedMixConfig={feedMixConfig}
+                onFeedMixChange={handleFeedMixChange}
+                onFeedMixReset={handleFeedMixReset}
+                savedMixes={savedMixes}
+                onSaveMix={handleSaveMix}
+                onLoadMix={handleLoadMix}
+                onDeleteMix={handleDeleteMix}
+                algorithmTransparent={algorithmTransparent}
+                onAlgorithmTransparencyChange={setAlgorithmTransparent}
+                freshnessPreference={freshnessPreference}
+                onFreshnessChange={setFreshnessPreference}
+                creatorDiversity={creatorDiversity}
+                onCreatorDiversityChange={setCreatorDiversity}
+                exploreRatio={exploreRatio}
+                onExploreRatioChange={setExploreRatio}
+                activePreset={activePreset}
+                onApplyPreset={applyFeedPreset}
+                feedPresets={FEED_PRESETS}
+              />
+            </WidgetErrorBoundary>
           )}
 
           <ScrollToTop />

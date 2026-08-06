@@ -959,15 +959,16 @@ creatorVideos.get('/:id/analytics', async (c) => {
       // No analytics stored
     }
 
-    // Build analytics response
+    // Build analytics response — demo/seed content is BANNED. When no
+    // stored analytics exist, return empty series rather than fabricating
+    // dummy time series.
     const analytics: VideoAnalytics = {
-      viewsOverTime: storedAnalytics?.viewsOverTime ?? generateDummyTimeSeries(days, totalViews),
+      viewsOverTime: storedAnalytics?.viewsOverTime ?? [],
       totalViews,
       totalLikes,
       totalTipsUsdCents,
       totalTips,
-      tipsOverTime:
-        storedAnalytics?.tipsOverTime ?? generateDummyTipsTimeSeries(days, totalTipsUsdCents),
+      tipsOverTime: storedAnalytics?.tipsOverTime ?? [],
       sourceBreakdown: storedAnalytics?.sourceBreakdown ?? {
         'DegenFeed Video Hub': Math.round(totalViews * 0.5),
         'Shorts Feed': Math.round(totalViews * 0.2),
@@ -993,50 +994,6 @@ creatorVideos.get('/:id/analytics', async (c) => {
     return jsonResponse({ error: `Failed to fetch analytics: ${msg}` }, 500);
   }
 });
-
-// ─── Helpers: Generate dummy time series ─────────────────────────────────
-
-type ViewDataPoint = { date: string; count: number };
-type TipDataPoint = { date: string; amountUsdCents: number };
-
-function generateDummyTimeSeries(days: number, total: number): ViewDataPoint[] {
-  const series: ViewDataPoint[] = [];
-  const now = new Date();
-  const dailyAvg = Math.max(1, Math.round(total / Math.max(days, 1)));
-
-  for (let i = days - 1; i >= 0; i--) {
-    const date = new Date(now);
-    date.setDate(date.getDate() - i);
-    const jitter = Math.max(0, dailyAvg + Math.round((Math.random() - 0.5) * dailyAvg * 0.5));
-    const dateStr = date.toISOString().split('T')[0];
-    series.push({
-      date: dateStr,
-      count: i === 0 ? Math.max(0, total - series.reduce((s, x) => s + x.count, 0)) : jitter,
-    });
-  }
-
-  return series;
-}
-
-function generateDummyTipsTimeSeries(days: number, total: number): TipDataPoint[] {
-  const series: TipDataPoint[] = [];
-  const now = new Date();
-  const dailyAvg = Math.max(1, Math.round(total / Math.max(days, 1)));
-
-  for (let i = days - 1; i >= 0; i--) {
-    const date = new Date(now);
-    date.setDate(date.getDate() - i);
-    const jitter = Math.max(0, dailyAvg + Math.round((Math.random() - 0.5) * dailyAvg * 0.5));
-    const dateStr = date.toISOString().split('T')[0];
-    series.push({
-      date: dateStr,
-      amountUsdCents:
-        i === 0 ? Math.max(0, total - series.reduce((s, x) => s + x.amountUsdCents, 0)) : jitter,
-    });
-  }
-
-  return series;
-}
 
 // ─── Export ──────────────────────────────────────────────────────────────
 

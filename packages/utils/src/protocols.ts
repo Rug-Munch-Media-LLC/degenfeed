@@ -18,6 +18,7 @@ export type ProtocolCategory =
   | 'video'
   | 'audio'
   | 'publishing'
+  | 'newsletters'
   | 'governance'
   | 'markets'
   | 'discussion'
@@ -45,6 +46,7 @@ export const CATEGORIES: Record<ProtocolCategory, { label: string; icon: string 
   video: { label: 'Video', icon: '🎬' },
   audio: { label: 'Audio', icon: '🎵' },
   publishing: { label: 'Publishing', icon: '📝' },
+  newsletters: { label: 'Newsletters', icon: '📬' },
   governance: { label: 'Governance', icon: '🗳️' },
   markets: { label: 'Markets', icon: '📊' },
   discussion: { label: 'Discussion', icon: '👥' },
@@ -216,7 +218,7 @@ export const PROTOCOLS: Record<string, ProtocolConfig> = {
     endpoint: '/api/feed/writefreely',
     route: '/feed/writefreely',
     postNoun: 'article',
-    category: 'publishing',
+    category: 'newsletters',
     stats: [
       { label: 'instance', value: 'blog.degenfeed.xyz' },
       { label: 'federated', value: 'ActivityPub' },

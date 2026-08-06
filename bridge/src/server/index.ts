@@ -1049,17 +1049,16 @@ const server = http.createServer(async (req, res) => {
         cacheKey,
         async () => {
           const feedResult = await buildFeed(protocols, fetchLimit);
-          // NEVER return empty — if buildFeed returned empty, serve seed content
+          // Demo/seed content is BANNED — if buildFeed returned empty, keep
+          // it empty (buildFeed already emits a warning notice). Never
+          // fabricate posts to fill the feed.
           if (!feedResult.posts || feedResult.posts.length === 0) {
-            const { getSeedContent } = await import('./seed-content');
-            const seedPosts = getSeedContent(fetchLimit);
-            for (const p of seedPosts) (p as Record<string, unknown>)._demo = true;
-            feedResult.posts = seedPosts;
-            feedResult.meta.total = seedPosts.length;
-            feedResult.meta.isDemo = true;
+            feedResult.meta = feedResult.meta || {};
+            feedResult.meta.isDemo = false;
+            feedResult.meta.source = 'direct';
             feedResult.meta.notices = feedResult.meta.notices || [];
             (feedResult.meta.notices as string[]).push(
-              'All providers returned empty — serving demo content',
+              'All providers returned empty — no posts available',
             );
           }
           return feedResult;
@@ -1462,17 +1461,17 @@ const server = http.createServer(async (req, res) => {
         const { fetchZoraPosts } = await import('../providers/zora');
         const posts = await fetchZoraPosts(limit);
         if (!posts || posts.length === 0) {
-          const { getSeedContent } = await import('./seed-content');
-          const seedPosts = getSeedContent(limit, 'zora');
-          for (const p of seedPosts) (p as Record<string, unknown>)._demo = true;
+          // Demo/seed content is BANNED — return an explicit empty result.
+          console.warn(`[bridge] zora returned no posts — returning empty (demo content banned)`);
           return jsonOk(res, {
-            posts: seedPosts,
+            posts: [],
             meta: {
-              total: seedPosts.length,
+              total: 0,
               page,
               limit,
-              source: 'demo',
-              isDemo: true,
+              source: 'zora-indexer',
+              isDemo: false,
+              notice: 'Zora provider returned no posts',
               fetchedAt: Date.now(),
             },
           });
@@ -1544,18 +1543,16 @@ const server = http.createServer(async (req, res) => {
           singleCacheKey,
           async () => {
             const r = await buildFeed([proto], fetchLimit);
-            // NEVER return empty for single-provider feeds
+            // Demo/seed content is BANNED — never fabricate posts for
+            // single-provider feeds. buildFeed already emits the empty
+            // result + warning notice.
             if (!r.posts || r.posts.length === 0) {
-              const { getSeedContent } = await import('./seed-content');
-              const seedPosts = getSeedContent(fetchLimit, proto);
-              for (const p of seedPosts) (p as Record<string, unknown>)._demo = true;
-              r.posts = seedPosts;
-              r.meta.total = seedPosts.length;
-              r.meta.isDemo = true;
-              r.meta.source = 'demo';
+              r.meta = r.meta || {};
+              r.meta.isDemo = false;
+              r.meta.source = 'direct';
               r.meta.notices = r.meta.notices || [];
               (r.meta.notices as string[]).push(
-                `Provider ${proto} returned empty — serving demo content. Connect a real ${proto} account at app.degenfeed.xyz`,
+                `Provider ${proto} returned empty — no posts available`,
               );
             }
             return r;

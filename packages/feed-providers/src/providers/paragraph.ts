@@ -9,7 +9,8 @@
  * article-media helper.
  *
  * If the bridge is unavailable, a native RSS fallback fetches the known
- * publications directly from paragraph.xyz (`/api/feeds/rss/@{slug}`).
+ * publications directly from paragraph.xyz (`https://paragraph.xyz/@{slug}/rss`,
+ * verified 2026-08-06 — the older `/api/feeds/rss/@{slug}` path returns 404).
  *
  * Both paths carry a circuit breaker + health check.
  */
@@ -266,7 +267,10 @@ export class ParagraphProvider implements FeedProvider {
     const all: UnifiedPost[] = [];
     for (const pub of this.publications) {
       try {
-        const url = `${PARAGRAPH_FRONT}/api/feeds/rss/@${pub.slug}`;
+        // Verified 2026-08-06: the canonical Paragraph publication RSS lives at
+        // https://paragraph.xyz/@{slug}/rss (200 + real items). The legacy
+        // /api/feeds/rss/@{slug} path returns 404 — do NOT revert.
+        const url = `${PARAGRAPH_FRONT}/@${pub.slug}/rss`;
         const xml = await withTimeout(
           fetchRss(url, {
             headers: { 'user-agent': DEFAULT_USER_AGENT, ...opts.headers },
