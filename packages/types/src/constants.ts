@@ -89,6 +89,11 @@ export type Protocol =
   | 'polymarket'
   // ─── Audio / Video Platforms (NEW 2026-08-06) ──────────────
   | 'soundcloud'
+  // ─── Publishing / Newsletter Platforms (NEW 2026-08-06) ────
+  | 'substack'
+  | 'medium'
+  | 'twitch'
+  | 'kick'
   // ─── ActivityPub Ecosystem (Headless Forks) ─────────────────
   | 'bookwyrm'
   | 'mobilizon'
@@ -191,6 +196,11 @@ export const PROTOCOLS = [
   'polymarket',
   // Audio / Video Platforms
   'soundcloud',
+  // Publishing / Newsletter Platforms
+  'substack',
+  'medium',
+  'twitch',
+  'kick',
   // ActivityPub Ecosystem
   'bookwyrm',
   'mobilizon',
@@ -412,6 +422,10 @@ export const PLATFORM_TIER_WEIGHTS: Record<string, number> = {
   zora: 0.8,
   // Prediction Markets
   polymarket: 0.8,
+  // Audio / Video Platforms
+  soundcloud: 0.8,
+  twitch: 0.8,
+  kick: 0.7,
   // ActivityPub Ecosystem
   bookwyrm: 0.7,
   mobilizon: 0.6,

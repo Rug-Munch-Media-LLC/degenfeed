@@ -109,6 +109,10 @@ export type Protocol =
   | 'lit'
   | 'polymarket'
   | 'soundcloud'
+  | 'twitch'
+  | 'kick'
+  | 'substack'
+  | 'medium'
   | 'infra';
 
 export interface UnifiedIdentity {
@@ -197,6 +201,20 @@ export interface UnifiedIdentity {
     unlockLockAddress?: string;
     /** Lit Protocol PKP token ID */
     litPkpTokenId?: string;
+    /** Audius user handle */
+    audiusHandle?: string;
+    /** Twitch user ID (Helix) */
+    twitchUserId?: string;
+    /** Twitch broadcaster ID (Helix clips) */
+    twitchBroadcasterId?: string;
+    /** Kick channel slug/handle */
+    kickHandle?: string;
+    /** Substack publication slug (e.g. "milkroad") */
+    substackSlug?: string;
+    /** Paragraph.xyz publication slug (e.g. "bankless") */
+    paragraphSlug?: string;
+    /** Medium tag/publication/@author source id */
+    mediumSource?: string;
   };
 }
 
