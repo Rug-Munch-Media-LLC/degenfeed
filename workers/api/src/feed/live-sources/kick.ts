@@ -230,7 +230,7 @@ function convertKickToUnified(
     ? mapKickCategory(livestream.category?.name, curatedInfo.category)
     : mapKickCategory(livestream.category?.name, 'gaming');
 
-  const tags = curatedInfo?.tags ?? ['kick', 'live', livestream.category?.slug || 'gaming'];
+  const tags = curatedInfo?.tags ?? ['kick', 'live', (livestream.category?.slug || 'gaming')];
 
   return {
     id: `kick:${user.slug}`,
