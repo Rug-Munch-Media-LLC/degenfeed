@@ -130,6 +130,8 @@ export interface UnifiedIdentity {
   followerCount: number;
   followingCount: number;
   links: { label: string; url: string }[];
+  /** Native platform profile URL (e.g. https://warpcast.com/foo). Optional — the UI derives it from primary/handles when absent. */
+  url?: string;
   /** Raw protocol-specific identifiers */
   keys: {
     nostrPubkey?: string;

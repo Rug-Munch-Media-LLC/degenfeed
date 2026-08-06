@@ -497,6 +497,7 @@ export function eventToPost(ev: NostrEvent, relayUrl: string, profile?: NostrPro
       followerCount: 0,
       followingCount: 0,
       links: [],
+      url: `https://njump.me/${ev.pubkey}`,
       keys: { npub: pubkeyShort },
     },
     text: ev.content,

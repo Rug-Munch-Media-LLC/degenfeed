@@ -89,6 +89,7 @@ export function postToUnified(post: BskyPostView): UnifiedPost {
       avatarUrl: post.author.avatar || '',
       followerCount: 0,
       followingCount: 0,
+      url: `https://bsky.app/profile/${encodeURIComponent(post.author.handle || post.author.did)}`,
       links: [
         {
           label: 'profile',

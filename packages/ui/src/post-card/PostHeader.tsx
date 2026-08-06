@@ -13,6 +13,7 @@ import {
 } from '../ProtocolBadge';
 import type { ReputationBadgeProgress, ReputationBadgeScore } from '../ReputationBadge';
 import { ReputationBadge } from '../ReputationBadge';
+import { getAuthorProfileHref } from '@degenfeed/utils';
 
 export interface PostHeaderProps {
   post: UnifiedPost;
@@ -145,35 +146,55 @@ export const PostHeader = memo(function PostHeader({
   // `new Date(undefined).toISOString()` (same class of crash as the others).
   const hasValidCreatedAt = Number.isFinite(post.createdAt);
 
+  // Author profile click-through: prefer our internal profile page, fall back
+  // to the protocol-native profile URL when no stable id exists.
+  const authorHref = getAuthorProfileHref(post.author, post.protocol);
+  const AuthorLink = ({ children }: { children: React.ReactNode }) =>
+    authorHref ? (
+      <a
+        href={authorHref}
+        className="group/author flex items-center gap-3 no-underline"
+        onClick={(e) => e.stopPropagation()}
+        onKeyDown={(e) => e.stopPropagation()}
+        aria-label={`View ${post.author.displayName} profile`}
+      >
+        {children}
+      </a>
+    ) : (
+      <span className="flex items-center gap-3">{children}</span>
+    );
+
   return (
     <div className="author-row group mb-2 flex items-center gap-3">
-      {post.author.avatarUrl && !avatarFailed ? (
-        <Image
-          src={post.author.avatarUrl}
-          alt={`Avatar of ${post.author.displayName}`}
-          width={32}
-          height={32}
-          sizes="32px"
-          className={avatarClass}
-          loading={mediaPriority ? 'eager' : 'lazy'}
-          priority={mediaPriority}
-          decoding="async"
-          onError={() => setAvatarFailed(true)}
-        />
-      ) : (
-        <div
-          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold"
-          style={{
-            backgroundColor: `${getProtocolColor(post.protocol)}1f`,
-            color: getProtocolColor(post.protocol),
-            border: `1px solid ${getProtocolColor(post.protocol)}40`,
-          }}
-          role="img"
-          aria-label={`Avatar of ${post.author.displayName}`}
-        >
-          {post.author.displayName?.[0]?.toUpperCase() || _getProtocolIcon(post.protocol) || '?'}
-        </div>
-      )}
+      <AuthorLink>
+        {post.author.avatarUrl && !avatarFailed ? (
+          <Image
+            src={post.author.avatarUrl}
+            alt={`Avatar of ${post.author.displayName}`}
+            width={32}
+            height={32}
+            sizes="32px"
+            className={avatarClass}
+            loading={mediaPriority ? 'eager' : 'lazy'}
+            priority={mediaPriority}
+            decoding="async"
+            onError={() => setAvatarFailed(true)}
+          />
+        ) : (
+          <div
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold"
+            style={{
+              backgroundColor: `${getProtocolColor(post.protocol)}1f`,
+              color: getProtocolColor(post.protocol),
+              border: `1px solid ${getProtocolColor(post.protocol)}40`,
+            }}
+            role="img"
+            aria-label={`Avatar of ${post.author.displayName}`}
+          >
+            {post.author.displayName?.[0]?.toUpperCase() || _getProtocolIcon(post.protocol) || '?'}
+          </div>
+        )}
+      </AuthorLink>
       <div className="flex-1 min-w-0">
         {post.protocol === 'lemmy' && post.community && (
           <div className="lemmy-community-row mb-0.5">
@@ -221,25 +242,55 @@ export const PostHeader = memo(function PostHeader({
           </div>
         )}
         <div className="flex items-center gap-2">
-          <span
-            className="author-name truncate text-sm font-semibold"
-            style={{
-              color:
-                post.protocol === 'nostr'
-                  ? 'var(--color-fg)'
-                  : post.protocol === 'lens'
-                    ? '#abfe2c'
-                    : post.protocol === 'bluesky'
-                      ? '#60a5fa'
-                      : post.protocol === 'reddit'
-                        ? '#ff4500'
-                        : post.protocol === 'rss'
-                          ? '#fbbf24'
-                          : 'var(--color-fg)',
-            }}
-          >
-            {post.author.displayName}
-          </span>
+          {authorHref ? (
+            <a
+              href={authorHref}
+              className="min-w-0 no-underline"
+              onClick={(e) => e.stopPropagation()}
+              onKeyDown={(e) => e.stopPropagation()}
+              aria-label={`View ${post.author.displayName} profile`}
+            >
+              <span
+                className="author-name block truncate text-sm font-semibold hover:underline"
+                style={{
+                  color:
+                    post.protocol === 'nostr'
+                      ? 'var(--color-fg)'
+                      : post.protocol === 'lens'
+                        ? '#abfe2c'
+                        : post.protocol === 'bluesky'
+                          ? '#60a5fa'
+                          : post.protocol === 'reddit'
+                            ? '#ff4500'
+                            : post.protocol === 'rss'
+                              ? '#fbbf24'
+                              : 'var(--color-fg)',
+                }}
+              >
+                {post.author.displayName}
+              </span>
+            </a>
+          ) : (
+            <span
+              className="author-name truncate text-sm font-semibold"
+              style={{
+                color:
+                  post.protocol === 'nostr'
+                    ? 'var(--color-fg)'
+                    : post.protocol === 'lens'
+                      ? '#abfe2c'
+                      : post.protocol === 'bluesky'
+                        ? '#60a5fa'
+                        : post.protocol === 'reddit'
+                          ? '#ff4500'
+                          : post.protocol === 'rss'
+                            ? '#fbbf24'
+                            : 'var(--color-fg)',
+              }}
+            >
+              {post.author.displayName}
+            </span>
+          )}
           {post.protocol === 'nostr' && post.author.handles.nostr?.includes('@') && (
             <span
               className="flex-shrink-0 dark:text-blue-300 text-blue-600 text-xs"

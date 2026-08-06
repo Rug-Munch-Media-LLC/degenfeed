@@ -2,8 +2,8 @@
 
 import { addBookmark, removeBookmark } from '@degenfeed/storage';
 import type { EngagementAction, UnifiedPost } from '@degenfeed/types';
-import { CrossPostVersions, ErrorBoundary, getProtocolColor } from '@degenfeed/ui';
-import { formatTimeAgo } from '@degenfeed/utils';
+import { CrossPostVersions, ErrorBoundary, getProtocolColor, ProtocolBadge } from '@degenfeed/ui';
+import { formatTimeAgo, getAuthorProfileHref } from '@degenfeed/utils';
 import dynamic from 'next/dynamic';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
@@ -149,26 +149,35 @@ function PostCard({
   return (
     <article className="card border border-[var(--color-glass-border)]">
       <div className="mb-4 flex items-center gap-3">
-        <div
-          className="flex h-10 w-10 items-center justify-center rounded-full text-sm font-bold"
-          style={{
-            backgroundColor: `${getProtocolColor(post.protocol)}22`,
-            color: getProtocolColor(post.protocol),
-          }}
+        <a
+          href={getAuthorProfileHref(post.author, post.protocol)}
+          className="no-underline"
+          onClick={(e) => e.stopPropagation()}
+          aria-label={`View ${post.author.displayName} profile`}
         >
-          {post.author.displayName[0]?.toUpperCase() || '?'}
-        </div>
+          <div
+            className="flex h-10 w-10 items-center justify-center rounded-full text-sm font-bold"
+            style={{
+              backgroundColor: `${getProtocolColor(post.protocol)}22`,
+              color: getProtocolColor(post.protocol),
+            }}
+          >
+            {post.author.displayName[0]?.toUpperCase() || '?'}
+          </div>
+        </a>
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
-            <span className="font-semibold text-sm text-[var(--color-fg)] truncate">
-              {post.author.displayName}
-            </span>
-            <span
-              className="text-[10px] text-[var(--color-muted)]"
-              style={{ color: getProtocolColor(post.protocol) }}
+            <a
+              href={getAuthorProfileHref(post.author, post.protocol)}
+              className="min-w-0 no-underline"
+              onClick={(e) => e.stopPropagation()}
+              aria-label={`View ${post.author.displayName} profile`}
             >
-              {post.protocol}
-            </span>
+              <span className="block truncate font-semibold text-sm text-[var(--color-fg)] hover:underline">
+                {post.author.displayName}
+              </span>
+            </a>
+            <ProtocolBadge protocol={post.protocol} size="sm" />
           </div>
           <div className="flex items-center gap-2 text-[11px] text-[var(--color-muted)]">
             <span>{formatTimeAgo(post.createdAt)} ago</span>

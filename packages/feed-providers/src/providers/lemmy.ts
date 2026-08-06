@@ -639,12 +639,12 @@ export class LemmyProvider implements FeedProvider {
         const timeoutMs = opts.timeoutMs ?? DEFAULT_TIMEOUT_MS;
         const allPosts: UnifiedPost[] = [];
 
-        // Default target: serve 50+ posts per request. Raised from 20
+        // Default target: serve 200+ posts per request. Raised from 50
         // (2026-08-06) so the protocol feed is rich by default.
-        // Per-community fetch asks for 25 posts; the general Hot fallback
+        // Per-community fetch asks for 40 posts; the general Hot fallback
         // asks for 50 from each reachable instance.
-        const MIN_POSTS = 50;
-        const PER_COMMUNITY_LIMIT = '25';
+        const MIN_POSTS = 200;
+        const PER_COMMUNITY_LIMIT = '40';
         const GENERAL_LIMIT = '50';
 
         // Phase 1 — curated communities on their expected instance.
@@ -652,7 +652,7 @@ export class LemmyProvider implements FeedProvider {
         // provider stays well under the Worker 50-subrequest budget even
         // when every community fails on the first try. Failures are logged
         // verbosely instead of silently swallowed.
-        const communityBatches = this.communities.slice(0, 40);
+        const communityBatches = this.communities.slice(0, 60);
         const communityResults = await withConcurrencyLimit(
           communityBatches,
           8,
@@ -700,8 +700,8 @@ export class LemmyProvider implements FeedProvider {
         // (no community filter) so users always have fresh content.
         if (allPosts.length < MIN_POSTS) {
           const generalResults = await withConcurrencyLimit(
-            this.instances.slice(0, 6),
-            3,
+            this.instances.slice(0, 12),
+            6,
             async (instance) => {
               try {
                 const data = await withTimeout(

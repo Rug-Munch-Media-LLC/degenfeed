@@ -368,20 +368,20 @@ export class BlueskyProvider implements FeedProvider {
 
   async fetch(opts: FetchOptions = {}): Promise<unknown> {
     const timeoutMs = opts.timeoutMs ?? DEFAULT_TIMEOUT_MS;
-    const limit = 50;
     return withRetry(async () => {
       const all: BskyPostView[] = [];
 
-      // 1. Crypto keyword search (existing behavior, primary signal)
-      const queries = CRYPTO_SEARCH_QUERIES.slice(0, 4);
+      // 1. Crypto keyword search (primary signal). Query in parallel with
+      //    25 posts per query so each query contributes a rich slice.
+      const queries = CRYPTO_SEARCH_QUERIES.slice(0, 6);
       const searchResults = await withConcurrencyLimit(
         queries,
-        Math.min(2, queries.length),
+        4,
         async (q) => {
           try {
             return await withTimeout(
               this.withFallback((baseUrl) =>
-                searchPosts(baseUrl, q, Math.max(5, Math.ceil(limit / queries.length)), this.accessJwt),
+                searchPosts(baseUrl, q, 25, this.accessJwt),
               ),
               timeoutMs,
               `bluesky:search:${q}`,
@@ -393,15 +393,16 @@ export class BlueskyProvider implements FeedProvider {
       );
       for (const r of searchResults) all.push(...r);
 
-      // 2. Feed generators (What's Hot + curated feeds) — new 2026-08-06
+      // 2. ALL feed generators (What's Hot + curated feeds) in parallel —
+      //    every feed is fetched, not just a subset. 25 posts per feed.
       const feedResults = await withConcurrencyLimit(
-        this.feedUris.slice(0, 6),
-        2,
+        this.feedUris,
+        7,
         async (feedUri) => {
           try {
             return await withTimeout(
               this.withFallback((baseUrl) =>
-                fetchFeedGenerator(baseUrl, feedUri, Math.max(5, Math.ceil(limit / 2)), this.accessJwt),
+                fetchFeedGenerator(baseUrl, feedUri, 25, this.accessJwt),
               ),
               timeoutMs,
               `bluesky:feed:${feedUri}`,
@@ -413,13 +414,12 @@ export class BlueskyProvider implements FeedProvider {
       );
       for (const r of feedResults) all.push(...r);
 
-      // 2.5. ATProto relay / trending topics (new 2026-08-06) — dynamic
-      //      trending feed generators from trending.bsky.app. Always
-      //      best-effort: failures never block the main feed.
+      // 2.5. ATProto relay / trending topics — dynamic trending feed
+      //      generators from trending.bsky.app. Always best-effort.
       try {
         const trendingPosts = await withTimeout(
           this.withFallback((baseUrl) =>
-            fetchTrendingFeedPosts(baseUrl, Math.max(5, Math.ceil(limit / 3)), this.accessJwt),
+            fetchTrendingFeedPosts(baseUrl, 25, this.accessJwt),
           ),
           timeoutMs,
           'bluesky:trending-topics',
@@ -429,26 +429,35 @@ export class BlueskyProvider implements FeedProvider {
         /* best-effort */
       }
 
-      // 3. Curated actors (only if we still need more posts)
-      if (all.length < limit / 2) {
-        const actors = this.curatedActors.slice(0, 8);
-        const actorResults = await withConcurrencyLimit(actors, 3, async (actor) => {
-          try {
-            return await withTimeout(
-              this.withFallback((baseUrl) =>
-                fetchAuthorFeed(baseUrl, actor, Math.max(3, Math.ceil(limit / actors.length)), this.accessJwt),
-              ),
-              timeoutMs,
-              `bluesky:${actor}`,
-            );
-          } catch {
-            return [] as BskyPostView[];
-          }
-        });
-        for (const r of actorResults) all.push(...r);
-      }
+      // 3. Curated actors — always fetched (not just when below half the
+      //    limit) so the feed is rich with known crypto voices.
+      const actors = this.curatedActors.slice(0, 14);
+      const actorResults = await withConcurrencyLimit(actors, 5, async (actor) => {
+        try {
+          return await withTimeout(
+            this.withFallback((baseUrl) =>
+              fetchAuthorFeed(baseUrl, actor, 12, this.accessJwt),
+            ),
+            timeoutMs,
+            `bluesky:${actor}`,
+          );
+        } catch {
+          return [] as BskyPostView[];
+        }
+      });
+      for (const r of actorResults) all.push(...r);
 
-      return all;
+      // 4. Deduplicate across all sources by post URI (cid fallback).
+      const seen = new Set<string>();
+      const deduped = all.filter((p) => {
+        const key = p.uri || p.cid;
+        if (!key) return true;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+
+      return deduped;
     });
   }
 

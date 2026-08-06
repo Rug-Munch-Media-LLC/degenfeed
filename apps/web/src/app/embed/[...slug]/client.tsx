@@ -1,7 +1,7 @@
 'use client';
 
 import type { UnifiedPost } from '@degenfeed/types';
-import { formatTimeAgo } from '@degenfeed/utils';
+import { formatTimeAgo, getAuthorProfileHref, getProtocolFeedPath } from '@degenfeed/utils';
 import Image from 'next/image';
 import { useCallback, useEffect, useState } from 'react';
 
@@ -135,30 +135,44 @@ export function EmbedPageClient({ dfUri }: EmbedPageClientProps) {
           {/* Author row */}
           <div className="p-5 pb-3">
             <div className="flex items-center gap-3">
-              <Image
-                src={
-                  post.author.avatarUrl ||
-                  'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Crect width=%2232%22 height=%2232%22 fill=%22%23333%22/%3E%3Ctext x=%2216%22 y=%2222%22 text-anchor=%22middle%22 fill=%22%23999%22 font-size=%2216%22%3E%40%3C/text%3E%3C/svg%3E'
-                }
-                alt={author}
-                width={40}
-                height={40}
-                className="h-10 w-10 rounded-full bg-[var(--color-muted)] object-cover"
-              />
+              <a
+                href={getAuthorProfileHref(post.author, post.protocol)}
+                className="no-underline"
+                aria-label={`View ${author} profile`}
+              >
+                <Image
+                  src={
+                    post.author.avatarUrl ||
+                    'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Crect width=%2232%22 height=%2232%22 fill=%22%23333%22/%3E%3Ctext x=%2216%22 y=%2222%22 text-anchor=%22middle%22 fill=%22%23999%22 font-size=%2216%22%3E%40%3C/text%3E%3C/svg%3E'
+                  }
+                  alt={author}
+                  width={40}
+                  height={40}
+                  className="h-10 w-10 rounded-full bg-[var(--color-muted)] object-cover"
+                />
+              </a>
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">
-                  <span className="truncate text-sm font-semibold text-[var(--color-fg)]">
-                    {author}
-                  </span>
-                  <span
-                    className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider"
+                  <a
+                    href={getAuthorProfileHref(post.author, post.protocol)}
+                    className="min-w-0 no-underline"
+                    aria-label={`View ${author} profile`}
+                  >
+                    <span className="block truncate text-sm font-semibold text-[var(--color-fg)] hover:underline">
+                      {author}
+                    </span>
+                  </a>
+                  <a
+                    href={getProtocolFeedPath(post.protocol)}
+                    className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider no-underline"
                     style={{
                       backgroundColor: `${protocolColor}18`,
                       color: protocolColor,
                     }}
+                    title={`View ${protocolLabel} feed`}
                   >
                     {protocolLabel}
-                  </span>
+                  </a>
                 </div>
                 {handle && <span className="text-xs text-[var(--color-muted)]">@{handle}</span>}
               </div>
