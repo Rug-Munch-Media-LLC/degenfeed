@@ -8,7 +8,7 @@
  * per-isolate and approximate — but they are FREE compared to burning a KV
  * write per request. For cross-isolate enforcement, IPs that are near (or
  * over) their limit are periodically reported to the self-hosted rmi-backend
- * at `{RMI_API_URL}/v1/rate-limits` (every 60s), which keeps persistent
+ * at `{RMI_API_URL}/api/v1/rate-limits/report` (every 60s), which keeps persistent
  * state without blocking every request on KV.
  *
  * If `RATE_LIMIT_DISABLED=true` (local dev), the limiter bypasses entirely
@@ -44,8 +44,11 @@ interface WindowCounter {
 const counters = new Map<string, WindowCounter>();
 
 // ─── Cross-isolate sync (rmi-backend) ─────────────────────────────
-// IPs near/over their limit are batched and reported to rmi-backend so
-// enforcement survives isolate death. Best-effort; never blocks requests.
+// IPs near/over their limit are reported to rmi-backend so enforcement
+// survives isolate death. Best-effort; never blocks requests.
+//
+// Backend receives at POST /api/v1/rate-limits/report:
+//   { ip, path, count, max, window_ms }
 
 const SYNC_INTERVAL_MS = 60_000;
 const NEAR_LIMIT_FRACTION = 0.2; // report when < 20% of tokens remain
@@ -54,6 +57,9 @@ interface NearLimitEntry {
   ip: string;
   path: string;
   recordedAt: number;
+  count: number;
+  max: number;
+  windowMs: number;
 }
 
 const nearLimitIps = new Map<string, NearLimitEntry>();
@@ -73,10 +79,10 @@ function warnRateLimitDisabled(): void {
  * Record an IP+path as near (or over) its limit and trigger the periodic
  * rmi-backend sync when the 60s window elapses.
  */
-function markNearLimit(env: Env, ip: string, path: string): void {
+function markNearLimit(env: Env, ip: string, path: string, count: number, max: number, windowMs: number): void {
   if (!env.RMI_API_URL && !env.RMI_API_KEY) return;
   const key = `${ip}:${path}`;
-  nearLimitIps.set(key, { ip, path, recordedAt: Date.now() });
+  nearLimitIps.set(key, { ip, path, recordedAt: Date.now(), count, max, windowMs });
   maybeSyncRateLimits(env);
 }
 
@@ -89,7 +95,7 @@ function maybeSyncRateLimits(env: Env): void {
 }
 
 /**
- * POST batched near-limit IPs to rmi-backend. On failure the entries are
+ * POST per-entry reports to rmi-backend. On failure the entries are
  * re-queued (capped) so the next sync retries them.
  */
 async function syncRateLimitsToRmi(env: Env): Promise<void> {
@@ -97,28 +103,41 @@ async function syncRateLimitsToRmi(env: Env): Promise<void> {
   const entries = Array.from(nearLimitIps.values());
   nearLimitIps.clear();
   const baseUrl = (env.RMI_API_URL || RMI_API_URL).replace(/\/+$/, '');
-  try {
-    const resp = await fetch(`${baseUrl}/v1/rate-limits`, {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        ...(env.RMI_API_KEY ? { authorization: `Bearer ${env.RMI_API_KEY}` } : {}),
-      },
-      body: JSON.stringify({
-        source: 'degenfeed-worker',
-        entries: entries.map((e) => ({ ip: e.ip, path: e.path, recordedAt: e.recordedAt })),
-      }),
-      signal: AbortSignal.timeout(3000),
-    });
-    if (!resp.ok) throw new Error(`rmi-backend rate-limit sync returned ${resp.status}`);
-  } catch (err) {
-    // Non-critical — re-queue for the next sync window (bounded).
+  const authHeaders: Record<string, string> = env.RMI_API_KEY
+    ? { authorization: `Bearer ${env.RMI_API_KEY}`, 'content-type': 'application/json' }
+    : { 'content-type': 'application/json' };
+
+  const failed: NearLimitEntry[] = [];
+
+  for (const e of entries) {
+    try {
+      const resp = await fetch(`${baseUrl}/api/v1/rate-limits/report`, {
+        method: 'POST',
+        headers: authHeaders,
+        body: JSON.stringify({
+          ip: e.ip,
+          path: e.path,
+          count: e.count,
+          max: e.max,
+          window_ms: e.windowMs,
+        }),
+        signal: AbortSignal.timeout(3000),
+      });
+      if (!resp.ok) {
+        throw new Error(`rmi-backend rate-limit report returned ${resp.status}`);
+      }
+    } catch (err) {
+      failed.push(e);
+    }
+  }
+
+  if (failed.length > 0) {
     log(
       'warn',
-      '[rate-limit] rmi-backend sync failed (best-effort)',
-      err instanceof Error ? err.message : err,
+      `[rate-limit] rmi-backend sync failed for ${failed.length} entries (best-effort)`,
     );
-    for (const e of entries) {
+    // Re-queue failed entries for the next sync window (bounded).
+    for (const e of failed) {
       if (nearLimitIps.size < 5000 && !nearLimitIps.has(`${e.ip}:${e.path}`)) {
         nearLimitIps.set(`${e.ip}:${e.path}`, e);
       }
@@ -177,13 +196,13 @@ export async function rateLimit(
     bucket.tokens -= 1;
     // Near the limit — report to rmi-backend for cross-isolate enforcement.
     if (bucket.tokens < NEAR_LIMIT_FRACTION * maxReq) {
-      markNearLimit(env, ip, path);
+      markNearLimit(env, ip, path, maxReq - Math.ceil(bucket.tokens), maxReq, windowMs);
     }
     return { allowed: true, retryAfter: 0 };
   }
 
   // Over the limit — report to rmi-backend for cross-isolate enforcement.
-  markNearLimit(env, ip, path);
+  markNearLimit(env, ip, path, maxReq, maxReq, windowMs);
   return { allowed: false, retryAfter: Math.ceil(windowMs / 1000) };
 }
 
@@ -388,7 +407,7 @@ export async function tieredRateLimit(
   const globalCount = incrCounter(globalKey, GLOBAL_DDOS_WINDOW_MS);
 
   if (globalCount > GLOBAL_DDOS_MAX) {
-    markNearLimit(env, ip, path);
+    markNearLimit(env, ip, path, globalCount, GLOBAL_DDOS_MAX, GLOBAL_DDOS_WINDOW_MS);
     return { allowed: false, retryAfter: Math.ceil(GLOBAL_DDOS_WINDOW_MS / 1000) };
   }
 
@@ -409,5 +428,6 @@ export async function tieredRateLimit(
 export async function recordBruteForceFailure(env: Env, ip: string): Promise<void> {
   const failureKey = `bf:fail:${ip}`;
   incrCounter(failureKey, AUTH_BLOCK_WINDOW_MS);
-  markNearLimit(env, ip, '/api/auth/wallet/verify');
+  const failureCount = readCounter(failureKey);
+  markNearLimit(env, ip, '/api/auth/wallet/verify', failureCount, AUTH_BLOCK_MAX, AUTH_BLOCK_WINDOW_MS);
 }
