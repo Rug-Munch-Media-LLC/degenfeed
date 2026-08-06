@@ -18,6 +18,7 @@ import { isSpamPost } from '@degenfeed/feed-core';
 import type { TrendingTopic } from '@degenfeed/ranking';
 import type { UnifiedPost } from '@degenfeed/types';
 import { COMMUNITY_KV_PREFIX, type CrossProtocolCommunity } from '@degenfeed/utils';
+import { edgeCacheGet, edgeCachePut } from '../lib/edge-cache';
 import { jsonResponse } from '../response-helpers';
 import { isValidInstanceUrl } from '../sanitize';
 import type { Env } from '../types';
@@ -121,13 +122,9 @@ export async function handleDiscoverTrending(request: Request, env: Env): Promis
   const period = url.searchParams.get('period') || 'hour';
   const cacheKey = `discover:trending:${period}`;
 
-  // Try cache
-  try {
-    const cached = await env.CACHE?.get(cacheKey);
-    if (cached) return jsonResponse(JSON.parse(cached));
-  } catch {
-    /* KV operation failed -- non-critical, continue */
-  }
+  // Try cache (Cache API first, KV fallback)
+  const cached = await edgeCacheGet(env, cacheKey);
+  if (cached) return jsonResponse(JSON.parse(cached));
 
   const windowHours = period === 'week' ? 168 : period === 'day' ? 24 : 1;
   const now = Date.now();
@@ -150,13 +147,7 @@ export async function handleDiscoverTrending(request: Request, env: Env): Promis
     meta: { total: scored.length, period, fetchedAt: now },
   };
 
-  try {
-    await env.CACHE?.put(cacheKey, JSON.stringify(response), {
-      expirationTtl: 300,
-    });
-  } catch {
-    /* KV operation failed -- non-critical, continue */
-  }
+  await edgeCachePut(env, cacheKey, JSON.stringify(response), 300);
 
   return jsonResponse(response);
 }
@@ -166,13 +157,9 @@ export async function handleDiscoverTrending(request: Request, env: Env): Promis
 export async function handleDiscoverCommunities(_request: Request, env: Env): Promise<Response> {
   const cacheKey = 'discover:communities:v1';
 
-  // Try cache
-  try {
-    const cached = await env.CACHE?.get(cacheKey);
-    if (cached) return jsonResponse(JSON.parse(cached));
-  } catch {
-    /* KV operation failed -- non-critical, continue */
-  }
+  // Try cache (Cache API first, KV fallback)
+  const cached = await edgeCacheGet(env, cacheKey);
+  if (cached) return jsonResponse(JSON.parse(cached));
 
   const communities: DiscoverCommunity[] = [];
 
@@ -282,13 +269,7 @@ export async function handleDiscoverCommunities(_request: Request, env: Env): Pr
     meta: { total: communities.length },
   };
 
-  try {
-    await env.CACHE?.put(cacheKey, JSON.stringify(response), {
-      expirationTtl: 300,
-    });
-  } catch {
-    /* KV operation failed -- non-critical, continue */
-  }
+  await edgeCachePut(env, cacheKey, JSON.stringify(response), 300);
 
   return jsonResponse(response);
 }
@@ -298,13 +279,9 @@ export async function handleDiscoverCommunities(_request: Request, env: Env): Pr
 export async function handleDiscoverPeople(_request: Request, env: Env): Promise<Response> {
   const cacheKey = 'discover:people:v1';
 
-  // Try cache
-  try {
-    const cached = await env.CACHE?.get(cacheKey);
-    if (cached) return jsonResponse(JSON.parse(cached));
-  } catch {
-    /* KV operation failed -- non-critical, continue */
-  }
+  // Try cache (Cache API first, KV fallback)
+  const cached = await edgeCacheGet(env, cacheKey);
+  if (cached) return jsonResponse(JSON.parse(cached));
 
   try {
     const posts = await fetchRecentPosts(env, 200);
@@ -372,13 +349,7 @@ export async function handleDiscoverPeople(_request: Request, env: Env): Promise
       meta: { total: people.length, fetchedAt: Date.now() },
     };
 
-    try {
-      await env.CACHE?.put(cacheKey, JSON.stringify(response), {
-        expirationTtl: 300,
-      });
-    } catch {
-      /* KV operation failed -- non-critical, continue */
-    }
+    await edgeCachePut(env, cacheKey, JSON.stringify(response), 300);
 
     return jsonResponse(response);
   } catch {
@@ -391,13 +362,9 @@ export async function handleDiscoverPeople(_request: Request, env: Env): Promise
 export async function handleDiscoverTopics(_request: Request, env: Env): Promise<Response> {
   const cacheKey = 'discover:topics:v1';
 
-  // Try cache
-  try {
-    const cached = await env.CACHE?.get(cacheKey);
-    if (cached) return jsonResponse(JSON.parse(cached));
-  } catch {
-    /* KV operation failed -- non-critical, continue */
-  }
+  // Try cache (Cache API first, KV fallback)
+  const cached = await edgeCacheGet(env, cacheKey);
+  if (cached) return jsonResponse(JSON.parse(cached));
 
   const posts = await fetchRecentPosts(env, 200);
   const now = Date.now();
@@ -433,13 +400,7 @@ export async function handleDiscoverTopics(_request: Request, env: Env): Promise
     meta: { total: topics.length, fetchedAt: now },
   };
 
-  try {
-    await env.CACHE?.put(cacheKey, JSON.stringify(response), {
-      expirationTtl: 300,
-    });
-  } catch {
-    /* KV operation failed -- non-critical, continue */
-  }
+  await edgeCachePut(env, cacheKey, JSON.stringify(response), 300);
 
   return jsonResponse(response);
 }
@@ -449,13 +410,9 @@ export async function handleDiscoverTopics(_request: Request, env: Env): Promise
 export async function handleDiscoverFeatured(_request: Request, env: Env): Promise<Response> {
   const cacheKey = 'discover:featured:v1';
 
-  // Try cache
-  try {
-    const cached = await env.CACHE?.get(cacheKey);
-    if (cached) return jsonResponse(JSON.parse(cached));
-  } catch {
-    /* KV operation failed -- non-critical, continue */
-  }
+  // Try cache (Cache API first, KV fallback)
+  const cached = await edgeCacheGet(env, cacheKey);
+  if (cached) return jsonResponse(JSON.parse(cached));
 
   // Fetch live spaces
   const spaces: FeaturedSpace[] = [];
@@ -590,13 +547,7 @@ export async function handleDiscoverFeatured(_request: Request, env: Env): Promi
 
   const response = { spaces, trending };
 
-  try {
-    await env.CACHE?.put(cacheKey, JSON.stringify(response), {
-      expirationTtl: 300,
-    });
-  } catch {
-    /* KV operation failed -- non-critical, continue */
-  }
+  await edgeCachePut(env, cacheKey, JSON.stringify(response), 300);
 
   return jsonResponse(response);
 }
@@ -606,13 +557,9 @@ export async function handleDiscoverFeatured(_request: Request, env: Env): Promi
 export async function handleDiscoverNew(_request: Request, env: Env): Promise<Response> {
   const cacheKey = 'discover:new:v1';
 
-  // Try cache
-  try {
-    const cached = await env.CACHE?.get(cacheKey);
-    if (cached) return jsonResponse(JSON.parse(cached));
-  } catch {
-    /* KV operation failed -- non-critical, continue */
-  }
+  // Try cache (Cache API first, KV fallback)
+  const cached = await edgeCacheGet(env, cacheKey);
+  if (cached) return jsonResponse(JSON.parse(cached));
 
   // 1. Recently created cross-protocol communities
   const newCommunities: DiscoverCommunity[] = [];
@@ -698,13 +645,7 @@ export async function handleDiscoverNew(_request: Request, env: Env): Promise<Re
     people: recentPeople,
   };
 
-  try {
-    await env.CACHE?.put(cacheKey, JSON.stringify(response), {
-      expirationTtl: 300,
-    });
-  } catch {
-    /* KV operation failed -- non-critical, continue */
-  }
+  await edgeCachePut(env, cacheKey, JSON.stringify(response), 300);
 
   return jsonResponse(response);
 }

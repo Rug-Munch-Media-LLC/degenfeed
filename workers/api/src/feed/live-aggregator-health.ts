@@ -4,6 +4,7 @@
  * Tracks source health and provides KV cache helpers.
  */
 
+import { edgeCacheGet, edgeCachePut } from '../lib/edge-cache';
 import type { Env } from '../types';
 import type { LiveSource, SourceHealth, UnifiedLiveStream } from './live-aggregator-types';
 
@@ -34,10 +35,11 @@ export function creatorScheduleIndexKey(creatorId: string): string {
 }
 
 // ─── Cached Aggregation ─────────────────────────────────
+// Stored via the edge Cache API (primary) with KV as a migration fallback.
 
 export async function getAggregatedCache(env: Env): Promise<UnifiedLiveStream[] | null> {
   try {
-    const raw = await env.CACHE?.get(liveCacheKey());
+    const raw = await edgeCacheGet(env, liveCacheKey());
     if (!raw) return null;
     return JSON.parse(raw) as UnifiedLiveStream[];
   } catch {
@@ -50,7 +52,7 @@ export async function setAggregatedCache(
   streams: UnifiedLiveStream[],
   ttl = 15,
 ): Promise<void> {
-  await env.CACHE?.put(liveCacheKey(), JSON.stringify(streams), { expirationTtl: ttl });
+  await edgeCachePut(env, liveCacheKey(), JSON.stringify(streams), ttl);
 }
 
 // ─── Source Health Tracking ─────────────────────────────

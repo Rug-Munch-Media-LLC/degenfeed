@@ -22,6 +22,18 @@
  *      instead of CACHE), call that out in the JSDoc.
  */
 
+// ─── KV MIGRATION / REMOVAL STATUS (2026-08-06) ──────────────────────────────
+// - REMOVED: LENS_COINS — dead binding, 0 code references. Namespace removed
+//   from wrangler.toml, terraform (both configs), and the Env type. No key
+//   factory functions existed for it in this file.
+// - UNBOUND (declared in Env but NOT bound in wrangler.toml — feature silently
+//   disabled): CONTENT_LIBRARY, SHORTS, SEEN, DEDUP, STREAMS,
+//   GHOST_SUBSCRIBERS, GHOST_TIPS, TREASURY, SSO_STATE. Either bind these in
+//   wrangler.toml or remove the code paths (see FIXME markers in types.ts).
+// - MIGRATION IN PROGRESS: degenfeed-api KV is being migrated off Cloudflare
+//   KV to the Cache API + rmi-backend (Talos). New key patterns should prefer
+//   rmi-backend-backed storage where possible.
+
 // ─── Generic → specific ───────────────────────────────────────────
 
 /** Base key for a cached single post. NS: CACHE. TTL: 5 min (300s). */

@@ -14,6 +14,13 @@
  * Bridgy Fed is the bridge service running at:
  *   https://bridgy.degenfeed.xyz (internal: http://127.0.0.1:8285)
  */
+import {
+  dequeueRaw,
+  enqueue as queueEnqueue,
+  getApiKey,
+  parsePayload,
+  useRmiQueueApi,
+} from './queue-client';
 import type { Env } from '../types';
 
 // ─── Constants ──────────────────────────────────────────────────────────────
@@ -276,6 +283,24 @@ export class BridgyFedService {
       }
     }
 
+    // API mode: mirror the config into the rmi-backend queue so reads can
+    // dequeue instead of KV list().
+    if (useRmiQueueApi(this.env)) {
+      try {
+        await queueEnqueue(
+          'bridgy:config',
+          `${KV_BRIDGY_CONFIG_PREFIX}${config.id}`,
+          config,
+          getApiKey(this.env),
+        );
+      } catch (err) {
+        console.warn(
+          `[bridgy-service] Queue API enqueue failed for config ${config.id}:`,
+          err,
+        );
+      }
+    }
+
     return { ok: true };
   }
 
@@ -289,12 +314,44 @@ export class BridgyFedService {
     limit?: number;
     activeOnly?: boolean;
   }): Promise<{ users: BridgyUserBridge[]; total: number }> {
+    const limit = options?.limit ?? 100;
+    const users: BridgyUserBridge[] = [];
+
+    // API mode: dequeue from the rmi-backend `bridgy:users` queue instead of
+    // a KV list() cursor scan. This is a non-destructive read — items are
+    // re-enqueued after being read.
+    // [REVIEW] A dedicated non-destructive list/read endpoint on the backend
+    // would be cleaner than dequeue+re-enqueue for config-like data.
+    if (useRmiQueueApi(this.env)) {
+      try {
+        const items = await dequeueRaw('bridgy:users', limit, getApiKey(this.env));
+        const seen = new Set<string>();
+        for (const item of items) {
+          const user = parsePayload<BridgyUserBridge>(item.payload);
+          if (!user?.userId) continue;
+          if (seen.has(user.userId)) continue; // de-dupe re-enqueued copies
+          seen.add(user.userId);
+          if (options?.activeOnly && !user.active) continue;
+          users.push(user);
+          if (users.length >= limit) break;
+        }
+        for (const item of items) {
+          try {
+            await queueEnqueue('bridgy:users', item.key, item.payload, getApiKey(this.env));
+          } catch {
+            /* best effort — non-destructive read */
+          }
+        }
+        return { users: users.slice(0, limit), total: users.length };
+      } catch (err) {
+        console.warn('[bridgy-service] Queue API unavailable — falling back to KV:', err);
+        // Fall through to the KV scan below
+      }
+    }
+
     if (!this.env.CACHE) {
       return { users: [], total: 0 };
     }
-
-    const limit = options?.limit ?? 100;
-    const users: BridgyUserBridge[] = [];
 
     try {
       const prefix = KV_BRIDGY_USERS_PREFIX + (options?.instance ? `${options.instance}:` : '');
@@ -422,6 +479,24 @@ export class BridgyFedService {
           ok: false,
           error: `Failed to register user bridge: ${err instanceof Error ? err.message : String(err)}`,
         };
+      }
+    }
+
+    // API mode: mirror the bridge into the rmi-backend queue so reads can
+    // dequeue instead of KV list().
+    if (useRmiQueueApi(this.env)) {
+      try {
+        await queueEnqueue(
+          'bridgy:users',
+          `${KV_BRIDGY_USERS_PREFIX}${bridge.sourceInstance}:${bridge.userId}`,
+          bridge,
+          getApiKey(this.env),
+        );
+      } catch (err) {
+        console.warn(
+          `[bridgy-service] Queue API enqueue failed for user bridge ${bridge.userId}:`,
+          err,
+        );
       }
     }
 
@@ -604,9 +679,40 @@ export class BridgyFedService {
   }
 
   /**
-   * Get all configured Bridgy Fed instances from KV.
+   * Get all configured Bridgy Fed instances.
+   *
+   * API mode: dequeues from the rmi-backend `bridgy:config` queue and
+   * re-enqueues (non-destructive read) instead of a KV list() cursor scan.
+   * [REVIEW] See getBridgedUsers — a non-destructive read endpoint would be
+   * cleaner for config-like data.
    */
   private async getAllConfiguredInstances(): Promise<BridgyFedConfig[]> {
+    if (useRmiQueueApi(this.env)) {
+      try {
+        const items = await dequeueRaw('bridgy:config', 100, getApiKey(this.env));
+        const instances: BridgyFedConfig[] = [];
+        const seen = new Set<string>();
+        for (const item of items) {
+          const config = parsePayload<BridgyFedConfig>(item.payload);
+          if (!config?.id) continue;
+          if (seen.has(config.id)) continue;
+          seen.add(config.id);
+          instances.push(config);
+        }
+        for (const item of items) {
+          try {
+            await queueEnqueue('bridgy:config', item.key, item.payload, getApiKey(this.env));
+          } catch {
+            /* best effort — non-destructive read */
+          }
+        }
+        return instances;
+      } catch (err) {
+        console.warn('[bridgy-service] Queue API unavailable — falling back to KV:', err);
+        // Fall through to the KV scan below
+      }
+    }
+
     if (!this.env.CACHE) return [];
 
     try {

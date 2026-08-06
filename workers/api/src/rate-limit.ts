@@ -1,24 +1,63 @@
 /**
  * @degenfeed/api-worker — Rate Limiting
  *
- * KV-backed fixed-window rate limiter with tiered protection for
+ * In-memory token-bucket rate limiter with tiered protection for
  * brute force, enumeration, scraping, admin, and DDoS attack vectors.
  *
- * Cloudflare Workers can spin up many isolates per zone, so any in-memory
- * counter is unreliable. We use the CACHE KV namespace with a per-bucket
- * TTL equal to the window. Each bucket key = `${ip}:${path}:${windowMs/1000}`,
- * storing a JSON `{ count, resetAt }`. The bucket auto-expires after one
- * window so the counter resets.
+ * Cloudflare Workers isolates are short-lived, so the token buckets are
+ * per-isolate and approximate — but they are FREE compared to burning a KV
+ * write per request. For cross-isolate enforcement, IPs that are near (or
+ * over) their limit are periodically reported to the self-hosted rmi-backend
+ * at `{RMI_API_URL}/v1/rate-limits` (every 60s), which keeps persistent
+ * state without blocking every request on KV.
  *
- * If `CACHE` is not bound (local dev), the function falls back to a
- * permissive "always allow" result and logs once — never blocks real users.
+ * If `RATE_LIMIT_DISABLED=true` (local dev), the limiter bypasses entirely
+ * and logs once per isolate.
  */
 
+import { RMI_API_URL } from './constants';
 import { log } from './logger';
 import type { Env, RateLimitResult } from './types';
 
 const DEFAULT_RATE_WINDOW = 5000;
 const DEFAULT_RATE_MAX = 20;
+
+// ─── In-memory token buckets (per isolate) ─────────────────────────
+// Key = `${ip}:${path}`. Approximate across isolates; exact within one.
+
+interface TokenBucket {
+  tokens: number;
+  lastRefill: number;
+}
+
+const buckets = new Map<string, TokenBucket>();
+
+// ─── In-memory fixed-window counters ──────────────────────────────
+// Used for brute-force failures, enumeration attempts, and the global
+// per-IP DDoS counter. Shape matches the old KV entries.
+
+interface WindowCounter {
+  count: number;
+  resetAt: number;
+}
+
+const counters = new Map<string, WindowCounter>();
+
+// ─── Cross-isolate sync (rmi-backend) ─────────────────────────────
+// IPs near/over their limit are batched and reported to rmi-backend so
+// enforcement survives isolate death. Best-effort; never blocks requests.
+
+const SYNC_INTERVAL_MS = 60_000;
+const NEAR_LIMIT_FRACTION = 0.2; // report when < 20% of tokens remain
+
+interface NearLimitEntry {
+  ip: string;
+  path: string;
+  recordedAt: number;
+}
+
+const nearLimitIps = new Map<string, NearLimitEntry>();
+let lastSyncAt = 0;
 
 // Log the dev-only RATE_LIMIT_DISABLED bypass once per isolate so it is
 // visible in observability without spamming every request.
@@ -31,7 +70,80 @@ function warnRateLimitDisabled(): void {
 }
 
 /**
- * KV-backed fixed-window rate limiter.
+ * Record an IP+path as near (or over) its limit and trigger the periodic
+ * rmi-backend sync when the 60s window elapses.
+ */
+function markNearLimit(env: Env, ip: string, path: string): void {
+  if (!env.RMI_API_URL && !env.RMI_API_KEY) return;
+  const key = `${ip}:${path}`;
+  nearLimitIps.set(key, { ip, path, recordedAt: Date.now() });
+  maybeSyncRateLimits(env);
+}
+
+function maybeSyncRateLimits(env: Env): void {
+  const now = Date.now();
+  if (now - lastSyncAt < SYNC_INTERVAL_MS) return;
+  if (nearLimitIps.size === 0) return;
+  lastSyncAt = now;
+  void syncRateLimitsToRmi(env);
+}
+
+/**
+ * POST batched near-limit IPs to rmi-backend. On failure the entries are
+ * re-queued (capped) so the next sync retries them.
+ */
+async function syncRateLimitsToRmi(env: Env): Promise<void> {
+  if (nearLimitIps.size === 0) return;
+  const entries = Array.from(nearLimitIps.values());
+  nearLimitIps.clear();
+  const baseUrl = (env.RMI_API_URL || RMI_API_URL).replace(/\/+$/, '');
+  try {
+    const resp = await fetch(`${baseUrl}/v1/rate-limits`, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        ...(env.RMI_API_KEY ? { authorization: `Bearer ${env.RMI_API_KEY}` } : {}),
+      },
+      body: JSON.stringify({
+        source: 'degenfeed-worker',
+        entries: entries.map((e) => ({ ip: e.ip, path: e.path, recordedAt: e.recordedAt })),
+      }),
+      signal: AbortSignal.timeout(3000),
+    });
+    if (!resp.ok) throw new Error(`rmi-backend rate-limit sync returned ${resp.status}`);
+  } catch (err) {
+    // Non-critical — re-queue for the next sync window (bounded).
+    log(
+      'warn',
+      '[rate-limit] rmi-backend sync failed (best-effort)',
+      err instanceof Error ? err.message : err,
+    );
+    for (const e of entries) {
+      if (nearLimitIps.size < 5000 && !nearLimitIps.has(`${e.ip}:${e.path}`)) {
+        nearLimitIps.set(`${e.ip}:${e.path}`, e);
+      }
+    }
+  }
+}
+
+/**
+ * Drop buckets that have not been touched in 2+ windows so the per-isolate
+ * map cannot grow unbounded under attack.
+ */
+function cleanupBuckets(now: number, windowMs: number): void {
+  if (buckets.size <= 10000) return;
+  for (const [key, bucket] of buckets) {
+    if (now - bucket.lastRefill > windowMs * 2) buckets.delete(key);
+  }
+}
+
+/**
+ * In-memory token-bucket rate limiter (per IP+path).
+ *
+ * A bucket holds `maxReq` tokens and refills at `maxReq / window` tokens per
+ * second. Requests consume one token; when the bucket is empty the request
+ * is denied. The bucket shape and defaults match the previous KV
+ * fixed-window limiter so callers and tiers behave the same.
  */
 export async function rateLimit(
   env: Env,
@@ -44,37 +156,35 @@ export async function rateLimit(
     warnRateLimitDisabled();
     return { allowed: true, retryAfter: 0 };
   }
-  if (!env.CACHE) {
-    // No KV bound (local dev). Skip throttling so the dev experience works.
-    return { allowed: true, retryAfter: 0 };
-  }
-  const bucketSec = Math.max(1, Math.ceil(windowMs / 1000));
-  const key = `rl:${ip}:${path}:${bucketSec}`;
+
+  const key = `${ip}:${path}`;
   const now = Date.now();
-  const resetAt = now + windowMs;
+  let bucket = buckets.get(key);
 
-  let count = 1;
-  try {
-    const raw = await env.CACHE.get(key);
-    if (raw) {
-      const parsed = JSON.parse(raw) as { count: number; resetAt: number };
-      if (parsed.resetAt > now) {
-        count = parsed.count + 1;
-      }
+  if (!bucket) {
+    bucket = { tokens: maxReq, lastRefill: now };
+    buckets.set(key, bucket);
+  }
+
+  // Refill tokens based on elapsed time.
+  const elapsed = (now - bucket.lastRefill) / 1000;
+  bucket.tokens = Math.min(maxReq, bucket.tokens + elapsed * (maxReq / (windowMs / 1000)));
+  bucket.lastRefill = now;
+
+  cleanupBuckets(now, windowMs);
+
+  if (bucket.tokens >= 1) {
+    bucket.tokens -= 1;
+    // Near the limit — report to rmi-backend for cross-isolate enforcement.
+    if (bucket.tokens < NEAR_LIMIT_FRACTION * maxReq) {
+      markNearLimit(env, ip, path);
     }
-    // TTL covers the window so the key expires automatically.
-    await env.CACHE.put(key, JSON.stringify({ count, resetAt }), {
-      expirationTtl: bucketSec,
-    });
-  } catch {
-    // KV hiccup — fail open so a single KV outage doesn't break the API.
     return { allowed: true, retryAfter: 0 };
   }
 
-  if (count > maxReq) {
-    return { allowed: false, retryAfter: Math.max(0, resetAt - now) };
-  }
-  return { allowed: true, retryAfter: 0 };
+  // Over the limit — report to rmi-backend for cross-isolate enforcement.
+  markNearLimit(env, ip, path);
+  return { allowed: false, retryAfter: Math.ceil(windowMs / 1000) };
 }
 
 // ─── Tiered rate limiters ────────────────────────────────────────────
@@ -110,6 +220,33 @@ const GLOBAL_DDOS_WINDOW_MS = 60_000;
 
 const ADMIN_MAX = 20;
 const ADMIN_WINDOW_MS = 60_000;
+
+/**
+ * Read a fixed-window counter, transparently resetting expired entries.
+ */
+function readCounter(key: string): number {
+  const now = Date.now();
+  const counter = counters.get(key);
+  if (!counter || counter.resetAt <= now) return 0;
+  return counter.count;
+}
+
+/**
+ * Increment a fixed-window counter, returning the new count.
+ */
+function incrCounter(key: string, windowMs: number): number {
+  const now = Date.now();
+  const counter = counters.get(key);
+  const count = counter && counter.resetAt > now ? counter.count + 1 : 1;
+  counters.set(key, { count, resetAt: now + windowMs });
+  // Bounded growth: expired counters are dropped once the map gets large.
+  if (counters.size > 10000) {
+    for (const [k, v] of counters) {
+      if (v.resetAt <= now) counters.delete(k);
+    }
+  }
+  return count;
+}
 
 /**
  * Check if a path is a feed/scrape endpoint (reads tier).
@@ -188,31 +325,13 @@ export async function tieredRateLimit(
     warnRateLimitDisabled();
     return { allowed: true, retryAfter: 0 };
   }
-  if (!env.CACHE) {
-    return { allowed: true, retryAfter: 0 };
-  }
 
   // ── Brute force protection (wallet verify) — auth 5/60s ────────
   if (isBruteForcePath(path)) {
     const failureKey = `bf:fail:${ip}`;
-    const now = Date.now();
-
-    // Check failure count in the current window
-    let failureCount = 0;
-    try {
-      const raw = await env.CACHE.get(failureKey);
-      if (raw) {
-        const parsed = JSON.parse(raw) as { count: number; resetAt: number };
-        if (parsed.resetAt > now) {
-          failureCount = parsed.count;
-        }
-      }
-    } catch {
-      // KV hiccup — fail open
-    }
 
     // If in blocked state (>3 failures), use stricter rate
-    if (failureCount >= AUTH_BLOCK_MAX) {
+    if (readCounter(failureKey) >= AUTH_BLOCK_MAX) {
       return rateLimit(env, ip, path, AUTH_BLOCK_RATE, AUTH_BLOCK_RATE_WINDOW_MS);
     }
 
@@ -222,22 +341,8 @@ export async function tieredRateLimit(
 
   // ── Enumeration protection ─────────────────────────────────────
   if (isEnumerationPath(path)) {
-    // Count attempts for this IP
     const enumKey = `enum:${ip}:${path}`;
-    const now = Date.now();
-
-    let attempts = 0;
-    try {
-      const raw = await env.CACHE.get(enumKey);
-      if (raw) {
-        const parsed = JSON.parse(raw) as { count: number; resetAt: number };
-        if (parsed.resetAt > now) {
-          attempts = parsed.count;
-        }
-      }
-    } catch {
-      // KV hiccup — fail open
-    }
+    const attempts = readCounter(enumKey);
 
     // Exponential backoff: each attempt beyond the first increases the window
     // Window = base * 2^(attempts - ENUMERATION_MAX), capped at max
@@ -252,15 +357,7 @@ export async function tieredRateLimit(
     }
 
     // Track attempt count
-    const bucketSec = Math.max(1, Math.ceil(ENUMERATION_WINDOW_MS / 1000));
-    const resetAt = now + ENUMERATION_WINDOW_MS;
-    try {
-      await env.CACHE.put(enumKey, JSON.stringify({ count: attempts + 1, resetAt }), {
-        expirationTtl: bucketSec,
-      });
-    } catch {
-      // Non-critical
-    }
+    incrCounter(enumKey, ENUMERATION_WINDOW_MS);
 
     return rateLimit(env, ip, path, ENUMERATION_MAX, ENUMERATION_WINDOW_MS);
   }
@@ -288,28 +385,11 @@ export async function tieredRateLimit(
   // ── Global DDoS protection ─────────────────────────────────────
   // Count requests across ALL paths for this IP
   const globalKey = `rl:global:${ip}`;
-  const globalBucketSec = Math.max(1, Math.ceil(GLOBAL_DDOS_WINDOW_MS / 1000));
-  const now = Date.now();
-  const globalResetAt = now + GLOBAL_DDOS_WINDOW_MS;
-
-  let globalCount = 1;
-  try {
-    const raw = await env.CACHE.get(globalKey);
-    if (raw) {
-      const parsed = JSON.parse(raw) as { count: number; resetAt: number };
-      if (parsed.resetAt > now) {
-        globalCount = parsed.count + 1;
-      }
-    }
-    await env.CACHE.put(globalKey, JSON.stringify({ count: globalCount, resetAt: globalResetAt }), {
-      expirationTtl: globalBucketSec,
-    });
-  } catch {
-    // KV hiccup — fail open
-  }
+  const globalCount = incrCounter(globalKey, GLOBAL_DDOS_WINDOW_MS);
 
   if (globalCount > GLOBAL_DDOS_MAX) {
-    return { allowed: false, retryAfter: Math.max(0, globalResetAt - now) };
+    markNearLimit(env, ip, path);
+    return { allowed: false, retryAfter: Math.ceil(GLOBAL_DDOS_WINDOW_MS / 1000) };
   }
 
   // ── Default: split by request type — writes 30/60s, reads 100/60s
@@ -323,28 +403,11 @@ export async function tieredRateLimit(
 /**
  * Record a failed brute force attempt.
  * Called by the wallet verify handler when signature verification fails.
+ * The count lives in the per-isolate map and is reported to rmi-backend so
+ * the block survives isolate death.
  */
 export async function recordBruteForceFailure(env: Env, ip: string): Promise<void> {
-  if (!env.CACHE) return;
   const failureKey = `bf:fail:${ip}`;
-  const now = Date.now();
-  const windowMs = AUTH_BLOCK_WINDOW_MS;
-  const bucketSec = Math.max(1, Math.ceil(windowMs / 1000));
-
-  let count = 1;
-  try {
-    const raw = await env.CACHE.get(failureKey);
-    if (raw) {
-      const parsed = JSON.parse(raw) as { count: number; resetAt: number };
-      if (parsed.resetAt > now) {
-        count = parsed.count + 1;
-      }
-    }
-    const resetAt = now + windowMs;
-    await env.CACHE.put(failureKey, JSON.stringify({ count, resetAt }), {
-      expirationTtl: bucketSec,
-    });
-  } catch {
-    // Non-critical
-  }
+  incrCounter(failureKey, AUTH_BLOCK_WINDOW_MS);
+  markNearLimit(env, ip, '/api/auth/wallet/verify');
 }

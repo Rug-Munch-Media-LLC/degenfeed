@@ -4,6 +4,7 @@
  * Master aggregation functions that combine all sources.
  */
 
+import { edgeCacheGet, edgeCacheGetOr, edgeCachePut } from '../lib/edge-cache';
 import type { Env } from '../types';
 import { getAggregatedCache, setAggregatedCache, upcomingCacheKey } from './live-aggregator-health';
 import {
@@ -81,7 +82,7 @@ export async function aggregateUpcomingStreams(env: Env): Promise<UpcomingStream
   const upcoming: UpcomingStream[] = [];
 
   try {
-    const cached = await env.CACHE?.get(upcomingCacheKey());
+    const cached = await edgeCacheGet(env, upcomingCacheKey());
     if (cached) return JSON.parse(cached) as UpcomingStream[];
   } catch {
     // Fall through
@@ -103,10 +104,19 @@ export async function aggregateUpcomingStreams(env: Env): Promise<UpcomingStream
 
   // DegenFeed Spaces upcoming
   try {
-    const raw = await env.SPACES?.get('spaces:upcoming');
+    const raw = await edgeCacheGetOr(
+      env,
+      'spaces:upcoming',
+      60,
+      () => env.SPACES?.get('spaces:upcoming') ?? null,
+    );
     if (raw) {
       const upcomingIds = JSON.parse(raw) as string[];
-      const results = await Promise.all(upcomingIds.map((id) => env.SPACES?.get(`spaces:${id}`)));
+      const results = await Promise.all(
+        upcomingIds.map((id) =>
+          edgeCacheGetOr(env, `spaces:${id}`, 60, () => env.SPACES?.get(`spaces:${id}`) ?? null),
+        ),
+      );
       for (const raw of results) {
         if (!raw) continue;
         try {
@@ -149,7 +159,7 @@ export async function aggregateUpcomingStreams(env: Env): Promise<UpcomingStream
   upcoming.sort((a, b) => a.scheduledAt - b.scheduledAt);
 
   if (upcoming.length > 0) {
-    await env.CACHE?.put(upcomingCacheKey(), JSON.stringify(upcoming), { expirationTtl: 60 });
+    await edgeCachePut(env, upcomingCacheKey(), JSON.stringify(upcoming), 60);
   }
 
   return upcoming;

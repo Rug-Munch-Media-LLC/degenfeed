@@ -28,21 +28,32 @@ export const OAuthProvidersSignIn = memo(function OAuthProvidersSignIn({
     setLoading(true);
     setError('');
     try {
-      const endpoint = protocol.authUrl;
-      if (!endpoint) throw new Error('No auth URL configured');
+      // Better Auth social sign-in (equivalent to the client's
+      // `signIn.social({ provider })`): POST to the auth server and redirect
+      // the browser to the returned provider authorize URL. Better Auth
+      // completes the OAuth callback server-side and sets the session cookie.
+      const res = await fetch('/api/auth/better/sign-in/social', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          provider: protocol.id,
+          callbackURL: '/home',
+        }),
+      });
 
-      const res = await fetch(endpoint, { credentials: 'include' });
       if (!res.ok) {
         const data = (await res.json().catch(() => ({}))) as { error?: string };
         throw new Error(data.error || `${protocol.label} sign-in is not available right now.`);
       }
 
-      const data = (await res.json()) as { authorizeUrl?: string; message?: string };
-      if (!data.authorizeUrl) {
+      const data = (await res.json()) as { url?: string; redirect?: boolean; message?: string };
+      const authorizeUrl = data.url;
+      if (!authorizeUrl) {
         throw new Error('No authorization URL received');
       }
 
-      window.location.href = data.authorizeUrl;
+      window.location.href = authorizeUrl;
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to start sign-in');
       setLoading(false);

@@ -12,6 +12,7 @@ import type {
   AggregationResult,
   StoryCluster,
 } from '../../feed/news-types';
+import { edgeCacheGet, edgeCachePut } from '../../lib/edge-cache';
 import {
   badRequest,
   conflict,
@@ -101,7 +102,32 @@ interface NewsMetaResponse {
 let cachedResult: { data: AggregationResult; ts: number } | null = null;
 const CACHE_TTL_MS = 30_000;
 
+/**
+ * Canonical edge cache key for an aggregation options set. Public news
+ * responses are cacheable at the edge (TTL 30s, matching CACHE_TTL_MS).
+ */
+function newsCacheKey(opts: AggregationOptions): string {
+  const parts = [
+    opts.category ?? 'all',
+    opts.query ?? '',
+    (opts.sourceIds ?? []).join(','),
+    opts.sort ?? 'newest',
+    opts.limit ?? 50,
+  ];
+  return `news:agg:${parts.join(':')}`;
+}
+
 async function getCachedOrFetch(env: Env, opts: AggregationOptions): Promise<AggregationResult> {
+  // 1. Edge Cache (Cache API first, KV fallback) — public, TTL 30s.
+  const edgeKey = newsCacheKey(opts);
+  try {
+    const cached = await edgeCacheGet(env, edgeKey);
+    if (cached) return JSON.parse(cached) as AggregationResult;
+  } catch {
+    // Non-critical — fall through to aggregation.
+  }
+
+  // 2. In-isolate in-memory cache (legacy, kept for hot paths).
   if (
     !opts.category &&
     !opts.query &&
@@ -118,6 +144,9 @@ async function getCachedOrFetch(env: Env, opts: AggregationOptions): Promise<Agg
   if (!opts.category && !opts.query && !opts.sourceIds) {
     cachedResult = { data: result, ts: Date.now() };
   }
+
+  // 3. Store at the edge (Cache API primary, KV fallback).
+  await edgeCachePut(env, edgeKey, JSON.stringify(result), 30);
 
   return result;
 }

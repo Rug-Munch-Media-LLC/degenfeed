@@ -1,19 +1,31 @@
 /**
  * @degenfeed/api-worker — Durable Sync Queue
  *
- * KV-backed queue for cross-protocol sync actions.
- * Ensures every action is processed at least once, even during
- * worker downtime or protocol API failures. Uses exponential backoff
- * with up to 5 retries before permanent dead-letter status.
+ * Cross-protocol sync action queue.
+ *
+ * Queue source:
+ *   - Default (USE_RMI_QUEUE_API=true): uses the rmi-backend queue API
+ *     (GET /v1/queue/dequeue?queue=sync, POST /v1/queue/enqueue) instead of
+ *     KV list() + per-key get/put. This removes the KV list quota burn.
+ *   - Fallback (flag disabled, or API unreachable): legacy KV-backed queue
+ *     under the `sync:queue:` prefix with exponential backoff and up to
+ *     5 retries before permanent dead-letter status.
  *
  * Queue lifecycle:
  *   enqueue → pending → processing → completed | failed → retry (up to 5×)
  *
- * Processed by the cron trigger every 30 seconds and inline after
+ * Processed by the cron trigger every minute and inline after
  * webhook delivery for sub-second forwarding.
  */
 
 import type { Protocol } from '@degenfeed/types';
+import {
+  dequeueRaw,
+  enqueue as queueEnqueue,
+  getApiKey,
+  parsePayload,
+  useRmiQueueApi,
+} from './queue-client';
 import type { Env } from '../types';
 
 // ─── Types ────────────────────────────────────────────────────────────────
@@ -84,11 +96,9 @@ function getBackoffMs(retryCount: number): number {
 
 /**
  * Enqueue a sync action for processing.
- * Stores the entry in KV with a TTL. Returns the entry ID.
+ * Returns the entry ID.
  */
 export async function enqueue(env: Env, action: SyncAction): Promise<string> {
-  if (!env.CACHE) return action.id;
-
   const entry: SyncQueueEntry = {
     action,
     status: 'pending',
@@ -99,9 +109,20 @@ export async function enqueue(env: Env, action: SyncAction): Promise<string> {
   };
 
   const key = `${QUEUE_PREFIX}${action.id}`;
-  await env.CACHE.put(key, JSON.stringify(entry), {
-    expirationTtl: QUEUE_TTL,
-  });
+
+  if (useRmiQueueApi(env)) {
+    try {
+      await queueEnqueue('sync', key, entry, getApiKey(env));
+    } catch (err) {
+      // API unavailable — fall back to KV so the action isn't lost.
+      console.error('[sync-queue] Queue API enqueue failed, falling back to KV:', err);
+      if (env.CACHE) {
+        await env.CACHE.put(key, JSON.stringify(entry), { expirationTtl: QUEUE_TTL });
+      }
+    }
+  } else if (env.CACHE) {
+    await env.CACHE.put(key, JSON.stringify(entry), { expirationTtl: QUEUE_TTL });
+  }
 
   // Log for monitoring
   console.log(
@@ -113,6 +134,8 @@ export async function enqueue(env: Env, action: SyncAction): Promise<string> {
 
 /**
  * Mark an entry as completed.
+ * In API mode the backend queue owns the item (already consumed by dequeue),
+ * so this is a no-op unless a local KV copy exists.
  */
 export async function markCompleted(env: Env, id: string): Promise<void> {
   if (!env.CACHE) return;
@@ -133,6 +156,10 @@ export async function markCompleted(env: Env, id: string): Promise<void> {
 /**
  * Mark an entry as failed and schedule a retry if retries remain.
  * Moves to dead-letter if max retries exceeded.
+ *
+ * In API mode, a retryable failure is re-enqueued via POST /v1/queue/enqueue
+ * (the dequeue already consumed the item); dead letters are kept as KV audit
+ * copies since the queue API has no dead-letter surface yet.
  */
 export async function markFailed(env: Env, id: string, error: string): Promise<void> {
   if (!env.CACHE) return;
@@ -142,27 +169,49 @@ export async function markFailed(env: Env, id: string, error: string): Promise<v
   if (!raw) return;
 
   const entry: SyncQueueEntry = JSON.parse(raw);
+  await failEntry(env, entry, error);
+}
+
+/**
+ * Apply retry/failure state to an in-memory entry and persist it:
+ *   - retries remain  → re-enqueue (API) or write back (KV)
+ *   - retries exceeded → dead-letter KV audit copy
+ */
+async function failEntry(env: Env, entry: SyncQueueEntry, error: string): Promise<void> {
   entry.retryCount++;
   entry.error = error;
 
   if (entry.retryCount >= entry.maxRetries) {
-    // Move to dead letter
+    // Move to dead letter (KV audit copy — survives in both modes)
     entry.status = 'dead_letter';
-    const deadKey = `${DEAD_LETTER_PREFIX}${id}`;
-    await env.CACHE.put(deadKey, JSON.stringify(entry), {
-      expirationTtl: 86400 * 7, // keep dead letters for 7 days
-    });
+    if (env.CACHE) {
+      const deadKey = `${DEAD_LETTER_PREFIX}${entry.action.id}`;
+      await env.CACHE.put(deadKey, JSON.stringify(entry), {
+        expirationTtl: 86400 * 7, // keep dead letters for 7 days
+      });
+    }
   } else {
     entry.status = 'failed';
     entry.nextRetryAt = Date.now() + getBackoffMs(entry.retryCount);
+    if (useRmiQueueApi(env)) {
+      try {
+        await queueEnqueue('sync', `${QUEUE_PREFIX}${entry.action.id}`, entry, getApiKey(env));
+      } catch (err) {
+        console.error(`[sync-queue] Re-enqueue failed for ${entry.action.id}:`, err);
+      }
+    }
   }
 
-  await env.CACHE.put(key, JSON.stringify(entry), {
-    expirationTtl: QUEUE_TTL,
-  });
+  // KV audit copy (both modes, guarded) — keeps legacy-mode parity and lets
+  // ops flip USE_RMI_QUEUE_API back to "false" without losing state.
+  if (env.CACHE) {
+    await env.CACHE.put(`${QUEUE_PREFIX}${entry.action.id}`, JSON.stringify(entry), {
+      expirationTtl: QUEUE_TTL,
+    });
+  }
 
   console.warn(
-    `[sync-queue] failed ${id} (retry ${entry.retryCount}/${entry.maxRetries}): ${error.slice(0, 200)}`,
+    `[sync-queue] failed ${entry.action.id} (retry ${entry.retryCount}/${entry.maxRetries}): ${error.slice(0, 200)}`,
   );
 }
 
@@ -181,9 +230,30 @@ export async function getEntry(env: Env, id: string): Promise<SyncQueueEntry | n
 
 /**
  * List all pending queue entries (status = pending, ready to process).
+ *
+ * API mode: dequeues from the rmi-backend `sync` queue (the backend is
+ * responsible for readiness/backoff visibility). Falls back to the KV scan
+ * for this call if the API is unreachable.
  */
 export async function listPending(env: Env, limit = 100): Promise<SyncQueueEntry[]> {
   if (!env.CACHE) return [];
+
+  if (useRmiQueueApi(env)) {
+    try {
+      const items = await dequeueRaw('sync', limit, getApiKey(env));
+      const entries: SyncQueueEntry[] = [];
+      for (const item of items) {
+        const entry = parsePayload<SyncQueueEntry>(item.payload);
+        if (!entry?.action?.id) continue;
+        entries.push(entry);
+        if (entries.length >= limit) break;
+      }
+      return entries;
+    } catch (e) {
+      console.warn('[sync-queue] Queue API unavailable — falling back to KV listPending:', e);
+      // Fall through to the KV scan below
+    }
+  }
 
   const entries: SyncQueueEntry[] = [];
   try {
@@ -244,13 +314,16 @@ export async function processQueue(
   // Process in parallel batches of 5
   const batchPromises: Promise<void>[] = [];
   for (const entry of entries) {
-    // Mark as processing
-    entry.status = 'processing';
+    // Mark as processing (KV only in legacy mode — in API mode the backend
+    // queue owns the state after dequeue).
+    if (!useRmiQueueApi(env)) {
+      entry.status = 'processing';
 
-    const key = `${QUEUE_PREFIX}${entry.action.id}`;
-    await env.CACHE?.put(key, JSON.stringify(entry), {
-      expirationTtl: QUEUE_TTL,
-    });
+      const key = `${QUEUE_PREFIX}${entry.action.id}`;
+      await env.CACHE?.put(key, JSON.stringify(entry), {
+        expirationTtl: QUEUE_TTL,
+      });
+    }
 
     const promise = processor(entry.action)
       .then(async (ok) => {
@@ -258,12 +331,12 @@ export async function processQueue(
           await markCompleted(env, entry.action.id);
           succeeded++;
         } else {
-          await markFailed(env, entry.action.id, 'Processor returned false');
+          await failEntry(env, entry, 'Processor returned false');
           failed++;
         }
       })
       .catch(async (err) => {
-        await markFailed(env, entry.action.id, err instanceof Error ? err.message : String(err));
+        await failEntry(env, entry, err instanceof Error ? err.message : String(err));
         failed++;
       });
 
@@ -291,6 +364,9 @@ export async function processQueue(
 /**
  * Retry all dead-letter entries (move them back to the queue).
  * Returns count of entries retried.
+ *
+ * Dead letters are kept as KV audit copies (no queue-API dead-letter surface
+ * yet); retried entries are re-enqueued via the API in API mode.
  */
 export async function retryDeadLetters(env: Env, limit = 50): Promise<number> {
   if (!env.CACHE) return 0;
@@ -326,9 +402,17 @@ export async function retryDeadLetters(env: Env, limit = 50): Promise<number> {
 
           // Write back to queue
           const queueKey = `${QUEUE_PREFIX}${entry.action.id}`;
-          await env.CACHE.put(queueKey, JSON.stringify(entry), {
-            expirationTtl: QUEUE_TTL,
-          });
+          if (useRmiQueueApi(env)) {
+            try {
+              await queueEnqueue('sync', queueKey, entry, getApiKey(env));
+            } catch (err) {
+              console.error(`[sync-queue] Dead-letter re-enqueue failed for ${entry.action.id}:`, err);
+            }
+          } else {
+            await env.CACHE.put(queueKey, JSON.stringify(entry), {
+              expirationTtl: QUEUE_TTL,
+            });
+          }
 
           // Remove from dead letter
           await env.CACHE.delete(key.name);
@@ -349,6 +433,11 @@ export async function retryDeadLetters(env: Env, limit = 50): Promise<number> {
 
 /**
  * Get queue stats for monitoring.
+ *
+ * In API mode the backend owns queue state, so exact counts are not
+ * available from the worker without another API surface — return zeros.
+ * [REVIEW] rmi-backend should expose a queue stats endpoint if this
+ * endpoint needs live numbers.
  */
 export async function getQueueStats(env: Env): Promise<{
   pending: number;
@@ -357,6 +446,10 @@ export async function getQueueStats(env: Env): Promise<{
   completed: number;
 }> {
   if (!env.CACHE) {
+    return { pending: 0, failed: 0, deadLetter: 0, completed: 0 };
+  }
+
+  if (useRmiQueueApi(env)) {
     return { pending: 0, failed: 0, deadLetter: 0, completed: 0 };
   }
 

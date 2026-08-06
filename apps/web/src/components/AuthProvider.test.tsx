@@ -75,6 +75,26 @@ vi.mock('../lib/nostr', () => ({
   publishNoteToNostr: vi.fn().mockResolvedValue(undefined),
 }));
 
+// Better Auth client — hermetic mock: no network in tests. The provider reads
+// the session via `useSession()`; a null session means "logged out".
+vi.mock('@/lib/auth-client', () => ({
+  signIn: {
+    email: vi.fn(),
+    social: vi.fn(),
+  },
+  signUp: {
+    email: vi.fn(),
+  },
+  signOut: vi.fn().mockResolvedValue({}),
+  useSession: () => ({
+    data: null,
+    isPending: false,
+    isRefetching: false,
+    error: null,
+    refetch: vi.fn().mockResolvedValue(undefined),
+  }),
+}));
+
 vi.mock('./Toast', () => ({
   useToast: () => ({
     showToast: vi.fn(),

@@ -69,6 +69,20 @@ export interface Env {
   PIXELFED_INSTANCES?: string;
   /** Optional bearer for rmi-backend if gated */
   RMI_API_KEY?: string;
+  /**
+   * When "true" (default), queue processing uses the rmi-backend queue API
+   * (GET/POST /v1/queue/*) instead of KV list()-based queue scans.
+   * Set to "false" to fall back to the legacy KV behavior.
+   */
+  USE_RMI_QUEUE_API?: string;
+  /**
+   * How often the scheduled post executor may run, in minutes.
+   * The cron trigger still fires every minute; the executor self-throttles
+   * to this interval. Defaults to 5.
+   */
+  SCHEDULED_EXECUTOR_INTERVAL_MINUTES?: string;
+  /** Self-hosted rmi-backend URL for persistent storage (default: https://api.rugmunch.io) */
+  RMI_API_URL?: string;
   /** Optional Sentry DSN for error reporting */
   SENTRY_DSN?: string;
   /** API key for MeiliSearch (production requires Authorization: Bearer <key>) */
@@ -242,18 +256,19 @@ export interface Env {
   PERMANENCE?: KVNamespace;
 
   /** KV namespace for global dedup registry */
+  // FIXME: [KV-MIGRATION] Unbound — feature silently disabled. Either bind in wrangler.toml or remove code paths.
   DEDUP?: KVNamespace;
   /** KV namespace for per-user seen content tracking */
+  // FIXME: [KV-MIGRATION] Unbound — feature silently disabled. Either bind in wrangler.toml or remove code paths.
   SEEN?: KVNamespace;
 
   /** KV namespace for Farcaster creator coin records */
   FARCASTER_COINS?: KVNamespace;
-  /** KV namespace for Lens Protocol creator coin records */
-  LENS_COINS?: KVNamespace;
   /** KV namespace for cross-chain token registrations */
   XCHAIN_REGISTRY?: KVNamespace;
 
   /** KV namespace for DegenFeed multi-type streaming system — solo, spaces, collab, coin-launch */
+  // FIXME: [KV-MIGRATION] Unbound — feature silently disabled. Either bind in wrangler.toml or remove code paths.
   STREAMS?: KVNamespace;
   /** Zora wrapper factory contract address (Base) */
   ZORA_WRAPPER_FACTORY?: string;
@@ -263,6 +278,7 @@ export interface Env {
   /** KV namespace for custom feed storage */
   CUSTOM_FEEDS?: KVNamespace;
   /** KV namespace for creator coin treasury fee tracking */
+  // FIXME: [KV-MIGRATION] Unbound — feature silently disabled. Either bind in wrangler.toml or remove code paths.
   TREASURY?: KVNamespace;
 
   // ─── Postiz cross-posting ───────────────────────────────────────────
@@ -368,12 +384,15 @@ export interface Env {
   /** Ghost Content API key (optional, falls back to Admin key) */
   GHOST_CONTENT_KEY?: string;
   /** KV namespace for Ghost subscriber data */
+  // FIXME: [KV-MIGRATION] Unbound — feature silently disabled. Either bind in wrangler.toml or remove code paths.
   GHOST_SUBSCRIBERS?: KVNamespace;
   /** KV namespace for Ghost tip records */
+  // FIXME: [KV-MIGRATION] Unbound — feature silently disabled. Either bind in wrangler.toml or remove code paths.
   GHOST_TIPS?: KVNamespace;
 
   // ─── Content Library ────────────────────────────────────────────────
   /** KV namespace for the unified content library — all creator content stored here */
+  // FIXME: [KV-MIGRATION] Unbound — feature silently disabled. Either bind in wrangler.toml or remove code paths.
   CONTENT_LIBRARY?: KVNamespace;
   /** SendGrid or Mailgun API key for email delivery */
   EMAIL_API_KEY?: string;
@@ -412,6 +431,7 @@ export interface Env {
 
   // ─── Unified Shorts ──────────────────────────────────────────────────
   /** KV namespace for unified shorts (cross-protocol short-form video) */
+  // FIXME: [KV-MIGRATION] Unbound — feature silently disabled. Either bind in wrangler.toml or remove code paths.
   SHORTS?: KVNamespace;
   /** Zora video NFT contract address */
   ZORA_VIDEO_CONTRACT?: string;
@@ -433,8 +453,6 @@ export interface Env {
   MEDIA_STORAGE_BINDING?: R2Bucket;
   /** R2 bucket binding for video storage (used by video-storage.ts) */
   VIDEO_STORAGE_BINDING?: R2Bucket;
-  /** KV namespace for media metadata (image dimensions, creator links, storage stats) */
-  MEDIA_METADATA?: KVNamespace;
   /** Irys node URL for Arweave uploads (default: https://node1.irys.xyz) */
   IRYS_NODE_URL?: string;
   /** Irys/Arweave wallet private key (for platform-paid permanent storage) */
@@ -448,6 +466,7 @@ export interface Env {
 
   // ─── SSO (Single Sign-On) Infrastructure ──────────────────────────────
   /** KV namespace for SSO session data and wallet state (aliases to IDENTITIES) */
+  // FIXME: [KV-MIGRATION] Unbound — feature silently disabled. Either bind in wrangler.toml or remove code paths.
   SSO_STATE?: KVNamespace;
 
   // ─── Self-hosted image galleries (Immich/Lychee) ─────────────────────
