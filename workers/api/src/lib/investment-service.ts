@@ -307,11 +307,11 @@ const MOCK_YIELD_OPPORTUNITIES: YieldOpportunity[] = [
 // ─── Service ──────────────────────────────────────────────────────────────
 
 export class InvestmentService {
-  private kv: KVNamespace;
+  private kv: KVNamespace | undefined;
 
   constructor(env: Env) {
     this.env = env;
-    this.kv = env.TREASURY as unknown as KVNamespace;
+    this.kv = env.TREASURY;
   }
 
   // ─── Portfolio Overview ───────────────────────────────────────────
@@ -322,7 +322,7 @@ export class InvestmentService {
    */
   async getPortfolio(daoId: string): Promise<Portfolio> {
     // Try cache first
-    const cached = await this.kv.get(portfolioKey(daoId));
+    const cached = await this.kv?.get(portfolioKey(daoId));
     if (cached) {
       return JSON.parse(cached) as Portfolio;
     }
@@ -398,7 +398,7 @@ export class InvestmentService {
     };
 
     // Cache for 5 minutes
-    await this.kv.put(portfolioKey(daoId), JSON.stringify(portfolio), { expirationTtl: 300 });
+    await this.kv?.put(portfolioKey(daoId), JSON.stringify(portfolio), { expirationTtl: 300 });
 
     return portfolio;
   }
@@ -422,7 +422,7 @@ export class InvestmentService {
       lastUpdated: now,
     };
 
-    await this.kv.put(investmentKey(daoId, id), JSON.stringify(pos), {
+    await this.kv?.put(investmentKey(daoId, id), JSON.stringify(pos), {
       expirationTtl: DEFAULT_TTL,
     });
 
@@ -471,7 +471,7 @@ export class InvestmentService {
       lastUpdated: Date.now(),
     };
 
-    await this.kv.put(investmentKey(daoId, positionId), JSON.stringify(updated), {
+    await this.kv?.put(investmentKey(daoId, positionId), JSON.stringify(updated), {
       expirationTtl: DEFAULT_TTL,
     });
 
@@ -518,7 +518,7 @@ export class InvestmentService {
     limit?: number;
   }): Promise<YieldOpportunity[]> {
     // Check cache
-    const cached = await this.kv.get(yieldOpportunitiesKey());
+    const cached = await this.kv?.get(yieldOpportunitiesKey());
     let opportunities: YieldOpportunity[];
 
     if (cached) {
@@ -528,7 +528,7 @@ export class InvestmentService {
       opportunities = MOCK_YIELD_OPPORTUNITIES;
 
       // Cache for 10 minutes
-      await this.kv.put(yieldOpportunitiesKey(), JSON.stringify(opportunities), {
+      await this.kv?.put(yieldOpportunitiesKey(), JSON.stringify(opportunities), {
         expirationTtl: 600,
       });
     }
@@ -578,7 +578,7 @@ export class InvestmentService {
       created: now,
     };
 
-    await this.kv.put(investmentProposalKey(daoId, id), JSON.stringify(invProposal), {
+    await this.kv?.put(investmentProposalKey(daoId, id), JSON.stringify(invProposal), {
       expirationTtl: DEFAULT_TTL,
     });
 
@@ -620,7 +620,7 @@ export class InvestmentService {
     proposal.votes[choice]++;
     proposal.status = this.#tallyProposal(proposal);
 
-    await this.kv.put(investmentProposalKey(daoId, proposalId), JSON.stringify(proposal), {
+    await this.kv?.put(investmentProposalKey(daoId, proposalId), JSON.stringify(proposal), {
       expirationTtl: DEFAULT_TTL,
     });
 
@@ -784,7 +784,7 @@ export class InvestmentService {
 
   async #getPosition(daoId: string, positionId: string): Promise<InvestmentPosition | null> {
     try {
-      const raw = await this.kv.get(investmentKey(daoId, positionId));
+      const raw = await this.kv?.get(investmentKey(daoId, positionId));
       return raw ? (JSON.parse(raw) as InvestmentPosition) : null;
     } catch {
       return null;
@@ -793,7 +793,7 @@ export class InvestmentService {
 
   async #getProposal(daoId: string, proposalId: string): Promise<InvestmentProposal | null> {
     try {
-      const raw = await this.kv.get(investmentProposalKey(daoId, proposalId));
+      const raw = await this.kv?.get(investmentProposalKey(daoId, proposalId));
       return raw ? (JSON.parse(raw) as InvestmentProposal) : null;
     } catch {
       return null;
@@ -802,17 +802,17 @@ export class InvestmentService {
 
   async #addToIndex(daoId: string, positionId: string): Promise<void> {
     const key = investmentIndexKey(daoId);
-    const existing = await this.kv.get(key);
+    const existing = await this.kv?.get(key);
     const index: string[] = existing ? JSON.parse(existing) : [];
     index.unshift(positionId);
-    await this.kv.put(key, JSON.stringify(index), {
+    await this.kv?.put(key, JSON.stringify(index), {
       expirationTtl: DEFAULT_TTL,
     });
   }
 
   async #getIndex(daoId: string): Promise<string[]> {
     try {
-      const raw = await this.kv.get(investmentIndexKey(daoId));
+      const raw = await this.kv?.get(investmentIndexKey(daoId));
       return raw ? (JSON.parse(raw) as string[]) : [];
     } catch {
       return [];
@@ -821,17 +821,17 @@ export class InvestmentService {
 
   async #addToProposalIndex(daoId: string, proposalId: string): Promise<void> {
     const key = investmentProposalIndexKey(daoId);
-    const existing = await this.kv.get(key);
+    const existing = await this.kv?.get(key);
     const index: string[] = existing ? JSON.parse(existing) : [];
     index.unshift(proposalId);
-    await this.kv.put(key, JSON.stringify(index), {
+    await this.kv?.put(key, JSON.stringify(index), {
       expirationTtl: DEFAULT_TTL,
     });
   }
 
   async #getProposalIndex(daoId: string): Promise<string[]> {
     try {
-      const raw = await this.kv.get(investmentProposalIndexKey(daoId));
+      const raw = await this.kv?.get(investmentProposalIndexKey(daoId));
       return raw ? (JSON.parse(raw) as string[]) : [];
     } catch {
       return [];

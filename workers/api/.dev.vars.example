@@ -28,6 +28,13 @@ VAPID_PRIVATE_KEY=
 # Optional: RMI backend API key if gated
 RMI_API_KEY=
 
+# Fallback/primary rmi-backend API key for persistent storage endpoints (bookmarks, identities, chat, sessions)
+RMI_INTERNAL_KEY=
+
+# When "true", rmi-backend API results are authoritative for KV-migrated
+# namespaces even when empty. When unset, empty API results fall back to KV.
+USE_RMI_API=true
+
 # Queue processing via rmi-backend queue API ("true" default) vs legacy KV list()
 USE_RMI_QUEUE_API=true
 

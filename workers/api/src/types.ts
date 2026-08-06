@@ -69,6 +69,15 @@ export interface Env {
   PIXELFED_INSTANCES?: string;
   /** Optional bearer for rmi-backend if gated */
   RMI_API_KEY?: string;
+  /** Fallback/primary rmi-backend API key for persistent storage endpoints (X-API-Key). */
+  RMI_INTERNAL_KEY?: string;
+  /**
+   * When "true", rmi-backend API results are authoritative for the
+   * KV-migrated namespaces (bookmarks / identities / chat / sessions) even
+   * when the API returns an empty result. When unset, empty API results
+   * fall back to the legacy KV store.
+   */
+  USE_RMI_API?: string;
   /**
    * When "true" (default), queue processing uses the rmi-backend queue API
    * (GET/POST /v1/queue/*) instead of KV list()-based queue scans.
@@ -256,10 +265,10 @@ export interface Env {
   PERMANENCE?: KVNamespace;
 
   /** KV namespace for global dedup registry */
-  // FIXME: [KV-MIGRATION] Unbound — feature silently disabled. Either bind in wrangler.toml or remove code paths.
+  // NOTE: [KV-MIGRATION] Unbound — code guards against undefined; feature silently disabled.
   DEDUP?: KVNamespace;
   /** KV namespace for per-user seen content tracking */
-  // FIXME: [KV-MIGRATION] Unbound — feature silently disabled. Either bind in wrangler.toml or remove code paths.
+  // NOTE: [KV-MIGRATION] Unbound — code guards against undefined; feature silently disabled.
   SEEN?: KVNamespace;
 
   /** KV namespace for Farcaster creator coin records */
@@ -268,7 +277,7 @@ export interface Env {
   XCHAIN_REGISTRY?: KVNamespace;
 
   /** KV namespace for DegenFeed multi-type streaming system — solo, spaces, collab, coin-launch */
-  // FIXME: [KV-MIGRATION] Unbound — feature silently disabled. Either bind in wrangler.toml or remove code paths.
+  // NOTE: [KV-MIGRATION] Unbound — code guards against undefined; feature silently disabled.
   STREAMS?: KVNamespace;
   /** Zora wrapper factory contract address (Base) */
   ZORA_WRAPPER_FACTORY?: string;
@@ -278,7 +287,7 @@ export interface Env {
   /** KV namespace for custom feed storage */
   CUSTOM_FEEDS?: KVNamespace;
   /** KV namespace for creator coin treasury fee tracking */
-  // FIXME: [KV-MIGRATION] Unbound — feature silently disabled. Either bind in wrangler.toml or remove code paths.
+  // NOTE: [KV-MIGRATION] Unbound — code guards against undefined; feature silently disabled.
   TREASURY?: KVNamespace;
 
   // ─── Postiz cross-posting ───────────────────────────────────────────
@@ -384,15 +393,15 @@ export interface Env {
   /** Ghost Content API key (optional, falls back to Admin key) */
   GHOST_CONTENT_KEY?: string;
   /** KV namespace for Ghost subscriber data */
-  // FIXME: [KV-MIGRATION] Unbound — feature silently disabled. Either bind in wrangler.toml or remove code paths.
+  // NOTE: [KV-MIGRATION] Unbound — code guards against undefined; feature silently disabled.
   GHOST_SUBSCRIBERS?: KVNamespace;
   /** KV namespace for Ghost tip records */
-  // FIXME: [KV-MIGRATION] Unbound — feature silently disabled. Either bind in wrangler.toml or remove code paths.
+  // NOTE: [KV-MIGRATION] Unbound — code guards against undefined; feature silently disabled.
   GHOST_TIPS?: KVNamespace;
 
   // ─── Content Library ────────────────────────────────────────────────
   /** KV namespace for the unified content library — all creator content stored here */
-  // FIXME: [KV-MIGRATION] Unbound — feature silently disabled. Either bind in wrangler.toml or remove code paths.
+  // NOTE: [KV-MIGRATION] Unbound — code guards against undefined; feature silently disabled.
   CONTENT_LIBRARY?: KVNamespace;
   /** SendGrid or Mailgun API key for email delivery */
   EMAIL_API_KEY?: string;
@@ -431,7 +440,7 @@ export interface Env {
 
   // ─── Unified Shorts ──────────────────────────────────────────────────
   /** KV namespace for unified shorts (cross-protocol short-form video) */
-  // FIXME: [KV-MIGRATION] Unbound — feature silently disabled. Either bind in wrangler.toml or remove code paths.
+  // NOTE: [KV-MIGRATION] Unbound — code guards against undefined; feature silently disabled.
   SHORTS?: KVNamespace;
   /** Zora video NFT contract address */
   ZORA_VIDEO_CONTRACT?: string;
@@ -463,11 +472,6 @@ export interface Env {
   IPFS_GATEWAY_URL?: string;
   /** Media transformation service URL (e.g. Cloudflare Image Resizing) */
   IMAGE_TRANSFORM_URL?: string;
-
-  // ─── SSO (Single Sign-On) Infrastructure ──────────────────────────────
-  /** KV namespace for SSO session data and wallet state (aliases to IDENTITIES) */
-  // FIXME: [KV-MIGRATION] Unbound — feature silently disabled. Either bind in wrangler.toml or remove code paths.
-  SSO_STATE?: KVNamespace;
 
   // ─── Self-hosted image galleries (Immich/Lychee) ─────────────────────
   /** Immich server URL (e.g. https://photos.example.com) */

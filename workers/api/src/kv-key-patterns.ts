@@ -27,9 +27,11 @@
 //   from wrangler.toml, terraform (both configs), and the Env type. No key
 //   factory functions existed for it in this file.
 // - UNBOUND (declared in Env but NOT bound in wrangler.toml — feature silently
-//   disabled): CONTENT_LIBRARY, SHORTS, SEEN, DEDUP, STREAMS,
-//   GHOST_SUBSCRIBERS, GHOST_TIPS, TREASURY, SSO_STATE. Either bind these in
-//   wrangler.toml or remove the code paths (see FIXME markers in types.ts).
+//   disabled; code guards against undefined): CONTENT_LIBRARY, SHORTS, SEEN,
+//   DEDUP, STREAMS, GHOST_SUBSCRIBERS, GHOST_TIPS, TREASURY.
+//   See NOTE markers in types.ts.
+// - REMOVED 2026-08-06: SSO_STATE — dead declaration, 0 code references.
+//   Deleted from the Env type.
 // - MIGRATION IN PROGRESS: degenfeed-api KV is being migrated off Cloudflare
 //   KV to the Cache API + rmi-backend (Talos). New key patterns should prefer
 //   rmi-backend-backed storage where possible.

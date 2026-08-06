@@ -26,7 +26,11 @@
  */
 
 import type { Env } from '../index';
-import { broadcastToAll, broadcastToUser } from '../ws-broadcast';
+import {
+  getChatHistory as rmiGetChatHistory,
+  sendChatMessage as rmiSendChatMessage,
+} from '../lib/rmi-client';
+import { broadcastToAll } from '../ws-broadcast';
 import { CHANNELS } from '../ws-channels';
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -357,15 +361,21 @@ export async function sendChatMessage(
     isDeleted: false,
   };
 
-  // Store in KV
+  // Primary: persist to rmi-backend chat-history. KV below stays warm as
+  // the fallback store when the API is unreachable.
+  try {
+    await rmiSendChatMessage(env, msg.streamId, msg.userId, msg.message);
+  } catch {
+    // API unavailable — KV store below is the fallback persistence
+  }
+
+  // Store in KV (fallback / warm cache)
   await storeMessage(env, msg);
 
   // Store last-seen timestamp per protocol for polling
-  await env.CACHE?.put(
-    chatLastKey(input.streamId, input.protocol),
-    String(msg.timestamp),
-    { expirationTtl: 86400 },
-  ).catch(() => {});
+  await env.CACHE?.put(chatLastKey(input.streamId, input.protocol), String(msg.timestamp), {
+    expirationTtl: 86400,
+  }).catch(() => {});
 
   // Broadcast to all WebSocket clients
   broadcastToAll(CHANNELS.STREAM_CHAT, {
@@ -463,6 +473,30 @@ export async function getChatMessages(
   limit = 50,
   before?: string,
 ): Promise<LiveChatMessage[]> {
+  // Primary: rmi-backend chat history
+  try {
+    const fromApi = await rmiGetChatHistory(env, streamId, limit);
+    if (fromApi.length > 0 || env.USE_RMI_API === 'true') {
+      // The backend stores { sender, content, created_at }; map onto the
+      // unified shape. Note: the API returns the most recent `limit`
+      // messages, so the `before` cursor cannot be applied to API results.
+      return fromApi.map((m) => ({
+        id: `rmi:${m.created_at}:${m.sender}:${m.content.slice(0, 8)}`,
+        streamId,
+        userId: m.sender,
+        displayName: m.sender,
+        message: m.content,
+        timestamp: Date.parse(m.created_at) || 0,
+        protocol: 'degenfeed' as ChatProtocol,
+        reactions: {},
+        isDeleted: false,
+      }));
+    }
+  } catch {
+    // API unavailable — fall through to KV
+  }
+
+  // KV fallback
   try {
     const key = chatMessagesKey(streamId);
     const raw = await env.CACHE?.get(key);
@@ -516,7 +550,11 @@ export async function pinMessage(env: Env, streamId: string, messageId: string):
 /**
  * Unpin a message.
  */
-export async function unpinMessage(env: Env, streamId: string, messageId: string): Promise<boolean> {
+export async function unpinMessage(
+  env: Env,
+  streamId: string,
+  messageId: string,
+): Promise<boolean> {
   try {
     const key = chatPinnedKey(streamId);
     const raw = await env.CACHE?.get(key);
@@ -616,11 +654,7 @@ export async function banUser(
 /**
  * Unban a user from chat.
  */
-export async function unbanUser(
-  env: Env,
-  streamId: string,
-  userId: string,
-): Promise<boolean> {
+export async function unbanUser(env: Env, streamId: string, userId: string): Promise<boolean> {
   try {
     const key = chatBannedKey(streamId);
     const raw = await env.CACHE?.get(key);
@@ -765,7 +799,7 @@ export async function pollNostrChat(env: Env, streamId: string, eventId: string)
 
   const sinceKey = chatLastKey(streamId, 'nostr');
   const sinceStr = await env.CACHE?.get(sinceKey).catch(() => null);
-  const since = sinceStr ? Number(sinceStr) : (Date.now() - 60000);
+  const since = sinceStr ? Number(sinceStr) : Date.now() - 60000;
 
   try {
     const nostr = await import('@degenfeed/nostr-sdk');
@@ -815,7 +849,7 @@ export async function pollFarcasterChat(
   const hubUrl = env.FARCASTER_HUB_URL || 'http://127.0.0.1:2281';
   const sinceKey = chatLastKey(streamId, 'farcaster');
   const sinceStr = await env.CACHE?.get(sinceKey).catch(() => null);
-  const since = sinceStr ? Number(sinceStr) : (Date.now() - 60000);
+  const since = sinceStr ? Number(sinceStr) : Date.now() - 60000;
 
   try {
     // Use the hub to fetch replies to a cast or the stream's URL
@@ -841,7 +875,9 @@ export async function pollFarcasterChat(
     for (const msg of data.messages || []) {
       if (!msg.data?.castAddBody?.text) continue;
       const msgTime = msg.data.timestamp
-        ? msg.data.timestamp > 1e12 ? msg.data.timestamp : msg.data.timestamp * 1000
+        ? msg.data.timestamp > 1e12
+          ? msg.data.timestamp
+          : msg.data.timestamp * 1000
         : 0;
       if (msgTime < since) continue;
 
@@ -882,7 +918,7 @@ export async function pollBlueskyChat(
 
   const sinceKey = chatLastKey(streamId, 'bluesky');
   const sinceStr = await env.CACHE?.get(sinceKey).catch(() => null);
-  const since = sinceStr ? Number(sinceStr) : (Date.now() - 60000);
+  const since = sinceStr ? Number(sinceStr) : Date.now() - 60000;
 
   try {
     if (bskyPostUri) {
@@ -915,10 +951,18 @@ export async function pollBlueskyChat(
         const replyTime = record.createdAt ? new Date(record.createdAt).getTime() : 0;
         if (replyTime < since) continue;
 
-        await ingestFromProtocol(env, streamId, 'bluesky', author.did, author.displayName || author.did.slice(0, 10), record.text.slice(0, 500), {
-          avatarUrl: author.avatar,
-          badges: ['bluesky'],
-        });
+        await ingestFromProtocol(
+          env,
+          streamId,
+          'bluesky',
+          author.did,
+          author.displayName || author.did.slice(0, 10),
+          record.text.slice(0, 500),
+          {
+            avatarUrl: author.avatar,
+            badges: ['bluesky'],
+          },
+        );
         count++;
       }
 
@@ -951,10 +995,18 @@ export async function pollBlueskyChat(
       const postTime = record.createdAt ? new Date(record.createdAt).getTime() : 0;
       if (postTime < since) continue;
 
-      await ingestFromProtocol(env, streamId, 'bluesky', author.did, author.displayName || author.did.slice(0, 10), record.text.slice(0, 500), {
-        avatarUrl: author.avatar,
-        badges: ['bluesky'],
-      });
+      await ingestFromProtocol(
+        env,
+        streamId,
+        'bluesky',
+        author.did,
+        author.displayName || author.did.slice(0, 10),
+        record.text.slice(0, 500),
+        {
+          avatarUrl: author.avatar,
+          badges: ['bluesky'],
+        },
+      );
       count++;
     }
 
@@ -976,12 +1028,13 @@ export async function pollActivityPubChat(
   apPostId?: string,
 ): Promise<number> {
   const accessToken = env.GTS_ACCESS_TOKEN || env.MASTODON_ACCESS_TOKEN;
-  const instance = env.GTS_INSTANCE_URL || env.MASTODON_INSTANCE_URL || 'https://social.degenfeed.xyz';
+  const instance =
+    env.GTS_INSTANCE_URL || env.MASTODON_INSTANCE_URL || 'https://social.degenfeed.xyz';
   if (!accessToken) return 0;
 
   const sinceKey = chatLastKey(streamId, 'activitypub');
   const sinceStr = await env.CACHE?.get(sinceKey).catch(() => null);
-  const since = sinceStr ? Number(sinceStr) : (Date.now() - 60000);
+  const since = sinceStr ? Number(sinceStr) : Date.now() - 60000;
 
   try {
     if (apPostId) {
@@ -1014,10 +1067,18 @@ export async function pollActivityPubChat(
           ? 'activitypub'
           : 'mastodon';
 
-        await ingestFromProtocol(env, streamId, protocol, reply.account?.acct || reply.id, reply.account?.display_name || reply.account?.acct || 'anon', plaintext.slice(0, 500), {
-          avatarUrl: reply.account?.avatar,
-          badges: [protocol],
-        });
+        await ingestFromProtocol(
+          env,
+          streamId,
+          protocol,
+          reply.account?.acct || reply.id,
+          reply.account?.display_name || reply.account?.acct || 'anon',
+          plaintext.slice(0, 500),
+          {
+            avatarUrl: reply.account?.avatar,
+            badges: [protocol],
+          },
+        );
         count++;
       }
 
@@ -1050,10 +1111,18 @@ export async function pollActivityPubChat(
       const plaintext = stripHtml(post.content || '');
       if (!plaintext) continue;
 
-      await ingestFromProtocol(env, streamId, 'mastodon', post.account?.acct || post.id, post.account?.display_name || post.account?.acct || 'anon', plaintext.slice(0, 500), {
-        avatarUrl: post.account?.avatar,
-        badges: ['mastodon'],
-      });
+      await ingestFromProtocol(
+        env,
+        streamId,
+        'mastodon',
+        post.account?.acct || post.id,
+        post.account?.display_name || post.account?.acct || 'anon',
+        plaintext.slice(0, 500),
+        {
+          avatarUrl: post.account?.avatar,
+          badges: ['mastodon'],
+        },
+      );
       count++;
     }
 
@@ -1072,8 +1141,16 @@ export async function pollActivityPubChat(
 export async function handleTelegramWebhook(
   env: Env,
   body: {
-    message?: { chat?: { id?: number }; from?: { id?: number; first_name?: string }; text?: string };
-    callback_query?: { data?: string; message?: { chat?: { id?: number }; message_id?: number }; from?: { id?: number; first_name?: string } };
+    message?: {
+      chat?: { id?: number };
+      from?: { id?: number; first_name?: string };
+      text?: string;
+    };
+    callback_query?: {
+      data?: string;
+      message?: { chat?: { id?: number }; message_id?: number };
+      from?: { id?: number; first_name?: string };
+    };
   },
 ): Promise<{ ok: boolean }> {
   try {
@@ -1089,9 +1166,17 @@ export async function handleTelegramWebhook(
     if (!text) return { ok: false };
 
     const from = body.message?.from;
-    await ingestFromProtocol(env, streamId, 'telegram', String(from?.id || chatId), from?.first_name || 'TG User', text, {
-      badges: ['telegram'],
-    });
+    await ingestFromProtocol(
+      env,
+      streamId,
+      'telegram',
+      String(from?.id || chatId),
+      from?.first_name || 'TG User',
+      text,
+      {
+        badges: ['telegram'],
+      },
+    );
 
     return { ok: true };
   } catch {
@@ -1165,10 +1250,16 @@ export async function startUnifiedChatPolling(
     if (!active || abortSignal?.aborted) return;
     try {
       await Promise.allSettled([
-        config.nostrEventId ? pollNostrChat(env, config.streamId, config.nostrEventId) : Promise.resolve(0),
+        config.nostrEventId
+          ? pollNostrChat(env, config.streamId, config.nostrEventId)
+          : Promise.resolve(0),
         pollFarcasterChat(env, config.streamId, config.farcasterHash),
-        config.bskyPostUri ? pollBlueskyChat(env, config.streamId, config.bskyPostUri) : Promise.resolve(0),
-        config.apPostId ? pollActivityPubChat(env, config.streamId, config.apPostId) : Promise.resolve(0),
+        config.bskyPostUri
+          ? pollBlueskyChat(env, config.streamId, config.bskyPostUri)
+          : Promise.resolve(0),
+        config.apPostId
+          ? pollActivityPubChat(env, config.streamId, config.apPostId)
+          : Promise.resolve(0),
       ]);
     } catch {
       // Silently continue next poll
@@ -1195,7 +1286,14 @@ export async function startUnifiedChatPolling(
 // ═══════════════════════════════════════════════════════════════════════════
 
 function stripHtml(html: string): string {
-  return html.replace(/<[^>]*>/g, '').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'").trim();
+  return html
+    .replace(/<[^>]*>/g, '')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .trim();
 }
 
 /**
@@ -1269,7 +1367,4 @@ export async function recordViewerProtocol(
   }
 }
 
-export {
-  chatMessagesKey,
-  chatConfigKey,
-};
+export { chatConfigKey, chatMessagesKey };
