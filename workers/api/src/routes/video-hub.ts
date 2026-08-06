@@ -214,7 +214,11 @@ function _formatViews(views: number): string {
   return String(views);
 }
 
-// ─── Fallback mock data generators (used when real feeds are unavailable) ─────
+// ─── Fallback mock data generators (REMOVED) ─────────────────────────────
+// Demo/seed content is BANNED. The video hub never fabricates videos —
+// when real feeds are unavailable it returns an explicit empty result
+// with a warning notice. This stub exists to preserve call sites while
+// guaranteeing no fake content is ever served.
 
 function generateMockVideos(
   count: number,
@@ -225,58 +229,12 @@ function generateMockVideos(
     page?: number;
   } = {},
 ): UnifiedVideo[] {
-  const { source = 'all', category = 'all', page = 1 } = options;
-  const categories = VIDEO_CATEGORIES.filter((c) => c.id !== 'all');
-  const sources = Object.entries(VIDEO_SOURCES);
-  const videos: UnifiedVideo[] = [];
-  const offset = (page - 1) * count;
-
-  for (let i = 0; i < count; i++) {
-    const idx = offset + i;
-    const catIdx = idx % categories.length;
-    const cat = categories[catIdx];
-
-    // Filter by category
-    if (category !== 'all' && cat.id !== category) continue;
-
-    const sourceIdx = idx % sources.length;
-    const [sourceKey, sourceMeta] = sources[sourceIdx];
-
-    // Filter by source
-    if (source !== 'all' && sourceKey !== source) continue;
-
-    const publishedAt = Date.now() - idx * 3600000 * (Math.random() * 4 + 0.5);
-    const views = Math.round(Math.random() * 50000 + 100);
-    const duration = Math.round(Math.random() * 600 + 30);
-
-    videos.push({
-      id: `video-${sourceKey}-${idx}`,
-      title: `${cat.label} Video #${idx + 1} — ${['Deep Dive', 'Review', 'Tutorial', 'Live Session', 'Discussion', 'Analysis', 'Showcase'][idx % 7]}`,
-      description: `A ${cat.label.toLowerCase()} video from ${sourceMeta.label}. This is an example description showing what the content covers.`,
-      thumbnailUrl: `https://picsum.photos/seed/vid${idx}/640/360`,
-      videoUrl: `https://example.com/watch/${sourceKey}/${idx}`,
-      embedUrl: `https://example.com/embed/${sourceKey}/${idx}`,
-      duration,
-      durationLabel: formatDuration(duration),
-      source: sourceKey as UnifiedVideo['source'],
-      sourceLabel: sourceMeta.label,
-      sourceColor: sourceMeta.color,
-      channelName: `Channel ${String.fromCharCode(65 + (idx % 26))}`,
-      channelUrl: `https://example.com/channel/${sourceKey}/${idx}`,
-      channelAvatar: `https://picsum.photos/seed/avatar${idx}/100/100`,
-      publishedAt,
-      publishedLabel: timeAgo(publishedAt),
-      views,
-      category: cat.id as VideoCategoryId,
-      tags: [cat.id, sourceKey, 'degenfeed'],
-      isLive: sourceKey === 'livestream' && idx % 3 === 0,
-    });
-
-    // Break early if we've hit the requested count after filtering
-    if (videos.length >= count) break;
-  }
-
-  return videos;
+  console.warn(
+    '[video-hub] generateMockVideos is deprecated — demo/seed content is banned. Returning empty.',
+  );
+  void count;
+  void options;
+  return [];
 }
 
 // ─── Feed Aggregator ──────────────────────────────────────────────────────
@@ -300,7 +258,8 @@ async function getUnifiedVideoFeed(params: {
   // Get user categories for personalization
   const userCategories = wallet ? await categorizer.getUserCategories(wallet, env) : [];
 
-  // Generate videos from real feeds; fall back to mock data if all providers fail.
+  // Demo/seed content is BANNED — never fabricate videos. The stub
+  // generator returns empty + logs a warning; callers surface an empty feed.
   const videos = generateMockVideos(limit, { source, category, sort, page });
 
   // Sort

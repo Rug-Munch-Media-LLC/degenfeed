@@ -144,11 +144,14 @@ zoraVideo.post('/mint', async (c) => {
     }
 
     // Generate thumbnail if not provided
+    // Demo/seed/placeholder content is BANNED — never substitute a fake
+    // picsum image for a real thumbnail. Require the caller to provide one.
     let thumbnailUri = body.thumbnailUri;
     if (!thumbnailUri) {
-      const { keccak256, stringToHex } = await import('viem');
-      const hash = keccak256(stringToHex(body.videoUri)).slice(0, 10);
-      thumbnailUri = `https://picsum.photos/seed/${hash}/640/360`;
+      return jsonResponse(
+        { error: 'thumbnailUri is required — placeholder thumbnails are not allowed' },
+        400,
+      );
     }
 
     // Use the ZoraVideoSDK to mint

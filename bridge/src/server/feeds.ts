@@ -104,7 +104,7 @@ import {
 } from '../reliability/register-all';
 import { deadLetterQueue } from '../reliability/retry';
 import { feedCache } from './response-cache';
-import { getSeedContent } from './seed-content';
+export { getSeedContent } from './seed-content';
 import type { UnifiedPost } from './types';
 
 interface ProviderEntry {
@@ -233,7 +233,7 @@ export const PROVIDERS: Record<string, ProviderEntry> = {
     name: 'Rumble (Video)',
     category: 'content',
     // Rumble blocks datacenter fetches; return a real empty shape so the
-    // single-provider route seeds demo content instead of 404-stubbing.
+    // single-provider route returns empty instead of 404-stubbing.
     fetch: async (): Promise<UnifiedPost[]> => [],
   },
   gab: { name: 'Gab / Dissenter', fetch: fetchGabPosts, category: 'content' },
@@ -1225,16 +1225,15 @@ async function buildFeedInternal(
     console.log(`[bridge] ${protocol}: ${count} posts`);
 
   if (allPosts.length === 0) {
-    notices.push('All content sources returned no data. Serving demo content.');
-    // NEVER return empty — serve seed/demo content so the feed always has something
-    const seedPosts = getSeedContent(limit);
-    for (const p of seedPosts) {
-      (p as Record<string, unknown>)._demo = true;
-    }
+    // Demo/seed content is BANNED. Never fabricate posts — return an
+    // explicit empty result with a warning notice so callers know the
+    // providers returned nothing.
+    console.warn('[bridge] All content sources returned no data. Returning empty — demo content is banned.');
+    notices.push('All content sources returned no data. No posts available.');
     return {
-      posts: seedPosts,
+      posts: [],
       meta: {
-        total: seedPosts.length,
+        total: 0,
         limit,
         perProtocol,
         providerSources,
@@ -1244,10 +1243,8 @@ async function buildFeedInternal(
         discoveryProtocols,
         page: 1,
         fetchedAt: Date.now(),
-        source: 'demo',
-        isDemo: true,
-        demoNote:
-          'Connect more protocols to see real content. Configure Nostr, Farcaster, Bluesky, or Mastodon at app.degenfeed.xyz/settings',
+        source: 'direct',
+        isDemo: false,
       },
     };
   }

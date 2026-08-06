@@ -342,4 +342,4 @@ ALLOWED_ORIGINS = "https://canary.degenfeed.xyz,http://localhost:3000"
 # Sunday 12:00:   weekly source discovery + health maintenance
 # Remove the [triggers] block to disable; ideal cost is ~zero.
 [triggers]
-crons = ["* * * * *", "*/5 * * * *", "*/30 * * * *", "0 14 * * *", "0 12 * * 0"]
+crons = ["* * * * *", "*/5 * * * *", "*/30 * * * *", "0 14 * * *", "0 12 * * 7"]

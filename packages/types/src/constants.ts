@@ -115,6 +115,10 @@ export type Protocol =
   | 'discourse'
   | 'ghost'
   // REMOVED: sublinks, firefish, iceshrimp, sharkey, akkoma, headscale, yggdrasil — never implemented
+  // ─── Link Aggregators (NEW 2026-08-06) ────────────────────
+  | 'lobsters'
+  // ─── Nostr NIP-29 groups / communities ────────────────────
+  | 'nostr-groups'
   // ─── Infrastructure (status-only, not in main feed) ────────
   | 'infra';
 
@@ -222,6 +226,10 @@ export const PROTOCOLS = [
   'immich',
   'discourse',
   'ghost',
+  // Link Aggregators
+  'lobsters',
+  // Nostr NIP-29 groups / communities
+  'nostr-groups',
   // REMOVED: sublinks, firefish, iceshrimp, sharkey, akkoma, headscale, yggdrasil
 ] as const satisfies Protocol[];
 

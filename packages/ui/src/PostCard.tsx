@@ -148,13 +148,6 @@ function PostCardComponent({
 
   const isSelf = post.author.id === 'self' || post.author.id.startsWith('self:');
 
-  // Seed/demo content is flagged `_demo: true` (top-level by the bridge,
-  // or nested in `raw` by the seed-content provider). Surface it honestly
-  // instead of presenting demo posts as real network content.
-  const isDemo =
-    (post as unknown as { _demo?: boolean })._demo === true ||
-    (post.raw as { _demo?: boolean } | undefined)?._demo === true;
-
   useEffect(() => {
     if (typeof window === 'undefined' || !post.author.id) return;
     let cancelled = false;
@@ -559,18 +552,9 @@ function PostCardComponent({
 
         {/* Protocol badge row (left) + Why this post? ⓘ icon (right).
             The protocol badge itself lives in the PostHeader (top-left);
-            this row only carries the demo flag and the transparency button. */}
+            this row carries the transparency button. */}
         <div className="mb-1 flex items-center justify-between">
-          <span className="flex items-center gap-1.5">
-            {isDemo && (
-              <span
-                className="inline-flex items-center rounded-full bg-amber-950/40 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-400"
-                title="This is placeholder demo content — the live source is temporarily unavailable"
-              >
-                Demo
-              </span>
-            )}
-          </span>
+          <span className="flex items-center gap-1.5" />
           <button
             type="button"
             onClick={(e) => {

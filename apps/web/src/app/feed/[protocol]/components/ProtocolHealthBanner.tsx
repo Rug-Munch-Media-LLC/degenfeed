@@ -7,12 +7,15 @@
  * Uses REAL bridge health data:
  *   - Green: source live, provider healthy → "Nostr relay connected — N notes indexed"
  *   - Yellow: degraded (fallback / cache / sync) → "Farcaster using Nostr fallback while Hubble syncs"
- *   - Red: provider down / demo content → "Reddit data unavailable — Redlib instance down"
+ *   - Red: provider down → "Reddit data unavailable — Redlib instance down"
  *
  * The banner derives status from two live sources:
- *   1. The feed response meta (source: live|fallback|cached|demo, isDemo, errors, notices)
+ *   1. The feed response meta (source: live|fallback|cached, errors, notices)
  *   2. The bridge health probe (GET /api/feed/health → sources.<protocol>.healthy)
  * It polls health every 60s so statuses stay current without a page reload.
+ *
+ * Demo/seed content is banned platform-wide, so there is no demo state to
+ * display — the feed is either live, degraded, or empty.
  */
 
 import { useCallback, useEffect, useState } from 'react';
@@ -21,7 +24,6 @@ import { getProtocolInfo } from './protocolMeta';
 export interface HealthBannerMeta {
   total?: number;
   source?: string;
-  isDemo?: boolean;
   errors?: string[];
   notices?: string[];
   perProtocol?: Record<string, number>;
@@ -157,7 +159,6 @@ export function ProtocolHealthBanner({ protocol, meta }: ProtocolHealthBannerPro
   }, [checkHealth]);
 
   // ── Derive banner level from feed meta + live probe ─────────────
-  const isDemo = meta?.isDemo === true;
   const source = meta?.source ?? 'live';
   const hasErrors = (meta?.errors?.length ?? 0) > 0;
   const hasDegradedNotice =
@@ -166,7 +167,7 @@ export function ProtocolHealthBanner({ protocol, meta }: ProtocolHealthBannerPro
     source === 'fallback';
 
   let level: BannerLevel = 'green';
-  if (isDemo || source === 'demo' || hasErrors) {
+  if (hasErrors) {
     level = 'red';
   } else if (probeState === 'done' && probe && probe.healthy === false) {
     level = 'red';

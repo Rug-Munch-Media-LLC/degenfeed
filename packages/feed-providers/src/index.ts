@@ -60,6 +60,13 @@ export {
   type KickProviderOptions,
 } from './providers/kick';
 export {
+  LOBSTERS_JSON_URL,
+  LOBSTERS_RSS_URL,
+  LobstersProvider,
+  lobstersRssToPosts,
+  lobstersStoryToPost,
+} from './providers/lobsters';
+export {
   type DiscoverCommunitiesOptions,
   discoverCommunities,
   type FederatedCommunity,
@@ -92,6 +99,13 @@ export {
   mirrorArticleToPost,
 } from './providers/mirror';
 export { DEFAULT_RELAYS, NostrProvider } from './providers/nostr';
+export {
+  NIP29_GROUP_METADATA_KIND,
+  NIP29_GROUP_NOTE_KIND,
+  NIP29_GROUP_RELAYS,
+  NostrGroupsProvider,
+  type NostrGroupsProviderOptions,
+} from './providers/nostr-groups';
 export {
   isOpenSeaCollection,
   isOpenSeaSaleEvent,

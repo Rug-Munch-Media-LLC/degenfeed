@@ -40,12 +40,28 @@ interface FeedMeta {
   activeUsers24h?: number;
   engagementVelocity?: number;
   source?: string;
-  isDemo?: boolean;
   perProtocol?: Record<string, number>;
   providerSources?: Record<string, string>;
 }
 
 export type SortMode = 'latest' | 'trending' | 'popular' | 'top';
+
+/** Compact inline boundary for non-critical protocol widgets (header,
+ *  stats, health, trending). One broken widget must never take down the
+ *  protocol timeline. */
+function ProtocolWidgetBoundary({ children }: { children: React.ReactNode }) {
+  return (
+    <ErrorBoundary
+      fallback={() => (
+        <div className="my-2 rounded-lg border border-yellow-500/20 bg-yellow-500/5 px-3 py-2 text-center text-xs text-yellow-400">
+          This section couldn&apos;t be displayed. The feed below is unaffected.
+        </div>
+      )}
+    >
+      {children}
+    </ErrorBoundary>
+  );
+}
 
 const SORT_TABS: { id: SortMode; label: string; icon: string }[] = [
   { id: 'latest', label: 'Latest', icon: '🕐' },
@@ -310,27 +326,35 @@ export function ProtocolFeedContent({
     <ErrorBoundary>
       <div className="mx-auto max-w-2xl">
         {/* Protocol Header */}
-        <ProtocolHeader
-          protocol={protocol}
-          totalPosts={feedMeta.total}
-          activeUsers24h={feedMeta.activeUsers24h}
-        />
+        <ProtocolWidgetBoundary>
+          <ProtocolHeader
+            protocol={protocol}
+            totalPosts={feedMeta.total}
+            activeUsers24h={feedMeta.activeUsers24h}
+          />
+        </ProtocolWidgetBoundary>
 
         {/* Protocol health banner (green/yellow/red) from live bridge health */}
-        <ProtocolHealthBanner protocol={protocol} meta={feedMeta} />
+        <ProtocolWidgetBoundary>
+          <ProtocolHealthBanner protocol={protocol} meta={feedMeta} />
+        </ProtocolWidgetBoundary>
 
         {/* Stats Cards */}
-        <ProtocolStats
-          protocol={protocol}
-          totalPosts={feedMeta.total}
-          activeUsers24h={feedMeta.activeUsers24h}
-          engagementVelocity={feedMeta.engagementVelocity}
-          trendingTopics={feedMeta.trending}
-          color={color}
-        />
+        <ProtocolWidgetBoundary>
+          <ProtocolStats
+            protocol={protocol}
+            totalPosts={feedMeta.total}
+            activeUsers24h={feedMeta.activeUsers24h}
+            engagementVelocity={feedMeta.engagementVelocity}
+            trendingTopics={feedMeta.trending}
+            color={color}
+          />
+        </ProtocolWidgetBoundary>
 
         {/* Trending topics */}
-        <ProtocolTrending protocol={protocol} topics={feedMeta.trending ?? []} color={color} />
+        <ProtocolWidgetBoundary>
+          <ProtocolTrending protocol={protocol} topics={feedMeta.trending ?? []} color={color} />
+        </ProtocolWidgetBoundary>
 
         {/* Sort tabs + follow */}
         <div className="mb-4 flex items-center justify-between gap-2">
