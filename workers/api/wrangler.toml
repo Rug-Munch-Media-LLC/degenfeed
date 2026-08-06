@@ -193,7 +193,10 @@ SENTRY_DSN = ""
 # Self-hosted Redlib instance for Reddit feed proxying
 REDLIB_URL = "https://redlib.degenfeed.xyz"
 # Self-hosted RSS-Bridge instance for proxied RSS feed fetching
-FLARESOLVERR_URL = "http://localhost:8191"
+# FlareSolverr (Cloudflare bypass) — public URL via bridge tunnel; the worker
+# runs at the edge so localhost is unreachable (127.0.0.1:8191 was never valid
+# for production — the service listens on 8192 on Talos).
+FLARESOLVERR_URL = "https://flaresolverr.degenfeed.xyz"
 RMI_BACKEND_URL = "http://localhost:8000"
 # ── rmi-backend queue API (replaces KV list()-based queue processing) ──
 # USE_RMI_QUEUE_API: "true" (default) uses the rmi-backend queue API
@@ -234,8 +237,8 @@ RESTREAMER_URL = "http://127.0.0.1:8088"
 RS_ADMIN_USER = ""
 RS_ADMIN_PASSWORD = ""
 # Bridge API key for authenticated worker→bridge calls.
-# Override in production via "wrangler secret put BRIDGE_API_KEY".
-BRIDGE_API_KEY = ""
+# Set in production via "wrangler secret put BRIDGE_API_KEY" (no plaintext var,
+# otherwise the secret binding conflicts with the toml-declared var).
 
 # Owncast instance for live streaming
 OWNCAST_INSTANCE_URL = "https://owncast.degenfeed.xyz"

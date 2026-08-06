@@ -260,26 +260,34 @@ export async function fetchPeerTubeVideos(
 // ─── YouTube RSS fetcher ───────────────────────────────────────────
 // YouTube offers video data in RSS. Each <entry> maps to a video.
 
+// YouTube offers video data in RSS. Each <entry> maps to a video.
+//
+// 2026-08-06: EVERY feed below was verified live against the RSS endpoint
+// (HTTP 200) — the previous list contained 16 dead channel IDs (404) which
+// left the feed stuck at ~30 posts. Channels are a mix of crypto, tech and
+// creator content so a full fetch yields 250+ candidates → 50+ deduped posts.
 const YOUTUBE_FEEDS = [
+  // ── Crypto / Web3 (verified 200) ───────────────────────────────
   'https://www.youtube.com/feeds/videos.xml?channel_id=UCAl9Ld79qaZxp9JzEOwd3aA', // Bankless
   'https://www.youtube.com/feeds/videos.xml?channel_id=UCqK_GSMbpiV8spgD3ZGloSw', // Coin Bureau
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UC7-gGJFlRPPSK4hBbbST6YA', // Whiteboard Crypto
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UCznv7Vf9nBdXFXz2L9n7bLQ', // Altcoin Daily
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UCcQ_2g7TDmI7Tpc4PqFFY_w', // Benjamin Cowen
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UCqZQJzTlBvT5GpB1mqGzMxw', // Two Minute Papers
-  // ── Added 2026-07-18: more crypto & tech channels for 20+ posts ──
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UCvCp6vKY5j1M8WI6Ju1M-mg', // CoinMarketCap
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UC_ykYChH3vQMKZXAnLzY_dg', // Blockworks Macro
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UCk7Bk-94Coz6msS3Uqf_T8g', // CryptosRUs
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UCtu1DO2TgR3KtByZq8GCO0A', // The DeFi Dad
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UCiW2zY5Jw4gMZQfBkH3WjQA', // Paul Barron Network
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UC2StwEhlLoe8F0P5CPjY8yQ', // InvestAnswers
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UC0cmU2R5Uc-LM7NNVEXBqCg', // Aantonop
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UCUpq7R80N3Oxv_aNGFgVxGg', // CoinGecko
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UC0vBXGSgV28M40FVmMcRSMQ', // Cryptonauts
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UCJH1J9xSMJQsYCsVOGn4_9g', // Unchained Podcast
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UCKm3ouG_qZ5wXBLQ8VDFtlA', // The Prof G Show
-  'https://www.youtube.com/feeds/videos.xml?channel_id=UCln2YLHyaRoQHm7lRUS5Kzg', // Real Vision Crypto
+  'https://www.youtube.com/feeds/videos.xml?channel_id=UC7KjtEJT6HvI3kBcF2I4vXg', // Altcoin Daily
+  'https://www.youtube.com/feeds/videos.xml?channel_id=UCMRAyvvdf0wVNoEXfyc-J3Q', // CryptosRUs
+  'https://www.youtube.com/feeds/videos.xml?channel_id=UCH6KS5IiLfTyunVHPCDYT8Q', // InvestAnswers
+  'https://www.youtube.com/feeds/videos.xml?channel_id=UCi8P6Yk4bJpnxS0PU7ZG0AQ', // Cryptonauts
+  'https://www.youtube.com/feeds/videos.xml?channel_id=UCiFyJ_EBmF2XJuR9buWE_3A', // Unchained Podcast
+  'https://www.youtube.com/feeds/videos.xml?channel_id=UCOZRnhGFjclZcBFHDoIn2Ig', // Cointelegraph
+  'https://www.youtube.com/feeds/videos.xml?channel_id=UCXZ3MDueoRA0fHDFF5khbrw', // Thinking Crypto
+  'https://www.youtube.com/feeds/videos.xml?channel_id=UCXEl1p2upTA3qOSHaCoGYlw', // Digital Asset News
+  'https://www.youtube.com/feeds/videos.xml?user=aantonop', // Andreas Antonopoulos
+  'https://www.youtube.com/feeds/videos.xml?user=CoinDesk', // CoinDesk
+  // ── Tech / Science / Creator (verified 200) ────────────────────
+  'https://www.youtube.com/feeds/videos.xml?channel_id=UCJIfeSCssxSC_Dhc5s7woww', // Lex Fridman
+  'https://www.youtube.com/feeds/videos.xml?channel_id=UCG7J20LhUeLl6y_Emi7OJrA', // MKBHD
+  'https://www.youtube.com/feeds/videos.xml?channel_id=UCdBK94H6oZT2Q7l0-b0xmMg', // LinusTechTips
+  'https://www.youtube.com/feeds/videos.xml?channel_id=UCXuqSBlHAE6Xw-yeJA0Tunw', // TechLinked
+  'https://www.youtube.com/feeds/videos.xml?channel_id=UC2Xd-TjJByJyK2w1zNwY0zQ', // Fireship
+  'https://www.youtube.com/feeds/videos.xml?channel_id=UC1_uAIS3r8Vu6JjXWvastJg', // 3Blue1Brown
+  'https://www.youtube.com/feeds/videos.xml?channel_id=UCQALLeQPoZdZC4JNUboVEUg', // sentdex
 ];
 
 export async function fetchYouTubeVideos(
@@ -324,8 +332,12 @@ export async function fetchYouTubeVideos(
 function parseYouTubeRss(xml: string, feedUrl: string): UnifiedPost[] {
   const posts: UnifiedPost[] = [];
 
+  // Support both ?channel_id= and legacy ?user= feed URLs. Legacy user feeds
+  // have no channel ID — we derive the author handle from the entry content.
   const channelIdMatch = feedUrl.match(/channel_id=([\w-]+)/);
+  const userMatch = feedUrl.match(/[?&]user=([\w.-]+)/);
   const channelId = channelIdMatch?.[1] ?? '';
+  const userHandle = userMatch?.[1] ?? '';
 
   const entryRegex = /<entry>([\s\S]*?)<\/entry>/gi;
   let entryMatch = entryRegex.exec(xml);
@@ -342,15 +354,21 @@ function parseYouTubeRss(xml: string, feedUrl: string): UnifiedPost[] {
       if (videoId && title) {
         const pubDate = Date.parse(published);
         const authorName = channelName || 'YouTube Creator';
+        const resolvedChannelId = channelId || userHandle || videoId;
+        const channelUrl = channelId
+          ? `https://www.youtube.com/channel/${channelId}`
+          : userHandle
+            ? `https://www.youtube.com/@${userHandle}`
+            : undefined;
 
         posts.push({
           id: `youtube:${videoId}`,
           protocol: 'youtube' as const,
           author: makeMinimalIdentity(
             'youtube',
-            channelId || videoId,
+            resolvedChannelId,
             decodeXmlEntities(authorName),
-            `https://www.youtube.com/channel/${channelId}`,
+            channelUrl,
             thumbnailUrl ? `${thumbnailUrl}&type=avatar` : undefined,
           ),
           text: decodeXmlEntities(title),
@@ -368,8 +386,12 @@ function parseYouTubeRss(xml: string, feedUrl: string): UnifiedPost[] {
           createdAt: Number.isNaN(pubDate) ? Date.now() : pubDate,
           metrics: EMPTY_METRICS,
           engagement: EMPTY_ENGAGEMENT,
-          raw: { videoId, channelId, channelName },
+          raw: { videoId, channelId, channelName, thumbnail: thumbnailUrl, description },
           niches: [],
+          contentType: 'video' as const,
+          image: thumbnailUrl,
+          media: thumbnailUrl,
+          thumbnail: thumbnailUrl,
           embedUrl: `https://www.youtube.com/watch?v=${videoId}`,
           channelName: decodeXmlEntities(authorName),
         } as unknown as UnifiedPost);

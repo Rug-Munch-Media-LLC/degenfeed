@@ -9,12 +9,6 @@ import { useNotifications } from '../hooks/useNotifications';
 import { useProtocolConnections } from '../hooks/useProtocolConnections';
 import { useAuth } from './AuthProvider';
 import { DegenChatLogo } from './DegenChatBrand';
-import {
-  CATEGORY_DISPLAY_ORDER,
-  CATEGORY_PROTOCOLS,
-  EXTRA_PROTOCOLS,
-  type ProtocolCategory,
-} from './feed/feed-protocols';
 import { useToast } from './Toast';
 import { UnifiedComposerButton } from './UnifiedComposerButton';
 
@@ -148,32 +142,59 @@ function ChevronIcon({ collapsed }: { collapsed: boolean }) {
 
 /* === Nav model =============================================== */
 
-type SectionId = 'social' | 'content' | 'video' | 'web3' | 'tools';
+type SectionId =
+  | 'social'
+  | 'video'
+  | 'audio'
+  | 'newsletters'
+  | 'discussion'
+  | 'markets'
+  | 'governance'
+  | 'reading'
+  | 'chat'
+  | 'tools';
 
-const SECTION_IDS: SectionId[] = ['social', 'content', 'video', 'web3', 'tools'];
+const SECTION_IDS: SectionId[] = [
+  'social',
+  'video',
+  'audio',
+  'newsletters',
+  'discussion',
+  'markets',
+  'governance',
+  'reading',
+  'chat',
+  'tools',
+];
 
 const SECTION_META: Record<SectionId, { label: string; icon: string }> = {
   social: { label: 'Social', icon: '💬' },
-  content: { label: 'Content', icon: '📝' },
   video: { label: 'Video', icon: '🎬' },
-  web3: { label: 'Web3', icon: '🔗' },
+  audio: { label: 'Audio', icon: '🎵' },
+  newsletters: { label: 'Newsletters', icon: '📬' },
+  discussion: { label: 'Discussion', icon: '👥' },
+  markets: { label: 'Markets', icon: '📊' },
+  governance: { label: 'Governance', icon: '🗳️' },
+  reading: { label: 'Reading', icon: '📚' },
+  chat: { label: 'Chat', icon: '💬' },
   tools: { label: 'Tools', icon: '🛠️' },
 };
 
-/** Map the canonical protocol registry categories onto sidebar sections. */
-const CATEGORY_TO_SECTION: Record<ProtocolCategory, SectionId> = {
-  social: 'social',
-  communities: 'social',
-  discussion: 'social',
-  news: 'content',
-  media: 'content',
-  audio: 'content',
-  publishing: 'content',
-  reading: 'content',
-  video: 'video',
-  web3: 'web3',
-  governance: 'web3',
-  markets: 'web3',
+/**
+ * Curated protocol IDs per sidebar section — the canonical sidebar menu.
+ * Every protocol here resolves to a real /feed/{id} page with content.
+ */
+const SECTION_PROTOCOLS: Record<SectionId, string[]> = {
+  social: ['mastodon', 'bluesky', 'nostr', 'farcaster', 'lens', 'threads', 'minds', 'gab'],
+  video: ['youtube', 'peertube', 'vimeo', 'loops', 'owncast', 'twitch', 'kick'],
+  audio: ['soundcloud', 'audius', 'castopod'],
+  newsletters: ['substack', 'medium', 'mirror', 'paragraph', 'writefreely', 'wordpress'],
+  discussion: ['lemmy', 'reddit', 'lobsters', 'discourse'],
+  markets: ['polymarket', 'opensea'],
+  governance: ['snapshot', 'tally'],
+  reading: ['bookwyrm'],
+  chat: [],
+  tools: [],
 };
 
 interface FeatureLink {
@@ -191,48 +212,36 @@ const SECTION_FEATURES: Record<SectionId, FeatureLink[]> = {
     { id: 'spaces', label: 'Spaces', href: '/spaces', icon: '🎙️', color: '#22d3ee' },
     { id: 'communities', label: 'Communities', href: '/c', icon: '👥', color: '#a78bfa' },
   ],
-  content: [
-    { id: 'news', label: 'News', href: '/news', icon: '📰', color: '#f97316' },
-    { id: 'newsletters', label: 'Newsletters', href: '/newsletter', icon: '📬', color: '#e63946' },
-    { id: 'podcasts', label: 'Podcasts', href: '/podcasts', icon: '🎙️', color: '#7c3aed' },
-    { id: 'visual', label: 'Visual / Photos', href: '/visual', icon: '🖼️', color: '#ec4899' },
-    { id: 'images', label: 'Images', href: '/images', icon: '📷', color: '#f59e0b' },
-    { id: 'articles', label: 'Articles', href: '/articles', icon: '📄', color: '#22c55e' },
-    { id: 'digest', label: 'Digest', href: '/digest', icon: '📥', color: '#f43f5e' },
-  ],
   video: [
-    {
-      id: 'create',
-      label: 'Create',
-      href: '/create',
-      icon: '➕',
-      color: '#22c55e',
-    },
-    { id: 'youtube', label: 'YouTube', href: '/youtube', icon: '▶️', color: '#ff0000' },
+    { id: 'create', label: 'Create', href: '/create', icon: '➕', color: '#22c55e' },
     { id: 'videos', label: 'Videos', href: '/videos', icon: '🎬', color: '#a855f7' },
     { id: 'shorts', label: 'Shorts', href: '/shorts', icon: '⚡', color: '#facc15' },
     { id: 'live', label: 'Live', href: '/live', icon: '🔴', color: '#ef4444', live: true },
   ],
-  web3: [
-    { id: 'dao', label: 'DAO', href: '/dao/create', icon: '🏛️', color: '#6366f1' },
-    { id: 'creator-coins', label: 'Creator Coins', href: '/coins', icon: '🪙', color: '#f59e0b' },
-    { id: 'launch', label: 'Launch', href: '/launch', icon: '🚀', color: '#22d3ee' },
-    { id: 'connect', label: 'Connect', href: '/connect', icon: '🔗', color: '#10b981' },
+  audio: [{ id: 'podcasts', label: 'Podcasts', href: '/podcasts', icon: '🎙️', color: '#7c3aed' }],
+  newsletters: [
+    { id: 'newsletter', label: 'Newsletters', href: '/newsletter', icon: '📬', color: '#e63946' },
+  ],
+  discussion: [],
+  markets: [],
+  governance: [],
+  reading: [],
+  chat: [
+    { id: 'messages', label: 'Messages', href: '/messages', icon: '💬', color: '#3b82f6' },
+    { id: 'groups', label: 'Groups', href: '/messages/groups', icon: '👥', color: '#a78bfa' },
+    { id: 'voice', label: 'Voice', href: '/messages/voice', icon: '🎤', color: '#22c55e' },
+    { id: 'video-chat', label: 'Video', href: '/messages/video', icon: '📹', color: '#ec4899' },
   ],
   tools: [
-    { id: 'search', label: 'Search', href: '/search', icon: '🔍', color: '#6366f1' },
-    {
-      id: 'notifications',
-      label: 'Notifications',
-      href: '/notifications',
-      icon: '🔔',
-      color: '#ec4899',
-    },
-    { id: 'messages', label: 'Messages', href: '/messages', icon: '💬', color: '#3b82f6' },
-    { id: 'creator', label: 'Creator Studio', href: '/creator', icon: '✏️', color: '#a78bfa' },
+    { id: 'news', label: 'News', href: '/news', icon: '📰', color: '#f97316' },
+    { id: 'articles', label: 'Articles', href: '/articles', icon: '📄', color: '#22c55e' },
+    { id: 'digest', label: 'Digest', href: '/digest', icon: '📥', color: '#f43f5e' },
     { id: 'trending', label: 'Trending', href: '/trending', icon: '📈', color: '#f97316' },
-    { id: 'leaderboard', label: 'Leaderboard', href: '/leaderboard', icon: '🏆', color: '#eab308' },
     { id: 'discover', label: 'Discover', href: '/discover', icon: '🧭', color: '#06b6d4' },
+    { id: 'creator', label: 'Creator Studio', href: '/creator', icon: '✏️', color: '#a78bfa' },
+    { id: 'dao', label: 'DAO', href: '/dao/create', icon: '🏛️', color: '#6366f1' },
+    { id: 'creator-coins', label: 'Creator Coins', href: '/coins', icon: '🪙', color: '#f59e0b' },
+    { id: 'leaderboard', label: 'Leaderboard', href: '/leaderboard', icon: '🏆', color: '#eab308' },
     { id: 'feeds', label: 'Feeds', href: '/feeds', icon: '📚', color: '#8b5cf6' },
     { id: 'pricing', label: 'Pricing', href: '/pricing', icon: '💎', color: '#22c55e' },
     { id: 'premium', label: 'Premium', href: '/premium', icon: '👑', color: '#fbbf24' },
@@ -253,12 +262,13 @@ const SECTION_FEATURES: Record<SectionId, FeatureLink[]> = {
 const SECTION_STORAGE_KEY = 'df_sidebar_sections';
 
 /**
- * Protocol rows that duplicate a section feature link (e.g. "YouTube" hub
- * vs the /feed/youtube protocol feed). The feature link covers the concept
- * in the sidebar; the underlying feed stays reachable via FeedShell and the
- * quick switcher, so we don't render the row twice.
+ * Protocol rows that duplicate a section feature link (e.g. the "Live" hub
+ * vs the /feed/live protocol feed, or the "Newsletters" hub vs the
+ * /feed/newsletter aggregator). The feature link covers the concept in the
+ * sidebar; the underlying feed stays reachable via FeedShell and the quick
+ * switcher, so we don't render the row twice.
  */
-const FEATURE_DUPLICATE_PROTOCOL_IDS = new Set(['youtube', 'live', 'newsletter', 'podcast']);
+const FEATURE_DUPLICATE_PROTOCOL_IDS = new Set(['live', 'newsletter', 'podcast', 'rss']);
 
 /* === Main Component ========================================= */
 
@@ -312,26 +322,20 @@ export const LeftSidebar = memo(function LeftSidebar({
   /* ── Protocol → section mapping ───────────────────────────── */
 
   const sectionProtocolIds = useMemo(() => {
-    const ordered: { section: SectionId; id: string }[] = [];
-    for (const cat of CATEGORY_DISPLAY_ORDER) {
-      const section = CATEGORY_TO_SECTION[cat];
-      for (const id of CATEGORY_PROTOCOLS[cat] ?? []) ordered.push({ section, id });
-    }
-    for (const p of EXTRA_PROTOCOLS) {
-      ordered.push({ section: CATEGORY_TO_SECTION[p.category], id: p.id });
-    }
     const map: Record<SectionId, string[]> = {
       social: [],
-      content: [],
       video: [],
-      web3: [],
+      audio: [],
+      newsletters: [],
+      discussion: [],
+      markets: [],
+      governance: [],
+      reading: [],
+      chat: [],
       tools: [],
     };
-    const seen = new Set<string>();
-    for (const { section, id } of ordered) {
-      if (seen.has(id)) continue;
-      seen.add(id);
-      map[section].push(id);
+    for (const sid of SECTION_IDS) {
+      map[sid] = [...(SECTION_PROTOCOLS[sid] ?? [])];
     }
     return map;
   }, []);
@@ -339,9 +343,14 @@ export const LeftSidebar = memo(function LeftSidebar({
   const sectionHealthyCounts = useMemo(() => {
     const counts: Record<SectionId, number> = {
       social: 0,
-      content: 0,
       video: 0,
-      web3: 0,
+      audio: 0,
+      newsletters: 0,
+      discussion: 0,
+      markets: 0,
+      governance: 0,
+      reading: 0,
+      chat: 0,
       tools: 0,
     };
     for (const sid of SECTION_IDS) {
