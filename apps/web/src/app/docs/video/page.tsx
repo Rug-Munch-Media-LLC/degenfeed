@@ -21,17 +21,17 @@ export const metadata: Metadata = {
     'degenfeed video guide',
     'multi-protocol video',
   ],
-  alternates: { canonical: 'https://degenfeed.xyz/docs/video' },
+  alternates: { canonical: 'https://app.degenfeed.xyz/docs/video' },
   openGraph: {
     title: 'Video Streaming Guide — DegenFeed',
     description:
       'Watch and stream video across YouTube, Twitch, PeerTube, Rumble, and more — all in one place.',
-    url: 'https://degenfeed.xyz/docs/video',
+    url: 'https://app.degenfeed.xyz/docs/video',
     siteName: 'DegenFeed',
     type: 'website',
     images: [
       {
-        url: 'https://degenfeed.xyz/og-image.png',
+        url: 'https://app.degenfeed.xyz/og-image.png',
         width: 1200,
         height: 630,
         alt: 'DegenFeed Video Streaming Guide',
@@ -43,7 +43,7 @@ export const metadata: Metadata = {
     title: 'Video Streaming Guide — DegenFeed',
     description:
       'Watch and stream video across YouTube, Twitch, PeerTube, Rumble, and more — all in one place.',
-    images: ['https://degenfeed.xyz/og-image.png'],
+    images: ['https://app.degenfeed.xyz/og-image.png'],
   },
 };
 

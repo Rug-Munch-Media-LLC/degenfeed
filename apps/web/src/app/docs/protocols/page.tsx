@@ -17,6 +17,12 @@ export const metadata: Metadata = {
     title: 'DegenFeed Protocol Integration Guide',
     description: 'Detailed protocol integration guide for all 18 supported networks plus RSS/Atom.',
   },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'DegenFeed Protocol Integration Guide',
+    description: 'How DegenFeed integrates Nostr, Farcaster, Lens, Bluesky, Mastodon and more.',
+    images: ['https://app.degenfeed.xyz/og-image.png'],
+  },
 };
 
 interface ProtocolInfo {

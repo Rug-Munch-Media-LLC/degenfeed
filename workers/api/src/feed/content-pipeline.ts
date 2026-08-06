@@ -49,6 +49,8 @@ export type FeedSourceKey =
   | 'lemmy'
   | 'mirror'
   | 'paragraph'
+  | 'substack'
+  | 'medium'
   | 'ghost'
   | 'youtube'
   | 'peertube'
@@ -243,6 +245,26 @@ export const FEED_SOURCES: Record<FeedSourceKey, FeedSourceDef> = {
     network: 'publishing',
     usesProviderRegistry: true,
     protocol: 'paragraph',
+  },
+  substack: {
+    id: 'substack',
+    label: 'Substack',
+    emoji: '📬',
+    color: '#ff6719',
+    weight: 0.6,
+    network: 'publishing',
+    usesProviderRegistry: true,
+    protocol: 'substack',
+  },
+  medium: {
+    id: 'medium',
+    label: 'Medium',
+    emoji: '✍️',
+    color: '#000000',
+    weight: 0.6,
+    network: 'publishing',
+    usesProviderRegistry: true,
+    protocol: 'medium',
   },
   ghost: {
     id: 'ghost',

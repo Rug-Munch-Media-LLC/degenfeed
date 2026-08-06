@@ -1,4 +1,6 @@
 import type { Metadata } from 'next';
+import { Suspense } from 'react';
+import { ProtocolFeedSkeleton } from '../../../components/feed/ProtocolFeedSkeleton';
 
 interface Props {
   params: Promise<{ protocol: string }>;
@@ -57,11 +59,18 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       card: 'summary_large_image',
       title: `${label} — DegenFeed`,
       description: `Browse ${label} posts across the open social web.`,
+      images: ['https://app.degenfeed.xyz/og-image.png'],
     },
     alternates: { canonical: `https://app.degenfeed.xyz/feed/${protocol}` },
   };
 }
 
-export default function ProtocolFeedLayout({ children }: { children: React.ReactNode }) {
-  return children;
+/**
+ * Protocol feed layout — wraps children in a <Suspense> boundary so the
+ * protocol-aware skeleton (video grid / text list / card grid) shows while
+ * the page is streaming, instead of a blank or generic flash.
+ */
+export default async function ProtocolFeedLayout({ params, children }: Props) {
+  const { protocol } = await params;
+  return <Suspense fallback={<ProtocolFeedSkeleton protocol={protocol} />}>{children}</Suspense>;
 }

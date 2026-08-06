@@ -7,12 +7,15 @@ export const revalidate = 86400;
 export const metadata: Metadata = {
   title: 'FAQ — DegenFeed Web3 Social Universe Questions Answered',
   description:
-    'Everything you need to know about DegenFeed — the Web3 Social Universe. What makes it web3, how cross-posting works, creator coins, self-hosting, data ownership, and how to get started on 101+ decentralized social protocols.',
+    'Everything you need to know about DegenFeed — the Web3 Social Universe. What it is, which protocols are supported, how federation works, data privacy, self-hosting, connecting accounts, Postiz, livestreaming, pricing, and how it compares to Ground News.',
   keywords: [
     'web3 social media faq',
     'decentralized social network questions',
     'how does degenfeed work',
-    'what makes it web3',
+    'what is postiz',
+    'how does federation work',
+    'degenfeed vs ground news',
+    'is degenfeed private',
     'nostr vs farcaster vs bluesky',
     'what is web3 social',
     'cross protocol posting guide',
@@ -24,7 +27,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'FAQ — Web3 Social Media Questions Answered | DegenFeed',
     description:
-      'Learn about cross-protocol posting, crypto tipping, Nostr, Farcaster, Lens, Bluesky, and self-hosting.',
+      'Learn about cross-protocol posting, federation, data privacy, Postiz, livestreaming, crypto tipping, Nostr, Farcaster, Lens, Bluesky, and self-hosting.',
     url: 'https://app.degenfeed.xyz/faq',
     images: [
       {
@@ -39,7 +42,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'FAQ — Web3 Social Media Q&A | DegenFeed',
     description:
-      'Frequently asked questions about cross-protocol posting, crypto tipping, and web3 social.',
+      'Frequently asked questions about federation, cross-protocol posting, Postiz, livestreaming, and web3 social.',
   },
 };
 
@@ -52,7 +55,7 @@ const faqStructuredData = {
       name: 'What is DegenFeed?',
       acceptedAnswer: {
         '@type': 'Answer',
-        text: 'DegenFeed is an open-source, multi-protocol social aggregator for web3. It pulls posts from 101+ protocols including Nostr, Farcaster, Lens, Bluesky, Mastodon, PeerTube, Owncast, Lemmy, Pixelfed, Threads, Reddit, and RSS into one unified, ranked timeline. No account needed to browse. Connect a wallet to post, tip, and engage across protocols. Creators can launch their own coins, livestream to multiple platforms, and earn tips in crypto.',
+        text: 'DegenFeed is an open-source, multi-protocol social aggregator for web3. It pulls posts from 18+ protocols including Nostr, Farcaster, Lens, Bluesky, Mastodon, PeerTube, Owncast, Lemmy, Pixelfed, Threads, Reddit, YouTube, and RSS into one unified, ranked timeline. No account needed to browse. Connect a wallet to post, tip, and engage across protocols. Creators can launch their own coins, livestream to multiple platforms, and earn tips in crypto.',
       },
     },
     {
@@ -60,7 +63,7 @@ const faqStructuredData = {
       name: 'How is DegenFeed different from Twitter/X?',
       acceptedAnswer: {
         '@type': 'Answer',
-        text: 'DegenFeed is not a walled garden. It reads from 101+ open protocols and lets you post to multiple networks simultaneously. There are no ads, no algorithm manipulation, no data selling. The ranking algorithm is transparent, open source (AGPL-3.0), and self-hostable. Creators can launch tokens, earn tips across chains, and stream live — none of which is possible on traditional social media.',
+        text: 'DegenFeed is not a walled garden. It reads from 18+ open protocols and lets you post to multiple networks simultaneously. There are no ads, no algorithm manipulation, no data selling. The ranking algorithm is transparent, open source (AGPL-3.0), and self-hostable. Creators can launch tokens, earn tips across chains, and stream live — none of which is possible on traditional social media.',
       },
     },
     {
@@ -68,7 +71,7 @@ const faqStructuredData = {
       name: 'What protocols does DegenFeed support?',
       acceptedAnswer: {
         '@type': 'Answer',
-        text: 'All of them. DegenFeed bridges 101+ protocols total. Major protocols include: Nostr, Farcaster, Lens, Bluesky, Mastodon, PeerTube, Owncast, Lemmy, Pixelfed, Matrix, Reddit, Threads, RSS/Atom (353+ sources), YouTube, GoToSocial, Pleroma, Misskey, Friendica, Diaspora, Gab, Minds, WriteFreely, Micro.blog, Plume, Write.as, Publii, Aether, Scuttlebutt, Hive, PieFed, Odysee, DTube, Rumble, BitTube, Funkwhale, Castopod, Steem, DeSo, Subsocial, CyberConnect, Ceramic, Status, Session, Telegram, Signal, IRC, XMPP, Discord, and many more. Every major decentralized social protocol is supported.',
+        text: 'DegenFeed bridges 18+ networks. Major protocols include: Nostr, Farcaster, Lens, Bluesky, Mastodon, PeerTube, Owncast, Lemmy, Pixelfed, Matrix, Reddit, Threads, RSS/Atom (248+ sources), YouTube, Odysee, Rumble, Minds, Substack, Mirror, Paragraph, and more — plus centralized platforms via DegenFeed Connect (YouTube, Twitch, Kick, TikTok, Instagram, LinkedIn).',
       },
     },
     {
@@ -77,6 +80,46 @@ const faqStructuredData = {
       acceptedAnswer: {
         '@type': 'Answer',
         text: 'The DegenFeed composer lets you select which protocols to publish to simultaneously. Content is sent to each protocol using its native API — Nostr via signed events, Farcaster via protobuf, Lens via typed data, Bluesky via XRPC, Mastodon via REST API. Each post gets a canonical DegenFeed ID so engagement (likes, replies) can be aggregated across protocols. Cross-posting requires connecting at least one protocol account.',
+      },
+    },
+    {
+      '@type': 'Question',
+      name: 'How does federation work?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'DegenFeed is a reader and bridge across every major federated and decentralized social system. Mastodon, Lemmy, PeerTube, and Pixelfed speak ActivityPub — thousands of independent servers exchange posts, and DegenFeed reads the public network directly. Bluesky runs on the AT Protocol with portable identities on PDSes. Nostr uses relays that any client can read from. Farcaster replicates its social graph across Hubs, and Lens publishes on-chain via Polygon. DegenFeed connects to all of them and merges everything into one unified feed.',
+      },
+    },
+    {
+      '@type': 'Question',
+      name: 'Is my data private?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'Yes — by architecture. Your protocol credentials (Nostr keys, Bluesky app passwords) are encrypted in your browser and never sent to our servers. Posts are signed client-side and published to open protocols where you control the keys. DegenFeed never sells, rents, or monetizes your data — no ads, no trackers beyond privacy-friendly analytics. Export everything at any time via /api/account/export in JSON or CSV.',
+      },
+    },
+    {
+      '@type': 'Question',
+      name: 'What is Postiz and how do I use it?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'Postiz is the open-source scheduling and publishing engine that powers DegenFeed Connect — posting and scheduling to centralized platforms like YouTube, Twitch, Kick, TikTok, Instagram, and LinkedIn from the same dashboard as decentralized protocols. Postiz handles OAuth for each platform, so DegenFeed never sees your credentials. Open the Connect page (/connect), sign in, and connect each platform. Included in Enterprise ($20/mo) or as a standalone add-on ($15/mo).',
+      },
+    },
+    {
+      '@type': 'Question',
+      name: 'How does livestreaming work?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'Navigate to the Live page and click "Go Live". Connect OBS (or any RTMP-compatible encoder) using the provided stream key and URL. Your stream is broadcast via PeerTube and simultaneously announced on Nostr (kind 30311), Farcaster (frames), Bluesky (AT Protocol), Mastodon (ActivityPub), and Telegram. Enterprise users can also go live to YouTube, Twitch, and Kick simultaneously via DegenFeed Connect.',
+      },
+    },
+    {
+      '@type': 'Question',
+      name: 'How does DegenFeed compare to Ground News?',
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: 'Ground News is a paywalled news product showing media bias ratings and blindspot coverage. DegenFeed provides the same style of bias transparency for free — 248 crypto, DeFi, AI, and tech news sources ranked by credibility tier, tagged with a 5-point political bias, and flagged when coverage skews to one side. DegenFeed goes further: the same feed aggregates social posts from 18+ open protocols, supports cross-posting, creator coins, tipping, and livestreaming — no paywall, no account required to read.',
       },
     },
     {

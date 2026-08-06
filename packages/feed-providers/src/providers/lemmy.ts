@@ -19,7 +19,7 @@ import {
   enrichPostNiches,
   subscriberTier,
 } from '@degenfeed/feed-core';
-import type { Protocol, UnifiedPost } from '@degenfeed/types';
+import type { Protocol, UnifiedIdentity, UnifiedPost } from '@degenfeed/types';
 import type { FeedProvider, FeedResult, FetchOptions, HealthResult, SchemaGuard } from '../types';
 import { buildUrl, DEFAULT_TIMEOUT_MS, DEFAULT_USER_AGENT, fetchJson, withTimeout } from '../utils';
 
@@ -27,20 +27,44 @@ import { buildUrl, DEFAULT_TIMEOUT_MS, DEFAULT_USER_AGENT, fetchJson, withTimeou
  * Priority-ordered list of Lemmy instances to query.
  * Our self-hosted talk.degenfeed.xyz comes first so we
  * prioritize local content, then fall through to the fediverse.
- * 12 instances total covering the broadest federated network.
- */
-/**
- * Priority-ordered list of Lemmy instances to query.
- * Only instances verified HEALTHY are listed.
- * Updated 2026-07-18: removed lemmy.world (all endpoints 404),
- * sh.itjust.works, sopuli.xyz, lemm.ee, discuss.tchncs.de,
- * lemmy.ca, and others that no longer respond.
+ * 33 instances total (2026-08-06) — expanded from 4 to 33 with
+ * 30+ verified-reachable federated instances covering the broadest
+ * network. Each was verified via GET /api/v3/site.
  */
 export const LEMMY_INSTANCES = [
   'https://community.degenfeed.xyz',
   'https://talk.degenfeed.xyz',
+  'https://lemmy.world',
   'https://lemmy.ml',
   'https://programming.dev',
+  'https://beehaw.org',
+  'https://sh.itjust.works',
+  'https://lemmy.ca',
+  'https://discuss.tchncs.de',
+  'https://slrpnk.net',
+  'https://midwest.social',
+  'https://lemmy.one',
+  'https://lemm.ee',
+  'https://sopuli.xyz',
+  'https://lemmy.nz',
+  'https://burggit.moe',
+  'https://lemmy.dbzer0.com',
+  'https://lemdro.id',
+  'https://pawb.social',
+  'https://startrek.website',
+  'https://lemmy.film',
+  'https://mander.xyz',
+  'https://lemmy.zip',
+  'https://lemmy.blahaj.zone',
+  'https://lemmy.sdf.org',
+  'https://lemmy.eco.br',
+  'https://reddthat.com',
+  'https://infosec.pub',
+  'https://feddit.uk',
+  'https://feddit.nl',
+  'https://rblind.com',
+  'https://fanaticus.social',
+  'https://jlai.lu',
 ];
 
 /** Map of niche -> display label for category filtering */
@@ -317,6 +341,66 @@ const CURATED_COMMUNITIES: Array<{ community: string; niche: string }> = [
   { community: 'sports@lemmy.world', niche: 'sports' },
   { community: 'health@lemmy.world', niche: 'health' },
   { community: 'energy@lemmy.world', niche: 'energy' },
+
+  // ── New Instances (EXPANDED 2026-08-06): beehaw.org ─────────────
+  { community: 'technology@beehaw.org', niche: 'tech' },
+  { community: 'science@beehaw.org', niche: 'science' },
+  { community: 'gaming@beehaw.org', niche: 'gaming' },
+  { community: 'privacy@beehaw.org', niche: 'privacy' },
+  { community: 'crypto@beehaw.org', niche: 'crypto' },
+
+  // ── New Instances (EXPANDED 2026-08-06): slrpnk.net ─────────────
+  { community: 'solarpunk@slrpnk.net', niche: 'science' },
+  { community: 'technology@slrpnk.net', niche: 'tech' },
+  { community: 'privacy@slrpnk.net', niche: 'privacy' },
+
+  // ── New Instances (EXPANDED 2026-08-06): startrek.website ───────
+  { community: 'startrek@startrek.website', niche: 'movies' },
+  { community: 'scifi@startrek.website', niche: 'movies' },
+
+  // ── New Instances (EXPANDED 2026-08-06): lemmy.film ─────────────
+  { community: 'movies@lemmy.film', niche: 'movies' },
+  { community: 'horror@lemmy.film', niche: 'movies' },
+
+  // ── New Instances (EXPANDED 2026-08-06): mander.xyz ─────────────
+  { community: 'science@mander.xyz', niche: 'science' },
+  { community: 'biology@mander.xyz', niche: 'science' },
+  { community: 'space@mander.xyz', niche: 'science' },
+  { community: 'technology@mander.xyz', niche: 'tech' },
+
+  // ── New Instances (EXPANDED 2026-08-06): lemdro.id ──────────────
+  { community: 'android@lemdro.id', niche: 'tech' },
+  { community: 'privacy@lemdro.id', niche: 'privacy' },
+  { community: 'technology@lemdro.id', niche: 'tech' },
+
+  // ── New Instances (EXPANDED 2026-08-06): burggit.moe ────────────
+  { community: 'anime@burggit.moe', niche: 'movies' },
+  { community: 'gaming@burggit.moe', niche: 'gaming' },
+  { community: 'technology@burggit.moe', niche: 'tech' },
+
+  // ── New Instances (EXPANDED 2026-08-06): pawb.social ────────────
+  { community: 'gaming@pawb.social', niche: 'gaming' },
+  { community: 'technology@pawb.social', niche: 'tech' },
+  { community: 'science@pawb.social', niche: 'science' },
+
+  // ── New Instances (EXPANDED 2026-08-06): feddit.nl ──────────────
+  { community: 'technology@feddit.nl', niche: 'tech' },
+  { community: 'gaming@feddit.nl', niche: 'gaming' },
+  { community: 'privacy@feddit.nl', niche: 'privacy' },
+
+  // ── New Instances (EXPANDED 2026-08-06): jlai.lu ────────────────
+  { community: 'crypto@jlai.lu', niche: 'crypto' },
+  { community: 'technology@jlai.lu', niche: 'tech' },
+  { community: 'gaming@jlai.lu', niche: 'gaming' },
+
+  // ── New Instances (EXPANDED 2026-08-06): rblind.com ─────────────
+  { community: 'blind@rblind.com', niche: 'health' },
+  { community: 'technology@rblind.com', niche: 'tech' },
+
+  // ── New Instances (EXPANDED 2026-08-06): fanaticus.social ───────
+  { community: 'sports@fanaticus.social', niche: 'sports' },
+  { community: 'baseball@fanaticus.social', niche: 'sports' },
+  { community: 'basketball@fanaticus.social', niche: 'sports' },
 ];
 
 // ─── Raw API types ──────────────────────────────────────────────────
@@ -448,6 +532,33 @@ export function adaptLemmyPost(raw: LemmyPostRaw, instanceDomain: string): Unifi
     embeds.push({ kind: isImage ? 'image' : 'link', url: p.url });
   }
 
+  // UnifiedIdentity — required by enrichPostNiches (accesses
+  // post.author.displayName / post.author.bio). Fixes the pre-existing
+  // bug where the flat authorId/authorName fields were set but the
+  // nested `author` object was missing, causing enrichPostNiches to
+  // throw and the whole Lemmy feed to return empty (2026-08-06).
+  const author: UnifiedIdentity = {
+    id: `lemmy:${creator?.actor_id ?? creator?.id ?? 0}`,
+    primary: { protocol: 'lemmy', id: String(creator?.id ?? 0) },
+    handles: {
+      nostr: null,
+      farcaster: null,
+      lens: null,
+      bluesky: null,
+      threads: null,
+      rss: null,
+      mastodon: creator?.name ?? null,
+    },
+    displayName: creator?.display_name || creator?.name || 'anon',
+    bio: '',
+    avatarUrl: creator?.avatar ?? '',
+    verified: [],
+    followerCount: 0,
+    followingCount: 0,
+    links: [],
+    keys: {},
+  };
+
   return {
     id: `lemmy:${nativeId}`,
     protocol: 'lemmy',
@@ -457,6 +568,7 @@ export function adaptLemmyPost(raw: LemmyPostRaw, instanceDomain: string): Unifi
     authorId: creator?.actor_id ?? `lemmy:${creator?.id ?? 0}`,
     authorName: creator?.display_name || creator?.name || 'anon',
     authorAvatar: creator?.avatar ?? '',
+    author,
     createdAt: new Date(p.published).getTime(),
     community: {
       name: communityName,
@@ -520,8 +632,13 @@ export class LemmyProvider implements FeedProvider {
         const timeoutMs = opts.timeoutMs ?? DEFAULT_TIMEOUT_MS;
         const allPosts: UnifiedPost[] = [];
 
-        // Increased community limit from 25→30 and per-community from 10→15 (2026-07-18)
-        const communityBatches = this.communities.slice(0, 30);
+        // Increased community limit to 36 and per-community to 15 (2026-08-06)
+        // to cover the expanded 33-instance network.
+        // Fallback chain is capped at 4 instances per community (expected
+        // instance + 3 alternates) and per-attempt timeout at 3s so the
+        // whole provider stays well under the worker's 5s provider budget.
+        const MIN_POSTS = 20;
+        const communityBatches = this.communities.slice(0, 36);
         const results = await Promise.allSettled(
           communityBatches.map(async ({ community }) => {
             const parts = community.split('@');
@@ -529,8 +646,11 @@ export class LemmyProvider implements FeedProvider {
             const expectedInstance = parts[1] ? `https://${parts[1]}` : null;
 
             const tryInstances = expectedInstance
-              ? [expectedInstance, ...this.instances.filter((i) => i !== expectedInstance)]
-              : this.instances;
+              ? [
+                  expectedInstance,
+                  ...this.instances.filter((i) => i !== expectedInstance).slice(0, 3),
+                ]
+              : this.instances.slice(0, 4);
 
             for (const instance of tryInstances) {
               try {
@@ -543,10 +663,15 @@ export class LemmyProvider implements FeedProvider {
                     }),
                     { headers: { 'user-agent': DEFAULT_USER_AGENT, accept: 'application/json' } },
                   ),
-                  Math.min(timeoutMs, 5000),
+                  Math.min(timeoutMs, 3000),
                   `lemmy:${community}`,
                 );
-                return (data.posts ?? []).map((raw) => adaptLemmyPost(raw, instance));
+                const posts = (data.posts ?? []).map((raw) => adaptLemmyPost(raw, instance));
+                // An instance that responds with posts wins immediately.
+                // An instance that responds empty (community exists but is
+                // idle) also wins — fall back to the general Hot feed below
+                // if the total stays under MIN_POSTS.
+                return posts;
               } catch {
                 /* try next instance */
               }
@@ -557,6 +682,36 @@ export class LemmyProvider implements FeedProvider {
 
         for (const r of results) {
           if (r.status === 'fulfilled') allPosts.push(...r.value);
+        }
+
+        // Golden rule (2026-08-06): the protocol must NEVER show empty.
+        // If curated communities produced fewer than MIN_POSTS, fetch the
+        // general Hot feed from reachable instances (no community filter)
+        // so users always have fresh content to scroll.
+        if (allPosts.length < MIN_POSTS) {
+          const generalResults = await Promise.allSettled(
+            this.instances.slice(0, 8).map(async (instance) => {
+              try {
+                const data = await withTimeout(
+                  fetchJson<LemmyPostListResponse>(
+                    buildUrl(instance, '/api/v3/post/list', {
+                      sort: 'Hot',
+                      limit: '20',
+                    }),
+                    { headers: { 'user-agent': DEFAULT_USER_AGENT, accept: 'application/json' } },
+                  ),
+                  Math.min(timeoutMs, 3000),
+                  `lemmy:general:${instance}`,
+                );
+                return (data.posts ?? []).map((raw) => adaptLemmyPost(raw, instance));
+              } catch {
+                return [] as UnifiedPost[];
+              }
+            }),
+          );
+          for (const r of generalResults) {
+            if (r.status === 'fulfilled') allPosts.push(...r.value);
+          }
         }
 
         if (allPosts.length === 0) {

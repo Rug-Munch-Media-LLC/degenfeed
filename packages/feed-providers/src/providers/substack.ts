@@ -107,8 +107,8 @@ export function parseSubstackRss(xml: string, baseUrl: string): SubstackFeed {
     items: [],
   };
   const channelImageMatch = channelXml.match(/<image>([\s\S]*?)<\/image>/i);
-  if (channelImageMatch) {
-    feed.image = (extractTag(channelImageMatch[1], 'url') as string) || '';
+  if (channelImageMatch?.[1]) {
+    feed.image = extractTag(channelImageMatch[1], 'url') || '';
   }
 
   const itemRe = /<item([^>]*)>([\s\S]*?)<\/item>/gi;

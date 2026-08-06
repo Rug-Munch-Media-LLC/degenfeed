@@ -211,7 +211,11 @@ const THEME_STYLES = `
     color: var(--fg-tertiary);
     margin-top: 1px;
   }
-  .header-brand svg { flex-shrink: 0; }
+  .header-brand svg {
+    flex-shrink: 0;
+    width: clamp(128px, 20vw, 176px);
+    height: auto;
+  }
   .header-nav { display: flex; align-items: center; gap: 24px; }
   .header-nav a {
     font-size: 14px;
@@ -402,6 +406,74 @@ const THEME_STYLES = `
   .btn-arrow { transition: transform 0.2s; }
   .btn:hover .btn-arrow { transform: translateX(3px); }
 
+  /* ── Protocol logo marquee ── */
+  .protocol-marquee {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 1080px;
+    margin: 56px auto 0;
+    overflow: hidden;
+    -webkit-mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
+    mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
+  }
+  .protocol-marquee-track {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    width: max-content;
+    animation: marquee-scroll 36s linear infinite;
+    will-change: transform;
+  }
+  .protocol-marquee:hover .protocol-marquee-track { animation-play-state: paused; }
+  @keyframes marquee-scroll {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+  }
+  .marquee-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 18px;
+    border: 1px solid var(--border);
+    border-radius: 9999px;
+    background: var(--surface-raised);
+    white-space: nowrap;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--fg-secondary);
+    transition: all 0.2s;
+  }
+  .marquee-item:hover {
+    border-color: var(--accent);
+    color: var(--fg);
+    background: var(--accent-subtle);
+  }
+  .marquee-item-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 6px;
+    flex-shrink: 0;
+  }
+  .marquee-item-name { font-family: var(--font-body); }
+
+  /* ── Fade-in on load (hero) ── */
+  .hero-fade {
+    opacity: 0;
+    animation: heroFadeIn 0.8s ease-out forwards;
+  }
+  @keyframes heroFadeIn {
+    to { opacity: 1; }
+  }
+  .hero-fade-1 { animation-delay: 0.05s; }
+  .hero-fade-2 { animation-delay: 0.15s; }
+  .hero-fade-3 { animation-delay: 0.25s; }
+  .hero-fade-4 { animation-delay: 0.35s; }
+  .hero-fade-5 { animation-delay: 0.5s; }
+
   /* ── Stats bar ── */
   .stats-bar {
     position: relative;
@@ -581,6 +653,16 @@ const THEME_STYLES = `
   .protocol-tile-tag {
     font-size: 11px;
     color: var(--fg-tertiary);
+  }
+  .protocols-more {
+    text-align: center;
+    margin: -56px 0 80px;
+    font-size: 14px;
+    color: var(--fg-tertiary);
+  }
+  .protocols-more::before {
+    content: '✦ ';
+    color: var(--accent);
   }
 
   /* ── How It Works (3-step) ── */
@@ -1081,39 +1163,7 @@ const ICON_FEED = (
     <path d="M8 8h8M8 12h5M8 16h8" />
   </svg>
 );
-const ICON_CROSSPOST = (
-  <svg
-    aria-hidden="true"
-    width="22"
-    height="22"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="1.5"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <path d="M16 3h5v5M21 3l-9 9" />
-    <path d="M19 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h6" />
-  </svg>
-);
-const ICON_VIDEO = (
-  <svg
-    aria-hidden="true"
-    width="22"
-    height="22"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="1.5"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <rect x="2" y="5" width="14" height="14" rx="2" />
-    <path d="M16 10l6-3v10l-6-3v-4z" />
-  </svg>
-);
-const ICON_COIN = (
+const ICON_CLOCK = (
   <svg
     aria-hidden="true"
     width="22"
@@ -1126,7 +1176,40 @@ const ICON_COIN = (
     strokeLinejoin="round"
   >
     <circle cx="12" cy="12" r="9" />
-    <path d="M12 7v10M15 9.5c0-1-1.2-2-3-2s-3 1-3 2 1.2 2 3 2 3 1 3 2-1.2 2-3 2-3-1-3-2" />
+    <path d="M12 7v5l3 2" />
+  </svg>
+);
+const ICON_CODE = (
+  <svg
+    aria-hidden="true"
+    width="22"
+    height="22"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.5"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <path d="M8 6l-6 6 6 6M16 6l6 6-6 6" />
+    <path d="M14 4l-4 16" />
+  </svg>
+);
+const ICON_SERVER = (
+  <svg
+    aria-hidden="true"
+    width="22"
+    height="22"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.5"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <rect x="2" y="3" width="20" height="7" rx="2" />
+    <rect x="2" y="14" width="20" height="7" rx="2" />
+    <path d="M6 6.5h.01M6 17.5h.01" />
   </svg>
 );
 const ICON_STORAGE = (
@@ -1143,37 +1226,6 @@ const ICON_STORAGE = (
   >
     <path d="M22 12h-6l-2 3h-4l-2-3H2" />
     <path d="M5.5 5.1L2 12v6a2 2 0 002 2h16a2 2 0 002-2v-6l-3.5-6.9A2 2 0 0016.7 4H7.3a2 2 0 00-1.8 1.1z" />
-  </svg>
-);
-const ICON_CHAT = (
-  <svg
-    aria-hidden="true"
-    width="22"
-    height="22"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="1.5"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2v10z" />
-  </svg>
-);
-const ICON_NEWS = (
-  <svg
-    aria-hidden="true"
-    width="22"
-    height="22"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="1.5"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <path d="M4 22h16a2 2 0 002-2V4a2 2 0 00-2-2H8a2 2 0 00-2 2v16a2 2 0 01-2 2zm0 0a2 2 0 01-2-2v-9c0-1.1.9-2 2-2h2" />
-    <path d="M18 14h-8M15 18h-5M10 6h8v4h-8V6z" />
   </svg>
 );
 const ICON_WALLET = (
@@ -1232,6 +1284,7 @@ interface Protocol {
   color: string;
   tag: string;
   icon: ReactNode;
+  slug: string;
 }
 
 const PROTOCOLS: Protocol[] = [
@@ -1239,6 +1292,7 @@ const PROTOCOLS: Protocol[] = [
     name: 'Nostr',
     color: '#8e30eb',
     tag: 'Protocol',
+    slug: 'nostr',
     icon: (
       <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
         <path d="M13 2L3 14h7l-1 8 10-12h-7l1-8z" />
@@ -1249,6 +1303,7 @@ const PROTOCOLS: Protocol[] = [
     name: 'Farcaster',
     color: '#8a63d2',
     tag: 'Protocol',
+    slug: 'farcaster',
     icon: (
       <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
         <path d="M12 2c2 0 3 1 3 3v5h4l2 12h-4l-1-6h-1v6h-6v-6H7l-1 6H2L4 10h4V5c0-2 1-3 3-3z" />
@@ -1259,6 +1314,7 @@ const PROTOCOLS: Protocol[] = [
     name: 'Bluesky',
     color: '#1185fe',
     tag: 'AT Protocol',
+    slug: 'bluesky',
     icon: (
       <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
         <path d="M12 10.5c-1.5-3-4.5-5-7-4.5-2.5.5-3.5 3-3 5 .5 2 2 3 3.5 3.5-1.5.5-3 1.5-3.5 3.5-.5 2 .5 4.5 3 5 2.5.5 5.5-1.5 7-4.5 1.5 3 4.5 5 7 4.5 2.5-.5 3.5-3 3-5-.5-2-2-3-3.5-3.5 1.5-.5 3-1.5 3.5-3.5.5-2-.5-4.5-3-5-2.5-.5-5.5 1.5-7 4.5z" />
@@ -1269,6 +1325,7 @@ const PROTOCOLS: Protocol[] = [
     name: 'AT Protocol',
     color: '#0a7cff',
     tag: 'Protocol',
+    slug: 'atproto',
     icon: (
       <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
         <path d="M13 2L3 14h7l-1 8 10-12h-7l1-8z" />
@@ -1279,6 +1336,7 @@ const PROTOCOLS: Protocol[] = [
     name: 'Mastodon',
     color: '#6364ff',
     tag: 'ActivityPub',
+    slug: 'mastodon',
     icon: (
       <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
         <path d="M12 2C7.6 2 4 3.6 4 7.5v8.3c0 1.8.8 3.1 2.4 4 .8.5 2.6 1 4.8 1.1l.2-2.2c-1.4-.2-2.3-.6-2.9-1 .6.6 1.5 1.1 2.7 1.3l.4.1c2.3.3 5.4-.1 7.4-2 1.6-.9 2.4-2.2 2.4-4V7.5C20 3.6 16.4 2 12 2zm5.3 12.2l-2.6-.4c-.2 0-.4.2-.4.4l.1 1.7c0 .2-.2.4-.4.3-2.4-.7-4.4-2.6-4.6-6.1-.1-1.5.9-2.5 2.2-2.5 1.2 0 2.3.8 2.5 2 .2 1.2.2 2.8.2 2.8h3.3s0-1.6.2-2.8c.2-1.2 1.3-2 2.5-2 1.3 0 2.3 1 2.2 2.5-.2 3.5-2.2 5.4-4.6 6.1-.2.1-.4-.1-.4-.3l.1-1.7c.1-.2 0-.4-.3-.4z" />
@@ -1289,6 +1347,7 @@ const PROTOCOLS: Protocol[] = [
     name: 'ActivityPub',
     color: '#7c5cff',
     tag: 'Fediverse',
+    slug: 'activitypub',
     icon: (
       <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
         <path d="M4 6a3 3 0 013-3h10a3 3 0 013 3v7a3 3 0 01-3 3h-4l-5 4v-4H7a3 3 0 01-3-3V6z" />
@@ -1306,6 +1365,7 @@ const PROTOCOLS: Protocol[] = [
     name: 'Lens',
     color: '#abfe2c',
     tag: 'Protocol',
+    slug: 'lens',
     icon: (
       <svg
         aria-hidden="true"
@@ -1327,6 +1387,7 @@ const PROTOCOLS: Protocol[] = [
     name: 'Threads',
     color: '#b8bdc4',
     tag: 'Read-only',
+    slug: 'threads',
     icon: (
       <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
         <path d="M12 2c3 0 5 1.5 5 4v.2c2.5.8 4 2.6 4 5.3 0 3.4-2.4 6-6.5 6.6-2 .3-3.5.2-3.5.2s-.2 2-1.2 2.9c-.5.5-1.1.8-1.7.5-.5-.2-.7-.8-.7-1.5 0-1 .2-2.3.2-3.3-2-.6-3-2.2-3-4.2C4.6 8 7 5.6 10 5.4c1.7-.1 3.2 0 4.4.5-.2-.9-.9-1.6-2-1.6-.8 0-1.4.4-1.8.9L8.5 4.5c.9-1.4 2.2-2.4 4.1-2.5h1.8z" />
@@ -1337,6 +1398,7 @@ const PROTOCOLS: Protocol[] = [
     name: 'Reddit',
     color: '#ff4500',
     tag: 'Read-only',
+    slug: 'reddit',
     icon: (
       <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
         <circle cx="12" cy="13" r="9" />
@@ -1350,6 +1412,7 @@ const PROTOCOLS: Protocol[] = [
     name: 'Minds',
     color: '#25d366',
     tag: 'Read-only',
+    slug: 'minds',
     icon: (
       <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
         <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm0 18a8 8 0 110-16 8 8 0 010 16zm-1-4h2v2h-2v-2zm0-10h2v7h-2V6z" />
@@ -1360,6 +1423,7 @@ const PROTOCOLS: Protocol[] = [
     name: 'RSS',
     color: '#ffa500',
     tag: 'News',
+    slug: 'rss',
     icon: (
       <svg
         aria-hidden="true"
@@ -1382,6 +1446,7 @@ const PROTOCOLS: Protocol[] = [
     name: 'PeerTube',
     color: '#f2690d',
     tag: 'Video',
+    slug: 'peertube',
     icon: (
       <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
         <path d="M8 5v14l11-7L8 5z" />
@@ -1392,6 +1457,7 @@ const PROTOCOLS: Protocol[] = [
     name: 'Owncast',
     color: '#8e30eb',
     tag: 'Video',
+    slug: 'owncast',
     icon: (
       <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
         <path d="M12 2a10 10 0 100 20 10 10 0 000-20zm0 17a7 7 0 110-14 7 7 0 010 14z" />
@@ -1403,6 +1469,7 @@ const PROTOCOLS: Protocol[] = [
     name: 'Lemmy',
     color: '#f2690d',
     tag: 'Community',
+    slug: 'lemmy',
     icon: (
       <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
         <circle cx="12" cy="12" r="10" />
@@ -1414,6 +1481,7 @@ const PROTOCOLS: Protocol[] = [
     name: 'YouTube',
     color: '#ff0000',
     tag: 'Video',
+    slug: 'youtube',
     icon: (
       <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
         <path d="M23 12s0-3.8-.5-5.6c-.3-1-1-1.7-2-2C18.7 4 12 4 12 4s-6.7 0-8.5.4c-1 .3-1.7 1-2 2C1 8.2 1 12 1 12s0 3.8.5 5.6c.3 1 1 1.7 2 2 1.8.4 8.5.4 8.5.4s6.7 0 8.5-.4c-1 .3-1.7 1-2 2z" />
@@ -1425,6 +1493,7 @@ const PROTOCOLS: Protocol[] = [
     name: 'Odysee',
     color: '#ef1970',
     tag: 'Video',
+    slug: 'odysee',
     icon: (
       <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
         <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm-1.2 14.5a5.3 5.3 0 110-10.6 5.3 5.3 0 010 10.6z" />
@@ -1435,6 +1504,7 @@ const PROTOCOLS: Protocol[] = [
     name: 'Rumble',
     color: '#85c742',
     tag: 'Video',
+    slug: 'rumble',
     icon: (
       <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
         <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm4.6 13.5l-5-2.9v-5.2h5l5 2.9-5 5.2z" />
@@ -1445,6 +1515,7 @@ const PROTOCOLS: Protocol[] = [
     name: 'Substack',
     color: '#ff6719',
     tag: 'Newsletter',
+    slug: 'substack',
     icon: (
       <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
         <path d="M4 4h16v2.5H4V4zm0 4.5h16V11H4V8.5zm0 4.5h16v2.5L12 20l-8-4.5V13z" />
@@ -1455,6 +1526,7 @@ const PROTOCOLS: Protocol[] = [
     name: 'Mirror',
     color: '#7c3aed',
     tag: 'Publishing',
+    slug: 'mirror',
     icon: (
       <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
         <path d="M7 2h10a1 1 0 011 1v2H6V3a1 1 0 011-1zM6 8h12v2H6V8zm0 4h12v2H6v-2zm0 4h12v2H6v-2zm0 4h12v2H6v-2z" />
@@ -1465,6 +1537,7 @@ const PROTOCOLS: Protocol[] = [
     name: 'Paragraph',
     color: '#00bfff',
     tag: 'Publishing',
+    slug: 'paragraph',
     icon: (
       <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
         <path d="M8 4h8v2h-3v14h-2V6H8V4z" />
@@ -1484,43 +1557,33 @@ interface Feature {
 const FEATURES: Feature[] = [
   {
     icon: ICON_FEED,
-    title: 'Unified Feed',
-    desc: 'One ranked timeline across Nostr, Farcaster, Bluesky, Mastodon, Lens, Threads, Reddit, Minds, and RSS. Filter by protocol, topic, or creator — no app-hopping, ever.',
-  },
-  {
-    icon: ICON_CROSSPOST,
-    title: 'Cross-Posting',
-    desc: 'Write once, publish everywhere. The composer sends your post to every network you select using each protocol\u2019s native API — and retries partial failures in the background.',
-  },
-  {
-    icon: ICON_VIDEO,
-    title: 'Video Streaming',
-    desc: 'Watch and stream across YouTube, PeerTube, Owncast, Rumble, and Odysee from one interface. Go live and broadcast simultaneously to multiple platforms at once.',
-  },
-  {
-    icon: ICON_COIN,
-    title: 'Creator Coins',
-    desc: 'Launch your own ERC-20 or SPL token with bonding curves, anti-sniping protection, and locked liquidity. Fans buy, hold, and trade your coin to back your work.',
+    title: 'Multi-Protocol Aggregation',
+    desc: 'One ranked timeline across Nostr, Farcaster, Bluesky, Mastodon, Lens, Threads, Reddit, Minds, RSS, PeerTube, and 20+ more networks. Filter by protocol, topic, or creator — no app-hopping, ever.',
   },
   {
     icon: ICON_STORAGE,
-    title: 'Decentralized Storage',
-    desc: 'Media and short clips are pinned to IPFS and Blossom — no centralized CDN, no vanishing uploads. Your content lives on the open network, not in a walled garden.',
+    title: 'Decentralized Infrastructure',
+    desc: 'No single server owns your feed. Media is pinned to IPFS and Blossom, identities stay on their native protocols, and relays are community-run — so no walled garden can pull the plug.',
   },
   {
-    icon: ICON_CHAT,
-    title: 'Multi-Protocol Chat',
-    desc: 'DMs and community rooms that span protocols. A Nostr user and a Mastodon user can talk in the same room, with your keys signing every message client-side.',
+    icon: ICON_CLOCK,
+    title: 'No Algorithms, Chronological',
+    desc: 'Posts arrive in real time, newest first — no engagement-maximizing black box, no shadowbanning, no rage-bait ranking. What you follow is exactly what you see.',
   },
   {
-    icon: ICON_NEWS,
-    title: 'News Aggregation',
-    desc: '248 crypto, DeFi, AI, and tech sources ranked by credibility, recency, and sentiment — with bias ratings and blindspot detection so you see both sides of every story.',
+    icon: ICON_CODE,
+    title: 'Open Source',
+    desc: 'The entire platform is open source (AGPL-3.0). Review every line, audit the ranking, fork it, and contribute — transparency is the point, not a marketing page.',
+  },
+  {
+    icon: ICON_SERVER,
+    title: 'Self-Hostable',
+    desc: 'Run your own instance with a single Docker Compose file. Own the relay, own the cache, own the bridge — your community, your uptime, your rules.',
   },
   {
     icon: ICON_WALLET,
-    title: 'Wallet Integration',
-    desc: 'Sign in with Solana or EVM wallets — no email, no password. Tip creators in ETH, SOL, USDC, or Lightning. Your identity is your wallet, secured by your keys.',
+    title: 'Your Keys, Your Data',
+    desc: 'Sign in with the keys you already own — a Nostr nsec, Farcaster signer, Bluesky account, Mastodon token, or a Solana/EVM wallet. We never sell data, and your keys never leave your browser.',
   },
 ];
 
@@ -1796,40 +1859,20 @@ export default async function LandingPage() {
             <span className="badge badge-outline">Free Forever</span>
           </div>
 
-          <h1 id="hero-title" className="hero-title">
-            All Your Feeds,
+          <h1 id="hero-title" className="hero-title hero-fade hero-fade-1">
+            The Internet,
             <br />
-            <span className="accent">One Place</span>
+            <span className="accent">Unfragmented</span>
           </h1>
 
-          <p className="hero-sub">
-            One free feed for every protocol and every side of the news.
+          <p className="hero-sub hero-fade hero-fade-2">
+            All your feeds. All your platforms. One place.
             <br />
-            Read Nostr, Farcaster, Bluesky, Mastodon, Lens, Threads, Reddit — 18+ networks and 248
-            news sources — then post to all of them at once with the identity you already own.
+            No algorithms. No censorship.
           </p>
 
-          <div className="hero-cta">
-            <Link href="https://app.degenfeed.xyz/feed" className="btn btn-primary">
-              Explore Feeds
-              <svg
-                width="20"
-                height="20"
-                viewBox="0 0 20 20"
-                fill="none"
-                className="btn-arrow"
-                aria-hidden="true"
-              >
-                <path
-                  d="M4 10h12M10 4l6 6-6 6"
-                  stroke="currentColor"
-                  strokeWidth="1.8"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </Link>
-            <Link href="https://app.degenfeed.xyz/register" className="btn btn-secondary">
+          <div className="hero-cta hero-fade hero-fade-3">
+            <Link href="https://app.degenfeed.xyz/register" className="btn btn-primary">
               Get Started
               <svg
                 width="20"
@@ -1848,10 +1891,47 @@ export default async function LandingPage() {
                 />
               </svg>
             </Link>
+            <Link href="https://app.degenfeed.xyz/feed/unified" className="btn btn-secondary">
+              Explore Feeds
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 20 20"
+                fill="none"
+                className="btn-arrow"
+                aria-hidden="true"
+              >
+                <path
+                  d="M4 10h12M10 4l6 6-6 6"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </Link>
+          </div>
+
+          {/* Protocol logo marquee */}
+          <div className="protocol-marquee hero-fade hero-fade-4" aria-label="Supported protocols">
+            <div className="protocol-marquee-track">
+              {[...PROTOCOLS, ...PROTOCOLS].map((p, i) => (
+                <span key={`${p.name}-${i}`} className="marquee-item">
+                  <span
+                    className="marquee-item-icon"
+                    style={{ background: `${p.color}1f`, color: p.color }}
+                    aria-hidden="true"
+                  >
+                    {p.icon}
+                  </span>
+                  <span className="marquee-item-name">{p.name}</span>
+                </span>
+              ))}
+            </div>
           </div>
 
           {/* Stats bar — real counts from bridge health, "—" when unavailable */}
-          <div className="stats-bar">
+          <div className="stats-bar hero-fade hero-fade-5">
             <LandingStats />
           </div>
         </section>
@@ -1864,11 +1944,11 @@ export default async function LandingPage() {
             <span className="section-label-line" aria-hidden="true" />
           </div>
           <h2 id="features-title" className="section-title">
-            Everything You Need, <span className="accent">Nothing You Don&rsquo;t</span>
+            Built for the <span className="accent">Open Web</span>
           </h2>
           <p className="section-sub">
-            The entire open social graph, your identity, and the best news in web3 — unified,
-            transparent, and free to read.
+            Aggregation without the algorithm. Infrastructure you can run yourself. Your keys, your
+            data, your feed — always.
           </p>
           <div className="features-grid">
             {FEATURES.map((f) => (
@@ -1893,11 +1973,15 @@ export default async function LandingPage() {
           </h2>
           <p className="section-sub">
             Read and interact across the entire open social graph from a single interface — 20+
-            networks online right now, and more on the way.
+            protocols and growing, each with its own live feed.
           </p>
           <div className="protocol-grid">
             {PROTOCOLS.map((p) => (
-              <div key={p.name} className="protocol-tile">
+              <Link
+                key={p.name}
+                href={`https://app.degenfeed.xyz/feed/${p.slug}`}
+                className="protocol-tile"
+              >
                 <span
                   className="protocol-tile-icon"
                   style={{ background: `${p.color}1f`, color: p.color }}
@@ -1908,9 +1992,12 @@ export default async function LandingPage() {
                   <div className="protocol-tile-name">{p.name}</div>
                   <div className="protocol-tile-tag">{p.tag}</div>
                 </div>
-              </div>
+              </Link>
             ))}
           </div>
+          <p className="protocols-more">
+            20+ protocols and growing — every feed is live, browsable, and free.
+          </p>
         </section>
 
         {/* ════════════ HOW IT WORKS ════════════ */}

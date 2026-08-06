@@ -309,6 +309,16 @@ export interface Env {
    */
   POSTIZ_INTEGRATIONS?: string;
 
+  // ─── Restreamer (multi-platform RTMP push) ─────────────────────────
+  /** Restreamer API base URL (datarhei core, default http://127.0.0.1:8088) */
+  RESTREAMER_URL?: string;
+  /** Restreamer admin username for JWT login */
+  RS_ADMIN_USER?: string;
+  /** Restreamer admin password for JWT login */
+  RS_ADMIN_PASSWORD?: string;
+  /** Owncast instance URL for live streaming / restream HLS source */
+  OWNCAST_INSTANCE_URL?: string;
+
   // ─── Cross-platform registration ─────────────────────────────────────
   /** KV namespace for storing platform account records */
   PLATFORM_ACCOUNTS?: KVNamespace;

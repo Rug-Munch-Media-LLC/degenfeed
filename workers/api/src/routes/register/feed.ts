@@ -936,6 +936,50 @@ export function registerFeedRoutes(app: Hono<{ Bindings: Env }>): void {
       return serverError(err instanceof Error ? err.message : 'Unknown error');
     }
   });
+
+  // ── API: Shorthand protocol sub-routes (added 2026-08-06) ────────
+  // Convenience aliases: GET /api/feed/{protocol}/popular|newest|trending
+  // mirror the /api/feed/protocol/:protocol/... routes so every protocol
+  // exposes categorized (popular/newest) content out of the box.
+  app.get('/api/feed/:provider/popular', async (c) => {
+    try {
+      const result = await handleProtocolPopular(
+        c.req.raw,
+        c.env,
+        c.req.param('provider'),
+        c.executionCtx,
+      );
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.get('/api/feed/:provider/trending', async (c) => {
+    try {
+      const result = await handleProtocolTrendingRoute(
+        c.req.raw,
+        c.env,
+        c.req.param('provider'),
+        c.executionCtx,
+      );
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.get('/api/feed/:provider/newest', async (c) => {
+    try {
+      const result = await handleProtocolNewest(
+        c.req.raw,
+        c.env,
+        c.req.param('provider'),
+        c.executionCtx,
+      );
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
   app.all('/api/feed/:provider', async (c) => {
     try {
       const result = await handleProviderFeed(c.req.raw, c.env, c.req.param('provider'));

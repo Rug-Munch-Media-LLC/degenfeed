@@ -16,6 +16,12 @@ export const metadata: Metadata = {
     description:
       'Complete release history for the open-source multi-protocol web3 social aggregator.',
   },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'DegenFeed Changelog',
+    description: 'Release history and version notes for the open-source web3 social aggregator.',
+    images: ['https://app.degenfeed.xyz/og-image.png'],
+  },
 };
 
 interface VersionEntry {

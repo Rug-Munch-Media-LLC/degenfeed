@@ -55,13 +55,17 @@ export class MastodonProvider implements FeedProvider {
         const allStatuses: GtSStatus[] = [];
 
         // 0. Trending API — free public endpoint with high-engagement posts.
-        //    Expanded 2026-07-18: 45+ instances across Mastodon, Pleroma, Misskey.
+        //    Expanded 2026-08-06: 150+ verified instances across Mastodon,
+        //    Pleroma, Misskey. Fetched with a concurrency limit so the
+        //    enlarged instance pool doesn't hammer the network at once.
         const trendingStart = performance.now();
-        const trendingResults = await Promise.allSettled(
-          TRENDING_INSTANCES.map((inst) => {
+        const trendingResults = await withConcurrencyLimit(
+          TRENDING_INSTANCES,
+          12,
+          async (inst) => {
             const healthAdjWeight = instanceHealthScore(inst.url, inst.weight);
             // Skip instances that have proven unhealthy
-            if (healthAdjWeight < 0.2) return Promise.resolve([] as GtSStatus[]);
+            if (healthAdjWeight < 0.2) return [] as GtSStatus[];
 
             const isMisskey = inst.software === 'misskey' || inst.software === 'firefish';
             const fetcher = isMisskey
@@ -71,26 +75,22 @@ export class MastodonProvider implements FeedProvider {
                   { headers: { 'user-agent': DEFAULT_USER_AGENT } },
                 );
 
-            return withTimeout(
-              fetcher,
-              Math.min(timeoutMs, 4000),
-              `fediverse:trending:${inst.label}`,
-            )
-              .then((result) => {
-                const latency = performance.now() - trendingStart;
-                recordInstanceSuccess(inst.url, latency);
-                return result;
-              })
-              .catch(() => {
-                recordInstanceFailure(inst.url);
-                return [] as GtSStatus[];
-              });
-          }),
+            try {
+              const result = await withTimeout(
+                fetcher,
+                Math.min(timeoutMs, 4000),
+                `fediverse:trending:${inst.label}`,
+              );
+              recordInstanceSuccess(inst.url, performance.now() - trendingStart);
+              return result;
+            } catch {
+              recordInstanceFailure(inst.url);
+              return [] as GtSStatus[];
+            }
+          },
         );
-        for (const r of trendingResults) {
-          if (r.status === 'fulfilled' && Array.isArray(r.value)) {
-            allStatuses.push(...r.value);
-          }
+        for (const statuses of trendingResults) {
+          if (Array.isArray(statuses)) allStatuses.push(...statuses);
         }
 
         // 1. Misskey/Firefish instances: also try local timeline for fresh content
@@ -191,7 +191,13 @@ export class MastodonProvider implements FeedProvider {
           return true;
         });
 
-        // 6. Content relevance filtering — keep only crypto/tech/web3 posts
+        // 6. Content relevance filtering — keep only crypto/tech/web3 posts.
+        //    Golden rule (2026-08-06): the protocol must NEVER show empty.
+        //    If the relevance filter leaves fewer than MIN_POSTS, we fill
+        //    with the highest-engagement posts from the full pool so users
+        //    always have fresh content to scroll, even when niche content
+        //    is sparse on a given instance.
+        const MIN_POSTS = 20;
         const relevanceFiltered = unique.filter((s) => {
           const text = s.content ?? '';
           const tags = (s.tags ?? []).map((t) => t.name);
@@ -200,6 +206,23 @@ export class MastodonProvider implements FeedProvider {
           (s as unknown as Record<string, unknown>)._fediverseRelevance = relevance;
           return relevance >= RELEVANCE_THRESHOLD;
         });
+
+        let finalPool = relevanceFiltered;
+        let fillCount = 0;
+        if (finalPool.length < MIN_POSTS && unique.length > finalPool.length) {
+          const needed = MIN_POSTS - finalPool.length;
+          const inFilter = new Set(relevanceFiltered);
+          const engagementFill = unique
+            .filter((s) => !inFilter.has(s))
+            .sort((a, b) => {
+              const engagementA = a.favourites_count + a.reblogs_count * 2 + a.replies_count;
+              const engagementB = b.favourites_count + b.reblogs_count * 2 + b.replies_count;
+              return engagementB - engagementA;
+            })
+            .slice(0, needed);
+          fillCount = engagementFill.length;
+          finalPool = [...relevanceFiltered, ...engagementFill];
+        }
 
         // 7. Detect fediverse software for each instance for proper badge
         const instanceToSoftware = new Map<string, FediverseSoftware>();
@@ -228,7 +251,7 @@ export class MastodonProvider implements FeedProvider {
           return endpoints[0] ?? this.primaryUrl;
         };
 
-        const posts = relevanceFiltered.map((s) => {
+        const posts = finalPool.map((s) => {
           const post = statusToUnifiedPost(s, pickInstance(s.account.acct));
           // Stamp fediverse software type on raw for badge rendering
           const hostname = pickInstance(s.account.acct);
@@ -239,7 +262,7 @@ export class MastodonProvider implements FeedProvider {
 
         return {
           posts,
-          notice: `Fediverse: ${posts.length} posts from ${instanceHealth.size} instances (${relevanceFiltered.length} after relevance filter)`,
+          notice: `Fediverse: ${posts.length} posts from ${instanceHealth.size} instances (${relevanceFiltered.length} relevant${fillCount > 0 ? ` + ${fillCount} popular fill` : ''})`,
         };
       });
     } catch (err) {

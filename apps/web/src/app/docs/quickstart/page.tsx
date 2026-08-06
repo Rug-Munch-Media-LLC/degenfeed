@@ -17,6 +17,12 @@ export const metadata: Metadata = {
     title: 'DegenFeed Quickstart',
     description: 'Get up and running with DegenFeed in 5 minutes.',
   },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'DegenFeed Quickstart',
+    description: 'Get up and running with DegenFeed in 5 minutes.',
+    images: ['https://app.degenfeed.xyz/og-image.png'],
+  },
 };
 
 export default function QuickstartPage() {
