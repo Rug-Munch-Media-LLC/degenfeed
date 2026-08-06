@@ -18,6 +18,12 @@ export const metadata: Metadata = {
     title: 'DegenFeed API Reference',
     description: 'Complete API documentation with code examples in JavaScript, Python, and curl.',
   },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'DegenFeed API Reference',
+    description: 'Complete API documentation with code examples in JavaScript, Python, and curl.',
+    images: ['https://app.degenfeed.xyz/og-image.png'],
+  },
 };
 
 const feedEndpoints = [

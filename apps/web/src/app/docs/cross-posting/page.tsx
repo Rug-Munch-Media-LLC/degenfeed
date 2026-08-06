@@ -21,17 +21,17 @@ export const metadata: Metadata = {
     'degenfeed cross posting guide',
     'web3 social publishing',
   ],
-  alternates: { canonical: 'https://degenfeed.xyz/docs/cross-posting' },
+  alternates: { canonical: 'https://app.degenfeed.xyz/docs/cross-posting' },
   openGraph: {
     title: 'Cross-Posting Guide — DegenFeed',
     description:
       'Publish one post to Nostr, Farcaster, Bluesky, Mastodon, and more at once. Free, decentralized, no vendor lock-in.',
-    url: 'https://degenfeed.xyz/docs/cross-posting',
+    url: 'https://app.degenfeed.xyz/docs/cross-posting',
     siteName: 'DegenFeed',
     type: 'website',
     images: [
       {
-        url: 'https://degenfeed.xyz/og-image.png',
+        url: 'https://app.degenfeed.xyz/og-image.png',
         width: 1200,
         height: 630,
         alt: 'DegenFeed Cross-Posting Guide',
@@ -42,7 +42,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'Cross-Posting Guide — DegenFeed',
     description: 'Publish one post to Nostr, Farcaster, Bluesky, Mastodon, and more at once.',
-    images: ['https://degenfeed.xyz/og-image.png'],
+    images: ['https://app.degenfeed.xyz/og-image.png'],
   },
 };
 

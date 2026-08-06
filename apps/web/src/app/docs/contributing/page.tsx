@@ -18,6 +18,12 @@ export const metadata: Metadata = {
     description:
       'Guide for contributors to DegenFeed — the open-source multi-protocol web3 social aggregator.',
   },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Contributing to DegenFeed',
+    description: 'Development setup, code style, PR process, and testing guide for contributors.',
+    images: ['https://app.degenfeed.xyz/og-image.png'],
+  },
 };
 
 export default function ContributingPage() {

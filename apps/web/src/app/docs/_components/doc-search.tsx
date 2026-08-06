@@ -54,6 +54,29 @@ const searchIndex: { title: string; href: string; section: string; content: stri
     content: 'Send a crypto tip to a creator. Supports ETH, SOL, USDC, and Lightning Network zaps.',
   },
 
+  // Federation
+  {
+    title: 'How Federation Works',
+    href: '/docs#federation',
+    section: 'DegenFeed',
+    content:
+      'How DegenFeed reads federated networks: ActivityPub (Mastodon, Lemmy, PeerTube), AT Protocol (Bluesky), Nostr relays, Farcaster Hubs, and Lens on-chain.',
+  },
+  {
+    title: 'Connect Existing Accounts',
+    href: '/docs/user-guide#protocol-linking',
+    section: 'User Guide',
+    content:
+      'Connect your existing Nostr, Farcaster, Lens, Bluesky, or Mastodon accounts. Settings → Connected Accounts.',
+  },
+  {
+    title: 'DegenFeed Connect — External Platforms',
+    href: '/connect',
+    section: 'Connect',
+    content:
+      'Post and schedule to YouTube, Twitch, Kick, TikTok, Instagram, and LinkedIn. Powered by Postiz OAuth.',
+  },
+
   // API Reference
   {
     title: 'API Reference',
@@ -392,22 +415,22 @@ const searchIndex: { title: string; href: string; section: string; content: stri
   // Self-hosting / landing page sections
   {
     title: 'Ranking Algorithm',
-    href: '/docs#ranking',
-    section: 'DegenFeed',
+    href: '/docs/architecture#ranking',
+    section: 'Architecture',
     content:
       'Transparent 7-factor ranking algorithm. Recency, engagement, relevance, quality, diversity, source, velocity.',
   },
   {
     title: 'Self-Hosting',
-    href: '/docs#self-hosting',
-    section: 'DegenFeed',
+    href: '/docs/architecture#deployment',
+    section: 'Architecture',
     content: 'Self-host DegenFeed. MIT licensed. Cloudflare Pages and Workers deployment.',
   },
   {
-    title: 'Environment Variables',
-    href: '/docs#env',
-    section: 'DegenFeed',
-    content: 'Environment variables configuration. AUTH_SECRET, RELAY_URLS, API keys.',
+    title: 'Deployment & CI/CD',
+    href: '/docs/architecture#ci-cd',
+    section: 'Architecture',
+    content: 'Deployment pipelines, environment variables configuration, CI/CD workflow.',
   },
 ];
 

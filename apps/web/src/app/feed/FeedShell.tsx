@@ -23,6 +23,7 @@ import {
   type ProtocolCategory,
   SIDEBAR_ORDER,
 } from '../../components/feed/feed-protocols';
+import { setLastProtocol } from '../../lib/protocolPreference';
 
 // Bottom-sheet protocol picker — only needed when the user taps "More" on
 // mobile. Lazy so the ~195-line sheet (and its imports) stays out of the

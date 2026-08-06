@@ -211,8 +211,9 @@ BRIDGE_INTERNAL_URL = "https://bridge.degenfeed.xyz"
 # Feature flags — comma-separated list of flags that should default to enabled
 FEATURE_FLAGS_DEFAULT = "reply-composer,dark-mode-only,farcaster-frames"
 # Postiz cross-posting API — for scheduled social media publishing
-# DEV ONLY — override via wrangler secret put for production
-POSTIZ_BASE_URL = "http://127.0.0.1:3105"
+# Public URL: schedule.degenfeed.xyz routes /api/ to the Postiz backend.
+# NOTE: workers cannot reach 127.0.0.1:3105 — must use the public host.
+POSTIZ_BASE_URL = "https://schedule.degenfeed.xyz/api"
 POSTIZ_API_KEY = "${POSTIZ_API_KEY}"
 POSTIZ_INTEGRATIONS = ""
 
@@ -220,6 +221,20 @@ POSTIZ_INTEGRATIONS = ""
 PEERTUBE_INSTANCE_URL = "https://video.degenfeed.xyz"
 PEERTUBE_CLIENT_ID = ""
 PEERTUBE_CLIENT_SECRET = ""
+
+# Restreamer (datarhei) — multi-platform RTMP push orchestration.
+# The worker triggers Restreamer through the bridge service (bridge.degenfeed.xyz)
+# which runs on the same host as Restreamer (127.0.0.1:8088). RESTREAMER_URL is
+# used for direct access in local dev only.
+RESTREAMER_URL = "http://127.0.0.1:8088"
+RS_ADMIN_USER = ""
+RS_ADMIN_PASSWORD = ""
+# Bridge API key for authenticated worker→bridge calls.
+# Override in production via "wrangler secret put BRIDGE_API_KEY".
+BRIDGE_API_KEY = ""
+
+# Owncast instance for live streaming
+OWNCAST_INSTANCE_URL = "https://owncast.degenfeed.xyz"
 
 # Telegram bot for OAuth + livestream notifications
 TELEGRAM_BOT_NAME = ""

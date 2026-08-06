@@ -399,6 +399,34 @@ app.post('/api/external/standalone/subscribe', async (c) =>
 );
 
 // ═══════════════════════════════════════════════════════════════════════════
+// POSTIZ SCHEDULING ROUTES
+// ═══════════════════════════════════════════════════════════════════════════
+
+import {
+  handlePostizAnalytics,
+  handlePostizCancel,
+  handlePostizIntegrations,
+  handlePostizSchedule,
+  handlePostizSchedules,
+  handlePostizStatus,
+} from './routes/postiz';
+
+// GET  /api/postiz/schedules — upcoming scheduled posts for current user
+app.get('/api/postiz/schedules', async (c) => handlePostizSchedules(c.req.raw, c.env));
+// POST /api/postiz/schedule — schedule a cross-platform post
+app.post('/api/postiz/schedule', async (c) => handlePostizSchedule(c.req.raw, c.env));
+// GET  /api/postiz/analytics — post performance analytics
+app.get('/api/postiz/analytics', async (c) => handlePostizAnalytics(c.req.raw, c.env));
+// GET  /api/postiz/integrations — list connected Postiz channels
+app.get('/api/postiz/integrations', async (c) => handlePostizIntegrations(c.req.raw, c.env));
+// GET  /api/postiz/status — Postiz connection + access status
+app.get('/api/postiz/status', async (c) => handlePostizStatus(c.req.raw, c.env));
+// DELETE /api/postiz/schedules/:id — cancel a scheduled post
+app.delete('/api/postiz/schedules/:id', async (c) =>
+  handlePostizCancel(c.req.raw, c.env, c.req.param('id')),
+);
+
+// ═══════════════════════════════════════════════════════════════════════════
 // BRIDGY FED BRIDGE ROUTES
 // ═══════════════════════════════════════════════════════════════════════════
 

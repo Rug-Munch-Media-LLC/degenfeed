@@ -9,10 +9,12 @@ export const revalidate = 86400;
 export const metadata: Metadata = {
   title: 'Documentation — DegenFeed Web3 Social Platform',
   description:
-    'Complete documentation for DegenFeed: API reference, protocol integration guides, self-hosting setup, architecture overview, user guides, creator monetization guide, and developer SDKs.',
+    'Complete documentation for DegenFeed: quickstart guide, user guide, cross-posting, video streaming, API reference, protocol integration, architecture, and troubleshooting. Learn how federation works and how to connect your accounts.',
   keywords: [
     'degenfeed docs',
     'web3 social platform documentation',
+    'how federation works',
+    'connect nostr farcaster lens bluesky',
     'nostr farcaster lens integration guide',
     'decentralized social media setup',
     'self-host social aggregator',
@@ -23,7 +25,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'DegenFeed Documentation — API, Guides & Self-Hosting',
     description:
-      'Complete documentation: API reference, protocol guides, user manual, creator monetization, and self-hosting setup.',
+      'Complete documentation: quickstart, user guide, API reference, protocol guides, federation, cross-posting, and self-hosting setup.',
     url: 'https://app.degenfeed.xyz/docs',
     siteName: 'DegenFeed',
     type: 'website',
@@ -86,7 +88,11 @@ const popularTopics = [
     href: '/docs/user-guide#cross-protocol-posting',
     desc: 'Post to multiple networks at once',
   },
-  { title: 'Ranking Algorithm', href: '/docs#ranking', desc: 'How posts are scored and ranked' },
+  {
+    title: 'Ranking Algorithm',
+    href: '/docs/architecture#ranking',
+    desc: 'How posts are scored and ranked',
+  },
   {
     title: 'Nostr Integration',
     href: '/docs/protocols#nostr',
@@ -107,7 +113,16 @@ const popularTopics = [
     href: '/docs/quickstart#tip-creator',
     desc: 'ETH, SOL, USDC, Lightning',
   },
-  { title: 'Self-Hosting', href: '/docs#self-hosting', desc: 'Run your own DegenFeed instance' },
+  {
+    title: 'Self-Hosting',
+    href: '/docs/architecture#deployment',
+    desc: 'Run your own DegenFeed instance',
+  },
+  {
+    title: 'How Federation Works',
+    href: '/docs#federation',
+    desc: 'Nostr, ActivityPub, AT Protocol',
+  },
 ];
 
 const changelogItems = [
@@ -140,14 +155,15 @@ export default function DocsLandingPage() {
         <div className="mb-3 flex items-center gap-2">
           <Badge color="green">v0.2.0</Badge>
           <Badge>MIT Licensed</Badge>
-          <Badge color="purple">10 Protocols</Badge>
+          <Badge color="purple">18+ Networks</Badge>
         </div>
         <h1 className="text-4xl font-bold tracking-tight text-[var(--color-fg)] lg:text-5xl">
           DegenFeed Documentation
         </h1>
         <p className="mt-3 max-w-2xl text-base leading-relaxed text-[var(--color-muted)]">
           DegenFeed is an open-source multi-protocol social aggregator for web3. It pulls public
-          posts from 10 decentralized and federated networks into one unified, ranked timeline.
+          posts from 18+ decentralized and federated networks into one unified, ranked timeline —
+          plus 248 bias-rated news sources.
         </p>
         {/* Search */}
         <div className="mt-6 max-w-xl">
@@ -191,6 +207,65 @@ export default function DocsLandingPage() {
             </Link>
           ))}
         </div>
+      </section>
+
+      {/* How Federation Works */}
+      <section id="federation" className="mb-12 scroll-mt-20">
+        <h2 className="mb-4 text-lg font-semibold text-[var(--color-fg)]">How Federation Works</h2>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="rounded-lg border border-[var(--color-glass-border)] bg-white/[0.02] p-5">
+            <h3 className="mb-2 text-sm font-semibold text-[var(--color-fg)]">
+              Federated (ActivityPub &amp; AT Protocol)
+            </h3>
+            <p className="text-xs leading-relaxed text-[var(--color-muted)]">
+              Networks like Mastodon, Lemmy, PeerTube, Pixelfed, and Bluesky are federated:
+              thousands of independent servers (instances / PDSes) talk to each other using open
+              standards (ActivityPub / AT Protocol). DegenFeed connects to public instances
+              directly, so you read posts from the whole network — not just one server.
+            </p>
+          </div>
+          <div className="rounded-lg border border-[var(--color-glass-border)] bg-white/[0.02] p-5">
+            <h3 className="mb-2 text-sm font-semibold text-[var(--color-fg)]">
+              Relay-Based (Nostr)
+            </h3>
+            <p className="text-xs leading-relaxed text-[var(--color-muted)]">
+              Nostr works differently: anyone can run a relay, and clients talk to many relays at
+              once. DegenFeed maintains a pool of public relays for redundancy, so your feed stays
+              live even if individual relays go down.
+            </p>
+          </div>
+          <div className="rounded-lg border border-[var(--color-glass-border)] bg-white/[0.02] p-5">
+            <h3 className="mb-2 text-sm font-semibold text-[var(--color-fg)]">
+              Hub-Based (Farcaster) &amp; On-Chain (Lens)
+            </h3>
+            <p className="text-xs leading-relaxed text-[var(--color-muted)]">
+              Farcaster is coordinated by a network of Hubs that replicate the entire social graph,
+              while Lens stores profile and publication data on-chain via Polygon. DegenFeed reads
+              from public Hubs and the Lens GraphQL API.
+            </p>
+          </div>
+          <div className="rounded-lg border border-[var(--color-glass-border)] bg-white/[0.02] p-5">
+            <h3 className="mb-2 text-sm font-semibold text-[var(--color-fg)]">
+              Aggregated (RSS, YouTube, Reddit)
+            </h3>
+            <p className="text-xs leading-relaxed text-[var(--color-muted)]">
+              Traditional open sources — RSS/Atom feeds, YouTube channels, and Reddit subreddits —
+              are normalized into the same timeline, so web2 and web3 content sit side by side in
+              one ranked feed.
+            </p>
+          </div>
+        </div>
+        <p className="mt-4 text-xs text-[var(--color-muted)]">
+          Want the deep dive? See{' '}
+          <Link href="/docs/architecture" className="text-degen-400 hover:underline">
+            System Architecture
+          </Link>{' '}
+          for data flow and infrastructure, or{' '}
+          <Link href="/docs/protocols" className="text-degen-400 hover:underline">
+            Protocol Integration
+          </Link>{' '}
+          for per-protocol details.
+        </p>
       </section>
 
       {/* What's New */}
@@ -244,8 +319,20 @@ export default function DocsLandingPage() {
             {
               title: 'System Architecture',
               href: '/docs/architecture',
-              desc: 'Data flow, KV schema, deployment',
+              desc: 'Data flow, federation, KV schema, deployment',
               color: 'border-l-green-500',
+            },
+            {
+              title: 'Video Streaming',
+              href: '/docs/video',
+              desc: 'Watch, go live, multi-protocol distribution',
+              color: 'border-l-cyan-500',
+            },
+            {
+              title: 'Connect External Platforms',
+              href: '/connect',
+              desc: 'Post & schedule to YouTube, Twitch, TikTok, LinkedIn',
+              color: 'border-l-pink-500',
             },
             {
               title: 'Contributing Guide',
@@ -289,7 +376,7 @@ export default function DocsLandingPage() {
         <p className="text-xs text-[var(--color-muted)]">
           DegenFeed is a product of{' '}
           <strong className="text-[var(--color-muted)]">Rug Munch Media LLC</strong>. MIT Licensed.
-          Built on open protocols. 10 networks. One window.
+          Built on open protocols. 18+ networks. One window.
         </p>
       </div>
     </div>

@@ -65,6 +65,8 @@ const THEME_BOOTSTRAP_SCRIPT = [
 
 export const metadata: Metadata = {
   manifest: '/manifest.json',
+  applicationName: 'DegenFeed',
+  category: 'social',
   icons: {
     icon: '/icon.svg',
     shortcut: '/favicon.ico',
@@ -76,7 +78,7 @@ export const metadata: Metadata = {
     template: '%s — DegenFeed',
   },
   description:
-    'One feed for the entire open social graph. Read Nostr, Farcaster, Lens, Bluesky, Mastodon, Threads, Reddit and 18+ more networks — then cross-post to all of them at once. Bias-rated news, creator coins, video streaming. No sign-up required.',
+    'One feed for the open social graph. Read Nostr, Farcaster, Lens, Bluesky, Mastodon and 18+ networks, then cross-post to all of them at once. Bias-rated news, creator coins, no sign-up.',
   keywords: [
     'web3 social media',
     'decentralized social network',

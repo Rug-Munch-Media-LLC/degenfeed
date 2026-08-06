@@ -36,18 +36,45 @@ export const BSKY_APPVIEW_FALLBACKS = [
  * `app.bsky.feed.getFeed`. Each entry is an AT-URI of the form
  * `at://<did>/app.bsky.feed.generator/<record_key>`.
  *
- * - `whats-hot` is Bluesky's official "What's Hot" / Discover algorithm
- *   (creator: bsky.app, did:plc:z72i7hdynmk6r22z27h6tvur).
- * - `video-feed` is Bluesky's official short-form video feed
- *   (creator: bsky.app, did:plc:z72i7hd5jnv5a7j5l3s5j3xh).
+ * All official feeds below are owned by bsky.app
+ * (did:plc:z72i7hdynmk6r22z27h6tvur), resolved 2026-08-06 via
+ * `app.bsky.feed.getActorFeeds?actor=bsky.app`:
+ *
+ * - `whats-hot`     — "Discover" (official, public)
+ * - `hot-classic`   — "What's Hot Classic" (official, public)
+ * - `bsky-team`     — posts from Bluesky team members (official, public)
+ * - `thevids`       — trending short-form video feed (official; replaces
+ *   the old `video-feed` record key which now returns 400)
+ * - `with-friends`  — "Popular With Friends" (personalized — requires a
+ *   session; skipped gracefully when no accessJwt is available)
+ * - `mutuals`       — "Mutuals" (personalized — requires a session)
+ * - `best-of-follows` — "Best of Follows" (personalized — requires a session)
  *
  * Operators can pass additional crypto/tech feed generator AT-URIs via
  * `BlueskyProviderOptions.feedUris`.
  */
 export const CURATED_BSKY_FEEDS = [
   'at://did:plc:z72i7hdynmk6r22z27h6tvur/app.bsky.feed.generator/whats-hot',
-  'at://did:plc:z72i7hd5jnv5a7j5l3s5j3xh/app.bsky.feed.generator/video-feed',
+  'at://did:plc:z72i7hdynmk6r22z27h6tvur/app.bsky.feed.generator/hot-classic',
+  'at://did:plc:z72i7hdynmk6r22z27h6tvur/app.bsky.feed.generator/bsky-team',
+  'at://did:plc:z72i7hdynmk6r22z27h6tvur/app.bsky.feed.generator/thevids',
+  'at://did:plc:z72i7hdynmk6r22z27h6tvur/app.bsky.feed.generator/with-friends',
+  'at://did:plc:z72i7hdynmk6r22z27h6tvur/app.bsky.feed.generator/mutuals',
+  'at://did:plc:z72i7hdynmk6r22z27h6tvur/app.bsky.feed.generator/best-of-follows',
 ];
+
+/**
+ * ATProto relay / trending content.
+ *
+ * The official `trending.bsky.app` actor publishes one feed generator
+ * per live trending topic (resolved via `app.bsky.unspecced
+ * .getTrendingTopics`). Each topic's `link` points at
+ * `/profile/trending.bsky.app/feed/<recordKey>`, which we convert into
+ * an AT-URI and fetch via `app.bsky.feed.getFeed`. This gives us a
+ * dynamic, always-fresh source of the most popular posts network-wide
+ * (ATProto relay content), independent of keyword searches.
+ */
+export const BSKY_TRENDING_ACTOR_DID = 'did:plc:qrz3lhbyuxbeilrc6nekdqme';
 
 export const CURATED_BSKY_ACTORS = [
   'jay.bsky.social',
@@ -233,6 +260,54 @@ async function fetchFeedGenerator(
   return (data.feed ?? []).map((f) => f.post);
 }
 
+/**
+ * Fetch the currently trending posts from the ATProto network.
+ *
+ * Resolves live trending topics via `app.bsky.unspecced.getTrendingTopics`,
+ * converts each topic's `/profile/trending.bsky.app/feed/<recordKey>` link
+ * into an AT-URI, then fetches up to 2 trending feed generators. This
+ * surfaces the most popular posts network-wide right now (relay content),
+ * independent of our crypto keyword searches.
+ */
+async function fetchTrendingFeedPosts(
+  baseUrl: string,
+  limit: number,
+  accessJwt?: string,
+): Promise<BskyPostView[]> {
+  const topicsUrl = buildUrl(baseUrl, '/xrpc/app.bsky.unspecced.getTrendingTopics', {
+    limit: '8',
+  });
+  const headers: Record<string, string> = {};
+  if (accessJwt) headers.authorization = `Bearer ${accessJwt}`;
+  const topics = await fetchJson<{ topics?: Array<{ topic?: string; link?: string }> }>(topicsUrl, {
+    headers,
+  });
+
+  const feedUris = (topics.topics ?? [])
+    .map((t) => t.link ?? '')
+    .filter((link) => /\/profile\/trending\.bsky\.app\/feed\/[A-Za-z0-9]+$/.test(link))
+    .slice(0, 2)
+    .map((link) => {
+      const recordKey = link.split('/').pop() ?? '';
+      return `at://${BSKY_TRENDING_ACTOR_DID}/app.bsky.feed.generator/${recordKey}`;
+    });
+
+  if (feedUris.length === 0) return [];
+
+  const results = await withConcurrencyLimit(
+    feedUris,
+    2,
+    async (feedUri) => {
+      try {
+        return await fetchFeedGenerator(baseUrl, feedUri, Math.max(5, Math.ceil(limit / 2)), accessJwt);
+      } catch {
+        return [] as BskyPostView[];
+      }
+    },
+  );
+  return results.flat().filter((p): p is BskyPostView => Boolean(p));
+}
+
 export interface BlueskyProviderOptions {
   baseUrl?: string;
   fallbackUrl?: string;
@@ -310,7 +385,7 @@ export class BlueskyProvider implements FeedProvider {
 
       // 2. Feed generators (What's Hot + curated feeds) — new 2026-08-06
       const feedResults = await withConcurrencyLimit(
-        this.feedUris.slice(0, 4),
+        this.feedUris.slice(0, 6),
         2,
         async (feedUri) => {
           try {
@@ -327,6 +402,22 @@ export class BlueskyProvider implements FeedProvider {
         },
       );
       for (const r of feedResults) all.push(...r);
+
+      // 2.5. ATProto relay / trending topics (new 2026-08-06) — dynamic
+      //      trending feed generators from trending.bsky.app. Always
+      //      best-effort: failures never block the main feed.
+      try {
+        const trendingPosts = await withTimeout(
+          this.withFallback((baseUrl) =>
+            fetchTrendingFeedPosts(baseUrl, Math.max(5, Math.ceil(limit / 3)), this.accessJwt),
+          ),
+          timeoutMs,
+          'bluesky:trending-topics',
+        );
+        all.push(...trendingPosts);
+      } catch {
+        /* best-effort */
+      }
 
       // 3. Curated actors (only if we still need more posts)
       if (all.length < limit / 2) {

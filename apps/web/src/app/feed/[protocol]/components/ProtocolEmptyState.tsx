@@ -4,8 +4,10 @@
  * @degenfeed/web — ProtocolEmptyState
  *
  * Protocol-specific empty states with CTAs for the /feed/[protocol] pages.
- * Each protocol gets honest, actionable copy: what's missing, how to fix it,
- * and a relevant call-to-action.
+ * Every empty feed offers:
+ *  - "No posts yet" headline with honest, protocol-flavored copy
+ *  - a "Try refreshing" button
+ *  - a "Browse popular instead" link to /feed/{protocol}/popular
  */
 
 import Link from 'next/link';
@@ -27,25 +29,25 @@ interface EmptyCopy {
 const EMPTY_COPY: Record<string, EmptyCopy> = {
   nostr: {
     icon: '⚡',
-    title: 'No Nostr notes found',
+    title: 'No Nostr notes yet',
     body: 'No notes from connected relays right now. Follow some npubs or connect your nsec to see your feed.',
     cta: { label: 'Connect Nostr', href: '/settings?tab=nostr' },
   },
   farcaster: {
     icon: '◈',
-    title: 'No Farcaster casts',
+    title: 'No Farcaster casts yet',
     body: 'The Farcaster feed is quiet while Hubble syncs. Link your FID to see your feed.',
     cta: { label: 'Link your FID', href: '/settings?tab=farcaster' },
   },
   bluesky: {
     icon: '☁',
-    title: 'No Bluesky posts',
+    title: 'No Bluesky posts yet',
     body: 'Nothing from the AT Protocol right now. Follow some handles or connect your Bluesky account.',
     cta: { label: 'Connect Bluesky', href: '/settings?tab=bluesky' },
   },
   lens: {
     icon: '◎',
-    title: 'No Lens publications',
+    title: 'No Lens publications yet',
     body: 'The Lens graph is quiet here. Follow profiles or connect your Lens profile to see publications.',
     cta: { label: 'Connect Lens', href: '/settings?tab=lens' },
   },
@@ -57,19 +59,19 @@ const EMPTY_COPY: Record<string, EmptyCopy> = {
   },
   lemmy: {
     icon: '🗣',
-    title: 'No Lemmy posts',
+    title: 'No Lemmy posts yet',
     body: 'No posts from connected Lemmy instances. Browse communities to find discussions.',
     cta: { label: 'Browse communities', href: '/communities' },
   },
   reddit: {
     icon: '🔴',
-    title: 'No Reddit posts',
+    title: 'No Reddit posts yet',
     body: 'Reddit data is currently unavailable — the Redlib instance may be down or rate-limited. Try again in a moment.',
     cta: { label: 'Retry', href: '' },
   },
   rss: {
     icon: '📰',
-    title: 'No articles right now',
+    title: 'No articles yet',
     body: 'No RSS articles from your sources at the moment. New stories arrive every hour — this feed fills up fast.',
   },
 };
@@ -78,7 +80,7 @@ export function ProtocolEmptyState({ protocol, sort, onRetry }: ProtocolEmptySta
   const info = getProtocolInfo(protocol);
   const copy = EMPTY_COPY[protocol] ?? {
     icon: info.icon,
-    title: `No ${info.label} posts found`,
+    title: `No ${info.label} posts yet`,
     body: `No ${sort === 'videos' ? 'media' : ''} posts from this protocol right now. Try a different sort order or check back later.`,
     cta: { label: 'Retry', href: '' },
   };
@@ -99,14 +101,17 @@ export function ProtocolEmptyState({ protocol, sort, onRetry }: ProtocolEmptySta
       <h3 className="mb-1 text-base font-bold" style={{ color: info.color }}>
         {copy.title}
       </h3>
-      <p className="mx-auto max-w-xs text-sm text-[var(--color-muted)]">{copy.body}</p>
-      <div className="mt-4 flex flex-wrap items-center justify-center gap-3">
+      <p className="mx-auto max-w-xs text-sm leading-relaxed text-[var(--color-muted)]">
+        {copy.body}
+      </p>
+
+      <div className="mt-5 flex flex-wrap items-center justify-center gap-3">
         {copy.cta?.href ? (
           <Link
             href={copy.cta.href}
             target={copy.cta.external ? '_blank' : undefined}
             rel={copy.cta.external ? 'noopener noreferrer' : undefined}
-            className="rounded-lg px-4 py-2 text-sm font-medium text-white transition-all hover:opacity-90"
+            className="inline-flex min-h-[44px] items-center rounded-lg px-4 py-2 text-sm font-medium text-white transition-all hover:opacity-90"
             style={{ backgroundColor: info.color }}
           >
             {copy.cta.label}
@@ -116,21 +121,56 @@ export function ProtocolEmptyState({ protocol, sort, onRetry }: ProtocolEmptySta
             <button
               type="button"
               onClick={onRetry}
-              className="rounded-lg px-4 py-2 text-sm font-medium text-white transition-all hover:opacity-90"
+              className="inline-flex min-h-[44px] items-center rounded-lg px-4 py-2 text-sm font-medium text-white transition-all hover:opacity-90"
               style={{ backgroundColor: info.color }}
             >
               Retry
             </button>
           )
         )}
+
+        {/* Try refreshing */}
         <button
           type="button"
           onClick={onRetry}
-          className="rounded-lg border px-4 py-2 text-sm font-medium text-[var(--color-muted)] transition-colors hover:bg-[var(--color-overlay)] hover:text-[var(--color-fg)]"
+          className="inline-flex min-h-[44px] items-center gap-1.5 rounded-lg border px-4 py-2 text-sm font-medium text-[var(--color-muted)] transition-colors hover:bg-[var(--color-overlay)] hover:text-[var(--color-fg)]"
         >
-          Refresh
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 16 16"
+            fill="none"
+            aria-hidden="true"
+          >
+            <path
+              d="M3 8a5 5 0 019.9-1"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+            />
+            <path
+              d="M13 3v4H9"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+          Try refreshing
         </button>
       </div>
+
+      {/* Browse popular instead */}
+      <p className="mt-5 text-xs text-[var(--color-muted)]">
+        <Link
+          href={`/feed/${encodeURIComponent(protocol)}/popular`}
+          className="font-semibold transition-colors hover:underline"
+          style={{ color: info.color }}
+        >
+          Browse popular {info.label} posts instead
+        </Link>{' '}
+        — the most engaged posts from this network.
+      </p>
     </div>
   );
 }

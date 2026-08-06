@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import Script from 'next/script';
 
 export const revalidate = 86400;
 
@@ -191,6 +192,22 @@ const techStack = [
 export default function AboutPage() {
   return (
     <div className="mx-auto max-w-3xl px-4 py-12">
+      <Script id="about-structured-data" type="application/ld+json">
+        {JSON.stringify({
+          '@context': 'https://schema.org',
+          '@type': 'AboutPage',
+          name: 'About DegenFeed',
+          url: 'https://app.degenfeed.xyz/about',
+          description:
+            'DegenFeed is an open-source, multi-protocol social aggregator that unifies 18+ decentralized and federated social networks into one ranked feed, plus 248 bias-rated news sources.',
+          mainEntity: {
+            '@type': 'Organization',
+            name: 'Rug Munch Media LLC',
+            url: 'https://app.degenfeed.xyz',
+            logo: 'https://app.degenfeed.xyz/icon-512.png',
+          },
+        })}
+      </Script>
       {/* Hero */}
       <div className="mb-12 text-center">
         <span

@@ -16,6 +16,12 @@ export const metadata: Metadata = {
     title: 'DegenFeed System Architecture',
     description: 'Complete system architecture documentation for DegenFeed.',
   },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'DegenFeed System Architecture',
+    description: 'Data flow, provider architecture, KV caching, and deployment for DegenFeed.',
+    images: ['https://app.degenfeed.xyz/og-image.png'],
+  },
 };
 
 const packages = [

@@ -25,9 +25,18 @@ import type { Env } from '../types';
 
 // ─── Constants ──────────────────────────────────────────────────────────────
 
-const POSTIZ_BASE_URL = 'http://127.0.0.1:3105';
+/**
+ * Postiz public API base URL.
+ *
+ * NOTE: Postiz self-hosted is served behind an nginx that routes `/api/`
+ * to the backend, so the public API base must include the `/api` prefix:
+ *   - internal: http://127.0.0.1:3105/api
+ *   - external: https://schedule.degenfeed.xyz/api
+ * All paths below are appended to this base (e.g. `${base}/public/v1/posts`).
+ */
+const POSTIZ_BASE_URL = 'http://127.0.0.1:3105/api';
 const POSTIZ_API_TIMEOUT = 10_000; // 10s
-const POSTIZ_HEALTH_PATH = '/';
+const POSTIZ_HEALTH_PATH = '/public/v1/is-connected';
 
 /** External platforms that DegenFeed Connect routes through Postiz */
 export const EXTERNAL_PLATFORM_CATEGORIES = {
@@ -285,9 +294,9 @@ export interface ExternalPlatformConnectUrl {
 
 /**
  * Check if Postiz is available and responding.
- * Postiz returns 307 redirect to /auth when healthy.
+ * Hits the public API's is-connected endpoint; healthy when it returns 200.
  */
-async function checkPostizHealth(): Promise<PostizBridgeStatus> {
+export async function checkPostizHealth(): Promise<PostizBridgeStatus> {
   try {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 5_000);
@@ -295,13 +304,11 @@ async function checkPostizHealth(): Promise<PostizBridgeStatus> {
     const response = await fetch(`${POSTIZ_BASE_URL}${POSTIZ_HEALTH_PATH}`, {
       method: 'GET',
       signal: controller.signal,
-      redirect: 'manual', // Don't follow the 307 redirect
     });
 
     clearTimeout(timeout);
 
-    // Postiz is healthy if it returns 307 (redirect to /auth) or 200
-    if (response.status === 307 || response.status === 200) {
+    if (response.ok) {
       return {
         available: true,
         message: `Postiz responding (HTTP ${response.status})`,
@@ -323,13 +330,15 @@ async function checkPostizHealth(): Promise<PostizBridgeStatus> {
 // ─── Postiz API Client ──────────────────────────────────────────────────────
 
 /**
- * Make a request to the Postiz API with proper error handling and timeout.
+ * Make a request to the Postiz public API with proper error handling and timeout.
+ * Base URL comes from env (POSTIZ_BASE_URL) or falls back to the local default.
  */
 async function postizRequest<T>(
   method: string,
   path: string,
   body?: Record<string, unknown>,
   apiKey?: string,
+  baseUrlOverride?: string,
 ): Promise<{ ok: boolean; data?: T; error?: string; status: number }> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), POSTIZ_API_TIMEOUT);
@@ -339,13 +348,13 @@ async function postizRequest<T>(
       'Content-Type': 'application/json',
     };
 
-    // If we have a Postiz API key, use it for authentication
+    // Postiz public API authenticates with `Authorization: <api-key>`
     if (apiKey) {
-      headers['X-Postiz-API-Key'] = apiKey;
-      headers.Authorization = `Bearer ${apiKey}`;
+      headers.Authorization = apiKey;
     }
 
-    const response = await fetch(`${POSTIZ_BASE_URL}${path}`, {
+    const base = baseUrlOverride || POSTIZ_BASE_URL;
+    const response = await fetch(`${base}${path}`, {
       method,
       headers,
       body: body ? JSON.stringify(body) : undefined,
@@ -438,8 +447,8 @@ export async function getExternalPlatformConnectUrl(
 
   // Postiz handles OAuth for the platform. We redirect to Postiz's
   // OAuth initiation endpoint with our state.
-  // The Postiz URL format varies by Postiz version. We use the public API.
-  const oauthUrl = `${baseUrl}/public/v1/integrations/${category.postiz_type}/connect`;
+  // Self-hosted Postiz exposes this via /public/v1/social/{integration}.
+  const oauthUrl = `${baseUrl}/public/v1/social/${category.postiz_type}`;
 
   return {
     url: `${oauthUrl}?state=${encodeURIComponent(statePayload)}&redirect=${encodeURIComponent('https://app.degenfeed.xyz/settings/external-platforms')}`,
@@ -479,24 +488,34 @@ export async function completeExternalPlatformConnection(
     const apiKey = getPostizApiKey(env);
     const baseUrl = getPostizBaseUrl(env);
     const integrationRes = await fetch(
-      `${baseUrl}/public/v1/integrations/${encodeURIComponent(postizIntegrationId)}`,
+      `${baseUrl}/public/v1/integrations`,
       {
         headers: {
-          Authorization: `Bearer ${apiKey}`,
+          Authorization: apiKey,
           'Content-Type': 'application/json',
         },
         signal: AbortSignal.timeout(5_000),
       },
     );
     if (integrationRes.ok) {
-      const integrationData = (await integrationRes.json()) as {
+      const integrations = (await integrationRes.json()) as Array<{
+        id?: string;
         name?: string;
-        avatar?: string;
-        metadata?: Record<string, string>;
-      };
-      account.displayName = integrationData.name ?? category.name;
-      account.avatarUrl = integrationData.avatar;
-      account.metadata = integrationData.metadata;
+        picture?: string;
+        profile?: string;
+        identifier?: string;
+      }>;
+      const match = integrations.find(
+        (i) => i.id === postizIntegrationId || i.identifier === postizIntegrationId,
+      );
+      if (match) {
+        account.displayName = match.name ?? match.profile ?? category.name;
+        account.avatarUrl = match.picture;
+        account.metadata = {
+          identifier: match.identifier ?? category.postiz_type,
+          profile: match.profile ?? '',
+        };
+      }
     }
   } catch {
     // Fall back to category name
@@ -602,6 +621,7 @@ export async function postToExternalPlatforms(
   env: Env,
 ): Promise<Record<string, { success: boolean; url?: string; error?: string }>> {
   const baseUrl = getPostizBaseUrl(env);
+  const apiKey = getPostizApiKey(env);
   const results: Record<string, { success: boolean; url?: string; error?: string }> = {};
 
   for (const platform of request.platforms) {
@@ -618,7 +638,7 @@ export async function postToExternalPlatforms(
 
     try {
       const postBody = {
-        type: request.scheduledAt ? 'later' : 'now',
+        type: request.scheduledAt ? 'schedule' : 'now',
         date: request.scheduledAt ?? new Date().toISOString(),
         shortLink: false,
         tags: request.hashtags ?? [],
@@ -645,7 +665,7 @@ export async function postToExternalPlatforms(
       const res = await fetch(`${baseUrl}/public/v1/posts`, {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${apiKey}`,
+          Authorization: apiKey,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(postBody),
@@ -699,6 +719,7 @@ export async function scheduleExternalPost(
   }
 
   const baseUrl = getPostizBaseUrl(env);
+  const apiKey = getPostizApiKey(env);
   const results: Record<string, { success: boolean; error?: string }> = {};
 
   // Use Postiz's schedule API
@@ -716,7 +737,7 @@ export async function scheduleExternalPost(
 
     try {
       const scheduleBody = {
-        type: 'later',
+        type: 'schedule',
         date: request.scheduledAt,
         shortLink: false,
         tags: request.hashtags ?? [],
@@ -741,7 +762,7 @@ export async function scheduleExternalPost(
       const res = await fetch(`${baseUrl}/public/v1/posts`, {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${apiKey}`,
+          Authorization: apiKey,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(scheduleBody),
@@ -796,6 +817,7 @@ export async function goLiveOnExternalPlatform(
   error?: string;
 }> {
   const baseUrl = getPostizBaseUrl(env);
+  const apiKey = getPostizApiKey(env);
   const postizType = EXTERNAL_TO_POSTIZ_TYPE[request.platform] ?? request.platform;
 
   try {
@@ -830,7 +852,7 @@ export async function goLiveOnExternalPlatform(
     const res = await fetch(`${baseUrl}/public/v1/posts`, {
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${apiKey}`,
+        Authorization: apiKey,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(goLiveBody),
@@ -872,13 +894,14 @@ export async function getExternalPlatformAnalytics(
   env: Env,
 ): Promise<ExternalAnalyticsResponse | { error: string }> {
   const baseUrl = getPostizBaseUrl(env);
+  const apiKey = getPostizApiKey(env);
 
   try {
     const res = await fetch(
-      `${baseUrl}/public/v1/integrations/${encodeURIComponent(postizIntegrationId)}/analytics`,
+      `${baseUrl}/public/v1/analytics/${encodeURIComponent(postizIntegrationId)}?date=30`,
       {
         headers: {
-          Authorization: `Bearer ${apiKey}`,
+          Authorization: apiKey,
           'Content-Type': 'application/json',
         },
         signal: AbortSignal.timeout(10_000),
@@ -912,8 +935,9 @@ export async function getExternalPlatformAnalytics(
 /**
  * Schedule a post via Postiz.
  *
- * Maps a DegenFeed MasterPost + protocol list to Postiz's schedule API.
- * Falls back to DegenFeed native scheduling if Postiz is unavailable.
+ * Maps a DegenFeed MasterPost + protocol list to Postiz's schedule API
+ * (`POST /public/v1/posts`). Falls back to DegenFeed native scheduling if
+ * Postiz is unavailable.
  *
  * @param masterPost - The post content
  * @param protocols - Target protocols/platforms
@@ -935,6 +959,7 @@ export async function createPostizSchedule(
   }
 
   const apiKey = getPostizApiKey(env);
+  const baseUrl = getPostizBaseUrl(env);
 
   // Map DegenFeed protocol names to Postiz platform IDs
   // Includes external platforms so premium users can cross-post to them
@@ -979,19 +1004,78 @@ export async function createPostizSchedule(
     isSensitive: masterPost.isSensitive,
   };
 
-  const result = await postizRequest<PostizScheduleResponse>(
+  // Resolve integration IDs from POSTIZ_INTEGRATIONS env map. The Postiz
+  // public API requires a concrete integration id per post entry.
+  const integrations = parsePostizIntegrations(env);
+
+  // Only schedule to platforms we have a connected integration for.
+  const usablePlatforms = scheduleRequest.platforms.filter(
+    (p) => integrations[p] ?? integrations[p.toLowerCase()],
+  );
+  if (usablePlatforms.length === 0) {
+    // No connected Postiz integrations — fall back to native scheduler
+    return { nativeFallback: true };
+  }
+
+  const posts = usablePlatforms.map((platform) => {
+    const integrationId = integrations[platform] ?? integrations[platform.toLowerCase()];
+    const postizType = EXTERNAL_TO_POSTIZ_TYPE[platform as ExternalPlatformId] ?? platform;
+    const values: Array<Record<string, unknown>> = [
+      {
+        content: scheduleRequest.text,
+        ...(scheduleRequest.title ? { title: scheduleRequest.title } : {}),
+        image: (scheduleRequest.mediaUrls ?? []).map((url, i) => ({ id: String(i), path: url })),
+      },
+    ];
+
+    return {
+      integration: { id: integrationId },
+      value: values,
+      settings: { __type: postizType },
+    };
+  });
+
+  const result = await postizRequest<Array<{ postId?: string; integration?: string }>>(
     'POST',
-    '/api/schedules',
-    scheduleRequest as unknown as Record<string, unknown>,
+    '/public/v1/posts',
+    {
+      type: scheduleRequest.scheduledAt ? 'schedule' : 'now',
+      date: scheduleRequest.scheduledAt ?? new Date().toISOString(),
+      shortLink: false,
+      tags: (scheduleRequest.hashtags ?? []).map((tag) => ({
+        value: tag.toLowerCase(),
+        label: tag,
+      })),
+      posts,
+    },
     apiKey,
+    baseUrl,
   );
 
-  if (result.ok && result.data?.id) {
-    return { postizId: result.data.id, nativeFallback: false };
+  if (result.ok && result.data && result.data.length > 0) {
+    const first = result.data[0];
+    if (first?.postId) {
+      return { postizId: first.postId, nativeFallback: false };
+    }
   }
 
   // Postiz accepted but returned unexpected data — fallback
   return { nativeFallback: true };
+}
+
+/**
+ * Parse the POSTIZ_INTEGRATIONS env var (JSON map of platform → integration id).
+ * Returns an empty object when unset/malformed.
+ */
+function parsePostizIntegrations(env: Env): Record<string, string> {
+  try {
+    const raw = (env as Record<string, string>).POSTIZ_INTEGRATIONS;
+    if (!raw) return {};
+    const parsed = JSON.parse(raw) as Record<string, string>;
+    return typeof parsed === 'object' && parsed !== null ? parsed : {};
+  } catch {
+    return {};
+  }
 }
 
 /**
@@ -1002,11 +1086,13 @@ export async function getPostizSchedule(
   env: Env,
 ): Promise<PostizScheduleResponse | null> {
   const apiKey = getPostizApiKey(env);
+  const baseUrl = getPostizBaseUrl(env);
   const result = await postizRequest<PostizScheduleResponse>(
     'GET',
-    `/api/schedules/${encodeURIComponent(scheduleId)}`,
+    `/public/v1/posts/${encodeURIComponent(scheduleId)}/status`,
     undefined,
     apiKey,
+    baseUrl,
   );
 
   if (result.ok && result.data) {
@@ -1026,22 +1112,65 @@ export async function listPostizSchedules(
   limit = 50,
 ): Promise<PostizScheduleResponse[]> {
   const apiKey = getPostizApiKey(env);
-  const params = new URLSearchParams();
-  if (status) params.set('status', status);
-  params.set('limit', String(limit));
+  const baseUrl = getPostizBaseUrl(env);
 
-  const result = await postizRequest<{ schedules: PostizScheduleResponse[] }>(
+  // Postiz list API requires a date range (UTC ISO). We request a wide
+  // window (last 30 days → next 90 days) and filter by status/date locally.
+  const start = new Date(Date.now() - 30 * 86400 * 1000).toISOString();
+  const end = new Date(Date.now() + 90 * 86400 * 1000).toISOString();
+  const params = new URLSearchParams({ startDate: start, endDate: end });
+
+  const result = await postizRequest<{ posts?: Array<Record<string, unknown>> }>(
     'GET',
-    `/api/schedules?${params.toString()}`,
+    `/public/v1/posts?${params.toString()}`,
     undefined,
     apiKey,
+    baseUrl,
   );
 
-  if (result.ok && result.data?.schedules) {
-    return result.data.schedules;
+  if (!result.ok || !result.data?.posts) {
+    return [];
   }
 
-  return [];
+  const now = Date.now();
+  let schedules: PostizScheduleResponse[] = [];
+
+  for (const raw of result.data.posts) {
+    const p = raw as {
+      id?: string;
+      content?: string;
+      publishDate?: string;
+      releaseURL?: string;
+      state?: string;
+      integration?: { id?: string; providerIdentifier?: string; name?: string };
+    };
+    const publishTs = p.publishDate ? new Date(p.publishDate).getTime() : 0;
+    const rawState = (p.state ?? 'QUEUE').toLowerCase();
+    const mappedStatus: PostizScheduleResponse['status'] =
+      rawState === 'published' ? 'published' : rawState === 'error' ? 'failed' : rawState === 'draft' ? 'draft' : 'scheduled';
+
+    // Status filter: 'scheduled' → future QUEUE posts; 'published' → PUBLISHED
+    if (status === 'scheduled' && (rawState !== 'queue' || publishTs < now)) continue;
+    if (status === 'published' && rawState !== 'published') continue;
+
+    schedules.push({
+      id: p.id ?? '',
+      status: mappedStatus,
+      scheduledAt: p.publishDate ?? null,
+      publishedAt: rawState === 'published' ? p.publishDate ?? null : null,
+      platforms: [p.integration?.providerIdentifier ?? p.integration?.name ?? 'postiz'],
+      createdAt: p.publishDate ?? new Date().toISOString(),
+    });
+  }
+
+  // Sort by scheduled time ascending
+  schedules.sort((a, b) => {
+    const ta = a.scheduledAt ? new Date(a.scheduledAt).getTime() : 0;
+    const tb = b.scheduledAt ? new Date(b.scheduledAt).getTime() : 0;
+    return ta - tb;
+  });
+
+  return schedules.slice(0, limit);
 }
 
 /**
@@ -1049,11 +1178,13 @@ export async function listPostizSchedules(
  */
 export async function cancelPostizSchedule(scheduleId: string, env: Env): Promise<boolean> {
   const apiKey = getPostizApiKey(env);
-  const result = await postizRequest<{ ok: boolean }>(
+  const baseUrl = getPostizBaseUrl(env);
+  const result = await postizRequest<{ id?: string }>(
     'DELETE',
-    `/api/schedules/${encodeURIComponent(scheduleId)}`,
+    `/public/v1/posts/${encodeURIComponent(scheduleId)}`,
     undefined,
     apiKey,
+    baseUrl,
   );
 
   return result.ok;
@@ -1068,18 +1199,255 @@ export async function getPostizAnalytics(
   env: Env,
 ): Promise<PostizAnalyticsResponse | null> {
   const apiKey = getPostizApiKey(env);
-  const result = await postizRequest<PostizAnalyticsResponse>(
+  const baseUrl = getPostizBaseUrl(env);
+  const result = await postizRequest<
+    Array<{
+      label?: string;
+      data?: Array<{ total?: string; date?: string }>;
+      percentageChange?: number;
+    }>
+  >(
     'GET',
-    `/api/analytics/${encodeURIComponent(postId)}`,
+    `/public/v1/analytics/post/${encodeURIComponent(postId)}?date=30`,
     undefined,
     apiKey,
+    baseUrl,
   );
 
-  if (result.ok && result.data) {
+  if (!result.ok || !result.data) {
+    return null;
+  }
+
+  // Normalize Postiz analytics rows into our aggregate shape.
+  const totals: Record<string, number> = {};
+  const platforms: PostizAnalyticsResponse['platforms'] = {};
+  let totalLikes = 0;
+  let totalReposts = 0;
+  let totalReplies = 0;
+  let totalQuotes = 0;
+  let totalImpressions = 0;
+
+  for (const row of result.data) {
+    const label = (row.label ?? '').toLowerCase();
+    const sum = (row.data ?? []).reduce(
+      (acc, d) => acc + (Number.parseInt(d.total ?? '0', 10) || 0),
+      0,
+    );
+    totals[label] = sum;
+
+    if (label === 'likes') totalLikes = sum;
+    if (label === 'reposts' || label === 'shares' || label === 'retweets') totalReposts = sum;
+    if (label === 'comments' || label === 'replies') totalReplies = sum;
+    if (label === 'quotes') totalQuotes = sum;
+    if (label === 'impressions') totalImpressions = sum;
+  }
+
+  platforms.all = {
+    likes: totalLikes,
+    reposts: totalReposts,
+    replies: totalReplies,
+    quotes: totalQuotes,
+    impressions: totalImpressions,
+    engagement_rate: totalImpressions > 0 ? (totalLikes + totalReposts + totalReplies) / totalImpressions : 0,
+  };
+
+  const engagementScore = totalImpressions > 0
+    ? Math.min(100, Math.round(((totalLikes + totalReposts + totalReplies * 2) / totalImpressions) * 1000))
+    : 0;
+
+  return {
+    postId,
+    platforms,
+    total: {
+      likes: totalLikes,
+      reposts: totalReposts,
+      replies: totalReplies,
+      quotes: totalQuotes,
+      impressions: totalImpressions,
+    },
+    engagementScore,
+    bestPlatform: totalImpressions > 0 ? 'all' : null,
+  };
+}
+
+/**
+ * List connected Postiz integrations (channels).
+ *
+ * Returns the raw integration records from `GET /public/v1/integrations`.
+ * Used by the Postiz dashboard routes to show available platforms and
+ * validate scheduling targets.
+ */
+export interface PostizIntegration {
+  id: string;
+  name: string;
+  identifier: string;
+  picture?: string;
+  disabled?: boolean;
+  profile?: string;
+  customer?: { id?: string; name?: string };
+}
+
+export async function listPostizIntegrations(env: Env): Promise<PostizIntegration[]> {
+  const apiKey = getPostizApiKey(env);
+  const baseUrl = getPostizBaseUrl(env);
+
+  const result = await postizRequest<PostizIntegration[]>(
+    'GET',
+    '/public/v1/integrations',
+    undefined,
+    apiKey,
+    baseUrl,
+  );
+
+  if (result.ok && Array.isArray(result.data)) {
     return result.data;
   }
 
-  return null;
+  return [];
+}
+
+/**
+ * Get account-level analytics for a connected Postiz integration.
+ * Fetches follower/impression trends from `/public/v1/analytics/{integration}`.
+ */
+export interface PostizAccountAnalyticsRow {
+  label: string;
+  data: Array<{ total: string; date: string }>;
+  percentageChange?: number;
+}
+
+export async function getPostizAccountAnalytics(
+  integrationId: string,
+  env: Env,
+  days = 30,
+): Promise<PostizAccountAnalyticsRow[]> {
+  const apiKey = getPostizApiKey(env);
+  const baseUrl = getPostizBaseUrl(env);
+
+  const result = await postizRequest<
+    Array<{ label?: string; data?: Array<{ total?: string; date?: string }>; percentageChange?: number }>
+  >(
+    'GET',
+    `/public/v1/analytics/${encodeURIComponent(integrationId)}?date=${days}`,
+    undefined,
+    apiKey,
+    baseUrl,
+  );
+
+  if (result.ok && Array.isArray(result.data)) {
+    return result.data.map((row) => ({
+      label: row.label ?? 'metric',
+      data: (row.data ?? []).map((d) => ({ total: d.total ?? '0', date: d.date ?? '' })),
+      percentageChange: row.percentageChange,
+    }));
+  }
+
+  return [];
+}
+
+/**
+ * Schedule a cross-platform post via the Postiz public API.
+ *
+ * This is the route-level scheduler used by POST /api/postiz/schedule.
+ * Each target platform is resolved to a connected Postiz integration id,
+ * then one post group is created with type='schedule' (or 'now' when no
+ * scheduledAt is given).
+ *
+ * @returns per-platform results + the Postiz post ids
+ */
+export async function scheduleCrossPlatformPost(
+  request: {
+    text: string;
+    title?: string;
+    platforms: string[];
+    scheduledAt?: string | null;
+    mediaUrls?: string[];
+    hashtags?: string[];
+  },
+  env: Env,
+): Promise<{
+  ok: boolean;
+  postIds?: string[];
+  results: Record<string, { success: boolean; postId?: string; error?: string }>;
+  error?: string;
+}> {
+  const baseUrl = getPostizBaseUrl(env);
+  const apiKey = getPostizApiKey(env);
+
+  const integrations = await listPostizIntegrations(env);
+  const integrationByIdentifier = new Map<string, PostizIntegration>();
+  for (const integration of integrations) {
+    integrationByIdentifier.set(integration.identifier.toLowerCase(), integration);
+    integrationByIdentifier.set(integration.id.toLowerCase(), integration);
+  }
+
+  // Resolve each requested platform to a Postiz integration.
+  const resolved: Array<{ platform: string; integration: PostizIntegration; postizType: string }> = [];
+  for (const platform of request.platforms) {
+    const key = platform.toLowerCase();
+    const integration = integrationByIdentifier.get(key);
+    if (!integration) {
+      continue;
+    }
+    const postizType =
+      EXTERNAL_TO_POSTIZ_TYPE[platform as ExternalPlatformId] ?? platform.toLowerCase();
+    resolved.push({ platform, integration, postizType });
+  }
+
+  if (resolved.length === 0) {
+    return {
+      ok: false,
+      results: {},
+      error:
+        'No connected Postiz integrations match the requested platforms. Connect channels at https://schedule.degenfeed.xyz first.',
+    };
+  }
+
+  const posts = resolved.map(({ integration, postizType }) => ({
+    integration: { id: integration.id },
+    value: [
+      {
+        content: request.text,
+        ...(request.title ? { title: request.title } : {}),
+        image: (request.mediaUrls ?? []).map((url, i) => ({ id: String(i), path: url })),
+      },
+    ],
+    settings: { __type: postizType },
+  }));
+
+  const result = await postizRequest<Array<{ postId?: string; integration?: string }>>(
+    'POST',
+    '/public/v1/posts',
+    {
+      type: request.scheduledAt ? 'schedule' : 'now',
+      date: request.scheduledAt ?? new Date().toISOString(),
+      shortLink: false,
+      tags: (request.hashtags ?? []).map((tag) => ({ value: tag.toLowerCase(), label: tag })),
+      posts,
+    },
+    apiKey,
+    baseUrl,
+  );
+
+  if (!result.ok) {
+    return { ok: false, results: {}, error: result.error ?? 'Postiz scheduling failed' };
+  }
+
+  const results: Record<string, { success: boolean; postId?: string; error?: string }> = {};
+  const postIds: string[] = [];
+
+  for (let i = 0; i < resolved.length; i++) {
+    const platform = resolved[i]?.platform ?? `platform-${i}`;
+    const created = result.data?.[i];
+    if (created?.postId) {
+      results[platform] = { success: true, postId: created.postId };
+      postIds.push(created.postId);
+    } else {
+      results[platform] = { success: false, error: 'Postiz did not return a post id' };
+    }
+  }
+
+  return { ok: postIds.length > 0, postIds, results };
 }
 
 /**

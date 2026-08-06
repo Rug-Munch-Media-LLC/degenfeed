@@ -13,7 +13,11 @@
 
 import { Hono } from 'hono';
 import { aggregateAllStreams, aggregateUpcomingStreams } from '../feed/live-aggregator';
-import { listPostizSchedules } from '../lib/postiz-bridge';
+import { listPostizSchedules, scheduleCrossPlatformPost } from '../lib/postiz-bridge';
+import {
+  startRestreamProcess,
+  type RestreamerTarget,
+} from '../lib/restreamer';
 import {
   announceStreamToAllProtocols,
   type StreamAnnouncement,
@@ -262,10 +266,16 @@ streams.get('/schedule', async (c) => {
  * multi-platform (Owncast + PeerTube) path is premium-gated.
  *
  * Body (same shape as POST /api/live/go-live):
- *   { title, description?, category?, tags?, platform: 'owncast'|'peertube'|'both' }
+ *   { title, description?, category?, tags?, platform: 'owncast'|'peertube'|'both'|'multi' }
  *
- * Delegates to the shared handler in routes/live/handlers-core.ts — no
- * duplicated orchestration logic.
+ * Premium 'multi' path (Restreamer → Postiz → Go Live):
+ *   1. Postiz schedules the stream announcement on the creator's social platforms
+ *   2. Restreamer (via the bridge) starts the multi-platform RTMP push to
+ *      Twitch/Kick/YouTube
+ *   3. The stream appears in /api/streams/live (Owncast aggregator)
+ *
+ * Delegates single-platform starts to the shared handler in
+ * routes/live/handlers-core.ts — no duplicated orchestration logic.
  */
 streams.post('/go-live', async (c) => {
   const session = await requireSession(c.req.raw, c.env);
@@ -275,10 +285,84 @@ streams.post('/go-live', async (c) => {
     const body = (await c.req.json().catch(() => ({}))) as Record<string, unknown>;
     const platform = (body.platform as string) || 'owncast';
 
-    // Multi-platform ('both') requires premium
-    if (platform === 'both') {
+    // Multi-platform ('both') and Restreamer multi-push ('multi') require premium
+    if (platform === 'both' || platform === 'multi' || platform === 'restreamer') {
       const gate = await requirePremiumTier(session.address, c.env, 'pro');
       if (gate) return gate;
+    }
+
+    // ── Restreamer → Postiz → Go Live flow (premium) ───────────────────
+    if (platform === 'multi' || platform === 'restreamer') {
+      const title = (body.title as string)?.trim();
+      if (!title) {
+        return jsonResponse({ ok: false, error: 'Stream title is required' }, 400);
+      }
+
+      const results: Record<string, unknown> = {};
+
+      // 1. Postiz schedules the stream announcement on social platforms
+      const announcePlatforms = Array.isArray(body.announceTo)
+        ? (body.announceTo as string[]).map((p) => String(p))
+        : [];
+      if (announcePlatforms.length > 0) {
+        const announcement = await scheduleCrossPlatformPost(
+          {
+            text: `🔴 LIVE NOW: ${title} — watch on DegenFeed!\nhttps://app.degenfeed.xyz/live\n#DegenFeed #Live`,
+            title,
+            platforms: announcePlatforms,
+            scheduledAt: null, // immediate
+            hashtags: ['DegenFeed', 'Live'],
+          },
+          c.env,
+        );
+        results.announcement = announcement;
+      } else {
+        results.announcement = { ok: true, skipped: 'No announceTo platforms provided' };
+      }
+
+      // 2. Restreamer starts the multi-platform RTMP push (via bridge)
+      const targets: RestreamerTarget[] = Array.isArray(body.restreamTargets)
+        ? (body.restreamTargets as Array<{
+            platform?: string;
+            rtmpUrl?: string;
+            streamKey?: string;
+          }>)
+            .filter((t) => t && t.platform && t.rtmpUrl && t.streamKey)
+            .map((t) => ({
+              platform: String(t.platform),
+              rtmpUrl: String(t.rtmpUrl),
+              streamKey: String(t.streamKey),
+            }))
+        : [];
+
+      const owncastUrl = (c.env as Record<string, string>).OWNCAST_INSTANCE_URL
+        || 'https://owncast.degenfeed.xyz';
+      const restream = await startRestreamProcess(c.env, {
+        streamId: `live-${Date.now().toString(36)}`,
+        title,
+        owncastHlsUrl: `${owncastUrl}/hls/stream.m3u8`,
+        targets:
+          targets.length > 0
+            ? targets
+            : [{ platform: 'peertube', rtmpUrl: 'rtmp://live.degenfeed.xyz/live', streamKey: 'degenfeed' }],
+      });
+      results.restream = restream;
+
+      // 3. Delegate Owncast setup to the shared handler so the stream key is real
+      const coreResult = await handleGoLive(c.req.raw, c.env);
+      const coreBody = await coreResult.json().catch(() => ({}));
+
+      return jsonResponse(
+        {
+          ok: true,
+          platform: 'multi',
+          announcement: results.announcement,
+          restream: results.restream,
+          stream: coreBody,
+          note: 'Stream announcement scheduled via Postiz; Restreamer multi-platform push triggered via bridge.',
+        },
+        201,
+      );
     }
 
     return await handleGoLive(c.req.raw, c.env);

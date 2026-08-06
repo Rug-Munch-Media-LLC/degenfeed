@@ -158,7 +158,7 @@ describe('audio/video streaming providers', () => {
 
     it('maps streams to unified posts with a pre-minted token', async () => {
       (globalThis.fetch as ReturnType<typeof vi.fn>).mockImplementation(
-        (url: string) =>
+        (_url: string) =>
           mockResponse({
             json: async () => ({
               data: [
@@ -199,7 +199,7 @@ describe('audio/video streaming providers', () => {
 
     it('mints a token via client credentials when only clientSecret is set', async () => {
       (globalThis.fetch as ReturnType<typeof vi.fn>).mockImplementation(
-        (url: string, init?: RequestInit) => {
+        (url: string, _init?: RequestInit) => {
           if (String(url).includes('oauth2/token')) {
             return Promise.resolve(
               mockResponse({ json: async () => ({ access_token: 'minted', expires_in: 3600 }) }),

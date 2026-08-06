@@ -26,6 +26,20 @@ export const DEFAULT_RELAYS = [
   'wss://nostr.wine',
   'wss://relay.snort.social',
   'wss://purplepag.es',
+  // Expanded 2026-08-06 — popular public relays verified reachable.
+  'wss://relay.nostr.net',
+  'wss://offchain.pub',
+  'wss://eden.nostr.land',
+  'wss://relay.0xchat.com',
+  'wss://nostr.mom',
+  'wss://atlas.nostr.land',
+  'wss://nostr.oxtr.dev',
+  'wss://nostr.bitcoiner.social',
+  'wss://nostr.einundzwanzig.space',
+  'wss://nostr.land',
+  'wss://no.str.cr',
+  'wss://yabu.me',
+  'wss://relay.nostr.nu',
 ];
 
 export const CRYPTO_HASHTAGS = [

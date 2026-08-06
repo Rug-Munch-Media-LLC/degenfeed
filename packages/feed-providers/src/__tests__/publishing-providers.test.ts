@@ -13,7 +13,9 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   extractImagesFromHtml,
   extractImagesFromItemXml,
+  extractImagesFromJson,
   firstImage,
+  soundcloudArtworkUrl,
   stripArticleHtml,
 } from '../providers/article-media';
 import { isChallengePage, MediumProvider, parseMediumRss } from '../providers/medium';
@@ -144,6 +146,102 @@ describe('article-media image extraction', () => {
     );
     expect(urls).toContain('https://cdn.example.com/inline.jpg');
     expect(urls).toContain('https://cdn.example.com/thumb.jpg');
+  });
+
+  it('extracts media:group/media:thumbnail (YouTube RSS)', () => {
+    const urls = extractImagesFromHtml(
+      '<item><title>x</title>' +
+        '<media:group>' +
+        '<media:content url="https://example.com/video.mp4" type="video/mp4"/>' +
+        '<media:thumbnail url="https://img.example.com/yt-thumb.jpg" width="480" height="360"/>' +
+        '</media:group></item>',
+    );
+    expect(urls).toContain('https://img.example.com/yt-thumb.jpg');
+  });
+
+  it('extracts mastodon media_attachments and card.image from JSON', () => {
+    const urls = extractImagesFromJson(
+      {
+        media_attachments: [
+          { type: 'image', url: 'https://files.example.com/a.jpg' },
+          { type: 'image', preview_url: 'https://files.example.com/a_small.jpg' },
+        ],
+        card: { url: 'https://news.example.com/x', image: 'https://og.example.com/card.png' },
+      },
+      'mastodon',
+    );
+    expect(urls).toContain('https://files.example.com/a.jpg');
+    expect(urls).toContain('https://files.example.com/a_small.jpg');
+    expect(urls).toContain('https://og.example.com/card.png');
+  });
+
+  it('extracts bluesky embed.images thumb/fullsize and external.thumb from JSON', () => {
+    const urls = extractImagesFromJson(
+      {
+        embed: {
+          images: [{ thumb: 'https://cdn.bsky.app/img/feed_thumbnail/plain/a@jpeg' }],
+          external: { uri: 'https://x.com', thumb: 'https://cdn.bsky.app/img/feed_fullsize/plain/b@jpeg' },
+        },
+      },
+      'bluesky',
+    );
+    expect(urls).toContain('https://cdn.bsky.app/img/feed_thumbnail/plain/a@jpeg');
+    expect(urls).toContain('https://cdn.bsky.app/img/feed_fullsize/plain/b@jpeg');
+  });
+
+  it('extracts lens metadata.media original.url from JSON', () => {
+    const urls = extractImagesFromJson(
+      {
+        metadata: {
+          media: [{ original: { url: 'https://ik.imagekit.io/lens/cat.png' } }],
+        },
+      },
+      'lens',
+    );
+    expect(urls).toContain('https://ik.imagekit.io/lens/cat.png');
+  });
+
+  it('extracts nostr picture and imeta tags from JSON', () => {
+    const urls = extractImagesFromJson(
+      {
+        tags: [
+          ['picture', 'https://nostr.build/i/abc.png'],
+          ['imeta', 'url https://void.cat/v/xyz.webp', 'dim 1200x800', 'blurhash L5H2EC'],
+        ],
+      },
+      'nostr',
+    );
+    expect(urls).toContain('https://nostr.build/i/abc.png');
+    expect(urls).toContain('https://void.cat/v/xyz.webp');
+  });
+
+  it('extracts farcaster embeds that look like images', () => {
+    const urls = extractImagesFromJson(
+      {
+        embeds: [{ url: 'https://imagedelivery.net/abc/xyz' }, { url: 'https://example.com/not-an-image' }],
+      },
+      'farcaster',
+    );
+    expect(urls).toContain('https://imagedelivery.net/abc/xyz');
+    expect(urls).not.toContain('https://example.com/not-an-image');
+  });
+
+  it('upgrades soundcloud artwork_url to t500x500', () => {
+    const urls = extractImagesFromJson(
+      { artwork_url: 'https://i1.sndcdn.com/artworks-abc123-large.jpg' },
+      'soundcloud',
+    );
+    expect(urls).toEqual(['https://i1.sndcdn.com/artworks-abc123-t500x500.jpg']);
+  });
+
+  it('soundcloudArtworkUrl handles -large suffix and non-artwork URLs', () => {
+    expect(soundcloudArtworkUrl('https://i1.sndcdn.com/artworks-x-large.jpg')).toBe(
+      'https://i1.sndcdn.com/artworks-x-t500x500.jpg',
+    );
+    expect(soundcloudArtworkUrl('https://example.com/plain.png')).toBe(
+      'https://example.com/plain.png',
+    );
+    expect(soundcloudArtworkUrl(null)).toBeUndefined();
   });
 
   it('resolves relative URLs against a base', () => {

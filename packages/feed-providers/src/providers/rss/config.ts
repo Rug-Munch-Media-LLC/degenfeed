@@ -2806,4 +2806,18 @@ export const DEFAULT_CRYPTO_FEEDS: RssFeedConfig[] = [
     tags: ['security', 'audit', 'web3'],
     authority: 1,
   }),
+
+  // ═══════════════════════════════════════════════════════════════════
+  // RESEARCH — Ethereum Foundation research forum (added 2026-08-06)
+  // ═══════════════════════════════════════════════════════════════════
+  // ethresear.ch is a Discourse forum (not a Mastodon instance), so it
+  // is surfaced here via its RSS feed instead of the fediverse adapter.
+  // Verified reachable: GET /latest.rss → 200.
+  cfg('https://ethresear.ch/latest.rss', {
+    tier: 3,
+    weight: 0.8,
+    category: 'research',
+    tags: ['ethereum', 'crypto', 'research', 'layer2', 'rollup'],
+    authority: 2,
+  }),
 ];
