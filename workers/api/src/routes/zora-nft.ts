@@ -27,6 +27,12 @@ const zoraNFT = new Hono<{ Bindings: Env }>();
 
 const INDEXER_URL = 'http://127.0.0.1:8091';
 
+/** Resolve the Zora indexer URL, preferring the worker env override. */
+function getIndexerUrl(env: Env): string {
+  return env.ZORA_INDEXER_URL || INDEXER_URL;
+}
+
+
 // ═════════════════════════════════════════════════════════════════════════
 // POST /api/zora/mint — Mint an NFT on Zora
 // ═════════════════════════════════════════════════════════════════════════
@@ -79,7 +85,7 @@ zoraNFT.post('/mint', async (c) => {
 
     // Record the mint in our indexer
     try {
-      await fetch(`${INDEXER_URL}/api/mints`, {
+      await fetch(`${getIndexerUrl(c.env)}/api/mints`, {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
@@ -261,7 +267,7 @@ zoraNFT.get('/trending', async (c) => {
   const limit = Math.min(Math.max(Number(c.req.query('limit')) || 20, 1), 100);
 
   try {
-    const res = await fetch(`${INDEXER_URL}/api/trending?limit=${limit}`, {
+    const res = await fetch(`${getIndexerUrl(c.env)}/api/trending?limit=${limit}`, {
       signal: AbortSignal.timeout(5000),
     });
 
@@ -297,7 +303,7 @@ zoraNFT.get('/:address/:tokenId', async (c) => {
 
   try {
     // Fetch from our indexer
-    const res = await fetch(`${INDEXER_URL}/api/tokens?collection=${contractAddress}&limit=1`, {
+    const res = await fetch(`${getIndexerUrl(c.env)}/api/tokens?collection=${contractAddress}&limit=1`, {
       signal: AbortSignal.timeout(5000),
     });
 
@@ -345,7 +351,7 @@ zoraNFT.get('/:address', async (c) => {
 
   try {
     const res = await fetch(
-      `${INDEXER_URL}/api/tokens?collection=${contractAddress}&limit=${limit}&offset=${offset}`,
+      `${getIndexerUrl(c.env)}/api/tokens?collection=${contractAddress}&limit=${limit}&offset=${offset}`,
       { signal: AbortSignal.timeout(5000) },
     );
 

@@ -141,6 +141,7 @@ routes = [
 #   wrangler secret put TWITTER_CLIENT_SECRET
 #   wrangler secret put VAPID_PRIVATE_KEY
 #   wrangler secret put POSTIZ_API_KEY
+#   wrangler secret put NEWS_WARMUP_SECRET   (required by GET /api/news/warmup + */5 cron news warmup)
 # Generate AUTH_SECRET with:  openssl rand -hex 32
 # GTS_CLIENT_SECRET is from your GotoSocial app config.
 # PUSH_API_KEY — scoped key for POST /api/push/send (push notification sending)
@@ -239,7 +240,9 @@ LEMMY_INSTANCE_URL = "https://community.degenfeed.xyz"
 PIXELFED_INSTANCE_URL = "https://pixelfed.social"
 
 # Creator coin contracts
-ZORA_WRAPPER_FACTORY = "0x0000000000000000000000000000000000000000"
+# ZoraFactory (coins) — canonical address, same on all chains incl. Base:
+# https://docs.zora.co/coins/contracts/factory  [REVIEW]
+ZORA_WRAPPER_FACTORY = "0x777777751622c0d3258f214F9DF38E35BF45baF3"
 
 # Cross-chain bridge (Wormhole)
 WORMHOLE_BRIDGE = ""
@@ -249,6 +252,8 @@ ALLOW_DEV_OAUTH = "false"
 
 # Bluesky AT Protocol posting — DID for identity
 BSKY_DID = ""
+# Set as wrangler secrets for Bluesky write/DM/live access
+BSKY_ACCESS_TOKEN = ""
 
 # YouTube Data API v3 key
 YOUTUBE_API_KEY = ""
@@ -302,6 +307,7 @@ ALLOWED_ORIGINS = "https://canary.degenfeed.xyz,http://localhost:3000"
 
 # Cron triggers — scheduled Worker invocations.
 # Every minute:   scheduled post executor
+# Every 5 min:    feed cache warmup + news aggregation warmup (GET /api/news/warmup)
 # Every 30 min:   trending scraper
 # Daily 14:00:    daily digest + trending refresh
 # Sunday 12:00:   weekly source discovery + health maintenance

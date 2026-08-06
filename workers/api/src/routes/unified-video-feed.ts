@@ -38,7 +38,7 @@ unifiedVideoFeed.get('/', async (c) => {
     const filteredSources = source !== 'all' ? sources.filter((s) => s.id === source) : sources;
 
     // Gather video items from all sources (parallel)
-    const allItems = await gatherVideos(filteredSources, category, limit, cursor);
+    const allItems = await gatherVideos(filteredSources, category, limit, cursor, c.env);
 
     // Compute per-source counts
     const sourceCounts = allItems.items.reduce<Record<string, number>>((acc, item) => {
@@ -72,7 +72,7 @@ unifiedVideoFeed.get('/trending', async (c) => {
 
   try {
     const sources = await getAvailableSources(c.env);
-    const allItems = await gatherVideos(sources.slice(0, 5), undefined, limit * 2);
+    const allItems = await gatherVideos(sources.slice(0, 5), undefined, limit * 2, undefined, c.env);
 
     // Sort by engagement score for trending
     const trending = (allItems.items ?? [])
@@ -171,6 +171,7 @@ async function gatherVideos(
   _category?: string,
   limit: number = 30,
   _cursor?: string,
+  env?: Env,
 ): Promise<GatherResult> {
   try {
     const allVideos: FeedItem[] = [];
@@ -360,7 +361,7 @@ async function gatherVideos(
                 const bridge = await import(bridgePath);
                 const fetcher = bridge.default || bridge.fetchFeed || bridge.fetchTrending;
                 if (typeof fetcher === 'function') {
-                  const bridgeItems = await fetcher(source.id, perSourceLimit);
+                  const bridgeItems = await fetcher(source.id, perSourceLimit, env);
                   if (Array.isArray(bridgeItems) && bridgeItems.length > 0) {
                     items = (bridgeItems as Record<string, unknown>[]).map((v) => ({
                       id: `${source.id}-${v.id || crypto.randomUUID().slice(0, 8)}`,

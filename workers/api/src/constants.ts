@@ -89,6 +89,31 @@ export const FEED = {
   STALE_CONTENT_DAYS: 7,
 } as const;
 
+// ─── News Aggregation ─────────────────────────────────────────────
+// Budgets for the news pipeline (feed/news-aggregator.ts). These keep a
+// single aggregation run inside the Workers CPU budget (error 1102) by
+// bounding total wall-clock, fan-out, per-fetch timeouts, and enrichment.
+// Env overrides: NEWS_AGGREGATION_TIMEOUT_MS, NEWS_ENRICH_LIMIT.
+
+export const NEWS = {
+  /** Overall wall-clock budget for one aggregateNews() run (ms). */
+  AGGREGATION_TIMEOUT_MS: 25_000,
+  /** Stop fetching additional RSS sources once this many raw articles are collected. */
+  MAX_ARTICLES: 50,
+  /** Max concurrent RSS feed fetches. */
+  RSS_FETCH_CONCURRENCY: 3,
+  /** Per-feed HTTP timeout (ms). */
+  RSS_FETCH_TIMEOUT_MS: 4_000,
+  /** Default number of articles to HTML-enrich per run. */
+  ENRICH_LIMIT: 10,
+  /** Max concurrent article enrichment fetches. */
+  ENRICH_CONCURRENCY: 2,
+  /** Per-article enrichment HTTP timeout (ms). */
+  ENRICH_TIMEOUT_MS: 2_000,
+  /** Edge cache TTL for news aggregation results (seconds). */
+  CACHE_TTL_SECONDS: 300,
+} as const;
+
 // ─── Session & Auth ────────────────────────────────────────────────
 
 export const AUTH = {

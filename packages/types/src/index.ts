@@ -103,6 +103,7 @@ export type Protocol =
   | 'juicebox'
   | 'unlock'
   | 'lit'
+  | 'polymarket'
   | 'infra';
 
 export interface UnifiedIdentity {

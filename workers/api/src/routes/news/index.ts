@@ -13,6 +13,7 @@ import type {
   StoryCluster,
 } from '../../feed/news-types';
 import { edgeCacheGet, edgeCachePut } from '../../lib/edge-cache';
+import { NEWS } from '../../constants';
 import {
   badRequest,
   conflict,
@@ -100,11 +101,11 @@ interface NewsMetaResponse {
 // ─── Cache ────────────────────────────────────────────────────────────
 
 let cachedResult: { data: AggregationResult; ts: number } | null = null;
-const CACHE_TTL_MS = 30_000;
+const CACHE_TTL_MS = NEWS.CACHE_TTL_SECONDS * 1000; // 300s / 5 min
 
 /**
  * Canonical edge cache key for an aggregation options set. Public news
- * responses are cacheable at the edge (TTL 30s, matching CACHE_TTL_MS).
+ * responses are cacheable at the edge (TTL 300s, matching CACHE_TTL_MS).
  */
 function newsCacheKey(opts: AggregationOptions): string {
   const parts = [
@@ -118,7 +119,7 @@ function newsCacheKey(opts: AggregationOptions): string {
 }
 
 async function getCachedOrFetch(env: Env, opts: AggregationOptions): Promise<AggregationResult> {
-  // 1. Edge Cache (Cache API first, KV fallback) — public, TTL 30s.
+  // 1. Edge Cache (Cache API first, KV fallback) — public, TTL 300s.
   const edgeKey = newsCacheKey(opts);
   try {
     const cached = await edgeCacheGet(env, edgeKey);
@@ -146,7 +147,7 @@ async function getCachedOrFetch(env: Env, opts: AggregationOptions): Promise<Agg
   }
 
   // 3. Store at the edge (Cache API primary, KV fallback).
-  await edgeCachePut(env, edgeKey, JSON.stringify(result), 30);
+  await edgeCachePut(env, edgeKey, JSON.stringify(result), NEWS.CACHE_TTL_SECONDS);
 
   return result;
 }
@@ -278,13 +279,13 @@ function parseOpts(url: URL): AggregationOptions {
 
 // ─── Response helpers ────────────────────────────────────────────────
 
-function ok(data: unknown, cacheSecs = 30): Response {
+function ok(data: unknown, cacheSecs: number = NEWS.CACHE_TTL_SECONDS): Response {
   const body = JSON.stringify(data);
   return new Response(body, {
     status: 200,
     headers: {
       'content-type': 'application/json',
-      'cache-control': `public, max-age=${cacheSecs}`,
+      'cache-control': `public, max-age=${cacheSecs}, s-maxage=${cacheSecs}`,
     },
   });
 }
@@ -579,7 +580,7 @@ export async function handleNewsDigestPreview(_request: Request, env: Env): Prom
       generatedAt: Date.now(),
     });
   } catch (err: unknown) {
-    return serverError(err instanceof Error ? err.message : 'Failed to generate digest', 500);
+    return serverError(err instanceof Error ? err.message : 'Failed to generate digest');
   }
 }
 
@@ -600,6 +601,67 @@ export async function handleNewsDigestSubscribe(_request: Request, _env: Env): P
 export async function handleNewsSources(request: Request, env: Env): Promise<Response> {
   const { handleNewsSourcesRoute } = await import('../news-sources');
   return handleNewsSourcesRoute(request, env);
+}
+
+/**
+ * Warm the news cache without an HTTP round-trip. Used by the scheduled
+ * 5-minute cron handler so user requests hit freshly aggregated, cached
+ * data. Populates the same edge key the default feed uses.
+ */
+export async function warmupNewsCache(env: Env): Promise<{
+  stories: number;
+  clusters: number;
+  elapsedMs: number;
+}> {
+  const start = Date.now();
+  const result = await getCachedOrFetch(env, { limit: 50 });
+  return {
+    stories: result.stories.length,
+    clusters: result.clusters.length,
+    elapsedMs: Date.now() - start,
+  };
+}
+
+/**
+ * GET /api/news/warmup — Pre-populate the news aggregation cache so user
+ * requests hit cached data instead of paying the full aggregation cost.
+ * Requires the NEWS_WARMUP_SECRET via `?key=` or `Authorization: Bearer`.
+ */
+export async function handleNewsWarmup(request: Request, env: Env): Promise<Response> {
+  if (request.method !== 'GET') return methodNotAllowed(['GET']);
+
+  const secret = env.NEWS_WARMUP_SECRET;
+  if (!secret) {
+    return serverError('NEWS_WARMUP_SECRET is not configured');
+  }
+  const url = new URL(request.url);
+  const auth = request.headers.get('authorization') ?? '';
+  const provided = url.searchParams.get('key') ?? (auth.startsWith('Bearer ') ? auth.slice(7) : '');
+  if (!provided || provided !== secret) {
+    return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+      status: 401,
+      headers: { 'content-type': 'application/json', 'cache-control': 'no-store' },
+    });
+  }
+
+  try {
+    const start = Date.now();
+    const result = await getCachedOrFetch(env, { limit: 50 });
+    const elapsedMs = Date.now() - start;
+    return ok(
+      {
+        ok: true,
+        stories: result.stories.length,
+        clusters: result.clusters.length,
+        cachedAt: result.meta.fetchedAt,
+        timedOut: result.meta.errors.some((e) => e.includes('timed out')),
+        elapsedMs,
+      },
+      NEWS.CACHE_TTL_SECONDS,
+    );
+  } catch (err: unknown) {
+    return serverError(err instanceof Error ? err.message : 'News warmup failed');
+  }
 }
 
 // ─── Newsletter Creator Handlers ──────────────────────────────────────
@@ -625,7 +687,6 @@ export async function handleNewsletterCreatorCreate(request: Request, env: Env):
   } catch (err) {
     return serverError(
       `Failed to create newsletter: ${err instanceof Error ? err.message : String(err)}`,
-      500,
     );
   }
 }

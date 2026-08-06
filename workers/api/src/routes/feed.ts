@@ -26,11 +26,13 @@ import {
   DEFAULT_PROTOCOLS,
   deduplicateCrossProtocol,
   deprioritizeStaleContent,
+  DIRECT_FEED_PROTOCOLS,
   enrichNostrEngagement,
   FEED_GENERATION_TIMEOUT_MS,
   type FeedType,
   feedCacheKey,
   fetchFromProviders,
+  fetchFromProvidersWithTimeout,
   getCategoryCounts,
   getCircuitStatus,
   getFeedCache,
@@ -166,25 +168,71 @@ async function generateAndCacheFeed(
   // Home feed uses the bridge's aggregated superfeed instead of fanning out
   // to 68+ native providers (which return 0 posts). The bridge aggregates
   // real content from 10+ major protocols and caches it for 45s.
+  //
+  // The bridge is only attempted when BRIDGE_API_KEY is configured. When the
+  // key is missing (or the bridge errors / returns empty), we fall back to the
+  // 10 direct providers below so the feed always serves real content — never
+  // demo/seed posts.
   if (feedType === 'home') {
-    const bridgeProvider = new BridgeFeedProvider(
-      'home' as import('@degenfeed/types').Protocol,
-      env,
-    );
-    try {
-      const bridgeResult = await bridgeProvider.fetchFeed({ timeoutMs: 10000 });
-      allPosts = bridgeResult.posts || [];
-      if (bridgeResult.notice) notices.push(bridgeResult.notice);
-      perProtocol = { bridge: allPosts.length };
-      console.log(`[feed] home feed: bridge returned ${allPosts.length} posts`);
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : 'unknown';
-      notices.push(`Bridge unavailable: ${msg}`);
-      console.warn('[feed] Bridge unavailable for home feed:', msg);
+    if (!env.BRIDGE_API_KEY) {
+      notices.push(
+        'BRIDGE_API_KEY not configured — skipping bridge, using direct providers',
+      );
+      console.warn('[feed] BRIDGE_API_KEY not configured — home feed will use direct providers');
+    } else {
+      const bridgeProvider = new BridgeFeedProvider(
+        'home' as import('@degenfeed/types').Protocol,
+        env,
+      );
+      try {
+        const bridgeResult = await bridgeProvider.fetchFeed({ timeoutMs: 10000 });
+        allPosts = bridgeResult.posts || [];
+        if (bridgeResult.notice) notices.push(bridgeResult.notice);
+        perProtocol = { bridge: allPosts.length };
+        console.log(`[feed] home feed: bridge returned ${allPosts.length} posts`);
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : 'unknown';
+        notices.push(`Bridge unavailable: ${msg}`);
+        console.warn('[feed] Bridge unavailable for home feed:', msg);
+      }
+    }
+
+    // Direct-provider fallback: bridge not configured, errored, or empty
+    if (allPosts.length === 0) {
+      const direct = await fetchFromProvidersWithTimeout(
+        env,
+        DIRECT_FEED_PROTOCOLS,
+        limit,
+        notices,
+        FEED_GENERATION_TIMEOUT_MS,
+        execCtx,
+        timer,
+      );
+      const collected = collectProviderResults(direct.results);
+      allPosts = collected.posts;
+      errors = collected.errors;
+      perProtocol = collected.perProtocol;
+      console.log(`[feed] home feed: direct providers returned ${allPosts.length} posts`);
     }
   } else {
+    // Same treatment as home: without BRIDGE_API_KEY the bridge-backed
+    // protocols are unauthenticated (guaranteed 401) — skip them and fan
+    // out only to the 10 direct providers.
+    const fetchProtocols = env.BRIDGE_API_KEY
+      ? requestedProtocols
+      : requestedProtocols.filter((p) =>
+          (DIRECT_FEED_PROTOCOLS as readonly string[]).includes(p),
+        );
+    if (!env.BRIDGE_API_KEY) {
+      notices.push(
+        `BRIDGE_API_KEY not configured — limiting to direct providers (${fetchProtocols.length}/${requestedProtocols.length})`,
+      );
+      console.warn(
+        '[feed] BRIDGE_API_KEY not configured — skipping bridge-backed protocols',
+      );
+    }
     const results = await Promise.race([
-      fetchFromProviders(env, requestedProtocols, limit, notices, execCtx, timer),
+      fetchFromProviders(env, fetchProtocols, limit, notices, execCtx, timer),
       new Promise<never>((_, reject) =>
         setTimeout(
           () => reject(new Error(`feed generation timeout after ${FEED_GENERATION_TIMEOUT_MS}ms`)),
@@ -342,28 +390,24 @@ async function generateAndCacheFeed(
   }
 
   if (freshnessSorted.length === 0) {
-    // NEVER return empty — serve seed/demo content so the feed always has something
-    const { getSeedContent } = await import('../feed/seed-content');
-    const seedPosts = getSeedContent(limit);
+    // NEVER serve demo/seed content — fake posts must not masquerade as
+    // real content. When every provider (bridge + direct) returns empty,
+    // return an explicit empty result flagged as real/direct.
     const responseBody = {
-      data: seedPosts,
+      data: [],
       meta: {
-        total: seedPosts.length,
+        total: 0,
         limit,
         perProtocol,
         errors: errors.length > 0 ? errors : undefined,
-        notices: [
-          ...notices,
-          'All providers returned empty — serving demo content. Connect more protocols at app.degenfeed.xyz/settings',
-        ],
+        notices:
+          notices.length > 0 ? notices : ['No posts available from any provider'],
         fetchedAt: now,
-        isDemo: true,
-        source: 'demo',
-        demoNote:
-          'Connect Nostr, Farcaster, Bluesky, or Mastodon to see real content from every network',
+        isDemo: false,
+        source: 'direct',
       },
     };
-    // Cache the seed response briefly to avoid regenerating on every request
+    // Cache the empty response briefly to avoid regenerating on every request
     if (!cursor) {
       void setFeedCache(env, userId, feedType, responseBody, responseBody.meta);
     }
@@ -371,7 +415,7 @@ async function generateAndCacheFeed(
     const feedElapsed = Date.now() - feedStartTime;
     resp.headers.set(
       'X-DegenFeed-Debug',
-      `cache=miss,demo=true,feed-generation=${(feedElapsed / 1000).toFixed(1)}s`,
+      `cache=miss,empty=true,source=direct,feed-generation=${(feedElapsed / 1000).toFixed(1)}s`,
     );
     return resp;
   }
@@ -531,8 +575,8 @@ export async function handleFeedCacheInvalidate(request: Request, env: Env): Pro
  * Called every 5 minutes by the scheduled handler in cron-handler.ts.
  * Uses a synthetic Request with no params (defaults to limit=50, sort=scored)
  * and no auth (anonymous user), which populates the `anon` cache keys.
- * Even if the bridge is down, seed/demo content gets cached, ensuring
- * the KV cache is never empty on cold start for the next request.
+ * Real content (bridge or direct providers) gets cached; empty results are
+ * cached as an explicit empty feed — never demo/seed content.
  */
 export async function warmupFeedCache(env: Env): Promise<void> {
   const now = Date.now();

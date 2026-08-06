@@ -63,6 +63,19 @@ export {
   TRENDING_INSTANCES,
 } from './providers/mastodon';
 export { DEFAULT_RELAYS, NostrProvider } from './providers/nostr';
+export {
+  isOpenSeaCollection,
+  isOpenSeaSaleEvent,
+  OpenSeaProvider,
+  type OpenSeaProviderOptions,
+} from './providers/opensea';
+export {
+  isPolymarketEvent,
+  isPolymarketMarket,
+  parseOutcomePrices,
+  PolymarketProvider,
+  type PolymarketProviderOptions,
+} from './providers/polymarket';
 export { PixelfedProvider, type PixelfedProviderOptions } from './providers/pixelfed';
 export { PonderProvider } from './providers/ponder';
 export {
@@ -82,6 +95,18 @@ export {
   DEFAULT_RMI_BACKEND_URL,
   RmiDataBusProvider,
 } from './providers/rmi-databus';
+export {
+  isSnapshotProposal,
+  SNAPSHOT_GRAPHQL_URL,
+  SNAPSHOT_SPACES,
+  SnapshotProvider,
+  type SnapshotProviderOptions,
+} from './providers/snapshot';
+export {
+  isTallyProposal,
+  TallyProvider,
+  type TallyProviderOptions,
+} from './providers/tally';
 export type { QualityScore, RssCategory, RssFeedConfig } from './providers/rss';
 export {
   DEFAULT_CRYPTO_FEEDS,

@@ -59,6 +59,12 @@ export interface Env {
   BRIDGE_API_KEY?: string;
   /** Self-hosted Redlib instance for Reddit feed proxying */
   REDLIB_URL?: string;
+  /**
+   * Comma-separated list of healthy Mastodon instances for the discover
+   * directory proxy (defaults to mastodon.social, fosstodon.org,
+   * hachyderm.io, infosec.exchange, indieweb.social).
+   */
+  DISCOVER_MASTODON_INSTANCES?: string;
   /** Self-hosted RSS-Bridge instance for proxied RSS feed fetching */
   RSS_BRIDGE_URL?: string;
   /** Owncast instance URL for live streaming clips */
@@ -281,6 +287,8 @@ export interface Env {
   STREAMS?: KVNamespace;
   /** Zora wrapper factory contract address (Base) */
   ZORA_WRAPPER_FACTORY?: string;
+  /** Self-hosted Zora indexer URL (default: http://127.0.0.1:8091) */
+  ZORA_INDEXER_URL?: string;
   /** Wormhole bridge address for cross-chain tips */
   WORMHOLE_BRIDGE?: string;
 
@@ -492,6 +500,20 @@ export interface Env {
   DISCORD_COIN_WEBHOOK_URL?: string;
   /** Coingecko API key (free tier) for price feeds */
   COINGECKO_API_KEY?: string;
+
+  // ─── Governance / Markets / NFT Feed Providers (2026-08-06) ─────────
+  /** Tally API key (optional — sent as Api-Key header to api.tally.xyz). */
+  TALLY_API_KEY?: string;
+  /** OpenSea API v2 key (optional — sent as X-API-KEY header). */
+  OPENSEA_API_KEY?: string;
+
+  // ─── News Aggregation ──────────────────────────────────────────────
+  /** Overall wall-clock budget for one aggregateNews() run (ms). Default 25000. */
+  NEWS_AGGREGATION_TIMEOUT_MS?: string;
+  /** Max articles HTML-enriched per aggregation run. Default 10. */
+  NEWS_ENRICH_LIMIT?: string;
+  /** Secret key required to trigger GET /api/news/warmup (set via wrangler secret). */
+  NEWS_WARMUP_SECRET?: string;
 }
 
 // ─── Common type aliases used across routes ───────────────────────────

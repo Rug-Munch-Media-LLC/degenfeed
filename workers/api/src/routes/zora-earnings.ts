@@ -26,6 +26,12 @@ const zoraEarnings = new Hono<{ Bindings: Env }>();
 
 const INDEXER_URL = 'http://127.0.0.1:8091';
 
+/** Resolve the Zora indexer URL, preferring the worker env override. */
+function getIndexerUrl(env: Env): string {
+  return env.ZORA_INDEXER_URL || INDEXER_URL;
+}
+
+
 // ═════════════════════════════════════════════════════════════════════════
 // GET /api/zora/earnings/:address/summary — Full earnings summary
 // ═════════════════════════════════════════════════════════════════════════
@@ -39,7 +45,7 @@ zoraEarnings.get('/:address/summary', async (c) => {
 
   try {
     const { ZoraEarnings } = await import('@degenfeed/zora-sdk/earnings');
-    const earnings = new ZoraEarnings({ indexerUrl: INDEXER_URL });
+    const earnings = new ZoraEarnings({ indexerUrl: getIndexerUrl(c.env) });
 
     const summary = await earnings.getCreatorEarnings(creatorAddress as `0x${string}`);
 
@@ -63,7 +69,7 @@ zoraEarnings.get('/:address/rewards', async (c) => {
 
   try {
     const { ZoraEarnings } = await import('@degenfeed/zora-sdk/earnings');
-    const earnings = new ZoraEarnings({ indexerUrl: INDEXER_URL });
+    const earnings = new ZoraEarnings({ indexerUrl: getIndexerUrl(c.env) });
 
     const rewards = await earnings.getProtocolRewards(creatorAddress as `0x${string}`);
 
@@ -95,7 +101,7 @@ zoraEarnings.post('/:address/claim', async (c) => {
 
   try {
     const { ZoraEarnings } = await import('@degenfeed/zora-sdk/earnings');
-    const earnings = new ZoraEarnings({ indexerUrl: INDEXER_URL });
+    const earnings = new ZoraEarnings({ indexerUrl: getIndexerUrl(c.env) });
 
     // Need a wallet client — this is a relayer-based operation
     const { createWalletClient, http: viemHttp } = await import('viem');
@@ -121,7 +127,7 @@ zoraEarnings.post('/:address/claim', async (c) => {
 
     // Record claim in indexer
     try {
-      await fetch(`${INDEXER_URL}/api/earnings`, {
+      await fetch(`${getIndexerUrl(c.env)}/api/earnings`, {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
@@ -158,7 +164,7 @@ zoraEarnings.get('/:address/tips', async (c) => {
   }
 
   try {
-    const res = await fetch(`${INDEXER_URL}/api/tips?creator=${creatorAddress}&limit=${limit}`, {
+    const res = await fetch(`${getIndexerUrl(c.env)}/api/tips?creator=${creatorAddress}&limit=${limit}`, {
       signal: AbortSignal.timeout(5000),
     });
 
@@ -194,7 +200,7 @@ zoraEarnings.get('/:address/nfts', async (c) => {
 
   try {
     const { ZoraEarnings } = await import('@degenfeed/zora-sdk/earnings');
-    const earnings = new ZoraEarnings({ indexerUrl: INDEXER_URL });
+    const earnings = new ZoraEarnings({ indexerUrl: getIndexerUrl(c.env) });
 
     const nfts = await earnings.getPerNFTSalesHistory(creatorAddress as `0x${string}`);
 
@@ -222,7 +228,7 @@ zoraEarnings.get('/:address/top', async (c) => {
 
   try {
     const { ZoraEarnings } = await import('@degenfeed/zora-sdk/earnings');
-    const earnings = new ZoraEarnings({ indexerUrl: INDEXER_URL });
+    const earnings = new ZoraEarnings({ indexerUrl: getIndexerUrl(c.env) });
 
     const top = await earnings.getTopEarningNFTs(creatorAddress as `0x${string}`, limit);
 
@@ -252,7 +258,7 @@ zoraEarnings.post('/tip', async (c) => {
     }
 
     const { ZoraEarnings } = await import('@degenfeed/zora-sdk/earnings');
-    const earnings = new ZoraEarnings({ indexerUrl: INDEXER_URL });
+    const earnings = new ZoraEarnings({ indexerUrl: getIndexerUrl(c.env) });
 
     const tip = await earnings.recordTip({
       tipper: session.address! as `0x${string}`,
@@ -300,7 +306,7 @@ zoraEarnings.post('/record', async (c) => {
       );
     }
 
-    const res = await fetch(`${INDEXER_URL}/api/earnings`, {
+    const res = await fetch(`${getIndexerUrl(c.env)}/api/earnings`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({

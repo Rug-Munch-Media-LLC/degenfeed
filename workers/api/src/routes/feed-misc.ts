@@ -18,8 +18,48 @@ import {
   writeCachedHealth,
   writeJsonCache,
 } from '../feed';
+import { PolymarketProvider } from '@degenfeed/feed-providers';
 import { jsonResponse } from '../response-helpers';
 import type { Env } from '../types';
+
+/**
+ * GET /api/feed/polymarket — Polymarket prediction markets sorted by volume.
+ *
+ * Returns the PolymarketProvider feed (markets + odds + volume) with the
+ * posts re-sorted by volume (24h volume desc). Distinct from the generic
+ * `/api/feed/:provider` catch-all so the frontend gets a stable,
+ * volume-sorted market list.
+ */
+export async function handlePolymarketFeed(request: Request, env: Env): Promise<Response> {
+  const params = new URL(request.url).searchParams;
+  const limit = Math.min(Number(params.get('limit')) || 50, 200);
+  const cacheKey = `polymarket:v1:${limit}`;
+  const cached = await readJsonCache<unknown>(env, cacheKey, 'polymarket cache read');
+  if (cached) return jsonResponse(cached);
+
+  const provider = new PolymarketProvider({});
+  const result = await provider.fetchFeed({ timeoutMs: DEFAULT_TIMEOUT_MS, concurrency: 2 });
+
+  // Sort by volume desc (metrics.likes holds 24h/rolling volume)
+  const sorted = sanitizePosts(result.posts).sort(
+    (a, b) => (b.metrics.likes ?? 0) - (a.metrics.likes ?? 0),
+  );
+  const posts = sorted.slice(0, limit);
+
+  const response = {
+    data: posts,
+    meta: {
+      protocol: 'polymarket',
+      total: posts.length,
+      limit,
+      notice: result.notice,
+      sort: 'volume',
+      fetchedAt: Date.now(),
+    },
+  };
+  await writeJsonCache(env, cacheKey, response, 120, 'polymarket cache write');
+  return jsonResponse(response);
+}
 
 export async function handleRedditFeed(request: Request, env: Env): Promise<Response> {
   const params = new URL(request.url).searchParams;
@@ -37,38 +77,32 @@ export async function handleRedditFeed(request: Request, env: Env): Promise<Resp
     notice = result.notice;
   } catch (err) {
     console.error('[feed] Reddit provider fetch failed:', err instanceof Error ? err.message : err);
-    // Never return empty — serve seed content
-    const { getSeedContent } = await import('../feed/seed-content');
-    const seedPosts = getSeedContent(limit, 'reddit');
+    // Never serve demo/seed content — return an explicit empty result
     return jsonResponse({
-      data: seedPosts,
+      data: [],
       meta: {
-        total: seedPosts.length,
+        total: 0,
         limit,
         subreddit: subreddit || 'all',
-        isDemo: true,
-        source: 'demo',
+        isDemo: false,
+        source: 'direct',
         error: 'Reddit provider failed',
-        demoNote: 'Connect Reddit to see real content from your communities',
         fetchedAt: Date.now(),
       },
     });
   }
 
-  // Never return empty — serve seed content if all real sources failed
+  // Never serve demo/seed content if all real sources failed
   if (posts.length === 0) {
-    const { getSeedContent } = await import('../feed/seed-content');
-    const seedPosts = getSeedContent(limit, 'reddit');
     const response = {
-      data: seedPosts,
+      data: [],
       meta: {
-        total: seedPosts.length,
+        total: 0,
         limit,
         subreddit: subreddit || 'all',
-        isDemo: true,
-        source: 'demo',
-        notice: notice || 'Reddit returned empty — serving demo content',
-        demoNote: 'Connect Reddit to see real content from your communities',
+        isDemo: false,
+        source: 'direct',
+        notice: notice || 'Reddit returned empty',
         fetchedAt: Date.now(),
       },
     };
@@ -100,20 +134,18 @@ export async function handleProviderFeed(
   const params = new URL(request.url).searchParams;
   const limit = Math.min(Number(params.get('limit')) || 50, 200);
 
-  // Helper: serve seed content when real content is unavailable
-  async function serveSeedFallback(reason: string): Promise<Response> {
-    const { getSeedContent } = await import('../feed/seed-content');
-    const seedPosts = getSeedContent(limit, provider);
+  // Helper: serve an explicit empty result when real content is unavailable
+  // (never demo/seed content)
+  async function serveEmptyFallback(reason: string): Promise<Response> {
     return jsonResponse({
-      data: seedPosts,
+      data: [],
       meta: {
-        total: seedPosts.length,
+        total: 0,
         limit,
         protocol: provider,
-        isDemo: true,
-        source: 'demo',
+        isDemo: false,
+        source: 'direct',
         notice: reason,
-        demoNote: `Connect a real ${provider} account at app.degenfeed.xyz to see real content`,
         fetchedAt: Date.now(),
       },
     });
@@ -126,14 +158,14 @@ export async function handleProviderFeed(
     try {
       const result = await bridgeProvider.fetchFeed({ timeoutMs: 6000 });
       if (result.posts.length === 0) {
-        return serveSeedFallback(result.notice || `Bridge returned empty for ${provider}`);
+        return serveEmptyFallback(result.notice || `Bridge returned empty for ${provider}`);
       }
       return jsonResponse({
         data: result.posts.slice(0, limit),
         meta: { total: result.posts.length, limit, protocol: provider, fetchedAt: Date.now() },
       });
     } catch (err) {
-      return serveSeedFallback(
+      return serveEmptyFallback(
         `Bridge provider failed for ${provider}: ${err instanceof Error ? err.message : 'unknown'}`,
       );
     }
@@ -172,9 +204,9 @@ export async function handleProviderFeed(
       }
     }
 
-    // Never return empty — serve seed content if all real sources failed
+    // Never serve demo/seed content if all real sources failed
     if (posts.length === 0) {
-      return serveSeedFallback(result.notice || `Provider ${provider} returned empty`);
+      return serveEmptyFallback(result.notice || `Provider ${provider} returned empty`);
     }
 
     return jsonResponse({
@@ -210,8 +242,8 @@ export async function handleProviderFeed(
       /* bridge unavailable */
     }
 
-    // Ultimate fallback: seed content
-    return serveSeedFallback(
+    // Ultimate fallback: explicit empty result (never demo/seed content)
+    return serveEmptyFallback(
       `Provider ${provider} failed: ${err instanceof Error ? err.message : 'unknown'}`,
     );
   }

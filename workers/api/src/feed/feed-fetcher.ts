@@ -22,10 +22,14 @@ import {
   LensProvider,
   MastodonProvider,
   NostrProvider,
+  OpenSeaProvider,
+  PolymarketProvider,
   PonderProvider,
   RedditProvider,
   RmiDataBusProvider,
   RssProvider,
+  SnapshotProvider,
+  TallyProvider,
   ThreadsProvider,
 } from '@degenfeed/feed-providers';
 import type { Protocol, UnifiedPost } from '@degenfeed/types';
@@ -117,10 +121,34 @@ export const ALL_PROTOCOLS: Protocol[] = [
   'discourse',
   'ghost',
   'kbin',
+  // ── Governance / Markets / NFT (NEW 2026-08-06) ─────────
+  'snapshot',
+  'tally',
+  'polymarket',
+  'opensea',
 ];
 
 /** Default protocols used when no explicit filter is provided */
 export const DEFAULT_PROTOCOLS: Protocol[] = ALL_PROTOCOLS;
+
+/**
+ * The 10 protocols with native FeedProvider implementations in
+ * getProvider() (no bridge dependency). Used as a direct-provider
+ * fallback whenever the bridge service is unauthenticated, down, or
+ * returns empty — so the feed never degrades to demo/seed content.
+ */
+export const DIRECT_FEED_PROTOCOLS: Protocol[] = [
+  'nostr',
+  'farcaster',
+  'lens',
+  'bluesky',
+  'mastodon',
+  'lemmy',
+  'peertube',
+  'reddit',
+  'rss',
+  'threads',
+];
 
 export const DEFAULT_TIMEOUT_MS = 6000;
 export const FEED_GENERATION_TIMEOUT_MS = 12000;
@@ -206,6 +234,11 @@ export const PROVIDER_TIMEOUTS: Record<Protocol, number> = {
   google: 5000,
   twitter: 5000,
   paragraph: 5000,
+  // ── Governance / Markets / NFT (NEW 2026-08-06) ─────────
+  snapshot: 5000,
+  tally: 5000,
+  polymarket: 6000,
+  opensea: 6000,
 };
 
 // ─── Per-provider fetch timer ────────────────────────────────────
@@ -330,6 +363,14 @@ export function getProvider(protocol: Protocol, env: Env): FeedProvider {
       return new PonderProvider();
     case 'rss':
       return new RssWithFallbackProvider(env);
+    case 'snapshot':
+      return new SnapshotProvider({});
+    case 'tally':
+      return new TallyProvider({ apiKey: env.TALLY_API_KEY });
+    case 'polymarket':
+      return new PolymarketProvider({});
+    case 'opensea':
+      return new OpenSeaProvider({ apiKey: env.OPENSEA_API_KEY });
     default:
       // Fall back to bridge API for all other protocols (50+)
       return new BridgeFeedProvider(protocol, env);

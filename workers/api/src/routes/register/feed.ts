@@ -86,6 +86,7 @@ import {
   handleNewsFeed,
   handleNewsForYou,
   handleNewsHot,
+  handleNewsWarmup,
   handleNewsletterCreatorCreate,
   handleNewsletterCreatorIssue,
   handleNewsletterCreatorIssues,
@@ -1559,6 +1560,14 @@ export function registerFeedRoutes(app: Hono<{ Bindings: Env }>): void {
   app.all('/api/news/sources/stats', async (c) => {
     try {
       const result = await handleNewsSourcesRoute(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
+  app.get('/api/news/warmup', async (c) => {
+    try {
+      const result = await handleNewsWarmup(c.req.raw, c.env);
       return ok(result);
     } catch (err) {
       return serverError(err instanceof Error ? err.message : 'Unknown error');

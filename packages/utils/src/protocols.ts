@@ -574,6 +574,21 @@ export const PROTOCOLS: Record<string, ProtocolConfig> = {
       { label: 'networks', value: '8+' },
     ],
   },
+  polymarket: {
+    id: 'polymarket',
+    label: 'Polymarket',
+    color: '#1d9bf0',
+    icon: '📊',
+    description: 'Prediction markets — real-time odds, trending markets & resolution status',
+    endpoint: '/api/feed/polymarket',
+    route: '/feed/polymarket',
+    postNoun: 'market',
+    category: 'web3',
+    stats: [
+      { label: 'volume', value: '$1B+' },
+      { label: 'live markets', value: '2k+' },
+    ],
+  },
 };
 
 export const PROTOCOL_LIST = Object.values(PROTOCOLS);
@@ -833,6 +848,7 @@ export const SIDEBAR_ORDER = [
   'lobsters',
   'snapshot',
   'tally',
+  'polymarket',
   'juicebox',
   'unlock',
   'lemmy',

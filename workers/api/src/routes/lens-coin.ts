@@ -20,7 +20,9 @@ import { recordUnifiedTip } from './unified-tip';
 
 const LENS_COIN_PREFIX = 'lens:coin:';
 const LENS_LINK_PREFIX = 'lens:link:';
-const ZORA_WRAPPER_FACTORY = '0x0000000000000000000000000000000000000000'; // Override via env
+// ZoraFactory (coins) — canonical address on Base:
+// https://docs.zora.co/coins/contracts/factory  [REVIEW]
+const ZORA_WRAPPER_FACTORY = '0x777777751622c0d3258f214F9DF38E35BF45baF3'; // Override via env
 const LENS_API_URL = 'https://api-v2.lens.dev/graphql';
 const TTL_1Y = 60 * 60 * 24 * 365;
 

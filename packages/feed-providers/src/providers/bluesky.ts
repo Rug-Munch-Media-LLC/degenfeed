@@ -19,6 +19,36 @@ import {
 export const BSKY_PUBLIC_URL = 'https://public.api.bsky.app';
 export const BSKY_SOCIAL_URL = 'https://bsky.social';
 
+/**
+ * Additional public ATProto AppView/PDS endpoints used as fallback
+ * sources when the primary endpoint fails. All of these serve the
+ * public read XRPC endpoints (getFeed, getAuthorFeed, searchPosts,
+ * getProfile) unauthenticated.
+ */
+export const BSKY_APPVIEW_FALLBACKS = [
+  'https://public.api.bsky.app',
+  'https://api.bsky.app',
+  'https://bsky.social',
+];
+
+/**
+ * Curated feed generators (custom algorithm feeds) fetched via
+ * `app.bsky.feed.getFeed`. Each entry is an AT-URI of the form
+ * `at://<did>/app.bsky.feed.generator/<record_key>`.
+ *
+ * - `whats-hot` is Bluesky's official "What's Hot" / Discover algorithm
+ *   (creator: bsky.app, did:plc:z72i7hdynmk6r22z27h6tvur).
+ * - `video-feed` is Bluesky's official short-form video feed
+ *   (creator: bsky.app, did:plc:z72i7hd5jnv5a7j5l3s5j3xh).
+ *
+ * Operators can pass additional crypto/tech feed generator AT-URIs via
+ * `BlueskyProviderOptions.feedUris`.
+ */
+export const CURATED_BSKY_FEEDS = [
+  'at://did:plc:z72i7hdynmk6r22z27h6tvur/app.bsky.feed.generator/whats-hot',
+  'at://did:plc:z72i7hd5jnv5a7j5l3s5j3xh/app.bsky.feed.generator/video-feed',
+];
+
 export const CURATED_BSKY_ACTORS = [
   'jay.bsky.social',
   'naval.bsky.social',
@@ -182,25 +212,73 @@ async function searchPosts(
   return data.posts ?? [];
 }
 
+/**
+ * Fetch posts from a feed generator (custom algorithm feed) via
+ * `app.bsky.feed.getFeed`. The response shape matches the author-feed
+ * envelope: `{ feed: Array<{ post: BskyPostView }>, cursor? }`.
+ */
+async function fetchFeedGenerator(
+  baseUrl: string,
+  feedUri: string,
+  limit: number,
+  accessJwt?: string,
+): Promise<BskyPostView[]> {
+  const url = buildUrl(baseUrl, '/xrpc/app.bsky.feed.getFeed', {
+    feed: feedUri,
+    limit: String(Math.min(limit, 100)),
+  });
+  const headers: Record<string, string> = {};
+  if (accessJwt) headers.authorization = `Bearer ${accessJwt}`;
+  const data = await fetchJson<{ feed?: Array<{ post: BskyPostView }> }>(url, { headers });
+  return (data.feed ?? []).map((f) => f.post);
+}
+
 export interface BlueskyProviderOptions {
   baseUrl?: string;
   fallbackUrl?: string;
+  /** Additional fallback AppView/PDS endpoints (defaults to BSKY_APPVIEW_FALLBACKS). */
+  fallbackUrls?: string[];
   accessJwt?: string;
   curatedActors?: string[];
+  /** Feed generator AT-URIs to fetch (defaults to CURATED_BSKY_FEEDS). */
+  feedUris?: string[];
 }
 
 export class BlueskyProvider implements FeedProvider {
   readonly protocol: Protocol = 'bluesky';
   readonly schema: SchemaGuard = isBskyPostView;
   private readonly primaryUrl: string;
+  private readonly fallbackUrls: string[];
   private readonly accessJwt?: string;
   private readonly curatedActors: string[];
+  private readonly feedUris: string[];
   private readonly breaker = new CircuitBreaker('bluesky');
 
   constructor(options: BlueskyProviderOptions = {}) {
     this.primaryUrl = options.baseUrl || BSKY_PUBLIC_URL;
     this.accessJwt = options.accessJwt;
     this.curatedActors = options.curatedActors ?? CURATED_BSKY_ACTORS;
+    this.feedUris = options.feedUris ?? CURATED_BSKY_FEEDS;
+    // Include the primary URL first, then the caller's fallback URL, then defaults
+    const defaults = BSKY_APPVIEW_FALLBACKS.filter((u) => u !== this.primaryUrl);
+    if (options.fallbackUrl && options.fallbackUrl !== this.primaryUrl) {
+      this.fallbackUrls = [options.fallbackUrl, ...defaults.filter((u) => u !== options.fallbackUrl)];
+    } else {
+      this.fallbackUrls = defaults;
+    }
+  }
+
+  /** Run a fetcher against the primary AppView, falling back to other endpoints on failure. */
+  private async withFallback<T>(fn: (baseUrl: string) => Promise<T>): Promise<T> {
+    let lastErr: unknown;
+    for (const baseUrl of [this.primaryUrl, ...this.fallbackUrls]) {
+      try {
+        return await fn(baseUrl);
+      } catch (err) {
+        lastErr = err;
+      }
+    }
+    throw lastErr instanceof Error ? lastErr : new Error('All Bluesky endpoints failed');
   }
 
   async fetch(opts: FetchOptions = {}): Promise<unknown> {
@@ -209,6 +287,7 @@ export class BlueskyProvider implements FeedProvider {
     return withRetry(async () => {
       const all: BskyPostView[] = [];
 
+      // 1. Crypto keyword search (existing behavior, primary signal)
       const queries = CRYPTO_SEARCH_QUERIES.slice(0, 4);
       const searchResults = await withConcurrencyLimit(
         queries,
@@ -216,11 +295,8 @@ export class BlueskyProvider implements FeedProvider {
         async (q) => {
           try {
             return await withTimeout(
-              searchPosts(
-                this.primaryUrl,
-                q,
-                Math.max(5, Math.ceil(limit / queries.length)),
-                this.accessJwt,
+              this.withFallback((baseUrl) =>
+                searchPosts(baseUrl, q, Math.max(5, Math.ceil(limit / queries.length)), this.accessJwt),
               ),
               timeoutMs,
               `bluesky:search:${q}`,
@@ -232,16 +308,34 @@ export class BlueskyProvider implements FeedProvider {
       );
       for (const r of searchResults) all.push(...r);
 
+      // 2. Feed generators (What's Hot + curated feeds) — new 2026-08-06
+      const feedResults = await withConcurrencyLimit(
+        this.feedUris.slice(0, 4),
+        2,
+        async (feedUri) => {
+          try {
+            return await withTimeout(
+              this.withFallback((baseUrl) =>
+                fetchFeedGenerator(baseUrl, feedUri, Math.max(5, Math.ceil(limit / 2)), this.accessJwt),
+              ),
+              timeoutMs,
+              `bluesky:feed:${feedUri}`,
+            );
+          } catch {
+            return [] as BskyPostView[];
+          }
+        },
+      );
+      for (const r of feedResults) all.push(...r);
+
+      // 3. Curated actors (only if we still need more posts)
       if (all.length < limit / 2) {
         const actors = this.curatedActors.slice(0, 8);
         const actorResults = await withConcurrencyLimit(actors, 3, async (actor) => {
           try {
             return await withTimeout(
-              fetchAuthorFeed(
-                this.primaryUrl,
-                actor,
-                Math.max(3, Math.ceil(limit / actors.length)),
-                this.accessJwt,
+              this.withFallback((baseUrl) =>
+                fetchAuthorFeed(baseUrl, actor, Math.max(3, Math.ceil(limit / actors.length)), this.accessJwt),
               ),
               timeoutMs,
               `bluesky:${actor}`,

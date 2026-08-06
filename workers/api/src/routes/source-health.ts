@@ -420,7 +420,7 @@ export async function runWeeklyHealthMaintenance(env: Env): Promise<{
   culled: number;
 }> {
   const result = await handleSourcesHealthCheck(
-    new Request('http://localhost/api/sources/health-check'),
+    new Request('https://internal/api/sources/health-check'),
     env,
   );
   const data = (await result.json()) as {

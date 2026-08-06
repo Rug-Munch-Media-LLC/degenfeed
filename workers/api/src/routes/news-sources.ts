@@ -10,8 +10,10 @@
 import { aggregateNews } from '../feed/news-aggregator';
 import { NEWS_SOURCES } from '../feed/news-source-tiers';
 import { log } from '../index';
+import { edgeCacheGet, edgeCachePut } from '../lib/edge-cache';
 import { jsonResponse, methodNotAllowed, noCacheJsonResponse } from '../response-helpers';
 import type { Env } from '../types';
+import { NEWS } from '../constants';
 
 // ─── KV Keys ──────────────────────────────────────────────────────────────
 
@@ -19,6 +21,10 @@ const SOURCE_HEALTH_PREFIX = 'news:source:health:';
 const _SOURCE_COUNTS_PREFIX = 'news:source:counts:';
 const CACHE_TTL_LONG = 86400; // 24 hours
 const _CACHE_TTL_SHORT = 300; // 5 min
+const STATS_CACHE_KEY = 'news:sources:stats:v1';
+const CACHE_HEADERS = {
+  'cache-control': `public, max-age=${NEWS.CACHE_TTL_SECONDS}, s-maxage=${NEWS.CACHE_TTL_SECONDS}`,
+};
 
 // ─── Types ────────────────────────────────────────────────────────────────
 
@@ -189,6 +195,18 @@ export async function handleSourcesRefresh(request: Request, env: Env): Promise<
 // ─── GET /api/news/sources/stats — Source & Category Stats ──────────────
 
 export async function handleSourcesStats(_request: Request, env: Env): Promise<Response> {
+  // Same caching pattern as the news feed: the aggregation underneath is
+  // expensive and bounded by the aggregateNews timeout, so cache the stats
+  // at the edge for NEWS.CACHE_TTL_SECONDS (5 min).
+  try {
+    const cached = await edgeCacheGet(env, STATS_CACHE_KEY);
+    if (cached) {
+      return jsonResponse(JSON.parse(cached), 200, CACHE_HEADERS);
+    }
+  } catch {
+    // Cache miss / hiccup — recompute below.
+  }
+
   // Get article counts per source (from recent aggregation)
   let result;
   try {
@@ -262,7 +280,7 @@ export async function handleSourcesStats(_request: Request, env: Env): Promise<R
     .sort((a, b) => b.count - a.count)
     .slice(0, 20);
 
-  return noCacheJsonResponse({
+  const body = {
     data: {
       overview: {
         totalSources: NEWS_SOURCES.length,
@@ -279,7 +297,14 @@ export async function handleSourcesStats(_request: Request, env: Env): Promise<R
     meta: {
       fetchedAt: Date.now(),
     },
-  });
+  };
+
+  try {
+    await edgeCachePut(env, STATS_CACHE_KEY, JSON.stringify(body), NEWS.CACHE_TTL_SECONDS);
+  } catch {
+    // Non-critical — cache population failure does not fail the response.
+  }
+  return jsonResponse(body, 200, CACHE_HEADERS);
 }
 
 // ─── Router ───────────────────────────────────────────────────────────────
@@ -298,7 +323,20 @@ export async function handleNewsSourcesRoute(request: Request, env: Env): Promis
     return handleSourcesStats(request, env);
   }
 
-  // Default: list sources (existing behavior)
-  const { handleNewsSources } = await import('./news');
-  return handleNewsSources(request, env);
+  // Default: list sources (existing behavior). Built from the static registry
+  // instead of re-delegating to routes/news (which would recurse forever and
+  // blow the CPU budget with a Cloudflare 1102 error).
+  const sourceList = NEWS_SOURCES.map((s) => ({
+    id: s.id,
+    name: s.name,
+    category: s.category,
+    tier: s.tier,
+    credibility: s.credibility,
+    url: s.url,
+    type: s.type,
+  }));
+  return jsonResponse({
+    data: sourceList,
+    meta: { total: sourceList.length, fetchedAt: Date.now() },
+  });
 }

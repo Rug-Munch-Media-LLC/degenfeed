@@ -19,6 +19,12 @@ import type { TrendingTopic } from '@degenfeed/ranking';
 import type { UnifiedPost } from '@degenfeed/types';
 import { COMMUNITY_KV_PREFIX, type CrossProtocolCommunity } from '@degenfeed/utils';
 import { edgeCacheGet, edgeCachePut } from '../lib/edge-cache';
+import {
+  collectProviderResults,
+  DIRECT_FEED_PROTOCOLS,
+  fetchFromProviders,
+} from '../feed';
+import { handleHomeFeed } from './feed';
 import { jsonResponse } from '../response-helpers';
 import { isValidInstanceUrl } from '../sanitize';
 import type { Env } from '../types';
@@ -64,20 +70,66 @@ interface FeaturedSpace {
 
 import { liveIndexKey, spaceKey, upcomingIndexKey } from '../kv-helpers';
 
+// ─── Mastodon directory instances ────────────────────────────────────────
+
+/**
+ * Healthy Mastodon instances used by the legacy directory proxy.
+ * Configurable via DISCOVER_MASTODON_INSTANCES (comma-separated hostnames).
+ */
+const DEFAULT_MASTODON_INSTANCES = [
+  'mastodon.social',
+  'fosstodon.org',
+  'hachyderm.io',
+  'infosec.exchange',
+  'indieweb.social',
+];
+
+function resolveMastodonInstances(env: Env, requested?: string | null): string[] {
+  if (requested) {
+    const normalized = requested.startsWith('http') ? requested : `https://${requested}`;
+    return isValidInstanceUrl(normalized) ? [normalized] : [];
+  }
+  const configured = (env.DISCOVER_MASTODON_INSTANCES ?? '')
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
+  const hosts = configured.length > 0 ? configured : DEFAULT_MASTODON_INSTANCES;
+  return hosts.map((h) => (h.startsWith('http') ? h : `https://${h}`));
+}
+
 // ─── Feed helpers ══════════════════════════════════════════════════════
 
 /**
  * Fetch recent posts from the home feed pipeline.
+ *
+ * Calls the home feed handler directly (internal function call — no
+ * localhost HTTP fetch, which is dead from the Cloudflare edge). When the
+ * home feed pipeline returns empty, falls back to the 10 direct providers.
  */
-async function fetchRecentPosts(_env: Env, limit = 100): Promise<UnifiedPost[]> {
+async function fetchRecentPosts(env: Env, limit = 100): Promise<UnifiedPost[]> {
+  // 1. Internal call to the home feed pipeline (bridge → direct fallback)
   try {
     const feedReq = new Request(
-      `http://localhost/api/feed/home?limit=${limit}&sort=hot&protocols=nostr,farcaster,lens,bluesky,mastodon,threads,reddit,rss`,
+      `https://internal/api/feed/home?limit=${limit}&sort=hot&protocols=nostr,farcaster,lens,bluesky,mastodon,threads,reddit,rss`,
     );
-    const feedRes = await fetch(feedReq);
-    if (!feedRes.ok) return [];
+    const feedRes = await handleHomeFeed(feedReq, env);
+    if (!feedRes.ok) throw new Error(`home feed status ${feedRes.status}`);
     const body = (await feedRes.json()) as { data?: UnifiedPost[] };
-    return body.data ?? [];
+    if (body.data && body.data.length > 0) return body.data;
+  } catch {
+    /* fall through to direct providers */
+  }
+
+  // 2. Direct-provider fallback when the home feed pipeline is empty/failed
+  try {
+    const notices: string[] = [];
+    const results = await fetchFromProviders(
+      env,
+      DIRECT_FEED_PROTOCOLS,
+      limit,
+      notices,
+    );
+    return collectProviderResults(results).posts;
   } catch {
     return [];
   }
@@ -85,34 +137,76 @@ async function fetchRecentPosts(_env: Env, limit = 100): Promise<UnifiedPost[]> 
 
 // ─── Legacy: Mastodon directory proxy ─────────────────────────────────
 
-export async function handleDiscover(request: Request, _env: Env): Promise<Response> {
+export async function handleDiscover(request: Request, env: Env): Promise<Response> {
   const url = new URL(request.url);
-  const instance = url.searchParams.get('instance') || 'https://bitcoinhackers.org';
-  if (!isValidInstanceUrl(instance)) return jsonResponse({ error: 'Invalid instance URL' }, 400);
+  const requested = url.searchParams.get('instance');
+  const instances = resolveMastodonInstances(env, requested);
+  if (instances.length === 0) return jsonResponse({ error: 'Invalid instance URL' }, 400);
   const limit = 20;
 
-  try {
-    const res = await fetch(`${instance}/api/v1/directory?limit=${limit}&order=active&local=true`, {
-      headers: { 'user-agent': 'DegenFeed/0.1 (+https://degenfeed.xyz)' },
-    });
-    if (!res.ok) return jsonResponse({ error: 'Instance unavailable' }, 502);
-    const data = (await res.json()) as Array<{
-      id: string;
-      username: string;
-      acct: string;
-      display_name: string;
-      avatar: string;
-      note: string;
-      followers_count: number;
-    }>;
-    const result = data.map((a) => ({
-      ...a,
-      instance: new URL(instance).hostname,
-    }));
-    return jsonResponse(result);
-  } catch {
-    return jsonResponse({ error: 'Discovery failed' }, 500);
+  // Try each configured instance in order; return the first that succeeds.
+  for (const instance of instances) {
+    try {
+      const res = await fetch(`${instance}/api/v1/directory?limit=${limit}&order=active&local=true`, {
+        headers: { 'user-agent': 'DegenFeed/0.1 (+https://degenfeed.xyz)' },
+        signal: AbortSignal.timeout(5000),
+      });
+      if (!res.ok) continue;
+      const data = (await res.json()) as Array<{
+        id: string;
+        username: string;
+        acct: string;
+        display_name: string;
+        avatar: string;
+        note: string;
+        followers_count: number;
+      }>;
+      const result = data.map((a) => ({
+        ...a,
+        instance: new URL(instance).hostname,
+      }));
+      return jsonResponse(result);
+    } catch {
+      /* try next instance */
+    }
   }
+
+  // Direct-provider fallback: when every Mastodon instance fails, derive a
+  // discoverable account list from recent posts (real content only).
+  try {
+    const posts = await fetchRecentPosts(env, 100);
+    const accounts = deriveAccountsFromPosts(posts);
+    if (accounts.length > 0) {
+      return jsonResponse(accounts);
+    }
+  } catch {
+    /* fall through */
+  }
+
+  return jsonResponse({ error: 'Instance unavailable' }, 502);
+}
+
+/** Derive a Mastodon-directory-shaped account list from real posts. */
+function deriveAccountsFromPosts(posts: UnifiedPost[]): Array<Record<string, unknown>> {
+  const seen = new Set<string>();
+  const accounts: Array<Record<string, unknown>> = [];
+  for (const p of posts) {
+    if (seen.has(p.author.id)) continue;
+    seen.add(p.author.id);
+    const handle = Object.values(p.author.handles).find(Boolean) || p.author.id.slice(0, 12);
+    accounts.push({
+      id: `df:${p.author.id}`,
+      username: handle,
+      acct: handle,
+      display_name: p.author.displayName || handle,
+      avatar: p.author.avatarUrl || '',
+      note: p.author.bio || '',
+      followers_count: p.author.followerCount || 0,
+      instance: 'direct',
+    });
+    if (accounts.length >= 20) break;
+  }
+  return accounts;
 }
 
 // ─── GET /api/discover/trending ───────────────────────────────────────

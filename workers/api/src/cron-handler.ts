@@ -104,6 +104,21 @@ export async function scheduled(
     await warmupFeedCache(env).catch((err) =>
       log('warn', '[scheduled] feed cache warmup failed', err),
     );
+
+    // News cache warmup — populates the news aggregation cache on the same
+    // 5-minute tick so user requests hit cached data instead of paying the
+    // full (25s-budgeted) aggregation cost per request.
+    const { warmupNewsCache } = await import('./routes/news');
+    const newsWarmup = await warmupNewsCache(env).catch((err) => {
+      log('warn', '[scheduled] news cache warmup failed', err);
+      return null;
+    });
+    if (newsWarmup) {
+      log(
+        'info',
+        `[scheduled] news cache warmup: ${newsWarmup.stories} stories in ${newsWarmup.elapsedMs}ms`,
+      );
+    }
     return;
   }
 
@@ -149,7 +164,7 @@ export async function scheduled(
     // Run discovery
     try {
       const { handleSourcesDiscover } = await import('./routes/source-discovery');
-      const discoverReq = new Request('http://localhost/api/sources/discover?platform=all');
+      const discoverReq = new Request('https://internal/api/sources/discover?platform=all');
       await handleSourcesDiscover(discoverReq, env);
       log('info', '[scheduled] weekly source discovery complete');
     } catch (err) {

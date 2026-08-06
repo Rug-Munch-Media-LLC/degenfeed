@@ -11,8 +11,10 @@ import type { ParsedRssItem } from './news-types';
 
 /**
  * Fetch an RSS/Atom feed URL and return raw XML text.
+ * Per-feed timeout is kept short (4s) so a slow source cannot burn the
+ * aggregation wall-clock budget.
  */
-export async function fetchRssFeed(url: string, timeoutMs = 8000): Promise<string | null> {
+export async function fetchRssFeed(url: string, timeoutMs = 4000): Promise<string | null> {
   try {
     const res = await fetch(url, {
       signal: AbortSignal.timeout(timeoutMs),

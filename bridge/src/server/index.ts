@@ -125,6 +125,310 @@ function jsonOk(res: http.ServerResponse, data: unknown) {
   }
 }
 
+// ═══════════════════════════════════════════════════════════════════════════
+// UNIFIED CROSS-SERVICE PROFILE + IMAGE PROXY
+// Mirrors workers/api/src/routes/{profile-me,image-proxy}.ts for the
+// self-hosted deployment. api-server proxies /api/* here.
+// ═══════════════════════════════════════════════════════════════════════════
+
+const DEFAULT_ACCOUNT_DOMAIN = 'degenfeed.xyz';
+
+async function fetchBridgeJson(url: string, init?: RequestInit): Promise<Record<string, unknown>> {
+  const res = await fetch(url, {
+    ...init,
+    signal: AbortSignal.timeout(10_000),
+    headers: {
+      Accept: 'application/json, application/activity+json, text/html;q=0.8',
+      'User-Agent': 'degenfeed-bridge/0.4 (profile sync)',
+      ...(init?.headers ?? {}),
+    },
+  });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return (await res.json()) as Record<string, unknown>;
+}
+
+async function fetchBridgeGoToSocial(username: string) {
+  const webfinger = await fetchBridgeJson(
+    `https://social.degenfeed.xyz/.well-known/webfinger?resource=acct:${encodeURIComponent(username)}@${DEFAULT_ACCOUNT_DOMAIN}`,
+  );
+  const links = Array.isArray(webfinger.links)
+    ? (webfinger.links as Array<{ type?: string; href?: string }>)
+    : [];
+  const actorLink = links.find((l) => l.type === 'application/activity+json');
+  const htmlLink = links.find((l) => l.type === 'text/html');
+  if (!actorLink?.href) throw new Error('No ActivityPub actor link');
+  const actor = await fetchBridgeJson(actorLink.href);
+  const icon =
+    typeof actor.icon === 'object' && actor.icon
+      ? ((actor.icon as { url?: string }).url ?? (actor.icon as { href?: string }).href)
+      : typeof actor.icon === 'string'
+        ? actor.icon
+        : undefined;
+  return {
+    available: true,
+    username,
+    displayName: (actor.name as string) || username,
+    avatarUrl: icon,
+    bio: (actor.summary as string) || '',
+    profileUrl: htmlLink?.href ?? actorLink.href,
+  };
+}
+
+async function fetchBridgeLemmy(username: string) {
+  const data = await fetchBridgeJson(
+    `https://community.degenfeed.xyz/api/v3/user?username=${encodeURIComponent(username)}`,
+  );
+  const person = (data as { person_view?: { person?: Record<string, unknown> } }).person_view
+    ?.person;
+  if (!person) throw new Error('No person');
+  return {
+    available: true,
+    username: (person.name as string) ?? username,
+    displayName: (person.display_name as string) || (person.name as string) || username,
+    avatarUrl: (person.avatar as string) || undefined,
+    bio: (person.bio as string) || undefined,
+    profileUrl: (person.actor_id as string) || `https://community.degenfeed.xyz/u/${username}`,
+  };
+}
+
+async function fetchBridgePixelfed(username: string) {
+  const account = await fetchBridgeJson(
+    `https://photos.degenfeed.xyz/api/v1/accounts/lookup?acct=${encodeURIComponent(username)}`,
+  );
+  return {
+    available: true,
+    username: (account.username as string) ?? username,
+    displayName: (account.display_name as string) || username,
+    avatarUrl: (account.avatar as string) || undefined,
+    bio: (account.note as string) || undefined,
+    profileUrl: (account.url as string) || `https://photos.degenfeed.xyz/@${username}`,
+  };
+}
+
+async function fetchBridgePeerTube(username: string) {
+  const data = await fetchBridgeJson(
+    `https://video.degenfeed.xyz/api/v1/accounts?name=${encodeURIComponent(username)}`,
+  );
+  const list = data.data as Array<Record<string, unknown>> | undefined;
+  const account = Array.isArray(list)
+    ? list.find((a) => (a.name as string)?.toLowerCase() === username.toLowerCase())
+    : undefined;
+  if (!account) throw new Error('No account');
+  const avatars = account.avatars as Array<{ path?: string; fileUrl?: string }> | undefined;
+  const avatar =
+    avatars?.find((a) => a.fileUrl || a.path)?.fileUrl ?? avatars?.find((a) => a.fileUrl || a.path)?.path;
+  return {
+    available: true,
+    username: (account.name as string) ?? username,
+    displayName: (account.displayName as string) || (account.name as string) || username,
+    avatarUrl: avatar,
+    bio: (account.description as string) || undefined,
+    profileUrl: (account.url as string) || `https://video.degenfeed.xyz/a/${username}`,
+  };
+}
+
+async function fetchBridgeWriteFreely(username: string) {
+  const collection = await fetchBridgeJson(
+    `https://blog.degenfeed.xyz/api/collections/${encodeURIComponent(username)}`,
+  );
+  return {
+    available: true,
+    username: (collection.alias as string) ?? username,
+    displayName: (collection.title as string) || username,
+    bio: (collection.description as string) || undefined,
+    profileUrl: (collection.url as string) || `https://blog.degenfeed.xyz/${username}`,
+  };
+}
+
+const BRIDGE_SERVICES = [
+  { key: 'gotosocial', name: 'GoToSocial', url: 'https://social.degenfeed.xyz', icon: '🐦', desc: 'Microblogging', fetch: fetchBridgeGoToSocial },
+  { key: 'lemmy', name: 'Lemmy', url: 'https://community.degenfeed.xyz', icon: '💬', desc: 'Communities', fetch: fetchBridgeLemmy },
+  { key: 'pixelfed', name: 'Pixelfed', url: 'https://photos.degenfeed.xyz', icon: '📸', desc: 'Photos', fetch: fetchBridgePixelfed },
+  { key: 'peertube', name: 'PeerTube', url: 'https://video.degenfeed.xyz', icon: '📹', desc: 'Video', fetch: fetchBridgePeerTube },
+  { key: 'writefreely', name: 'WriteFreely', url: 'https://blog.degenfeed.xyz', icon: '✍️', desc: 'Blogging', fetch: fetchBridgeWriteFreely },
+] as const;
+
+async function fetchUnifiedProfile(username: string) {
+  const results: Record<string, Record<string, unknown>> = {};
+  const available: string[] = [];
+  const missing: string[] = [];
+
+  await Promise.all(
+    BRIDGE_SERVICES.map(async (service) => {
+      try {
+        results[service.key] = await service.fetch(username);
+        available.push(service.key);
+      } catch (err) {
+        results[service.key] = {
+          available: false,
+          error: err instanceof Error ? err.message : 'unavailable',
+        };
+        missing.push(service.key);
+      }
+    }),
+  );
+
+  const profiles = Object.fromEntries(
+    BRIDGE_SERVICES.map((s) => [
+      s.key,
+      {
+        key: s.key,
+        name: s.name,
+        url: s.url,
+        icon: s.icon,
+        desc: s.desc,
+        ...results[s.key],
+      },
+    ]),
+  );
+
+  return {
+    username,
+    primary: {
+      protocol: 'gotosocial',
+      url: `https://social.degenfeed.xyz/@${username}`,
+      available: results.gotosocial?.available ?? false,
+    },
+    profiles,
+    summary: {
+      total: BRIDGE_SERVICES.length,
+      available: available.length,
+      missing,
+      timestamp: Date.now(),
+    },
+  };
+}
+
+// ─── Image proxy (production mirror) ────────────────────────────────────
+// In-memory 1h cache. The Cloudflare worker version uses the Cache API; in
+// the self-hosted Node bridge a bounded Map with TTL is the equivalent.
+
+const IMAGE_PROXY_CACHE_TTL_MS = 3600 * 1000; // 1 hour
+const imageProxyCache = new Map<string, { body: Buffer; contentType: string; expiresAt: number }>();
+const IMAGE_PROXY_MAX_BYTES = 20 * 1024 * 1024;
+
+const BRIDGE_IMAGE_TYPES = [
+  'image/jpeg',
+  'image/png',
+  'image/gif',
+  'image/webp',
+  'image/avif',
+  'image/svg+xml',
+  'image/bmp',
+];
+
+function extractBridgeImageUrl(raw: string | null, protocol: string | null): string | null {
+  if (!raw) return null;
+  const text = raw.trim();
+  if (!text) return null;
+  if (/^https?:\/\/[^\s]+\.(?:jpg|jpeg|png|gif|webp|avif|svg|bmp)(?:\?[^\s]*)?$/i.test(text)) return text;
+  const markdown = text.match(/!\[[^\]]*\]\(([^)\s]+)\)/);
+  if (markdown?.[1]) return markdown[1];
+  const htmlImg = text.match(/<img[^>]+src=["']([^"']+)["']/i);
+  if (htmlImg?.[1]) return htmlImg[1];
+  if (protocol === 'nostr') {
+    const nostrImg = text.match(/https?:\/\/[^\s<>"']+\.(?:jpg|jpeg|png|gif|webp|avif)(?:\?[^\s<>"']*)?/i);
+    if (nostrImg?.[0]) return nostrImg[0];
+  }
+  const generic = text.match(/https?:\/\/[^\s<>"']+\.(?:jpg|jpeg|png|gif|webp|avif|svg|bmp)(?:\?[^\s<>"']*)?/i);
+  return generic?.[0] ?? null;
+}
+
+function validateBridgeProxyUrl(raw: string | null): string | null {
+  if (!raw) return null;
+  let parsed: URL;
+  try {
+    parsed = new URL(raw);
+  } catch {
+    return null;
+  }
+  if (parsed.protocol !== 'https:') return null;
+  if (parsed.username || parsed.password) return null;
+  const host = parsed.hostname.toLowerCase();
+  if (/^(localhost|0\.0\.0\.0|127\.|10\.|192\.168\.|169\.254\.|172\.(1[6-9]|2\d|3[01])\.|\[::1\]|\[::\])/.test(host)) return null;
+  if (parsed.port && parsed.port !== '443') return null;
+  return parsed.toString();
+}
+
+async function handleBridgeImageProxy(
+  rawUrl: string,
+  protocol: string,
+  res: http.ServerResponse,
+): Promise<boolean> {
+  try {
+    const target = validateBridgeProxyUrl(extractBridgeImageUrl(rawUrl, protocol) ?? rawUrl);
+    if (!target) {
+      res.writeHead(400, { 'Content-Type': 'text/plain' });
+      res.end('Invalid or blocked url');
+      return true;
+    }
+
+    const cacheKey = `${protocol}:${target}`;
+    const hit = imageProxyCache.get(cacheKey);
+    if (hit && hit.expiresAt > Date.now()) {
+      res.writeHead(200, {
+        'Content-Type': hit.contentType,
+        'Cache-Control': 'public, max-age=3600',
+        'Access-Control-Allow-Origin': '*',
+        'X-Image-Proxy': 'hit',
+      });
+      res.end(hit.body);
+      return true;
+    }
+
+    const upstream = await fetch(target, {
+      headers: { 'User-Agent': 'degenfeed-image-proxy/1.0', Accept: 'image/*,*/*;q=0.8' },
+      redirect: 'follow',
+      signal: AbortSignal.timeout(15_000),
+    });
+    if (!upstream.ok) {
+      res.writeHead(404, { 'Content-Type': 'text/plain' });
+      res.end('Image not found');
+      return true;
+    }
+    const contentType = (upstream.headers.get('Content-Type') || 'image/jpeg').split(';')[0].trim();
+    if (!BRIDGE_IMAGE_TYPES.includes(contentType)) {
+      res.writeHead(415, { 'Content-Type': 'text/plain' });
+      res.end('Not an image');
+      return true;
+    }
+    const contentLength = Number(upstream.headers.get('Content-Length') || 0);
+    if (contentLength > IMAGE_PROXY_MAX_BYTES) {
+      res.writeHead(413, { 'Content-Type': 'text/plain' });
+      res.end('Image too large');
+      return true;
+    }
+
+    const body = Buffer.from(await upstream.arrayBuffer());
+    if (body.length > IMAGE_PROXY_MAX_BYTES) {
+      res.writeHead(413, { 'Content-Type': 'text/plain' });
+      res.end('Image too large');
+      return true;
+    }
+
+    // Cache for 1 hour (bounded — evict stale entries opportunistically).
+    if (imageProxyCache.size > 500) {
+      const now = Date.now();
+      for (const [k, v] of imageProxyCache) if (v.expiresAt < now) imageProxyCache.delete(k);
+    }
+    imageProxyCache.set(cacheKey, { body, contentType, expiresAt: Date.now() + IMAGE_PROXY_CACHE_TTL_MS });
+
+    res.writeHead(200, {
+      'Content-Type': contentType || 'image/jpeg',
+      'Cache-Control': 'public, max-age=3600',
+      'Access-Control-Allow-Origin': '*',
+      'X-Image-Proxy': 'miss',
+    });
+    res.end(body);
+    return true;
+  } catch (err) {
+    console.error('[bridge] image-proxy error:', err);
+    res.writeHead(502, { 'Content-Type': 'text/plain' });
+    res.end('Upstream fetch failed');
+    return true;
+  }
+}
+
 // ─── Cross-Protocol Notification Generator ──────────────────────────────
 
 interface CrossProtocolNotification {
@@ -1265,6 +1569,40 @@ const server = http.createServer(async (req, res) => {
     // GET  /api/webhooks/status — list active restream processes
     const webhookHandled = await handleWebhookRoute(path, req.method || 'GET', req, res);
     if (webhookHandled) return;
+
+    // ── Unified Cross-Service Profile (SSO) ───────────────────────
+    // GET /api/profile/me?username=<u> — one GTS account, one identity across
+    // all DegenFeed services (GoToSocial, Lemmy, Pixelfed, PeerTube,
+    // WriteFreely). Mirrors workers/api/src/routes/profile-me.ts for the
+    // self-hosted deployment (api-server proxies /api/* here).
+    if (path === '/api/profile/me') {
+      const username =
+        searchParams.get('username') ||
+        searchParams.get('acct') ||
+        '';
+      const clean = username.trim().replace(/^@/, '').split('@')[0] || '';
+      if (!clean) {
+        res.writeHead(401, { 'Content-Type': 'application/json' });
+        res.end(
+          JSON.stringify({ error: 'Missing username. Pass ?username=<name>.' }),
+        );
+        return;
+      }
+      const profileResults = await fetchUnifiedProfile(clean);
+      return jsonOk(res, profileResults);
+    }
+
+    // ── Cross-Protocol Image Proxy ─────────────────────────────────
+    // GET /api/image-proxy?url=<encoded>&protocol=<protocol>
+    // Fetches images from any protocol's remote host with CORS headers,
+    // protocol-aware extraction, and 1-hour caching. Mirrors
+    // workers/api/src/routes/image-proxy.ts for the self-hosted deployment.
+    if (path === '/api/image-proxy') {
+      const rawUrl = searchParams.get('url') || '';
+      const protocol = searchParams.get('protocol') || '';
+      const handled = await handleBridgeImageProxy(rawUrl, protocol, res);
+      if (handled) return;
+    }
 
     return jsonOk(res, { status: 'ok', path, service: 'degenfeed-bridge' });
   } catch (err) {
