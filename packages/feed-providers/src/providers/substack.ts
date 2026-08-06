@@ -245,7 +245,7 @@ export class SubstackProvider implements FeedProvider {
                 `substack:${source.slug}`,
               );
               const feed = parseSubstackRss(xml, url);
-              return feed.items.slice(0, 5).map((item, index) =>
+              return feed.items.slice(0, 15).map((item, index) =>
                 substackItemToPost(source, feed, item, index),
               );
             } catch {

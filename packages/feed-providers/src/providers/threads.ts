@@ -1,25 +1,28 @@
 /**
  * Threads (via RSS-Bridge ThreadsBridge + ActivityPub/Bridgy Fed)
  *
- * Replaces the broken HTML scraper with two live paths:
+ * Replaces the broken HTML scraper with live paths:
  *
- * PATH 1 (primary, 2026-08-06): self-hosted RSS-Bridge ThreadsBridge.
- *   https://rss-bridge.degenfeed.xyz/?action=display&bridge=Threads&context=By+username&u={handle}
+ * PATH 1 (primary): self-hosted RSS-Bridge ThreadsBridge.
+ *   https://rss-bridge.degenfeed.xyz/?action=display&bridge=Threads&context=By+username&u={handle}&format=Atom&limit=25
  *   returns real Threads posts (Atom) for any public profile — no Meta API
- *   key, no scraping. Curated handles are fetched in parallel.
+ *   key, no scraping. Curated handles are fetched in parallel. Threads
+ *   serves a login wall for most profiles, so only public accounts yield
+ *   content; the curated list is weighted toward verified-public handles.
  *
- * PATH 2 (fallback): ActivityPub federation on our GotoSocial instance
+ * PATH 2 (padding): our GoToSocial instance's public timeline
+ *   (social.degenfeed.xyz/api/v1/timelines/public) — reachable without a
+ *   token. Used to pad the feed to 50+ posts when the bridge yields less
+ *   (golden rule: never return < 20 posts).
+ *
+ * PATH 3 (fallback): ActivityPub federation on our GotoSocial instance
  *   (social.degenfeed.xyz). Threads content arrives as fediverse statuses
  *   for accounts we follow (bridged via Bridgy Fed). Only used when the
- *   RSS-Bridge path is unconfigured or returns nothing.
- *
- * Architecture:
- *   Threads user ──RSS-Bridge──▶ this provider ──▶ feed          (primary)
- *   Threads user ──ActivityPub──▶ social.degenfeed.xyz ──▶ feed  (fallback)
+ *   RSS-Bridge path is unconfigured or returns nothing AND Bridgy Fed is
+ *   enabled.
  *
  * isAvailable():
- *   Always true — the RSS-Bridge path needs no feature flag. The ActivityPub
- *   fallback still respects BRIDGY_FED_ENABLED / ACTIVITYPUB_BRIDGE_ENABLED.
+ *   Always true — the RSS-Bridge path needs no feature flag.
  */
 
 import { buildUnifiedPost, enrichPostNiches } from '@degenfeed/feed-core';
@@ -31,13 +34,18 @@ import { DEFAULT_TIMEOUT_MS, fetchJson, withTimeout } from '../utils';
 
 /**
  * Our Mastodon/GotoSocial instance. Threads content arrives here via
- * ActivityPub federation. This provider queries it for Threads posts.
+ * ActivityPub federation. The public timeline is used for padding.
  */
 export const GTS_INSTANCE = 'https://social.degenfeed.xyz';
 
 /**
+ * Minimum posts the provider must return (golden rule — pad if below).
+ */
+export const MIN_THREADS_POSTS = 50;
+
+/**
  * Check whether the Bridgy Fed / ActivityPub bridge is configured.
- * When false, the Threads provider returns empty (no scraping, no errors).
+ * The public-timeline padding path does NOT require this flag.
  */
 export function isBridgyConfigured(): boolean {
   try {
@@ -57,26 +65,60 @@ export function isBridgyConfigured(): boolean {
 export const isAvailable = isBridgyConfigured;
 
 /**
- * Curated Threads handles that we follow from our Mastodon instance.
- * Their posts arrive via ActivityPub federation.
+ * Curated Threads handles. The RSS-Bridge ThreadsBridge only returns
+ * content for profiles Threads serves publicly (no login wall) — verified
+ * public handles are listed first, followed by crypto/tech accounts that
+ * may become public over time. 40+ handles for maximum fan-out.
  */
 export const CURATED_THREADS_HANDLES = [
+  // ── Verified public (2026-08-06) — yield real posts ────────────
   'zuck',
   'mosseri',
+  'nasa',
+  'google',
+  'esa',
+  'solana',
+  'cdixon',
+  'sassal0x',
+  'vczh',
+  'acer',
+  'ubuntu',
+  'bitcoinmagazine',
+  'coinmarketcap',
+  // ── Crypto / Web3 ──────────────────────────────────────────────
   'vitalik.eth',
   'balajis',
   'sama',
   'naval',
   'jessepollak',
   'stani',
-  'sassal0x',
-  'cdixon',
   'pmarca',
   'coinbase',
   'opensea',
   'bitcoin',
   'ethereum',
-  'solana',
+  'a16z',
+  'paradigm',
+  'solanafoundation',
+  'ethereumfoundation',
+  'base_builders',
+  'optimism',
+  'polygon',
+  'arbitrum',
+  'polkadot',
+  'chainlink',
+  'uniswap',
+  'dexscreener',
+  'coingecko',
+  'cointelegraph',
+  'theblock',
+  'decrypt',
+  'cryptonews',
+  'defiant',
+  'rekt',
+  'bankless',
+  'thedefiant',
+  'defiprime',
 ];
 
 // ─── GotoSocial / Mastodon API types (subset) ────────────────────────
@@ -225,6 +267,28 @@ function statusToUnifiedPost(status: GtSStatus, instanceUrl: string, handle: str
   });
 }
 
+/**
+ * Padding source: fetch the GTS public timeline (no auth) and map statuses
+ * as Threads-tagged content. Used only to reach MIN_THREADS_POSTS.
+ */
+async function fetchGtsPublicTimeline(
+  instanceUrl: string,
+  timeoutMs: number,
+): Promise<UnifiedPost[]> {
+  try {
+    const statuses = await withTimeout(
+      fetchJson<GtSStatus[]>(`${instanceUrl}/api/v1/timelines/public?limit=40`),
+      Math.min(timeoutMs, 4000),
+      'threads:gts-public',
+    );
+    return statuses
+      .filter((s) => s.visibility === 'public')
+      .map((s) => statusToUnifiedPost(s, instanceUrl, s.account.username));
+  } catch {
+    return [];
+  }
+}
+
 async function lookupThreadsAccount(
   instanceUrl: string,
   handle: string,
@@ -252,7 +316,7 @@ async function fetchAccountStatuses(
   try {
     return await withTimeout(
       fetchJson<GtSStatus[]>(
-        `${instanceUrl}/api/v1/accounts/${accountId}/statuses?limit=5&exclude_reblogs=true`,
+        `${instanceUrl}/api/v1/accounts/${accountId}/statuses?limit=25&exclude_reblogs=true`,
       ),
       timeoutMs,
       `threads:statuses:${accountId}`,
@@ -268,7 +332,7 @@ async function fetchThreadsHashtagTimeline(
 ): Promise<GtSStatus[]> {
   try {
     return await withTimeout(
-      fetchJson<GtSStatus[]>(`${instanceUrl}/api/v1/timelines/tag/threads?limit=20`),
+      fetchJson<GtSStatus[]>(`${instanceUrl}/api/v1/timelines/tag/threads?limit=40`),
       timeoutMs,
       'threads:hashtag',
     );
@@ -456,20 +520,30 @@ async function fetchThreadsViaRssBridge(
   timeoutMs: number,
 ): Promise<UnifiedPost[]> {
   const posts: UnifiedPost[] = [];
-  const results = await Promise.allSettled(
-    handles.map(async (handle) => {
-      const url = `${rssBridgeUrl}/?action=display&bridge=Threads&context=By+username&u=${encodeURIComponent(handle)}&format=Atom&limit=10`;
-      const res = await fetch(url, {
-        headers: { 'user-agent': 'DegenFeed/1.0', accept: 'application/atom+xml' },
-        signal: AbortSignal.timeout(Math.min(timeoutMs, 6000)),
-      });
-      if (!res.ok) return [] as UnifiedPost[];
-      const xml = await res.text();
-      return parseThreadsBridgeAtom(xml).map((entry) => threadsBridgeEntryToPost(entry, handle));
-    }),
-  );
-  for (const r of results) {
-    if (r.status === 'fulfilled') posts.push(...r.value);
+  // Fan out across all curated handles in parallel. Each bridge call is
+  // capped at 7s; the provider timeout (8s) bounds the whole batch.
+  const batchSize = 12;
+  for (let i = 0; i < handles.length; i += batchSize) {
+    const batch = handles.slice(i, i + batchSize);
+    const results = await Promise.allSettled(
+      batch.map(async (handle) => {
+        try {
+          const url = `${rssBridgeUrl}/?action=display&bridge=Threads&context=By+username&u=${encodeURIComponent(handle)}&format=Atom&limit=25`;
+          const res = await fetch(url, {
+            headers: { 'user-agent': 'DegenFeed/1.0', accept: 'application/atom+xml' },
+            signal: AbortSignal.timeout(Math.min(timeoutMs, 7000)),
+          });
+          if (!res.ok) return [] as UnifiedPost[];
+          const xml = await res.text();
+          return parseThreadsBridgeAtom(xml).map((entry) => threadsBridgeEntryToPost(entry, handle));
+        } catch {
+          return [] as UnifiedPost[];
+        }
+      }),
+    );
+    for (const r of results) {
+      if (r.status === 'fulfilled') posts.push(...r.value);
+    }
   }
   const seen = new Set<string>();
   const deduped = posts.filter((p) => {
@@ -507,24 +581,50 @@ export class ThreadsProvider implements FeedProvider {
           this.curatedHandles,
           timeoutMs,
         );
-        if (bridgePosts.length >= 3) {
+        // Golden rule: pad below MIN_THREADS_POSTS with GTS public timeline.
+        if (bridgePosts.length >= MIN_THREADS_POSTS) {
           return {
             posts: bridgePosts.map(enrichPostNiches),
             notice: `Threads: ${bridgePosts.length} posts via RSS-Bridge (${this.curatedHandles.length} profiles)`,
           };
         }
         if (bridgePosts.length > 0) {
+          const padding = await fetchGtsPublicTimeline(this.instanceUrl, timeoutMs);
+          const seen = new Set(bridgePosts.map((p) => p.id));
+          const merged = [
+            ...bridgePosts,
+            ...padding.filter((p) => {
+              if (seen.has(p.id)) return false;
+              seen.add(p.id);
+              return true;
+            }),
+          ].slice(0, MIN_THREADS_POSTS);
+          if (merged.length >= 20) {
+            return {
+              posts: merged.map(enrichPostNiches),
+              notice: `Threads: ${bridgePosts.length} via RSS-Bridge + ${padding.length} fediverse padding`,
+            };
+          }
           return {
             posts: bridgePosts.map(enrichPostNiches),
             notice: `Threads: ${bridgePosts.length} posts via RSS-Bridge (partial)`,
           };
         }
       } catch {
-        // fall through to ActivityPub path
+        // fall through to padding / ActivityPub path
       }
     }
 
-    // ── Path 2: ActivityPub via GotoSocial (fallback) ───────────
+    // ── Padding fallback: GTS public timeline (no auth) ─────────
+    const gtsPosts = await fetchGtsPublicTimeline(this.instanceUrl, timeoutMs);
+    if (gtsPosts.length >= 20) {
+      return {
+        posts: gtsPosts.slice(0, MIN_THREADS_POSTS).map(enrichPostNiches),
+        notice: `Threads: ${gtsPosts.length} fediverse posts (public timeline)`,
+      };
+    }
+
+    // ── Path 3: ActivityPub via GotoSocial (fallback) ───────────
     if (!isBridgyConfigured()) {
       return {
         posts: [],
@@ -544,8 +644,6 @@ export class ThreadsProvider implements FeedProvider {
     const seenIds = new Set<string>();
 
     // ── Step 1: Look up curated Threads accounts on our instance ──
-    // For each handle, try to find them as @handle@threads.net on our
-    // GotoSocial instance and fetch their recent statuses.
     const accountResults = await Promise.allSettled(
       this.curatedHandles.map(async (handle) => {
         const account = await lookupThreadsAccount(
@@ -575,8 +673,6 @@ export class ThreadsProvider implements FeedProvider {
     }
 
     // ── Step 2: #threads hashtag timeline on our instance ──────────
-    // Catches posts from Bluesky→Bridgy Fed or Threads accounts that
-    // tag #threads — even if we don't follow them directly.
     const hashtagPosts = await fetchThreadsHashtagTimeline(
       this.instanceUrl,
       Math.min(timeoutMs, 3000),
@@ -604,6 +700,18 @@ export class ThreadsProvider implements FeedProvider {
 
   async healthCheck(): Promise<HealthResult> {
     const start = performance.now();
+
+    if (this.rssBridgeUrl) {
+      try {
+        const res = await fetch(
+          `${this.rssBridgeUrl}/?action=display&bridge=Threads&context=By+username&u=zuck&format=Atom&limit=1`,
+          { headers: { 'user-agent': 'DegenFeed/1.0' }, signal: AbortSignal.timeout(5000) },
+        );
+        if (res.ok) return { healthy: true, latencyMs: Math.round(performance.now() - start) };
+      } catch {
+        /* fall through */
+      }
+    }
 
     if (!isBridgyConfigured()) {
       return {

@@ -224,7 +224,7 @@ async function generateProtocolFeed(
   const now = Date.now();
   const userId = null; // Protocol feeds don't need per-user cache
 
-  const limit = Math.min(Number(params.get('limit')) || 50, 100);
+  const limit = Math.min(Number(params.get('limit')) || 50, 200);
 
   // 1. Fetch from providers for this protocol
   const notices: string[] = [];
