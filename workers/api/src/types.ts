@@ -245,7 +245,7 @@ export interface Env {
   /** KV namespace for Farcaster creator coin records */
   FARCASTER_COINS?: KVNamespace;
   /** KV namespace for Lens Protocol creator coin records */
-  LENS_COINS?: KVNamespace;
+  // LENS_COINS removed 2026-08-06 — dead binding, namespace deleted from Cloudflare
   /** KV namespace for cross-chain token registrations */
   XCHAIN_REGISTRY?: KVNamespace;
 

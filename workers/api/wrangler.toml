@@ -88,10 +88,7 @@ binding = "FARCASTER_COINS"
 id = "5add91e310144a6d83a791a507453ebd"
 preview_id = "98af1bd284164ecd95a5f9f244d20098"
 
-[[kv_namespaces]]
-binding = "LENS_COINS"
-id = "8ca2b0f0d7c742d0b36a6b48e7ecdb90"
-preview_id = "a53bc2fd73734b8caf40b7bebb2983aa"
+# LENS_COINS — removed 2026-08-06 (dead binding, namespace deleted from Cloudflare)
 
 [[kv_namespaces]]
 binding = "XCHAIN_REGISTRY"
