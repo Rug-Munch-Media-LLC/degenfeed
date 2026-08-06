@@ -119,8 +119,6 @@ export interface CompatApp {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const COIN_PREFIX = 'coin:';
-// @ts-expect-error TS6133 unused
-const _SYMBOL_INDEX_PREFIX = 'coin:symbol:';
 const COMPAT_CACHE_PREFIX = 'zora:compat:coin:';
 const TRENDING_CACHE_KEY = 'zora:compat:trending';
 const WEBHOOK_CONFIG_KEY = 'zora:compat:webhook:config';
@@ -630,6 +628,25 @@ zoraCompat.get('/apps', async (c) => {
 // GET /api/zora/compat/verify/:address
 // ═══════════════════════════════════════════════════════════════════════════════
 
+/** A single compatibility check result. */
+interface ZoraVerifyCheck {
+  passed: boolean;
+  status?: number;
+  url?: string;
+  error?: string;
+  found?: boolean;
+}
+
+/** Payload for the coin verification endpoint. */
+interface ZoraVerifyResult {
+  address: string;
+  checks: Record<string, ZoraVerifyCheck>;
+  allPassed: boolean;
+  zoraUrl?: string;
+  basescanUrl?: string;
+  degenfeedUrl?: string;
+}
+
 /**
  * Verifies a coin's Zora compatibility status.
  * Checks that the coin is discoverable on Zora's API, has a ZoraFactory
@@ -642,7 +659,7 @@ zoraCompat.get('/verify/:address', async (c) => {
     return jsonResponse({ error: 'Invalid coin address' }, 400);
   }
 
-  const results: Record<string, unknown> = {
+  const results: ZoraVerifyResult = {
     address: addr,
     checks: {},
     allPassed: false,
@@ -715,7 +732,7 @@ zoraCompat.get('/verify/:address', async (c) => {
   }
 
   results.allPassed = Object.values(results.checks).every(
-    (check) => (check as Record<string, unknown>).passed === true,
+    (check) => check.passed === true,
   );
 
   results.zoraUrl = `https://zora.co/collect/base:${addr}`;

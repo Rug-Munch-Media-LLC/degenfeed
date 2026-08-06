@@ -1087,6 +1087,26 @@ const server = http.createServer(async (req, res) => {
     const podcastHandled = await handlePodcastRoute(path, req.method || 'GET', req, res);
     if (podcastHandled) return;
 
+    // GET /api/bridge/health/:protocol — per-protocol health probe used by
+    // the worker's BridgeFeedProvider.healthCheck(). Returns 200 when the
+    // protocol is registered, 404 when unknown.
+    const bridgeHealthMatch = path.match(/^\/api\/bridge\/health\/([\w-]+)$/);
+    if (bridgeHealthMatch) {
+      const proto = bridgeHealthMatch[1];
+      const provider = PROVIDERS[proto];
+      if (!provider) {
+        res.writeHead(404, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Not Found', protocol: proto }));
+        return;
+      }
+      return jsonOk(res, {
+        protocol: proto,
+        name: provider.name,
+        healthy: true,
+        checkedAt: Date.now(),
+      });
+    }
+
     if (path === '/api/feed/health') {
       const results = await Promise.all(
         [
@@ -1439,6 +1459,10 @@ const server = http.createServer(async (req, res) => {
         'youtube',
         'loops',
         'minds',
+        'gab',
+        'soundcloud',
+        'vimeo',
+        'wordpress',
         'mirror',
         'paragraph',
         'lbry',

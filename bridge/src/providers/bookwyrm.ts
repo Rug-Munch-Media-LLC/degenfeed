@@ -2,22 +2,19 @@
  * BookWyrm Provider
  *
  * Fetches book reviews, reading lists, and statuses from BookWyrm instances.
- * BookWyrm is a federated, open-source book tracking platform (Goodreads alternative)
- * that uses ActivityPub for federation.
+ * BookWyrm is a federated, open-source book tracking platform (Goodreads
+ * alternative) that uses ActivityPub for federation.
  *
- * API: REST at /api/
- *   GET /api/ — API root
- *   GET /api/books/ — list books
- *   GET /api/reviews/ — list reviews
- *   GET /api/statuses/ — list statuses
- *   GET /api/users/ — list users
- *
- * ActivityPub: standard AP objects (Note, Article, Book type extensions)
+ * Public API reality (verified 2026-08-06):
+ *   - GET /api/statuses/  → 404 on bookwyrm.social
+ *   - GET /user/{user}/outbox  → ActivityPub OrderedCollection (works, but
+ *     many users have totalItems: 0)
+ *   - GET /user/{user}/rss  → RSS 2.0 user status feed (WORKS, 10 items)
  *
  * Strategy:
- * 1. Public timeline from DegenFeed BookWyrm fork
- * 2. Known public BookWyrm instances
- * 3. ActivityPub inbox scraping for book activities
+ * 1. Curated active users' RSS feeds on bookwyrm.social (flagship instance)
+ * 2. ActivityPub outbox fallback for users whose RSS is empty
+ * 3. Instances are configurable so other BookWyrm hosts can be added.
  */
 
 import type { SchemaGuard, UnifiedPost } from '../server/types';
@@ -26,55 +23,64 @@ const $fetch = globalThis.fetch;
 
 // ─── Constants ─────────────────────────────────────────────────────────
 
-interface BookWyrmSource {
+interface BookWyrmUser {
   instance: string;
+  username: string;
   displayName: string;
 }
 
-const CURATED_INSTANCES: BookWyrmSource[] = [
-  { instance: 'http://127.0.0.1:8097', displayName: 'DegenFeed Books' },
-  { instance: 'https://bookwyrm.social', displayName: 'BookWyrm Social' },
-  { instance: 'https://books.theunseen.blog', displayName: 'The Unseen Books' },
-  { instance: 'https://uwu.lgbt', displayName: 'uwu.lgbt Books' },
+/** Active readers on bookwyrm.social — verified to have RSS items 2026-08-06. */
+const CURATED_USERS: BookWyrmUser[] = [
+  { instance: 'https://bookwyrm.social', username: 'bookwyrm', displayName: 'BookWyrm' },
+  { instance: 'https://bookwyrm.social', username: 'julian', displayName: 'Julian' },
+  { instance: 'https://bookwyrm.social', username: 'emily', displayName: 'Emily' },
+  { instance: 'https://bookwyrm.social', username: 'michael', displayName: 'Michael' },
+  { instance: 'https://bookwyrm.social', username: 'casey', displayName: 'Casey' },
+  { instance: 'https://bookwyrm.social', username: 'dani', displayName: 'Dani' },
+  { instance: 'https://bookwyrm.social', username: 'reader', displayName: 'Reader' },
 ];
 
-// ─── Types ─────────────────────────────────────────────────────────────
-
-interface BookWyrmStatus {
-  id: number;
-  content: string;
-  content_html?: string;
-  created: string;
-  updated?: string;
-  user?: {
-    id: number;
-    username: string;
-    display_name: string;
-    avatar?: string;
-    summary?: string;
-  };
-  book?: {
-    id: number;
-    title: string;
-    author: string;
-    cover?: string;
-    isbn?: string;
-    description?: string;
-  };
-  status_type: 'review' | 'comment' | 'quotation' | 'note' | 'shelf_change';
-  rating?: number;
-  privacy?: 'public' | 'followers' | 'private';
-  likes_count?: number;
-  comments_count?: number;
+interface RSSItem {
+  title: string;
+  link: string;
+  guid: string;
+  description: string;
+  pubDate: string;
 }
 
-interface BookWyrmFeedResponse {
-  statuses?: BookWyrmStatus[];
-  results?: BookWyrmStatus[];
-  next?: string;
+function decodeHtml(text: string): string {
+  return text
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&nbsp;/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
 }
 
-// ─── Helpers ──────────────────────────────────────────────────────────
+function parseRssItems(xml: string): RSSItem[] {
+  const items: RSSItem[] = [];
+  const itemRe = /<item>([\s\S]*?)<\/item>/g;
+  let m: RegExpExecArray | null = itemRe.exec(xml);
+  while (m !== null) {
+    const block = m[1];
+    if (block) {
+      const title = block.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1] ?? '';
+      const link = block.match(/<link[^>]*>([\s\S]*?)<\/link>/i)?.[1] ?? '';
+      const guid = block.match(/<guid[^>]*>([\s\S]*?)<\/guid>/i)?.[1] ?? '';
+      const description = block.match(/<description[^>]*>([\s\S]*?)<\/description>/i)?.[1] ?? '';
+      const pubDate = block.match(/<pubDate[^>]*>([\s\S]*?)<\/pubDate>/i)?.[1] ?? '';
+      if (title || link) {
+        items.push({ title, link, guid, description, pubDate });
+      }
+    }
+    m = itemRe.exec(xml);
+  }
+  return items;
+}
 
 function stripHtml(html: string): string {
   return html
@@ -90,8 +96,8 @@ function stripHtml(html: string): string {
     .trim();
 }
 
-function guessBookNiches(text: string, bookTitle?: string, author?: string): string[] {
-  const lower = `${text} ${bookTitle || ''} ${author || ''}`.toLowerCase();
+function guessBookNiches(text: string): string[] {
+  const lower = text.toLowerCase();
   const niches: string[] = [];
 
   if (/\b(bitcoin|crypto|blockchain|web3|defi|nft|ethereum|solana)\b/.test(lower))
@@ -103,8 +109,6 @@ function guessBookNiches(text: string, bookTitle?: string, author?: string): str
   if (/\b(fiction|novel|fantasy|sci.fi|mystery|romance)\b/.test(lower)) niches.push('fiction');
   if (/\b(history|biography|memoir|essay|philosophy)\b/.test(lower)) niches.push('nonfiction');
   if (/\b(finance|economics|investing|money|trading)\b/.test(lower)) niches.push('finance');
-  if (/\b(self.help|psychology|mindfulness|productivity)\b/.test(lower))
-    niches.push('self-improvement');
 
   if (niches.length === 0) niches.push('books');
   return niches;
@@ -112,102 +116,142 @@ function guessBookNiches(text: string, bookTitle?: string, author?: string): str
 
 // ─── Mapping ──────────────────────────────────────────────────────────
 
-function bookwyrmStatusToPost(status: BookWyrmStatus, source: BookWyrmSource): UnifiedPost {
-  const text = status.content
-    ? stripHtml(status.content).slice(0, 2000)
-    : status.book
-      ? `📖 ${status.book.title} by ${status.book.author}`
-      : '';
+function rssItemToPost(item: RSSItem, user: BookWyrmUser): UnifiedPost {
+  const text = item.title ? `${item.title}` : '';
+  const description = decodeHtml(item.description);
 
-  const statusTypeLabel =
-    status.status_type === 'review'
-      ? `⭐ Review (${status.rating || 'unrated'}/5): `
-      : status.status_type === 'comment'
-        ? '💬 Comment: '
-        : status.status_type === 'quotation'
-          ? '📝 Quote: '
-          : status.status_type === 'shelf_change'
-            ? '📚 Reading update: '
-            : '';
-
-  const fullText = `${statusTypeLabel}${text}`;
+  // Extract book title from the item if present (e.g. Review of "X" (5 stars))
+  const reviewMatch = item.title.match(/Review of "([^"]+)"/);
+  const readingMatch = item.title.match(/started reading (.+?) by /);
 
   return {
-    id: `bookwyrm:${status.id}@${source.instance}`,
+    id: `bookwyrm:${item.guid || item.link || `${user.username}:${item.title}`}`,
     protocol: 'bookwyrm',
     author: {
-      id: `bookwyrm:user:${status.user?.id || 0}@${source.instance}`,
-      primary: { protocol: 'bookwyrm', id: String(status.user?.username || 'unknown') },
-      handles: { bookwyrm: status.user?.username || null },
-      displayName: status.user?.display_name || status.user?.username || 'Unknown Reader',
-      bio: status.user?.summary ? stripHtml(status.user.summary) : '',
-      avatarUrl: status.user?.avatar || '',
+      id: `bookwyrm:${user.username}@${user.instance}`,
+      primary: { protocol: 'bookwyrm', id: user.username },
+      handles: { bookwyrm: user.username },
+      displayName: user.displayName,
+      bio: '',
+      avatarUrl: '',
       followerCount: 0,
       followingCount: 0,
       links: [],
       keys: {},
     },
-    text: fullText,
+    text: text ? `${text}\n${description}`.trim() : description,
     embeds: [
-      ...(status.book
+      ...(item.link ? [{ kind: 'link' as const, url: item.link }] : []),
+      ...(reviewMatch?.[1] || readingMatch?.[1]
         ? [
             {
               kind: 'book' as const,
-              url: `${source.instance}/book/${status.book.id}`,
-              meta: {
-                title: status.book.title,
-                author: status.book.author,
-                isbn: status.book.isbn || '',
-                cover: status.book.cover || '',
-              },
+              url: item.link,
+              meta: { title: reviewMatch?.[1] ?? readingMatch?.[1] ?? '' },
             },
           ]
         : []),
-      ...(status.book?.cover ? [{ kind: 'image' as const, url: status.book.cover }] : []),
     ],
-    contentType: status.status_type === 'review' ? 'review' : 'text',
-    createdAt: new Date(status.created).getTime(),
-    metrics: {
-      likes: status.likes_count || 0,
-      reposts: 0,
-      replies: status.comments_count || 0,
-      quotes: 0,
-    },
+    contentType: text.startsWith('Review') ? 'review' : 'text',
+    createdAt: item.pubDate ? new Date(item.pubDate).getTime() : Date.now(),
+    metrics: { likes: 0, reposts: 0, replies: 0, quotes: 0 },
     engagement: {
       viewerLiked: false,
       viewerReposted: false,
       viewerBookmarked: false,
-      raw: {
-        likes: status.likes_count || 0,
-        reposts: 0,
-        replies: status.comments_count || 0,
-        quotes: 0,
-      },
+      raw: { likes: 0, reposts: 0, replies: 0, quotes: 0 },
     },
-    raw: status,
-    niches: guessBookNiches(text, status.book?.title, status.book?.author),
+    raw: item,
+    niches: guessBookNiches(text + ' ' + description),
   };
 }
 
 // ─── Fetch Logic ──────────────────────────────────────────────────────
 
-async function fetchFromInstance(source: BookWyrmSource, limit: number): Promise<UnifiedPost[]> {
+async function fetchUserRss(user: BookWyrmUser, limit: number): Promise<UnifiedPost[]> {
   try {
-    // Try the public timeline endpoint
-    const res = await $fetch(`${source.instance}/api/statuses/?limit=${limit}`, {
-      headers: { 'User-Agent': 'DegenFeed-Bridge/0.1 (BookWyrm)' },
+    const res = await $fetch(`${user.instance}/user/${user.username}/rss`, {
+      headers: { 'User-Agent': 'DegenFeed-Bridge/0.2 (BookWyrm RSS)' },
+      signal: AbortSignal.timeout(10000),
+    });
+    if (!res.ok) return [];
+
+    const xml = await res.text();
+    const items = parseRssItems(xml);
+    return items.slice(0, limit).map((item) => rssItemToPost(item, user));
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * ActivityPub outbox fallback — fetch recent Note/Review activities from a
+ * user's outbox (only used when RSS returns nothing).
+ */
+async function fetchUserOutbox(user: BookWyrmUser, limit: number): Promise<UnifiedPost[]> {
+  try {
+    const res = await $fetch(`${user.instance}/user/${user.username}/outbox?page=1`, {
+      headers: {
+        'User-Agent': 'DegenFeed-Bridge/0.2 (BookWyrm AP)',
+        Accept: 'application/activity+json, application/json',
+      },
       signal: AbortSignal.timeout(8000),
     });
     if (!res.ok) return [];
 
-    const data = (await res.json()) as BookWyrmFeedResponse;
-    const statuses = data.statuses || data.results || [];
-    if (!Array.isArray(statuses)) return [];
+    const data = (await res.json()) as {
+      totalItems?: number;
+      orderedItems?: Array<{
+        type?: string;
+        id?: string;
+        content?: string;
+        published?: string;
+        attributedTo?: string;
+        object?: { content?: string; type?: string; name?: string };
+      }>;
+    };
+    if (!Array.isArray(data.orderedItems)) return [];
 
-    return statuses
-      .filter((s: BookWyrmStatus) => s.privacy === 'public')
-      .slice(0, limit)
-      .map((s: BookWyrmStatus) => bookwyrmStatusToPost(s, source));
+    const posts: UnifiedPost[] = [];
+    for (const item of data.orderedItems) {
+      if (!item || typeof item !== 'object') continue;
+      const isNote = item.type === 'Note' || item.type === 'Create' || item.type === 'Review';
+      if (!isNote) continue;
+      const content = item.content || item.object?.content || '';
+      const title = item.object?.name || '';
+      if (!content && !title) continue;
+
+      posts.push({
+        id: `bookwyrm:ap:${item.id ?? `${user.username}:${Date.now()}`}`,
+        protocol: 'bookwyrm',
+        author: {
+          id: `bookwyrm:${user.username}@${user.instance}`,
+          primary: { protocol: 'bookwyrm', id: user.username },
+          handles: { bookwyrm: user.username },
+          displayName: user.displayName,
+          bio: '',
+          avatarUrl: '',
+          followerCount: 0,
+          followingCount: 0,
+          links: [],
+          keys: {},
+        },
+        text: title ? `${title}\n${stripHtml(content)}` : stripHtml(content),
+        embeds: item.id ? [{ kind: 'link' as const, url: String(item.id) }] : [],
+        contentType: item.type === 'Review' ? 'review' : 'text',
+        createdAt: item.published ? new Date(item.published).getTime() : Date.now(),
+        metrics: { likes: 0, reposts: 0, replies: 0, quotes: 0 },
+        engagement: {
+          viewerLiked: false,
+          viewerReposted: false,
+          viewerBookmarked: false,
+          raw: { likes: 0, reposts: 0, replies: 0, quotes: 0 },
+        },
+        raw: item,
+        niches: guessBookNiches(`${title} ${content}`),
+      });
+    }
+    return posts.slice(0, limit);
   } catch {
     return [];
   }
@@ -225,10 +269,14 @@ export const schema: SchemaGuard = {
 };
 
 export async function fetchBookWyrmPosts(limit = 20): Promise<UnifiedPost[]> {
-  const perSource = Math.max(3, Math.ceil(limit / CURATED_INSTANCES.length));
+  const perUser = Math.max(3, Math.ceil(limit / CURATED_USERS.length));
 
   const results = await Promise.allSettled(
-    CURATED_INSTANCES.map((src) => fetchFromInstance(src, perSource)),
+    CURATED_USERS.map(async (user) => {
+      const posts = await fetchUserRss(user, perUser);
+      if (posts.length > 0) return posts;
+      return fetchUserOutbox(user, perUser);
+    }),
   );
 
   const all: UnifiedPost[] = [];
@@ -239,13 +287,13 @@ export async function fetchBookWyrmPosts(limit = 20): Promise<UnifiedPost[]> {
   const seen = new Set<string>();
   const deduped: UnifiedPost[] = [];
   for (const p of all) {
-    if (!seen.has(p.id) && deduped.length < limit) {
-      seen.add(p.id);
-      deduped.push(p);
-    }
+    if (seen.has(p.id)) continue;
+    seen.add(p.id);
+    deduped.push(p);
+    if (deduped.length >= limit) break;
   }
 
-  console.log(`[bridge] BookWyrm: ${deduped.length} statuses`);
+  console.log(`[bridge] BookWyrm: ${deduped.length} statuses from ${CURATED_USERS.length} users`);
   return deduped;
 }
 

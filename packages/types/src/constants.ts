@@ -87,6 +87,8 @@ export type Protocol =
   | 'bonfida'
   // ─── Prediction Markets / NFT Marketplaces (NEW 2026-08-06) ─
   | 'polymarket'
+  // ─── Audio / Video Platforms (NEW 2026-08-06) ──────────────
+  | 'soundcloud'
   // ─── ActivityPub Ecosystem (Headless Forks) ─────────────────
   | 'bookwyrm'
   | 'mobilizon'
@@ -187,6 +189,8 @@ export const PROTOCOLS = [
   'bonfida',
   // Prediction Markets / NFT Marketplaces
   'polymarket',
+  // Audio / Video Platforms
+  'soundcloud',
   // ActivityPub Ecosystem
   'bookwyrm',
   'mobilizon',

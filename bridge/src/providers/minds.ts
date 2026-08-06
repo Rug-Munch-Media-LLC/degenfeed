@@ -414,12 +414,14 @@ export async function fetchMindsPosts(limit = 20): Promise<UnifiedPost[]> {
   const cached = mindsCache && Date.now() < mindsCache.expiresAt ? mindsCache.posts : null;
   if (cached) return cached.slice(0, limit);
 
-  const perSource = Math.max(3, Math.ceil(limit / 5));
+  // Anonymous Minds access is spam-heavy; fetch generously from every source
+  // so the post-spam-filter yield still meets the requested limit.
+  const perSource = Math.max(6, Math.ceil(limit / 4));
 
   const [newsfeed, trending, ...tagFeeds] = await Promise.all([
     fetchNewsfeed(perSource),
     fetchTrending(perSource),
-    ...INTEREST_TAGS.slice(0, 4).map((t) => fetchHashtagFeed(t, 5)),
+    ...INTEREST_TAGS.slice(0, 8).map((t) => fetchHashtagFeed(t, Math.max(8, perSource))),
   ]);
 
   const all = [newsfeed, trending, ...tagFeeds].flat();
@@ -437,7 +439,10 @@ export async function fetchMindsPosts(limit = 20): Promise<UnifiedPost[]> {
   console.log(
     `[bridge] Minds: ${deduped.length} posts (newsfeed: ${newsfeed.length}, trending: ${trending.length}, tags: ${tagFeeds.length} feeds)`,
   );
-  mindsCache = { posts: deduped, expiresAt: Date.now() + MINDS_CACHE_TTL_MS };
+  // Only cache non-empty results so a bad window is retried next cycle.
+  if (deduped.length > 0) {
+    mindsCache = { posts: deduped, expiresAt: Date.now() + MINDS_CACHE_TTL_MS };
+  }
   return deduped;
 }
 

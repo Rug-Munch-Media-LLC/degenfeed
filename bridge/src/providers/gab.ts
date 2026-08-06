@@ -4,17 +4,19 @@
  * Fetches posts from Gab — a free speech social network.
  * Gab is a Mastodon fork and uses the Mastodon-compatible REST API.
  *
- * API: https://gab.com/api/v1/ (Mastodon-compatible)
- * Dissenter (commenting browser extension) integrated via Gab API.
+ * Public API reality (verified 2026-08-06):
+ *   - GET /api/v1/timelines/public → HTTP 403 (datacenter-blocked)
+ *   - GET /api/v1/accounts/{id}/statuses → auth-gated (empty/errors)
+ *   - GET /api/v1/accounts/search → requires access token
+ *   - Profile RSS (/user/{u}/rss) → HTML app shell, not real RSS
  *
- * NOTE: Gab requires authentication for most API endpoints.
- * We access via public RSS and/oembed where possible, plus
- * authenticated API via env credentials.
+ * The reliable anonymous path is the self-hosted RSS-Bridge GabBridge:
+ *   http://127.0.0.1:8282/?action=display&bridge=GabBridge&username={u}&format=Json
+ * which returns a JSON Feed of recent posts for a username.
  *
- * Content strategy:
- * 1. Public timeline via RSS/oembed endpoints
- * 2. Authenticated API for trending/discover
- * 3. Hashtag feeds for crypto/tech/politics topics
+ * Strategy:
+ * 1. Direct Gab API (works from non-datacenter egress / with credentials)
+ * 2. RSS-Bridge GabBridge for a curated list of active usernames
  */
 
 import type { SchemaGuard, UnifiedPost } from '../server/types';
@@ -22,6 +24,7 @@ import type { SchemaGuard, UnifiedPost } from '../server/types';
 const $fetch = globalThis.fetch;
 
 const GAB_BASE = process.env.GAB_INSTANCE_URL || 'https://gab.com';
+const RSS_BRIDGE_BASE = process.env.RSSBRIDGE_URL || 'http://127.0.0.1:8282';
 
 // ─── Types ─────────────────────────────────────────────────────────────
 
@@ -75,6 +78,15 @@ interface GabPost {
   reblog?: GabPost | null;
 }
 
+interface JsonFeedItem {
+  id?: string;
+  title?: string;
+  url?: string;
+  date_modified?: string;
+  content_html?: string;
+  author?: { name?: string };
+}
+
 // ─── Helpers ──────────────────────────────────────────────────────────
 
 export function stripHtml(html: string): string {
@@ -114,6 +126,16 @@ export function guessNiches(text: string): string[] {
   return niches;
 }
 
+/** Curated active Gab accounts (verified to return items via RSS-Bridge 2026-08-06). */
+const CURATED_USERS = [
+  'gab',
+  'jackposobiec',
+  'robcary',
+  'robertbridges',
+  'mikecoudrey',
+  'news',
+];
+
 // ─── Map Gab post to UnifiedPost ────────────────────────────────────────
 
 function gabPostToPost(post: GabPost): UnifiedPost {
@@ -122,7 +144,6 @@ function gabPostToPost(post: GabPost): UnifiedPost {
   const text = original.spoiler_text ? `[CW: ${original.spoiler_text}]\n\n${content}` : content;
   const acct = original.account;
 
-  // Determine content type
   let contentType = 'text';
   if (original.media_attachments?.some((m) => m.type === 'video' || m.type === 'gifv')) {
     contentType = 'video';
@@ -196,6 +217,44 @@ function gabPostToPost(post: GabPost): UnifiedPost {
   };
 }
 
+/** Map a JSON Feed item from RSS-Bridge GabBridge into a UnifiedPost. */
+function jsonFeedItemToPost(item: JsonFeedItem, username: string): UnifiedPost {
+  const content = stripHtml(item.content_html || item.title || '');
+  const url = item.url || `https://gab.com/${username}/posts/${item.id || ''}`;
+  const createdAt = item.date_modified ? new Date(item.date_modified).getTime() : Date.now();
+  const authorName = item.author?.name || username;
+
+  return {
+    id: `gab:rssbridge:${item.id || Buffer.from(url).toString('base64').slice(0, 24)}`,
+    protocol: 'gab',
+    author: {
+      id: `gab:user:${username}`,
+      primary: { protocol: 'gab', id: username },
+      handles: { gab: username },
+      displayName: authorName,
+      bio: '',
+      avatarUrl: '',
+      followerCount: 0,
+      followingCount: 0,
+      links: [],
+      keys: { gabUserId: username },
+    },
+    text: content,
+    embeds: url ? [{ kind: 'link' as const, url }] : [],
+    contentType: 'text',
+    createdAt: Number.isNaN(createdAt) ? Date.now() : createdAt,
+    metrics: { likes: 0, reposts: 0, replies: 0, quotes: 0 },
+    engagement: {
+      viewerLiked: false,
+      viewerReposted: false,
+      viewerBookmarked: false,
+      raw: { likes: 0, reposts: 0, replies: 0, quotes: 0 },
+    },
+    raw: item,
+    niches: guessNiches(content),
+  };
+}
+
 // ─── Fetch via Gab API ──────────────────────────────────────────────────
 
 async function fetchPublicTimeline(limit: number): Promise<UnifiedPost[]> {
@@ -211,40 +270,32 @@ async function fetchPublicTimeline(limit: number): Promise<UnifiedPost[]> {
     const posts = (await res.json()) as GabPost[];
     if (!Array.isArray(posts)) return [];
     return posts.map(gabPostToPost);
-  } catch (err) {
-    console.log(`[bridge] Gab timeline error: ${(err as Error).message}`);
-    return [];
-  }
-}
-
-async function fetchHashtagFeed(tag: string, limit: number): Promise<UnifiedPost[]> {
-  try {
-    const res = await $fetch(
-      `${GAB_BASE}/api/v1/timelines/tag/${encodeURIComponent(tag)}?limit=${Math.min(limit, 20)}`,
-      {
-        headers: { 'User-Agent': 'DegenFeed-Bridge/0.1 (Gab)' },
-        signal: AbortSignal.timeout(8000),
-      },
-    );
-    if (!res.ok) return [];
-    const posts = (await res.json()) as GabPost[];
-    if (!Array.isArray(posts)) return [];
-    return posts.map(gabPostToPost);
   } catch {
     return [];
   }
 }
 
-async function fetchExplore(limit: number): Promise<UnifiedPost[]> {
+// ─── Fetch via RSS-Bridge GabBridge ────────────────────────────────────
+
+async function fetchUserViaBridge(username: string): Promise<UnifiedPost[]> {
   try {
-    const res = await $fetch(`${GAB_BASE}/api/v1.1/explore/posts?limit=${Math.min(limit, 20)}`, {
-      headers: { 'User-Agent': 'DegenFeed-Bridge/0.1 (Gab)' },
-      signal: AbortSignal.timeout(8000),
+    const url = new URL(`${RSS_BRIDGE_BASE}/`);
+    url.searchParams.set('action', 'display');
+    url.searchParams.set('bridge', 'GabBridge');
+    url.searchParams.set('username', username);
+    url.searchParams.set('format', 'Json');
+
+    const res = await $fetch(url.toString(), {
+      headers: { 'User-Agent': 'DegenFeed-Bridge/0.1 (Gab RSS-Bridge)' },
+      signal: AbortSignal.timeout(10000),
     });
     if (!res.ok) return [];
-    const posts = (await res.json()) as GabPost[];
-    if (!Array.isArray(posts)) return [];
-    return posts.map(gabPostToPost);
+
+    const data = (await res.json()) as { items?: JsonFeedItem[] };
+    if (!Array.isArray(data.items)) return [];
+    return data.items
+      .filter((item) => item && (item.content_html || item.title))
+      .map((item) => jsonFeedItemToPost(item, username));
   } catch {
     return [];
   }
@@ -261,32 +312,35 @@ export const schema: SchemaGuard = {
   contentType: 'mixed',
 };
 
-const CRYPTO_TAGS = ['bitcoin', 'ethereum', 'crypto', 'defi', 'nft', 'blockchain', 'web3'];
-const TECH_TAGS = ['tech', 'startup', 'ai', 'freespeech'];
-
 export async function fetchGabPosts(limit = 20): Promise<UnifiedPost[]> {
-  const perSource = Math.max(3, Math.ceil(limit / 4));
+  const perUser = Math.max(1, Math.ceil(limit / Math.max(CURATED_USERS.length, 1)));
 
-  const [publicPosts, explorePosts, ...tagPosts] = await Promise.all([
-    fetchPublicTimeline(perSource),
-    fetchExplore(perSource),
-    ...CRYPTO_TAGS.slice(0, 3).map((t) => fetchHashtagFeed(t, 5)),
-    ...TECH_TAGS.slice(0, 2).map((t) => fetchHashtagFeed(t, 5)),
-  ]);
+  // 1. Direct API (works from non-datacenter egress / with credentials)
+  const apiPosts = await fetchPublicTimeline(Math.min(limit, 10));
 
-  const all = [publicPosts, explorePosts, ...tagPosts].flat();
+  // 2. RSS-Bridge GabBridge for curated users (reliable anonymous path)
+  const bridgeResults = await Promise.allSettled(
+    CURATED_USERS.slice(0, Math.min(6, Math.max(3, limit))).map(async (username) => {
+      const posts = await fetchUserViaBridge(username);
+      return posts.slice(0, perUser);
+    }),
+  );
+
+  const all = [...apiPosts];
+  for (const r of bridgeResults) {
+    if (r.status === 'fulfilled') all.push(...r.value);
+  }
 
   // Deduplicate by post ID
   const seen = new Set<string>();
   const deduped: UnifiedPost[] = [];
   for (const p of all) {
-    if (!seen.has(p.id) && deduped.length < limit) {
-      seen.add(p.id);
-      deduped.push(p);
-    }
+    if (seen.has(p.id) || deduped.length >= limit) continue;
+    seen.add(p.id);
+    deduped.push(p);
   }
 
-  console.log(`[bridge] Gab: ${deduped.length} posts from ${all.length} raw`);
+  console.log(`[bridge] Gab: ${deduped.length} posts from ${apiPosts.length} api + bridge`);
   return deduped;
 }
 

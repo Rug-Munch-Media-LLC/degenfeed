@@ -16,7 +16,12 @@
 export type ProtocolCategory =
   | 'social'
   | 'video'
-  | 'content'
+  | 'audio'
+  | 'publishing'
+  | 'governance'
+  | 'markets'
+  | 'discussion'
+  | 'reading'
   | 'communities'
   | 'web3'
   | 'media'
@@ -36,12 +41,17 @@ export interface ProtocolConfig {
 }
 
 export const CATEGORIES: Record<ProtocolCategory, { label: string; icon: string }> = {
-  social: { label: 'Social Networks', icon: '💬' },
-  video: { label: 'Video Platforms', icon: '🎬' },
-  content: { label: 'Content & Publishing', icon: '📝' },
-  communities: { label: 'Communities & Forums', icon: '👥' },
+  social: { label: 'Social', icon: '💬' },
+  video: { label: 'Video', icon: '🎬' },
+  audio: { label: 'Audio', icon: '🎵' },
+  publishing: { label: 'Publishing', icon: '📝' },
+  governance: { label: 'Governance', icon: '🗳️' },
+  markets: { label: 'Markets', icon: '📊' },
+  discussion: { label: 'Discussion', icon: '👥' },
+  reading: { label: 'Reading', icon: '📚' },
+  communities: { label: 'Communities', icon: '💬' },
   web3: { label: 'Web3 & Crypto', icon: '🔗' },
-  media: { label: 'Media Hub', icon: '🎨' },
+  media: { label: 'Media', icon: '🎨' },
   news: { label: 'News & RSS', icon: '📰' },
 };
 
@@ -161,7 +171,7 @@ export const PROTOCOLS: Record<string, ProtocolConfig> = {
     endpoint: '/api/feed/lemmy',
     route: '/feed/lemmy',
     postNoun: 'post',
-    category: 'communities',
+    category: 'discussion',
     stats: [
       { label: 'communities', value: '10k+' },
       { label: 'instances', value: '2.5k+' },
@@ -176,7 +186,7 @@ export const PROTOCOLS: Record<string, ProtocolConfig> = {
     endpoint: '/api/feed/pixelfed',
     route: '/feed/pixelfed',
     postNoun: 'photo',
-    category: 'content',
+    category: 'media',
     stats: [
       { label: 'instances', value: '1.2k+' },
       { label: 'photos shared', value: 'millions' },
@@ -191,7 +201,7 @@ export const PROTOCOLS: Record<string, ProtocolConfig> = {
     endpoint: '/api/feed/piefed',
     route: '/feed/piefed',
     postNoun: 'post',
-    category: 'communities',
+    category: 'discussion',
     stats: [
       { label: 'instance', value: 'links.degenfeed.xyz' },
       { label: 'federated', value: 'ActivityPub' },
@@ -206,7 +216,7 @@ export const PROTOCOLS: Record<string, ProtocolConfig> = {
     endpoint: '/api/feed/writefreely',
     route: '/feed/writefreely',
     postNoun: 'article',
-    category: 'content',
+    category: 'publishing',
     stats: [
       { label: 'instance', value: 'blog.degenfeed.xyz' },
       { label: 'federated', value: 'ActivityPub' },
@@ -266,7 +276,7 @@ export const PROTOCOLS: Record<string, ProtocolConfig> = {
     endpoint: '/api/feed/audius',
     route: '/feed/audius',
     postNoun: 'track',
-    category: 'web3',
+    category: 'audio',
     stats: [
       { label: 'catalog', value: '400M+ streams' },
       { label: 'free tier', value: '500K req/mo' },
@@ -281,7 +291,7 @@ export const PROTOCOLS: Record<string, ProtocolConfig> = {
     endpoint: '/api/feed/rarible',
     route: '/feed/nft-market',
     postNoun: 'sale',
-    category: 'web3',
+    category: 'markets',
     stats: [
       { label: 'chains', value: '7+' },
       { label: 'marketplaces', value: 'aggregated' },
@@ -327,7 +337,7 @@ export const PROTOCOLS: Record<string, ProtocolConfig> = {
     endpoint: '/api/feed/newsletter',
     route: '/feed/newsletter',
     postNoun: 'newsletter',
-    category: 'news',
+    category: 'publishing',
     stats: [
       { label: 'platforms', value: '5' },
       { label: 'publications', value: '15+' },
@@ -343,7 +353,7 @@ export const PROTOCOLS: Record<string, ProtocolConfig> = {
     endpoint: '/api/feed/podcast',
     route: '/feed/podcast',
     postNoun: 'episode',
-    category: 'news',
+    category: 'audio',
     stats: [
       { label: 'shows', value: '10' },
       { label: 'updated', value: 'recent episodes' },
@@ -358,7 +368,7 @@ export const PROTOCOLS: Record<string, ProtocolConfig> = {
     endpoint: '/api/feed/reddit',
     route: '/feed/reddit',
     postNoun: 'post',
-    category: 'communities',
+    category: 'discussion',
     stats: [
       { label: 'subreddits', value: 'crypto' },
       { label: 'active', value: '24/7' },
@@ -388,7 +398,7 @@ export const PROTOCOLS: Record<string, ProtocolConfig> = {
     endpoint: '/api/feed/soundcloud',
     route: '/feed/soundcloud',
     postNoun: 'track',
-    category: 'media',
+    category: 'audio',
     stats: [
       { label: 'users', value: '76M+' },
       { label: 'tracks', value: '300M+' },
@@ -403,7 +413,7 @@ export const PROTOCOLS: Record<string, ProtocolConfig> = {
     endpoint: '/api/feed/bandcamp',
     route: '/feed/bandcamp',
     postNoun: 'album',
-    category: 'media',
+    category: 'audio',
     stats: [
       { label: 'artists', value: '5M+' },
       { label: 'visitors', value: '50M/mo' },
@@ -463,7 +473,7 @@ export const PROTOCOLS: Record<string, ProtocolConfig> = {
     endpoint: '/api/feed/wordpress',
     route: '/feed/wordpress',
     postNoun: 'post',
-    category: 'content',
+    category: 'publishing',
     stats: [
       { label: 'market share', value: '43% of web' },
       { label: 'sites', value: '835M+' },
@@ -478,7 +488,7 @@ export const PROTOCOLS: Record<string, ProtocolConfig> = {
     endpoint: '/api/feed/nostr-groups',
     route: '/feed/nostr-groups',
     postNoun: 'message',
-    category: 'communities',
+    category: 'discussion',
     stats: [
       { label: 'NIP', value: 'NIP-29' },
       { label: 'protocol', value: 'Nostr' },
@@ -493,7 +503,7 @@ export const PROTOCOLS: Record<string, ProtocolConfig> = {
     endpoint: '/api/feed/opensea',
     route: '/feed/opensea',
     postNoun: 'event',
-    category: 'web3',
+    category: 'markets',
     stats: [
       { label: 'marketplace', value: '#1' },
       { label: 'real-time', value: 'Stream API' },
@@ -508,7 +518,7 @@ export const PROTOCOLS: Record<string, ProtocolConfig> = {
     endpoint: '/api/feed/lobsters',
     route: '/feed/lobsters',
     postNoun: 'story',
-    category: 'communities',
+    category: 'discussion',
     stats: [
       { label: 'community', value: 'tech' },
       { label: 'topical', value: '5k+ users' },
@@ -523,7 +533,7 @@ export const PROTOCOLS: Record<string, ProtocolConfig> = {
     endpoint: '/api/feed/snapshot',
     route: '/feed/snapshot',
     postNoun: 'proposal',
-    category: 'web3',
+    category: 'governance',
     stats: [
       { label: 'active DAOs', value: '10k+' },
       { label: 'voters', value: '500k+' },
@@ -538,7 +548,7 @@ export const PROTOCOLS: Record<string, ProtocolConfig> = {
     endpoint: '/api/feed/tally',
     route: '/feed/tally',
     postNoun: 'proposal',
-    category: 'web3',
+    category: 'governance',
     stats: [
       { label: 'DAOs tracked', value: '500+' },
       { label: 'treasury', value: '$10B+' },
@@ -553,7 +563,7 @@ export const PROTOCOLS: Record<string, ProtocolConfig> = {
     endpoint: '/api/feed/juicebox',
     route: '/feed/juicebox',
     postNoun: 'project',
-    category: 'web3',
+    category: 'governance',
     stats: [
       { label: 'projects', value: '2k+' },
       { label: 'raised', value: '$100M+' },
@@ -568,7 +578,7 @@ export const PROTOCOLS: Record<string, ProtocolConfig> = {
     endpoint: '/api/feed/unlock',
     route: '/feed/unlock',
     postNoun: 'lock',
-    category: 'web3',
+    category: 'governance',
     stats: [
       { label: 'locks deployed', value: '5k+' },
       { label: 'networks', value: '8+' },
@@ -583,7 +593,7 @@ export const PROTOCOLS: Record<string, ProtocolConfig> = {
     endpoint: '/api/feed/polymarket',
     route: '/feed/polymarket',
     postNoun: 'market',
-    category: 'web3',
+    category: 'markets',
     stats: [
       { label: 'volume', value: '$1B+' },
       { label: 'live markets', value: '2k+' },
@@ -752,7 +762,7 @@ export const EXTRA_PROTOCOLS: ExtraProtocolConfig[] = [
     color: '#800080',
     icon: '📚',
     route: '/feed/bookwyrm',
-    category: 'content',
+    category: 'reading',
   },
   {
     id: 'orbis',
@@ -794,15 +804,92 @@ export const EXTRA_PROTOCOLS: ExtraProtocolConfig[] = [
     route: '/feed/tableland',
     category: 'web3',
   },
+  {
+    id: 'mirror',
+    label: 'Mirror.xyz',
+    color: '#0a0a0a',
+    icon: 'M',
+    route: '/feed/mirror',
+    category: 'publishing',
+  },
+  {
+    id: 'paragraph',
+    label: 'Paragraph',
+    color: '#6b21a8',
+    icon: 'P',
+    route: '/feed/paragraph',
+    category: 'publishing',
+  },
+  {
+    id: 'ghost',
+    label: 'Ghost',
+    color: '#15171a',
+    icon: 'G',
+    route: '/feed/ghost',
+    category: 'publishing',
+  },
+  {
+    id: 'castopod',
+    label: 'Castopod',
+    color: '#ff6f00',
+    icon: '🎙️',
+    route: '/feed/castopod',
+    category: 'audio',
+  },
+  {
+    id: 'funkwhale',
+    label: 'Funkwhale',
+    color: '#f85a8b',
+    icon: '🎵',
+    route: '/feed/funkwhale',
+    category: 'audio',
+  },
+  {
+    id: 'faircamp',
+    label: 'Faircamp',
+    color: '#10b981',
+    icon: '🎸',
+    route: '/feed/faircamp',
+    category: 'audio',
+  },
+  {
+    id: 'discourse',
+    label: 'Discourse',
+    color: '#00b0e6',
+    icon: '💬',
+    route: '/feed/discourse',
+    category: 'discussion',
+  },
+  {
+    id: 'kbin',
+    label: 'Kbin',
+    color: '#6364ff',
+    icon: '🗣️',
+    route: '/feed/kbin',
+    category: 'discussion',
+  },
+  {
+    id: 'mbin',
+    label: 'Mbin',
+    color: '#8b5cf6',
+    icon: '🗣️',
+    route: '/feed/mbin',
+    category: 'discussion',
+  },
 ];
 
 /** Ordered list of category IDs for sidebar display */
 export const CATEGORY_DISPLAY_ORDER: ProtocolCategory[] = [
   'social',
-  'web3',
-  'content',
-  'communities',
   'video',
+  'audio',
+  'publishing',
+  'governance',
+  'markets',
+  'discussion',
+  'reading',
+  'communities',
+  'web3',
   'media',
   'news',
 ];
@@ -824,42 +911,58 @@ export const CATEGORY_PROTOCOLS: Record<ProtocolCategory, string[]> = (() => {
 
 /** Ordered list of protocols for the sidebar/tabs */
 export const SIDEBAR_ORDER = [
-  'live',
+  // Social
   'mastodon',
   'bluesky',
-  'audius',
-  'rarible',
-  'zora',
   'nostr',
   'farcaster',
   'lens',
   'threads',
-  'peertube',
+  'hive',
+  'gab',
+  'minds',
+  'steem',
+  // Video
+  'live',
   'youtube',
-  'loops',
-  'gancio',
-  'soundcloud',
-  'bandcamp',
+  'peertube',
   'vimeo',
   'twitch',
+  'loops',
+  'owncast',
+  // Audio
+  'soundcloud',
+  'bandcamp',
+  'audius',
+  'podcast',
+  // Publishing
+  'writefreely',
   'wordpress',
-  'nostr-groups',
-  'opensea',
-  'lobsters',
+  'newsletter',
+  // Governance
   'snapshot',
   'tally',
-  'polymarket',
   'juicebox',
   'unlock',
+  // Markets
+  'polymarket',
+  'opensea',
+  'rarible',
+  // Discussion
   'lemmy',
   'piefed',
-  'writefreely',
+  'reddit',
+  'lobsters',
+  'nostr-groups',
+  // Reading
+  'bookwyrm',
+  // Communities
+  'gancio',
+  // Media
   'pixelfed',
-  'owncast',
-  'rss',
-  'newsletter',
-  'podcast',
   'media',
+  // News
+  'rss',
 ];
 
 // ─────────────────────────────────────────────────────────────────────

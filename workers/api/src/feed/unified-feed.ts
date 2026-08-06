@@ -353,7 +353,7 @@ export async function buildUnifiedFeed(
     fetchPromises.push(
       (async () => {
         try {
-          const posts = await fetchPeerTubeVideos(Math.ceil(limit * mix.peertube));
+          const posts = await fetchPeerTubeVideos(Math.ceil(limit * mix.peertube), undefined, env);
           return { source: 'peertube' as SourceCategory, posts };
         } catch (err) {
           return {

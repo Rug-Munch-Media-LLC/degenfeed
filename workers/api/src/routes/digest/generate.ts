@@ -197,7 +197,7 @@ async function gatherDigestPosts(
   }
   try {
     const { fetchPeerTubeVideos } = await import('../../feed/unified-fetchers');
-    const ptPosts = await fetchPeerTubeVideos(10);
+    const ptPosts = await fetchPeerTubeVideos(10, undefined, env);
     all.push(...ptPosts.map((p) => ({ ...p, protocol: 'peertube' as Protocol })));
   } catch {
     /* PeerTube unavailable */

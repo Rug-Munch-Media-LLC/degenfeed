@@ -104,15 +104,23 @@ function looksLikeImageUrl(raw: string): boolean {
 
 /**
  * Extract an image URL from a status/post payload. `raw` may already be a
- * direct image URL (pass-through) or post text/HTML that embeds images in a
- * protocol-specific format.
+ * direct image URL (pass-through) or post text/HTML/JSON that embeds images
+ * in a protocol-specific format.
  *
  * Protocol formats:
  *   - nostr:      Markdown `![alt](https://...)`, bare `https://...` links,
- *                 nostr.build / m.primal.net / void.cat media
- *   - mastodon:   HTML `<img src="...">`, media_attachments remote URLs
- *   - bluesky:    `https://cdn.bsky.app/img/...` (already an image URL)
- *   - rss:        `<img src="...">`, `<enclosure url="...">`
+ *                 nostr.build / m.primal.net / void.cat media, `picture` tag,
+ *                 NIP-94 `imeta` tags
+ *   - mastodon:   HTML `<img src="...">`, media_attachments array (JSON),
+ *                 remote URL strings
+ *   - bluesky:    `https://cdn.bsky.app/img/...` (already an image URL),
+ *                 JSON `embed.images[0].fullsize|thumb` or
+ *                 `embed.external.thumb`
+ *   - lens:       JSON `metadata.media[0].original.url` or
+ *                 `metadata.image.original.url`
+ *   - rss:        `<img src="...">`, `<enclosure url="...">`,
+ *                 `<media:content url="...">`
+ *   - youtube:    `media:group/media:thumbnail url="..."`
  *   - peertube:   `/static/thumbnails/...` URLs (image URL pass-through)
  *   - pixelfed:   `/storage/...` URLs (image URL pass-through)
  *   - default:    generic Markdown + HTML + extension scan
@@ -121,6 +129,17 @@ export function extractImageUrl(raw: string | null, protocol: string | null): st
   if (!raw) return null;
   const text = raw.trim();
   if (!text) return null;
+
+  // 0. JSON payloads — Mastodon/Bluesky/Lens APIs return structured objects.
+  if (text.startsWith('{') || text.startsWith('[')) {
+    try {
+      const parsed: unknown = JSON.parse(text);
+      const jsonUrl = imageUrlFromJsonPayload(parsed, protocol);
+      if (jsonUrl) return jsonUrl;
+    } catch {
+      // Not JSON — fall through to text-based extraction.
+    }
+  }
 
   // 1. Already an image URL → pass through.
   if (looksLikeImageUrl(text)) return text;
@@ -137,17 +156,142 @@ export function extractImageUrl(raw: string | null, protocol: string | null): st
   const enclosure = text.match(/<enclosure[^>]+url=["']([^"']+)["']/i);
   if (enclosure?.[1]) return enclosure[1];
 
-  // 5. Nostr: any image-host URL embedded in a bare string (e.g. kind-1
+  // 5. RSS / YouTube media:content and media:thumbnail tags
+  const mediaContent = text.match(/<media:content[^>]+url=["']([^"']+)["']/i);
+  if (mediaContent?.[1]) return mediaContent[1];
+  const mediaThumb = text.match(/<media:thumbnail[^>]+url=["']([^"']+)["']/i);
+  if (mediaThumb?.[1]) return mediaThumb[1];
+  const mediaGroupThumb = text.match(/<media:group>[\s\S]*?<media:thumbnail[^>]+url=["']([^"']+)["']/i);
+  if (mediaGroupThumb?.[1]) return mediaGroupThumb[1];
+
+  // 6. Nostr: any image-host URL embedded in a bare string (e.g. kind-1
   //    content with a single media URL, or nostr.build links).
   if (protocol === 'nostr') {
     const nostrImg = text.match(/https?:\/\/[^\s<>"']+\.(?:jpg|jpeg|png|gif|webp|avif)(?:\?[^\s<>"']*)?/i);
     if (nostrImg?.[0]) return nostrImg[0];
   }
 
-  // 6. Generic: first https URL ending in an image extension anywhere in text.
+  // 7. Generic: first https URL ending in an image extension anywhere in text.
   const generic = text.match(/https?:\/\/[^\s<>"']+\.(?:jpg|jpeg|png|gif|webp|avif|svg|bmp)(?:\?[^\s<>"']*)?/i);
   if (generic?.[0]) return generic[0];
 
+  return null;
+}
+
+/**
+ * Walk a parsed JSON status/post payload looking for media URLs per protocol.
+ * Handles the shapes the social APIs return so callers can pass the raw
+ * protocol payload directly to the image proxy.
+ */
+function imageUrlFromJsonPayload(payload: unknown, protocol: string | null): string | null {
+  if (typeof payload !== 'object' || payload === null) return null;
+
+  // Mastodon: media_attachments[].url / preview_url / remote_url
+  const attachments = (payload as Record<string, unknown>).media_attachments;
+  if (Array.isArray(attachments)) {
+    for (const att of attachments) {
+      if (typeof att !== 'object' || att === null) continue;
+      const a = att as Record<string, unknown>;
+      const url = a.url ?? a.preview_url ?? a.remote_url;
+      if (typeof url === 'string' && url) return url;
+    }
+  }
+
+  // Bluesky: embed.images[].fullsize|thumb, embed.external.thumb
+  const embed = (payload as Record<string, unknown>).embed;
+  if (typeof embed === 'object' && embed !== null) {
+    const e = embed as Record<string, unknown>;
+    const images = e.images;
+    if (Array.isArray(images)) {
+      const first = images[0];
+      if (typeof first === 'object' && first !== null) {
+        const f = first as Record<string, unknown>;
+        const url = f.fullsize ?? f.thumb ?? f.image?.fullsize ?? f.image?.thumb;
+        if (typeof url === 'string' && url) return url;
+      }
+    }
+    const external = e.external;
+    if (typeof external === 'object' && external !== null) {
+      const thumb = (external as Record<string, unknown>).thumb;
+      if (typeof thumb === 'string' && thumb) return thumb;
+    }
+  }
+
+  // Bluesky record.embed variant
+  const record = (payload as Record<string, unknown>).record;
+  if (typeof record === 'object' && record !== null) {
+    const r = record as Record<string, unknown>;
+    const recEmbed = r.embed;
+    if (typeof recEmbed === 'object' && recEmbed !== null) {
+      const re = recEmbed as Record<string, unknown>;
+      const images = re.images;
+      if (Array.isArray(images)) {
+        const first = images[0];
+        if (typeof first === 'object' && first !== null) {
+          const f = first as Record<string, unknown>;
+          const url = f.fullsize ?? f.thumb;
+          if (typeof url === 'string' && url) return url;
+        }
+      }
+      const external = re.external;
+      if (typeof external === 'object' && external !== null) {
+        const thumb = (external as Record<string, unknown>).thumb;
+        if (typeof thumb === 'string' && thumb) return thumb;
+      }
+    }
+  }
+
+  // Lens: metadata.media[].original.url | metadata.image.original.url
+  const metadata = (payload as Record<string, unknown>).metadata;
+  if (typeof metadata === 'object' && metadata !== null) {
+    const m = metadata as Record<string, unknown>;
+    const media = m.media;
+    if (Array.isArray(media)) {
+      const first = media[0];
+      if (typeof first === 'object' && first !== null) {
+        const original = (first as Record<string, unknown>).original;
+        if (typeof original === 'object' && original !== null) {
+          const url = (original as Record<string, unknown>).url;
+          if (typeof url === 'string' && url) return url;
+        }
+      }
+    }
+    const image = m.image;
+    if (typeof image === 'object' && image !== null) {
+      const original = (image as Record<string, unknown>).original;
+      if (typeof original === 'object' && original !== null) {
+        const url = (original as Record<string, unknown>).url;
+        if (typeof url === 'string' && url) return url;
+      }
+    }
+  }
+
+  // Nostr: tags array with ["picture", url] or ["imeta", "url ...", ...]
+  const tags = (payload as Record<string, unknown>).tags;
+  if (Array.isArray(tags)) {
+    for (const tag of tags) {
+      if (!Array.isArray(tag)) continue;
+      if (tag[0] === 'picture' && typeof tag[1] === 'string' && tag[1]) return tag[1];
+      if (tag[0] === 'imeta') {
+        for (const part of tag) {
+          if (typeof part === 'string' && part.startsWith('url ')) {
+            const url = part.slice(4).trim();
+            if (url) return url;
+          }
+        }
+      }
+    }
+  }
+
+  // Generic: any string field that looks like an image URL.
+  const values = Object.values(payload as Record<string, unknown>);
+  for (const v of values) {
+    if (typeof v === 'string' && looksLikeImageUrl(v)) return v;
+    if (typeof v === 'object' && v !== null) {
+      const nested = imageUrlFromJsonPayload(v, protocol);
+      if (nested) return nested;
+    }
+  }
   return null;
 }
 

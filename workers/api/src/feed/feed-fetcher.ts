@@ -126,6 +126,12 @@ export const ALL_PROTOCOLS: Protocol[] = [
   'tally',
   'polymarket',
   'opensea',
+  // ── Media / Audio / Video (NEW 2026-08-06) ──────────────
+  'youtube',
+  'soundcloud',
+  'vimeo',
+  'loops',
+  'wordpress',
 ];
 
 /** Default protocols used when no explicit filter is provided */
@@ -148,6 +154,8 @@ export const DIRECT_FEED_PROTOCOLS: Protocol[] = [
   'reddit',
   'rss',
   'threads',
+  'youtube',
+  'soundcloud',
 ];
 
 export const DEFAULT_TIMEOUT_MS = 6000;
@@ -216,6 +224,7 @@ export const PROVIDER_TIMEOUTS: Record<Protocol, number> = {
   // ── Legacy aliases ───────────────────────────────────────
   atproto: 8000,
   youtube: 5000,
+  soundcloud: 5000,
   ponder: 3000,
   ethereum: 8000,
   solana: 8000,
@@ -371,6 +380,10 @@ export function getProvider(protocol: Protocol, env: Env): FeedProvider {
       return new PolymarketProvider({});
     case 'opensea':
       return new OpenSeaProvider({ apiKey: env.OPENSEA_API_KEY });
+    case 'youtube':
+      return new YouTubeRssProvider();
+    case 'soundcloud':
+      return new SoundCloudRssProvider();
     default:
       // Fall back to bridge API for all other protocols (50+)
       return new BridgeFeedProvider(protocol, env);
@@ -407,17 +420,74 @@ export class BridgeFeedProvider implements FeedProvider {
           signal: AbortSignal.timeout(timeoutMs),
         });
         if (!res.ok) {
+          // Provider-specific error: read the body so 401/404/500 are visible
+          // instead of being swallowed as a generic "non-200".
+          let bodySnippet = '';
+          try {
+            const raw = await res.text();
+            bodySnippet = raw.slice(0, 200).replace(/\s+/g, ' ').trim();
+          } catch {
+            /* body not readable — status alone is enough */
+          }
+          log('error', `bridge:${this.protocol}: HTTP ${res.status}`, {
+            provider: this.protocol,
+            status: res.status,
+            bodySnippet,
+            attempt,
+          });
           if (attempt === 0) continue; // Retry on non-200
-          return { posts: [], notice: `Bridge returned ${res.status} for ${this.protocol}` };
+          return {
+            posts: [],
+            notice: `Bridge returned ${res.status} for ${this.protocol}${bodySnippet ? `: ${bodySnippet}` : ''}`,
+          };
         }
-        const body = (await res.json()) as { data?: UnifiedPost[]; posts?: UnifiedPost[] };
+        const body = (await res.json()) as {
+          data?: UnifiedPost[];
+          posts?: UnifiedPost[];
+          meta?: { isDemo?: boolean; source?: string; demoNote?: string; notices?: string[]; errors?: string[] };
+        };
         const posts = body.data ?? body.posts ?? [];
+
+        // Detect demo/seed content — the bridge marks it with meta.isDemo
+        // and per-post `_demo` flags. Never silently serve demo content as if
+        // it were real; surface it in the notice so callers can distinguish.
+        const isDemo = body.meta?.isDemo === true || posts.some((p) => (p as Record<string, unknown>)?._demo === true);
+        if (isDemo) {
+          log('warn', `bridge:${this.protocol}: provider returned empty — demo content served`, {
+            provider: this.protocol,
+            demoNote: body.meta?.demoNote,
+            bridgeErrors: body.meta?.errors,
+          });
+          return {
+            posts: posts.slice(0, 50),
+            notice:
+              `Bridge served demo content for ${this.protocol} (provider returned empty)` +
+              (body.meta?.demoNote ? ` — ${body.meta.demoNote}` : ''),
+          };
+        }
+
+        const count = posts.length;
+        if (count === 0) {
+          log('warn', `bridge:${this.protocol}: bridge returned 0 posts`, {
+            provider: this.protocol,
+            bridgeNotices: body.meta?.notices,
+            bridgeErrors: body.meta?.errors,
+          });
+        } else {
+          log('info', `bridge:${this.protocol}: fetched ${count} posts`, { provider: this.protocol });
+        }
         return { posts: posts.slice(0, 50) };
       } catch (err) {
+        const errMsg = err instanceof Error ? err.message : 'unknown';
+        log('error', `bridge:${this.protocol}: fetch failed`, {
+          provider: this.protocol,
+          error: errMsg,
+          attempt,
+        });
         if (attempt === 0) continue; // Retry on error
         return {
           posts: [],
-          notice: `Bridge unavailable for ${this.protocol}: ${err instanceof Error ? err.message : 'unknown'}`,
+          notice: `Bridge unavailable for ${this.protocol}: ${errMsg}`,
         };
       }
     }
@@ -442,6 +512,176 @@ export class BridgeFeedProvider implements FeedProvider {
       };
     }
   }
+}
+
+// ─── YouTube RSS provider ───────────────────────────────────────────
+// Fetches YouTube channel RSS feeds (feeds/videos.xml?channel_id=…)
+// directly from the edge — no bridge, no API key required. Mirrors the
+// channel list in unified-fetchers.ts so /api/feed/youtube and the
+// unified feed return the same content.
+
+class YouTubeRssProvider implements FeedProvider {
+  readonly protocol: Protocol = 'youtube';
+  readonly schema: import('@degenfeed/feed-providers').SchemaGuard = () => true;
+
+  async fetchFeed(_opts: FetchOptions = {}): Promise<FeedResult> {
+    try {
+      const { fetchYouTubeVideos } = await import('./unified-fetchers');
+      const { posts, errors } = await fetchYouTubeVideos(30);
+      return {
+        posts,
+        notice: errors.length > 0 ? `youtube: ${errors.length} feeds failed` : undefined,
+      };
+    } catch (err) {
+      return {
+        posts: [],
+        notice: `youtube provider failed: ${err instanceof Error ? err.message : 'unknown'}`,
+      };
+    }
+  }
+
+  async healthCheck(): Promise<HealthResult> {
+    return { healthy: true, latencyMs: 0 };
+  }
+}
+
+// ─── SoundCloud RSS provider ────────────────────────────────────────
+// Fetches SoundCloud user RSS feeds (feeds.soundcloud.com) from the
+// edge. No API key — the public RSS endpoints work without auth.
+
+const SOUNDCLOUD_FEEDS: Array<{ url: string; name: string }> = [
+  { url: 'https://feeds.soundcloud.com/users/soundcloud:users:3034543/sounds.rss', name: 'Bankless' },
+  { url: 'https://feeds.soundcloud.com/users/soundcloud:users:308177174/sounds.rss', name: 'Unchained' },
+  { url: 'https://feeds.soundcloud.com/users/soundcloud:users:333233826/sounds.rss', name: 'The Pomp Podcast' },
+  { url: 'https://feeds.soundcloud.com/users/soundcloud:users:203315527/sounds.rss', name: 'The Defiant Podcast' },
+  { url: 'https://feeds.soundcloud.com/users/soundcloud:users:552520050/sounds.rss', name: 'Delphi Digital' },
+  { url: 'https://feeds.soundcloud.com/users/soundcloud:users:211193132/sounds.rss', name: 'Real Vision Crypto' },
+];
+
+class SoundCloudRssProvider implements FeedProvider {
+  readonly protocol: Protocol = 'soundcloud';
+  readonly schema: import('@degenfeed/feed-providers').SchemaGuard = () => true;
+
+  async fetchFeed(_opts: FetchOptions = {}): Promise<FeedResult> {
+    const limit = 30;
+    const errors: string[] = [];
+    const posts: UnifiedPost[] = [];
+
+    const results = await Promise.allSettled(
+      SOUNDCLOUD_FEEDS.map(async (feed) => {
+        const res = await fetch(feed.url, {
+          headers: { accept: 'application/rss+xml', 'user-agent': 'DegenFeed/1.0' },
+          signal: AbortSignal.timeout(5000),
+        });
+        if (!res.ok) return [] as UnifiedPost[];
+        const xml = await res.text();
+        return parseSoundCloudRss(xml, feed);
+      }),
+    );
+
+    for (const [i, r] of results.entries()) {
+      if (r.status === 'fulfilled') {
+        posts.push(...r.value);
+      } else {
+        errors.push(
+          `soundcloud:feed:${i}: ${r.reason instanceof Error ? r.reason.message : 'failed'}`,
+        );
+      }
+    }
+
+    // Deduplicate by track id
+    const seen = new Set<string>();
+    const deduped = posts.filter((p) => {
+      if (seen.has(p.id)) return false;
+      seen.add(p.id);
+      return true;
+    });
+
+    return {
+      posts: deduped.slice(0, limit),
+      notice: errors.length > 0 ? `soundcloud: ${errors.length} feeds failed` : undefined,
+    };
+  }
+
+  async healthCheck(): Promise<HealthResult> {
+    return { healthy: true, latencyMs: 0 };
+  }
+}
+
+/** Minimal RSS item extraction for SoundCloud track feeds. */
+function parseSoundCloudRss(xml: string, feed: { url: string; name: string }): UnifiedPost[] {
+  const posts: UnifiedPost[] = [];
+  const itemRegex = /<item>([\s\S]*?)<\/item>/gi;
+  let m: RegExpExecArray | null = itemRegex.exec(xml);
+  while (m !== null) {
+    const block = m[1];
+    if (block) {
+      const title = extractSoundCloudTag(block, 'title');
+      const link = extractSoundCloudTag(block, 'link');
+      const pubDate = extractSoundCloudTag(block, 'pubDate');
+      const description = extractSoundCloudTag(block, 'description');
+      const enclosure = block.match(/<enclosure[^>]+url=["']([^"']+)["']/i)?.[1] ?? '';
+      const image = block.match(/<itunes:image[^>]+href=["']([^"']+)["']/i)?.[1] ?? '';
+
+      if (title && link) {
+        const trackId = link.match(/\/tracks\/(\d+)/)?.[1] ?? link;
+        posts.push({
+          id: `soundcloud:${trackId}`,
+          protocol: 'soundcloud' as const,
+          author: {
+            id: `soundcloud:${feed.name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`,
+            primary: {
+              protocol: 'soundcloud' as const,
+              id: feed.name,
+            },
+            handles: {},
+            displayName: feed.name,
+            bio: '',
+            avatarUrl: '',
+            verified: [],
+            followerCount: 0,
+            followingCount: 0,
+            links: [{ label: 'source', url: link }],
+            keys: {},
+          },
+          text: title,
+          html: description ? `<p>${description.slice(0, 500)}</p>` : undefined,
+          embeds: [
+            {
+              kind: 'audio',
+              url: enclosure || link,
+              meta: { source: 'soundcloud', thumbnail: image },
+            },
+          ],
+          createdAt: Number.isNaN(Date.parse(pubDate)) ? Date.now() : Date.parse(pubDate),
+          metrics: { likes: 0, replies: 0, reposts: 0, quotes: 0 },
+          engagement: { likes: 0, replies: 0, reposts: 0, quotes: 0, raw: undefined },
+          raw: { feed: feed.name, enclosure, image },
+          niches: [],
+          embedUrl: link,
+          thumbnail: image,
+          audioUrl: enclosure || undefined,
+        } as unknown as UnifiedPost);
+      }
+    }
+    m = itemRegex.exec(xml);
+  }
+  return posts;
+}
+
+function extractSoundCloudTag(xml: string, tag: string): string {
+  const escaped = tag.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const re = new RegExp(`<${escaped}[^>]*>([\\s\\S]*?)</${escaped}>`, 'i');
+  const match = re.exec(xml);
+  if (!match?.[1]) return '';
+  return match[1]
+    .replace(/<!\[CDATA\[(.*?)\]\]>/gs, '$1')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&apos;/g, "'")
+    .trim();
 }
 
 // Wrapper that tries RMI first, falls back to public RSS.

@@ -7,47 +7,83 @@
  * What it adds: Audio content to the timeline (music, podcasts, mixes)
  * API: RSS feeds per artist + public API
  * Rate limit: 10 req/s (unauthenticated)
+ *
+ * NOTE (2026-08-06): SoundCloud RSS only exists for accounts that have
+ * enabled "podcast" RSS on their profile — most big artists have it
+ * disabled. The curated IDs below were verified to return items. The
+ * provider ALSO resolves user IDs from profile pages at runtime
+ * (https://soundcloud.com/{username} contains `soundcloud:users:{id}`),
+ * so new curated users can be added without re-verifying IDs.
  */
 
 import { checkRateLimit } from '../rate-limiter';
 import type { SchemaGuard, UnifiedPost } from '../server/types';
 
 const $fetch = globalThis.fetch;
-const USER_AGENT = 'DegenFeed-Bridge/0.1 (SoundCloud RSS)';
+const USER_AGENT = 'DegenFeed-Bridge/0.2 (SoundCloud RSS)';
+
+/** 90s TTL — collapse repeated feed-build calls into one real fetch window. */
+const SC_CACHE_TTL_MS = 90_000;
+let scCache: { posts: UnifiedPost[]; expiresAt: number } | null = null;
+
+/** Memoized username → RSS URL resolution (profile pages are expensive). */
+const resolvedUserUrls = new Map<string, string | null>();
 
 const SOUNDCLOUD_FEEDS: Array<{ url: string; label: string; genre: string }> = [
-  // Electronic/Dance music curators
+  // Electronic/Dance music curators — verified RSS-enabled 2026-08-06
   {
-    url: 'https://feeds.soundcloud.com/users/soundcloud:users:11813417/sounds.rss',
+    url: 'https://feeds.soundcloud.com/users/soundcloud:users:8553751/sounds.rss',
     label: 'Monstercat',
     genre: 'electronic',
   },
   {
-    url: 'https://feeds.soundcloud.com/users/soundcloud:users:25298967/sounds.rss',
-    label: 'MrSuicideSheep',
+    url: 'https://feeds.soundcloud.com/users/soundcloud:users:53282567/sounds.rss',
+    label: 'CloudKid',
+    genre: 'electronic',
+  },
+  {
+    url: 'https://feeds.soundcloud.com/users/soundcloud:users:1444689353/sounds.rss',
+    label: 'NCS',
+    genre: 'electronic',
+  },
+  {
+    url: 'https://feeds.soundcloud.com/users/soundcloud:users:371762/sounds.rss',
+    label: 'Proximity',
     genre: 'chill',
   },
   {
-    url: 'https://feeds.soundcloud.com/users/soundcloud:users:58789854/sounds.rss',
-    label: 'UKF',
+    url: 'https://feeds.soundcloud.com/users/soundcloud:users:26057743/sounds.rss',
+    label: 'Trap City',
+    genre: 'trap',
+  },
+  // Mainstream electronic artists — verified RSS-enabled 2026-08-06
+  {
+    url: 'https://feeds.soundcloud.com/users/soundcloud:users:856062/sounds.rss',
+    label: 'Skrillex',
     genre: 'dubstep',
   },
   {
-    url: 'https://feeds.soundcloud.com/users/soundcloud:users:14167058/sounds.rss',
-    label: 'Trap Nation',
-    genre: 'trap',
-  },
-  // Web3/Crypto music
-  {
-    url: 'https://feeds.soundcloud.com/users/soundcloud:users:112580959/sounds.rss',
-    label: 'Audius',
-    genre: 'web3',
+    url: 'https://feeds.soundcloud.com/users/soundcloud:users:16730/sounds.rss',
+    label: 'Diplo',
+    genre: 'electronic',
   },
   {
-    url: 'https://feeds.soundcloud.com/users/soundcloud:users:85743833/sounds.rss',
-    label: 'DJ Mixes',
-    genre: 'mixes',
+    url: 'https://feeds.soundcloud.com/users/soundcloud:users:203410014/sounds.rss',
+    label: 'deadmau5',
+    genre: 'progressive',
   },
+];
+
+/** Usernames to resolve at runtime → RSS (extra sources beyond the static list). */
+const RESOLVE_USERNAMES = [
+  'monstercat',
+  'cloudkid',
+  'skrillex',
+  'diplo',
+  'proximity',
+  'trapcity',
+  'ncs',
+  'deadmau5',
 ];
 
 interface SoundCloudRSSItem {
@@ -90,13 +126,40 @@ async function parseFeedXML(xml: string): Promise<SoundCloudRSSItem[]> {
   return items;
 }
 
+/** Resolve a SoundCloud username to its RSS feed URL (profile page meta). */
+async function resolveUserRssUrl(username: string): Promise<string | null> {
+  if (resolvedUserUrls.has(username)) return resolvedUserUrls.get(username) ?? null;
+  try {
+    const res = await $fetch(`https://soundcloud.com/${encodeURIComponent(username)}`, {
+      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; DegenFeed-Bridge/0.2)' },
+      signal: AbortSignal.timeout(6000),
+    });
+    if (!res.ok) {
+      resolvedUserUrls.set(username, null);
+      return null;
+    }
+    const html = await res.text();
+    const m = html.match(/soundcloud:users:(\d+)/);
+    if (!m?.[1]) {
+      resolvedUserUrls.set(username, null);
+      return null;
+    }
+    const url = `https://feeds.soundcloud.com/users/soundcloud:users:${m[1]}/sounds.rss`;
+    resolvedUserUrls.set(username, url);
+    return url;
+  } catch {
+    resolvedUserUrls.set(username, null);
+    return null;
+  }
+}
+
 async function fetchFeed(
   source: { url: string; label: string; genre: string },
   limit: number,
 ): Promise<UnifiedPost[]> {
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 8000);
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
     const res = await $fetch(source.url, {
       headers: { 'User-Agent': USER_AGENT },
       signal: controller.signal,
@@ -111,6 +174,7 @@ async function fetchFeed(
     for (const item of items.slice(0, limit)) {
       const audioUrl = item.enclosure?.['@_url'] ?? item['media:content']?.['@_url'] ?? '';
       const createdAt = item.pubDate ? new Date(item.pubDate).getTime() : Date.now();
+      if (!item.title && !audioUrl) continue;
 
       posts.push({
         id: `soundcloud-${Buffer.from(item.link ?? item.title ?? '')
@@ -158,17 +222,49 @@ export async function fetchSoundCloudPosts(limit: number = 20): Promise<UnifiedP
   const key = 'provider:soundcloud';
   if (!checkRateLimit(key, { maxRequests: 30, windowMs: 60_000 })) return [];
 
-  const perSource = Math.max(3, Math.ceil(limit / SOUNDCLOUD_FEEDS.length));
-  const results = await Promise.allSettled(
-    SOUNDCLOUD_FEEDS.map((src) => fetchFeed(src, perSource)),
-  );
+  // Serve from cache first — the prewarmer + refresher call this repeatedly.
+  const cached = scCache && Date.now() < scCache.expiresAt ? scCache.posts : null;
+  if (cached) return cached.slice(0, limit);
 
-  const posts: UnifiedPost[] = [];
-  for (const r of results) {
-    if (r.status === 'fulfilled') posts.push(...r.value);
+  // Resolve extra usernames at runtime — only once per process (memoized).
+  const extraSources: Array<{ url: string; label: string; genre: string }> = [];
+  for (const username of RESOLVE_USERNAMES) {
+    if (extraSources.length >= 6) break;
+    if (SOUNDCLOUD_FEEDS.some((s) => s.label.toLowerCase() === username.toLowerCase())) continue;
+    const url = await resolveUserRssUrl(username);
+    if (url) extraSources.push({ url, label: username, genre: 'electronic' });
   }
 
-  return posts.sort((a, b) => b.createdAt - a.createdAt).slice(0, limit);
+  const sources = [...SOUNDCLOUD_FEEDS, ...extraSources];
+  const perSource = Math.max(3, Math.ceil(limit / sources.length));
+
+  // Fetch in small batches (3) — SoundCloud throttles concurrent RSS fetches.
+  const posts: UnifiedPost[] = [];
+  const BATCH = 3;
+  for (let i = 0; i < sources.length; i += BATCH) {
+    const batch = sources.slice(i, i + BATCH);
+    const results = await Promise.allSettled(batch.map((src) => fetchFeed(src, perSource)));
+    for (const r of results) {
+      if (r.status === 'fulfilled') posts.push(...r.value);
+    }
+  }
+
+  // Deduplicate by id (resolved sources may overlap with static list)
+  const seen = new Set<string>();
+  const deduped: UnifiedPost[] = [];
+  for (const p of posts.sort((a, b) => b.createdAt - a.createdAt)) {
+    if (seen.has(p.id)) continue;
+    seen.add(p.id);
+    deduped.push(p);
+    if (deduped.length >= limit) break;
+  }
+
+  console.log(`[bridge] SoundCloud: ${deduped.length} posts from ${sources.length} sources`);
+  // Only cache non-empty results so a bad window is retried next cycle.
+  if (deduped.length > 0) {
+    scCache = { posts: deduped, expiresAt: Date.now() + SC_CACHE_TTL_MS };
+  }
+  return deduped;
 }
 
 export const schema: SchemaGuard = {

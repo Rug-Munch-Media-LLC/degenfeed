@@ -1084,7 +1084,7 @@ export class ContentPipeline {
       extraFetches.push(fetchLemmyPosts('hot', undefined, 20).then((r) => r.posts));
     }
     if (!protocols || protocols.includes('peertube')) {
-      extraFetches.push(fetchPeerTubeVideos(20));
+      extraFetches.push(fetchPeerTubeVideos(20, undefined, this.env));
     }
     if (!protocols || protocols.includes('youtube')) {
       extraFetches.push(fetchYouTubeVideos(20).then((r) => r.posts));
@@ -1296,7 +1296,7 @@ export class ContentPipeline {
 
   private async fetchTrendingVideos(limit: number): Promise<UnifiedPost[]> {
     const [peertubePosts, youtubeResult] = await Promise.all([
-      fetchPeerTubeVideos(Math.ceil(limit / 2)),
+      fetchPeerTubeVideos(Math.ceil(limit / 2), undefined, this.env),
       fetchYouTubeVideos(Math.ceil(limit / 2)),
     ]);
     return [...peertubePosts, ...youtubeResult.posts].slice(0, limit);

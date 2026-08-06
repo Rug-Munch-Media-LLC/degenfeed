@@ -79,6 +79,8 @@ function config() {
     owncastUrl: env('OWNCAST_URL', 'http://127.0.0.1:8092'),
     restreamerUrl: env('RESTREAMER_URL', 'http://127.0.0.1:8088'),
     rsToken: env('RS_TOKEN', ''),
+    rsAdminUser: env('RS_ADMIN_USER', ''),
+    rsAdminPassword: env('RS_ADMIN_PASSWORD', ''),
     peertubeBaseUrl: env('PEERTUBE_BASE_URL', 'http://127.0.0.1:9011'),
     peertubeClientId: env('PEERTUBE_CLIENT_ID', ''),
     peertubeClientSecret: env('PEERTUBE_CLIENT_SECRET', ''),
@@ -152,20 +154,62 @@ function toContainerAddress(rawUrl: string, fallbackHost: string, fallbackPort: 
 
 // ─── Restreamer API ──────────────────────────────────────────────────────
 
+// Restreamer (datarhei core v2.12) requires a JWT obtained from POST
+// /api/login (username/password). The old Bearer <RS_TOKEN> scheme was
+// removed upstream; a cached JWT is reused until it starts failing.
+let restreamerJwtCache: { token: string; expiresAt: number } | null = null;
+
+async function restreamerLogin(
+  cfg: ReturnType<typeof config>,
+): Promise<string | null> {
+  if (restreamerJwtCache && Date.now() < restreamerJwtCache.expiresAt) {
+    return restreamerJwtCache.token;
+  }
+  if (!cfg.rsAdminUser || !cfg.rsAdminPassword) {
+    return null;
+  }
+  try {
+    const res = await fetch(`${cfg.restreamerUrl}/api/login`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ username: cfg.rsAdminUser, password: cfg.rsAdminPassword }),
+      signal: AbortSignal.timeout(HTTP_TIMEOUT_MS),
+    });
+    const data = (await res.json().catch(() => ({}))) as { access_token?: string };
+    if (!res.ok || !data.access_token) {
+      console.error('[webhook] Restreamer login failed (HTTP', res.status, ')');
+      return null;
+    }
+    restreamerJwtCache = { token: data.access_token, expiresAt: Date.now() + 6 * 60 * 1000 };
+    return data.access_token;
+  } catch (err) {
+    console.error(
+      '[webhook] Restreamer login error:',
+      err instanceof Error ? err.message : err,
+    );
+    return null;
+  }
+}
+
 async function restreamerApi(
   cfg: ReturnType<typeof config>,
   method: string,
   path: string,
   body?: unknown,
 ): Promise<{ ok: boolean; status: number; data: unknown }> {
-  if (!cfg.rsToken) {
-    return { ok: false, status: 503, data: { message: 'RS_TOKEN not configured' } };
+  const token = await restreamerLogin(cfg);
+  if (!token) {
+    return {
+      ok: false,
+      status: 503,
+      data: { message: 'Restreamer auth not configured (RS_ADMIN_USER/RS_ADMIN_PASSWORD)' },
+    };
   }
   try {
     const res = await fetch(`${cfg.restreamerUrl}${path}`, {
       method,
       headers: {
-        Authorization: `Bearer ${cfg.rsToken}`,
+        Authorization: `Bearer ${token}`,
         'content-type': 'application/json',
       },
       body: body === undefined ? undefined : JSON.stringify(body),
