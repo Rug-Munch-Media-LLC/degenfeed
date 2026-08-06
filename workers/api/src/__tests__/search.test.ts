@@ -71,6 +71,58 @@ describe('handleSearch', () => {
     const res = await handleSearch(req, env);
     expect(res.status).toBe(200);
   });
+
+  it('should accept singular protocol param and echo it in meta', async () => {
+    const { handleSearch } = await import('../routes/search');
+    const req = new Request('http://localhost/api/search?q=eth&protocol=nostr&limit=5');
+    const env = {
+      SEARCH_CACHE_KV: { get: vi.fn().mockResolvedValue(null), put: vi.fn() },
+      RSS_CACHE_KV: { get: vi.fn().mockResolvedValue(null) },
+      // biome-ignore lint/suspicious/noExplicitAny: intentional mock/test cast
+    } as any;
+    const res = await handleSearch(req, env);
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as { meta?: { protocol?: string[] } };
+    expect(body.meta?.protocol).toEqual(['nostr']);
+  });
+
+  it('should reject unknown category values', async () => {
+    const { handleSearch } = await import('../routes/search');
+    const req = new Request('http://localhost/api/search?q=eth&category=bogus');
+    const env = {} as any;
+    const res = await handleSearch(req, env);
+    expect(res.status).toBe(400);
+    const body = (await res.json()) as { error?: string };
+    expect(body.error).toContain('Unknown category');
+  });
+
+  it('should accept valid sort values and echo them in meta', async () => {
+    const { handleSearch } = await import('../routes/search');
+    const req = new Request('http://localhost/api/search?q=eth&sort=newest&limit=5');
+    const env = {
+      SEARCH_CACHE_KV: { get: vi.fn().mockResolvedValue(null), put: vi.fn() },
+      RSS_CACHE_KV: { get: vi.fn().mockResolvedValue(null) },
+      // biome-ignore lint/suspicious/noExplicitAny: intentional mock/test cast
+    } as any;
+    const res = await handleSearch(req, env);
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as { meta?: { sort?: string } };
+    expect(body.meta?.sort).toBe('newest');
+  });
+
+  it('should accept category param and echo it in meta', async () => {
+    const { handleSearch } = await import('../routes/search');
+    const req = new Request('http://localhost/api/search?q=eth&category=video&limit=5');
+    const env = {
+      SEARCH_CACHE_KV: { get: vi.fn().mockResolvedValue(null), put: vi.fn() },
+      RSS_CACHE_KV: { get: vi.fn().mockResolvedValue(null) },
+      // biome-ignore lint/suspicious/noExplicitAny: intentional mock/test cast
+    } as any;
+    const res = await handleSearch(req, env);
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as { meta?: { category?: string } };
+    expect(body.meta?.category).toBe('video');
+  });
 });
 
 describe('handleSearchIdentity', () => {
