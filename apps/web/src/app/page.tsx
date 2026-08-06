@@ -64,30 +64,13 @@ export const metadata: Metadata = {
  * DegenFeed logo — neon green wordmark, inline SVG.
  */
 const DEGENFEED_LOGO = (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    viewBox="0 0 260 48"
-    width="180"
-    height="34"
-    role="img"
-    aria-label="DegenFeed logo"
-  >
-    <defs>
-      <linearGradient id="df-logo-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-        <stop offset="0%" stopColor="#00ff41" />
-        <stop offset="50%" stopColor="#00cc34" />
-        <stop offset="100%" stopColor="#009928" />
-      </linearGradient>
-      <filter id="df-logo-glow">
-        <feGaussianBlur stdDeviation="2" result="blur" />
-        <feMerge>
-          <feMergeNode in="blur" />
-          <feMergeNode in="SourceGraphic" />
-        </feMerge>
-      </filter>
-    </defs>
-    <text x="0" y="36" font-family="'Inter','SF Pro Display',system-ui,sans-serif" font-weight="800" font-size="36" fill="url(#df-logo-grad)" filter="url(#df-logo-glow)" letter-spacing="-1">DegenFeed</text>
-  </svg>
+  <img
+    src="/degenfeedlogo.png"
+    alt="DegenFeed"
+    width={180}
+    height={118}
+    style={{ maxWidth: '180px', height: 'auto' }}
+  />
 );
 
 /* ─── THEME INLINE STYLES ─────────────────────────────────────────────── */
