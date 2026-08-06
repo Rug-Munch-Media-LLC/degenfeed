@@ -108,6 +108,11 @@ export async function handleUnifiedFeed(request: Request, env: Env): Promise<Res
   const sort = parseSort(params.get('sort'));
   const limit = Math.min(Number(params.get('limit')) || 50, 100);
   const cursor = params.get('cursor') ?? undefined;
+  // Offset-based pagination: the frontend advances infinite scroll with
+  // ?page=N. Cursor (timestamp) pagination is also supported — when a
+  // cursor is present it takes precedence over the page offset.
+  const page = Math.max(1, Number(params.get('page')) || 1);
+  const offset = cursor ? 0 : (page - 1) * limit;
   const sources = parseSources(params.get('sources'));
   const protocols = parseProtocols(params.get('protocols'));
   const categoriesRaw = params.get('categories');
@@ -142,6 +147,7 @@ export async function handleUnifiedFeed(request: Request, env: Env): Promise<Res
     sort,
     limit,
     cursor,
+    offset,
     niches,
     contentTypes,
     timeRangeHours,
@@ -158,6 +164,9 @@ export async function handleUnifiedFeed(request: Request, env: Env): Promise<Res
     data: enrichWithBadges(posts as UnifiedPost[]),
     meta: {
       total: posts.length,
+      page,
+      limit,
+      hasMore: feed.hasMore ?? false,
       sourceBreakdown: feed.sourceBreakdown,
       nextCursor: feed.nextCursor,
       generatedAt: feed.generatedAt,
@@ -408,7 +417,7 @@ export async function handleSourceDiscovery(_request: Request, env: Env): Promis
  */
 export async function handleDefaultFeed(_request: Request, env: Env): Promise<Response> {
   const feed = await buildDefaultFeed(env);
-  const limit = Math.min(Number(new URL(_request.url).searchParams.get('limit')) || 50, 100);
+  const _limit = Math.min(Number(new URL(_request.url).searchParams.get('limit')) || 50, 100);
 
   // No demo/seed injection for the new-user default feed either.
   const posts = feed.posts;

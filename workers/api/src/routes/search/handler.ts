@@ -4,12 +4,16 @@
  * Search across indexed content via MeiliSearch, with fallback to
  * cross-network federated search when MeiliSearch is unavailable.
  *
- * GET /api/search?q=&limit=&protocols=   — Unified content search
- * GET /api/search/autocomplete?q=         — Autocomplete suggestions
- * GET /api/search/identity?q=             — Identity/author search
+ * GET /api/search?q=&limit=&protocol=&sort=&category=   — Unified content search
+ * GET /api/search/autocomplete?q=                       — Autocomplete suggestions
+ * GET /api/search/identity?q=                           — Identity/author search
  */
 
-import { CrossNetworkSearch } from '../../lib/cross-search';
+import {
+  CONTENT_CATEGORIES,
+  type ContentCategory,
+  CrossNetworkSearch,
+} from '../../lib/cross-search';
 import { jsonResponse, noCacheJsonResponse } from '../../response-helpers';
 import type { Env } from '../../types';
 
@@ -18,6 +22,8 @@ import type { Env } from '../../types';
 const DEFAULT_LIMIT = 25;
 const MAX_LIMIT = 100;
 const MEILI_DEFAULT_URL = 'http://127.0.0.1:7700';
+
+type SearchSort = 'newest' | 'relevant' | 'popular';
 
 // ─── Types ─────────────────────────────────────────────────────────────────
 
@@ -87,6 +93,46 @@ export interface IdentityResultItem {
 
 // ─── Helpers ───────────────────────────────────────────────────────────────
 
+/**
+ * Map a content category to a MeiliSearch filter expression on the posts
+ * index. Falls back to a niche/keyword filter for markets/governance.
+ */
+function meiliCategoryFilter(category: ContentCategory): string | null {
+  switch (category) {
+    case 'video':
+      return 'contentType = video';
+    case 'audio':
+      return 'contentType = podcast';
+    case 'newsletters':
+      return 'contentType = article AND (source = mirror OR source = paragraph OR source = substack OR source = ghost OR source = medium OR source = newsletter-bridge OR source = rss)';
+    case 'reading':
+      return 'contentType = article';
+    case 'discussion':
+      return 'source = lemmy OR source = reddit OR source = kbin OR source = tildes';
+    case 'social':
+      return 'source = mastodon OR source = bluesky OR source = nostr OR source = farcaster OR source = lens OR source = threads OR source = telegram OR source = discord OR source = pixelfed';
+    case 'markets':
+      return 'niches = trading OR niches = defi OR niches = markets';
+    case 'governance':
+      return 'niches = governance OR niches = dao';
+    default:
+      return null;
+  }
+}
+
+/**
+ * Group results by protocol for the frontend "grouped by protocol" UI.
+ */
+function groupByProtocol<T extends { protocol: string }>(items: T[]): Record<string, T[]> {
+  const grouped: Record<string, T[]> = {};
+  for (const item of items) {
+    const key = item.protocol || 'unknown';
+    if (!grouped[key]) grouped[key] = [];
+    grouped[key]?.push(item);
+  }
+  return grouped;
+}
+
 /** Parse a JSON-stringified metrics field or return defaults */
 function parseMetrics(raw: string): SearchResultItem['metrics'] {
   try {
@@ -152,6 +198,7 @@ async function queryMeili(
     limit?: number;
     offset?: number;
     filter?: string;
+    sort?: SearchSort;
     attributesToRetrieve?: string[];
   },
 ): Promise<MeiliSearchResponse | null> {
@@ -176,6 +223,15 @@ async function queryMeili(
       body.filter = [params.filter];
     }
 
+    // MeiliSearch sort: only send when the caller asked for a non-default
+    // order; wrap in try/catch below because the index may not have the
+    // attribute configured as sortable.
+    if (params.sort === 'newest') {
+      body.sort = ['createdAt:desc'];
+    } else if (params.sort === 'popular') {
+      body.sort = ['metrics.likes:desc'];
+    }
+
     if (params.attributesToRetrieve) {
       body.attributesToRetrieve = params.attributesToRetrieve;
     }
@@ -188,6 +244,18 @@ async function queryMeili(
     });
 
     if (!res.ok) {
+      // If sort failed (attribute not sortable), retry without sort
+      if (params.sort && res.status === 400) {
+        const retryBody = { ...body };
+        delete retryBody.sort;
+        const retryRes = await fetch(`${meiliUrl}/indexes/posts/search`, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify(retryBody),
+          signal: AbortSignal.timeout(5000),
+        });
+        if (retryRes.ok) return (await retryRes.json()) as MeiliSearchResponse;
+      }
       console.warn(
         `[search] MeiliSearch returned ${res.status}: ${await res.text().catch(() => '')}`,
       );
@@ -222,7 +290,11 @@ function dedupe<T extends { id: string }>(items: T[]): T[] {
  * Query params:
  *   q         — Search query (required, min 2 chars)
  *   limit     — Max results (default 25, max 100)
- *   protocols — Comma-separated protocol filter (optional)
+ *   protocol  — Single protocol filter (optional, e.g. protocol=nostr)
+ *   protocols — Comma-separated protocol filter (legacy alias)
+ *   sort      — Result ordering: relevant (default) | newest | popular
+ *   category  — Content category filter: social | video | audio |
+ *               newsletters | discussion | markets | governance | reading
  *   offset    — Pagination offset (default 0)
  */
 export async function handleSearch(request: Request, env: Env): Promise<Response> {
@@ -233,24 +305,47 @@ export async function handleSearch(request: Request, env: Env): Promise<Response
     MAX_LIMIT,
   );
   const offset = Math.max(parseInt(url.searchParams.get('offset') ?? '0', 10) || 0, 0);
-  const protocols = url.searchParams.get('protocols')?.trim();
+  const protocolParam = url.searchParams.get('protocol')?.trim();
+  const protocolsParam = url.searchParams.get('protocols')?.trim();
+  const sortParam = (url.searchParams.get('sort')?.trim() ?? 'relevant') as SearchSort;
+  const categoryParam = url.searchParams.get('category')?.trim().toLowerCase();
+
+  const sort: SearchSort =
+    sortParam === 'newest' || sortParam === 'popular' ? sortParam : 'relevant';
+
+  if (categoryParam && !CONTENT_CATEGORIES.includes(categoryParam as ContentCategory)) {
+    return jsonResponse(
+      {
+        error: `Unknown category: "${categoryParam}". Valid categories: ${CONTENT_CATEGORIES.join(', ')}`,
+      },
+      400,
+    );
+  }
+  const category = categoryParam as ContentCategory | null;
+
+  // Accept either `protocol` (single) or `protocols` (comma-separated)
+  const protocolList = (
+    protocolParam ? [protocolParam] : protocolsParam ? protocolsParam.split(',') : []
+  )
+    .map((p) => p.trim().toLowerCase())
+    .filter(Boolean);
 
   if (!query || query.length < 2) {
     return jsonResponse({ error: 'Search query is required (min 2 characters)' }, 400);
   }
 
   // Try MeiliSearch first
-  const meiliFilter = protocols
-    ? protocols
-        .split(',')
-        .map((p) => `source = ${p.trim()}`)
-        .join(' OR ')
-    : undefined;
+  const protocolFilters = protocolList.map((p) => `source = ${p}`);
+  const categoryFilter = category ? meiliCategoryFilter(category) : null;
+  const meiliFilter =
+    [protocolFilters.join(' OR '), categoryFilter].filter((f) => f && f.length > 0).join(' AND ') ||
+    undefined;
 
   const meiliResult = await queryMeili(env, {
     q: query,
     limit,
     offset,
+    sort,
     filter: meiliFilter,
     attributesToRetrieve: [
       'id',
@@ -280,10 +375,13 @@ export async function handleSearch(request: Request, env: Env): Promise<Response
   if (!hasMeiliHits) {
     try {
       const crossSearch = new CrossNetworkSearch(env);
+      const crossProtocols = protocolList;
       const crossResults = await crossSearch.search({
         query,
         limit: Math.min(limit, 20),
-        protocols: protocols?.split(',').filter(Boolean) as string[],
+        protocols: crossProtocols,
+        sort,
+        category: category ?? undefined,
       });
 
       // Map CrossNetworkSearch results to frontend format
@@ -355,10 +453,15 @@ export async function handleSearch(request: Request, env: Env): Promise<Response
         identities,
         communities,
         videos,
+        byProtocol: groupByProtocol(posts),
         meta: {
           total: crossResults.totalResults,
           query,
           limit,
+          offset,
+          sort,
+          category: category ?? undefined,
+          protocol: protocolList,
           source: 'cross-network',
           searchTime: crossResults.searchTime,
         },
@@ -373,14 +476,35 @@ export async function handleSearch(request: Request, env: Env): Promise<Response
         identities: [],
         communities: [],
         videos: [],
-        meta: { total: 0, query, limit, source: 'fallback' },
+        byProtocol: {},
+        meta: {
+          total: 0,
+          query,
+          limit,
+          offset,
+          sort,
+          category: category ?? undefined,
+          protocol: protocolList,
+          source: 'fallback',
+        },
       });
     }
   }
 
   // Map MeiliSearch results to frontend format
   const hits = meiliResult.hits;
-  const posts = dedupe(hits.map(hitToSearchResult));
+  let posts = dedupe(hits.map(hitToSearchResult));
+
+  // Post-process sort for the "popular" case (Meili may not have sortable metrics)
+  if (sort === 'popular') {
+    posts = [...posts].sort((a, b) => {
+      const engA = a.metrics.likes + a.metrics.reposts * 2 + a.metrics.replies * 3;
+      const engB = b.metrics.likes + b.metrics.reposts * 2 + b.metrics.replies * 3;
+      return engB - engA;
+    });
+  } else if (sort === 'newest') {
+    posts = [...posts].sort((a, b) => b.createdAt - a.createdAt);
+  }
 
   // Deduplicate identities by authorId
   const identityMap = new Map<string, IdentityResultItem>();
@@ -400,11 +524,15 @@ export async function handleSearch(request: Request, env: Env): Promise<Response
     identities,
     communities: [],
     videos: [],
+    byProtocol: groupByProtocol(posts),
     meta: {
       total: meiliResult.estimatedTotalHits || hits.length,
       query: meiliResult.query,
       limit,
       offset,
+      sort,
+      category: category ?? undefined,
+      protocol: protocolList,
       source: 'meilisearch',
       processingTimeMs: meiliResult.processingTimeMs,
     },

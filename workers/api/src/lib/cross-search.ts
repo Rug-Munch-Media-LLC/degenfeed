@@ -104,6 +104,111 @@ const LEMMY_OWN_URL = 'https://community.degenfeed.xyz';
 const PEERTUBE_OWN_URL = 'https://video.degenfeed.xyz';
 const GOTOSOCIAL_INSTANCE_URL = 'https://social.degenfeed.xyz';
 
+const INVIDIOUS_INSTANCES = [
+  'https://inv.nadeko.net',
+  'https://invidious.fdn.fr',
+  'https://invidious.privacydev.net',
+  'https://yewtu.be',
+];
+
+// ─── Content categories ────────────────────────────────────────────────
+
+/**
+ * Content-type categories used by /api/search?category=… and
+ * /api/feed/category/{category}. Each maps to the cross-search result
+ * buckets + protocol whitelist that best represent it.
+ */
+export type ContentCategory =
+  | 'social'
+  | 'video'
+  | 'audio'
+  | 'newsletters'
+  | 'discussion'
+  | 'markets'
+  | 'governance'
+  | 'reading';
+
+export const CONTENT_CATEGORIES: ContentCategory[] = [
+  'social',
+  'video',
+  'audio',
+  'newsletters',
+  'discussion',
+  'markets',
+  'governance',
+  'reading',
+];
+
+const SOCIAL_PROTOCOLS: Protocol[] = [
+  'mastodon',
+  'bluesky',
+  'nostr',
+  'farcaster',
+  'lens',
+  'threads',
+  'telegram',
+  'discord',
+  'pixelfed',
+];
+
+const VIDEO_PROTOCOLS: Protocol[] = ['youtube', 'peertube'];
+
+const NEWSLETTER_PROTOCOLS: Protocol[] = ['mirror', 'paragraph'];
+
+const DISCUSSION_PROTOCOLS: Protocol[] = ['lemmy', 'reddit', 'kbin', 'tildes'];
+
+function categoryTypesFor(category: ContentCategory): {
+  types: ('posts' | 'creators' | 'coins' | 'communities' | 'articles' | 'videos')[];
+  protocols?: Protocol[];
+} {
+  switch (category) {
+    case 'video':
+      return { types: ['videos'], protocols: VIDEO_PROTOCOLS };
+    case 'audio':
+      return {
+        types: ['posts', 'articles'],
+        protocols: ['peertube', 'paragraph', 'mirror', 'rss'],
+      };
+    case 'newsletters':
+      return { types: ['articles'], protocols: NEWSLETTER_PROTOCOLS };
+    case 'discussion':
+      return { types: ['posts', 'communities'], protocols: DISCUSSION_PROTOCOLS };
+    case 'markets':
+      return {
+        types: ['posts', 'coins'],
+        protocols: ['zora', 'nostr', 'farcaster', 'lens', 'bluesky', 'mastodon', 'lemmy', 'reddit'],
+      };
+    case 'governance':
+      return {
+        types: ['posts'],
+        protocols: ['nostr', 'farcaster', 'lens', 'bluesky', 'mastodon', 'lemmy'],
+      };
+    case 'reading':
+      return { types: ['articles'], protocols: ['mirror', 'paragraph', 'rss'] };
+    case 'social':
+    default:
+      return { types: ['posts', 'creators', 'communities'], protocols: SOCIAL_PROTOCOLS };
+  }
+}
+
+function compareForSort(a: SearchResult, b: SearchResult, sort: 'newest' | 'relevant' | 'popular') {
+  if (sort === 'newest') {
+    const aTime = Number(a.metadata?.publishedAt ?? a.metadata?.createdAt ?? 0);
+    const bTime = Number(b.metadata?.publishedAt ?? b.metadata?.createdAt ?? 0);
+    if (aTime !== bTime) return bTime - aTime;
+  }
+  if (sort === 'popular') {
+    const engagement = (r: SearchResult) =>
+      (Number(r.metadata?.likes) || 0) +
+      (Number(r.metadata?.reposts) || 0) * 2 +
+      (Number(r.metadata?.replies) || 0) * 3 +
+      (Number(r.metadata?.views) || 0) / 100;
+    const diff = engagement(b) - engagement(a);
+    if (diff !== 0) return diff;
+  }
+  return b.relevanceScore - a.relevanceScore;
+}
+
 // ─── Helpers ────────────────────────────────────────────────────────
 
 async function fetchJsonWithTimeout<T>(
@@ -187,13 +292,17 @@ export class CrossNetworkSearch {
   async search(opts: {
     query: string;
     types?: ('posts' | 'creators' | 'coins' | 'communities' | 'articles' | 'videos')[];
-    protocols?: Protocol[];
+    protocols?: string[];
     limit: number;
+    sort?: 'newest' | 'relevant' | 'popular';
+    category?: ContentCategory;
   }): Promise<CrossSearchResults> {
     const start = performance.now();
     const q = opts.query.trim();
     const types = opts.types ?? ['posts', 'creators', 'communities'];
     const limit = Math.min(opts.limit, 100);
+    const sort = opts.sort ?? 'relevant';
+    const category = opts.category;
 
     const results: CrossSearchResults = {
       query: q,
@@ -205,33 +314,80 @@ export class CrossNetworkSearch {
 
     const fetchers: Promise<void>[] = [];
 
-    if (types.includes('posts') || types.includes('creators') || types.includes('communities')) {
-      fetchers.push(this.searchActivityPub(q).then((r) => this.#collect(results, r, 'posts')));
-      fetchers.push(this.searchATProtocol(q).then((r) => this.#collect(results, r, 'posts')));
-      fetchers.push(this.searchNostr(q).then((r) => this.#collect(results, r, 'posts')));
-      fetchers.push(this.searchFarcaster(q).then((r) => this.#collect(results, r, 'posts')));
-      fetchers.push(this.searchLens(q).then((r) => this.#collect(results, r, 'posts')));
-      fetchers.push(this.searchLemmy(q).then((r) => this.#collect(results, r, 'posts')));
+    // Restrict the fetched provider set when a content category is requested.
+    // This keeps audio/newsletters/discussion etc. scoped to relevant sources
+    // instead of spraying generic posts across every protocol.
+    const categoryTypes = category ? categoryTypesFor(category) : null;
+    const effectiveTypes: typeof types = categoryTypes?.types ?? types;
+    const protocolWhitelist = categoryTypes?.protocols ?? opts.protocols;
+
+    const wantsPost = (t: (typeof types)[number]) => effectiveTypes.includes(t);
+    const protocolEnabled = (p: Protocol) =>
+      !protocolWhitelist || protocolWhitelist.length === 0 || protocolWhitelist.includes(p);
+    if (wantsPost('posts') || wantsPost('creators') || wantsPost('communities')) {
+      if (protocolEnabled('mastodon')) {
+        fetchers.push(this.searchActivityPub(q).then((r) => this.#collect(results, r, 'posts')));
+      }
+      if (protocolEnabled('bluesky')) {
+        fetchers.push(this.searchATProtocol(q).then((r) => this.#collect(results, r, 'posts')));
+      }
+      if (protocolEnabled('nostr')) {
+        fetchers.push(this.searchNostr(q).then((r) => this.#collect(results, r, 'posts')));
+      }
+      if (protocolEnabled('farcaster')) {
+        fetchers.push(this.searchFarcaster(q).then((r) => this.#collect(results, r, 'posts')));
+      }
+      if (protocolEnabled('lens')) {
+        fetchers.push(this.searchLens(q).then((r) => this.#collect(results, r, 'posts')));
+      }
+      if (protocolEnabled('lemmy') || protocolEnabled('reddit')) {
+        fetchers.push(this.searchLemmy(q).then((r) => this.#collect(results, r, 'posts')));
+        if (protocolEnabled('reddit')) {
+          fetchers.push(this.searchReddit(q).then((r) => this.#collect(results, r, 'posts')));
+        }
+      }
     }
 
-    if (types.includes('communities')) {
+    if (wantsPost('communities')) {
       fetchers.push(
         this.searchLemmyCommunities(q).then((r) => this.#collect(results, r, 'communities')),
       );
     }
 
-    if (types.includes('articles')) {
-      fetchers.push(this.searchMirror(q).then((r) => this.#collect(results, r, 'articles')));
-      fetchers.push(this.searchParagraph(q).then((r) => this.#collect(results, r, 'articles')));
+    if (wantsPost('articles')) {
+      if (protocolEnabled('mirror')) {
+        fetchers.push(this.searchMirror(q).then((r) => this.#collect(results, r, 'articles')));
+      }
+      if (protocolEnabled('paragraph')) {
+        fetchers.push(this.searchParagraph(q).then((r) => this.#collect(results, r, 'articles')));
+      }
     }
 
-    if (types.includes('videos')) {
-      fetchers.push(this.searchYouTube(q).then((r) => this.#collect(results, r, 'videos')));
-      fetchers.push(this.searchPeerTube(q).then((r) => this.#collect(results, r, 'videos')));
+    if (wantsPost('videos')) {
+      if (protocolEnabled('youtube')) {
+        fetchers.push(this.searchYouTube(q).then((r) => this.#collect(results, r, 'videos')));
+      }
+      if (protocolEnabled('peertube')) {
+        fetchers.push(this.searchPeerTube(q).then((r) => this.#collect(results, r, 'videos')));
+      }
     }
 
-    if (types.includes('coins')) {
+    if (wantsPost('coins')) {
       fetchers.push(this.searchZora(q).then((r) => this.#collect(results, r, 'coins')));
+    }
+
+    // Generic bridge search for every remaining protocol family (threads,
+    // telegram, discord, kbin, tildes, pixelfed, …). Only runs when no
+    // specific protocol filter excludes it.
+    if (
+      protocolEnabled('threads') ||
+      protocolEnabled('telegram') ||
+      protocolEnabled('discord') ||
+      protocolEnabled('kbin') ||
+      protocolEnabled('tildes') ||
+      protocolEnabled('pixelfed')
+    ) {
+      fetchers.push(this.searchBridge(q).then((r) => this.#collect(results, r, 'posts')));
     }
 
     // Hard deadline
@@ -239,16 +395,16 @@ export class CrossNetworkSearch {
     await Promise.race([Promise.allSettled(fetchers).then(() => undefined), deadline]);
 
     // Deduplicate by URL and rank
-    for (const category of Object.keys(results.results) as (keyof typeof results.results)[]) {
+    for (const categoryKey of Object.keys(results.results) as (keyof typeof results.results)[]) {
       const seen = new Set<string>();
-      results.results[category] = (results.results[category] as SearchResult[])
+      results.results[categoryKey] = (results.results[categoryKey] as SearchResult[])
         .filter((r) => {
           const key = r.url || r.id;
           if (seen.has(key)) return false;
           seen.add(key);
           return true;
         })
-        .sort((a, b) => b.relevanceScore - a.relevanceScore)
+        .sort((a, b) => compareForSort(a, b, sort))
         .slice(0, Math.ceil(limit / Object.keys(types).length || 1));
     }
 
@@ -378,16 +534,75 @@ export class CrossNetworkSearch {
   // ─── Farcaster Search ─────────────────────────────────────────
 
   async searchFarcaster(query: string): Promise<SearchResult[]> {
-    // Search via Hubble — look up username proof for exact match, then fetch casts
+    // 1. Prefer Neynar full-text cast search when an API key is configured
+    if (this.env.NEYNAR_API_KEY) {
+      try {
+        const data = await fetchJsonWithTimeout<{
+          result?: {
+            casts?: Array<{
+              hash: string;
+              text?: string;
+              timestamp?: string;
+              author?: {
+                username?: string;
+                display_name?: string;
+                pfp_url?: string;
+                fid?: number;
+              };
+              reactions?: { count?: number; likes_count?: number; recasts_count?: number };
+              replies?: { count?: number };
+            }>;
+          };
+        }>(
+          `https://api.neynar.com/v2/farcaster/cast/search?q=${encodeURIComponent(query)}&limit=10&priority_mode=true`,
+          {
+            headers: { 'x-api-key': this.env.NEYNAR_API_KEY },
+          },
+          4000,
+        );
+        const casts = data?.result?.casts ?? [];
+        if (casts.length > 0) {
+          return casts.map((c) => {
+            const text = c.text ?? '';
+            const ts = c.timestamp ? new Date(c.timestamp).getTime() : Date.now();
+            return makeResult({
+              id: `farcaster:${c.hash}`,
+              type: 'post',
+              title: truncate(text, 80),
+              description: truncate(text, 200),
+              source: 'farcaster',
+              relevanceScore: 0.8 + (c.reactions?.likes_count ?? 0) * 0.01,
+              url: `https://warpcast.com/${c.author?.username ?? '~'}/${c.hash.slice(0, 10)}`,
+              metadata: {
+                author:
+                  c.author?.display_name || c.author?.username || `fid:${c.author?.fid ?? '?'}`,
+                avatarUrl: c.author?.pfp_url,
+                likes: c.reactions?.likes_count ?? c.reactions?.count ?? 0,
+                reposts: c.reactions?.recasts_count ?? 0,
+                replies: c.replies?.count ?? 0,
+                createdAt: ts,
+              },
+            });
+          });
+        }
+      } catch {
+        // fall through to hub lookup
+      }
+    }
+
+    // 2. Fall back to Hubble — look up username proof for exact match, then fetch casts
     const hubUrl = this.env.FARCASTER_HUB_URL || 'http://127.0.0.1:2281';
     const results: SearchResult[] = [];
 
     // Try exact username lookup via Hubble's userNameProof
     try {
-      const nameResp = await fetch(`${hubUrl}/v1/userNameProofByName?name=${encodeURIComponent(query)}`, {
-        headers: { accept: 'application/json' },
-        signal: AbortSignal.timeout(5000),
-      });
+      const nameResp = await fetch(
+        `${hubUrl}/v1/userNameProofByName?name=${encodeURIComponent(query)}`,
+        {
+          headers: { accept: 'application/json' },
+          signal: AbortSignal.timeout(5000),
+        },
+      );
       if (nameResp.ok) {
         const proof = (await nameResp.json()) as { fid?: number; name?: string } | null;
         if (proof?.fid) {
@@ -396,24 +611,37 @@ export class CrossNetworkSearch {
             signal: AbortSignal.timeout(5000),
           });
           if (castResp.ok) {
-            const castData = (await castResp.json()) as { messages?: Array<{ hash: string; data: { castAddBody: { text: string }; fid: number; timestamp: number } }> };
+            const castData = (await castResp.json()) as {
+              messages?: Array<{
+                hash: string;
+                data: { castAddBody: { text: string }; fid: number; timestamp: number };
+              }>;
+            };
             for (const msg of castData.messages ?? []) {
               const text = msg.data?.castAddBody?.text;
               if (!text) continue;
-              results.push({
-                id: `farcaster:${msg.hash}`,
-                protocol: 'farcaster',
-                text,
-                author: { fid: msg.data.fid, username: query },
-                createdAt: (msg.data.timestamp + 1609459200) * 1000,
-                url: `https://warpcast.com/${query}/${msg.hash}`,
-                score: 0,
-              });
+              results.push(
+                makeResult({
+                  id: `farcaster:${msg.hash}`,
+                  type: 'post',
+                  title: truncate(text, 80),
+                  description: truncate(text, 200),
+                  source: 'farcaster',
+                  relevanceScore: 0.5,
+                  url: `https://warpcast.com/${query}/${msg.hash}`,
+                  metadata: {
+                    author: query,
+                    createdAt: (msg.data.timestamp + 1609459200) * 1000,
+                  },
+                }),
+              );
             }
           }
         }
       }
-    } catch { /* non-critical */ }
+    } catch {
+      /* non-critical */
+    }
 
     return results;
   }
@@ -455,11 +683,10 @@ export class CrossNetworkSearch {
         description: truncate(text, 200),
         source: 'lens',
         relevanceScore: 0.7 + (item.stats?.reactions ?? 0) * 0.01,
-        thumbnail: item.metadata?.image?.item,
+        thumbnail: item.metadata?.image?.item ?? undefined,
         url: `https://hey.xyz/posts/${item.id}`,
         metadata: {
-          author:
-            item.author?.metadata?.name || item.author?.username?.localName || 'lens user',
+          author: item.author?.metadata?.name || item.author?.username?.localName || 'lens user',
           avatarUrl: item.author?.metadata?.picture,
           reactions: item.stats?.reactions ?? 0,
         },
@@ -526,6 +753,156 @@ export class CrossNetworkSearch {
         metadata: { subscribers: cv.counts?.subscribers ?? 0 },
       });
     });
+  }
+
+  // ─── Reddit Search ────────────────────────────────────────────
+
+  async searchReddit(query: string): Promise<SearchResult[]> {
+    // Reddit's public JSON API mirrors the HTML search page. No auth for
+    // basic top/hot search. Use old.reddit to avoid bot walls where possible.
+    const data = await fetchJsonWithTimeout<{
+      data?: {
+        children?: Array<{
+          data?: {
+            id?: string;
+            title?: string;
+            selftext?: string;
+            url?: string;
+            permalink?: string;
+            thumbnail?: string;
+            author?: string;
+            created_utc?: number;
+            score?: number;
+            num_comments?: number;
+            subreddit?: string;
+            over_18?: boolean;
+          };
+        }>;
+      };
+    }>(
+      `https://www.reddit.com/search.json?q=${encodeURIComponent(query)}&sort=relevance&limit=20&type=link`,
+      {
+        headers: { 'user-agent': 'DegenFeed/0.1 (+https://degenfeed.xyz)' },
+      },
+    );
+    const children = data?.data?.children ?? [];
+    return children
+      .filter((c) => c.data && !c.data.over_18)
+      .slice(0, 10)
+      .map((c) => {
+        const d = c.data as NonNullable<(typeof children)[number]['data']>;
+        const text = d.selftext ? `${d.title}: ${d.selftext}` : (d.title ?? '');
+        return makeResult({
+          id: `reddit:${d.id}`,
+          type: 'post',
+          title: truncate(d.title ?? '', 80),
+          description: truncate(text, 200),
+          source: 'reddit',
+          relevanceScore: 0.6 + ((d.score ?? 0) / 1000) * 0.3,
+          thumbnail: d.thumbnail?.startsWith('http') ? d.thumbnail : undefined,
+          url: `https://www.reddit.com${d.permalink ?? ''}`,
+          metadata: {
+            author: d.author ?? 'anon',
+            likes: d.score ?? 0,
+            replies: d.num_comments ?? 0,
+            community: `r/${d.subreddit ?? ''}`,
+            createdAt: (d.created_utc ?? 0) * 1000,
+          },
+        });
+      });
+  }
+
+  // ─── RSS-Bridge Generic Search (fallback for other protocols) ──
+
+  async searchBridge(query: string): Promise<SearchResult[]> {
+    // RSS-Bridge exposes search via `?q=` on bridges that support it
+    // (Twitter, Telegram, etc.). Try a small set of likely bridges.
+    const bridgeUrl = this.env.RSS_BRIDGE_URL || 'http://127.0.0.1:8282';
+    const candidates = [
+      `${bridgeUrl}/?action=search&query=${encodeURIComponent(query)}&format=json`,
+    ];
+    for (const url of candidates) {
+      try {
+        const res = await fetch(url, {
+          headers: { accept: 'application/json' },
+          signal: AbortSignal.timeout(3500),
+        });
+        if (!res.ok) continue;
+        const data = (await res.json()) as {
+          items?: Array<{
+            id?: string;
+            title?: string;
+            content_text?: string;
+            url?: string;
+            date_published?: string;
+            author?: { name?: string };
+            image?: string;
+            _bridge?: string;
+          }>;
+        };
+        const items = data?.items ?? [];
+        if (items.length === 0) continue;
+        return items.slice(0, 10).map((it) => {
+          const rawSource = (it._bridge ?? 'rss').toLowerCase();
+          const source = /^[a-z-]+$/.test(rawSource) ? (rawSource as Protocol) : 'rss';
+          return makeResult({
+            id: `bridge:${it.id ?? it.url ?? Math.random()}`,
+            type: 'post',
+            title: truncate(it.title ?? '', 80),
+            description: truncate(it.content_text ?? it.title ?? '', 200),
+            source: source as Protocol,
+            relevanceScore: 0.4,
+            thumbnail: it.image,
+            url: it.url ?? '',
+            metadata: {
+              author: it.author?.name ?? 'unknown',
+              createdAt: it.date_published,
+            },
+          });
+        });
+      } catch {
+        // try next candidate
+      }
+    }
+    return [];
+  }
+
+  // ─── Per-protocol search dispatch ─────────────────────────────
+
+  async searchByProtocol(query: string, protocol: string): Promise<SearchResult[]> {
+    const q = query.trim();
+    if (!q) return [];
+    switch (protocol.toLowerCase()) {
+      case 'mastodon':
+      case 'activitypub':
+        return this.searchActivityPub(q);
+      case 'bluesky':
+      case 'atproto':
+        return this.searchATProtocol(q);
+      case 'nostr':
+        return this.searchNostr(q);
+      case 'farcaster':
+        return this.searchFarcaster(q);
+      case 'lens':
+        return this.searchLens(q);
+      case 'lemmy':
+        return this.searchLemmy(q);
+      case 'reddit':
+        return this.searchReddit(q);
+      case 'youtube':
+        return this.searchYouTube(q);
+      case 'peertube':
+        return this.searchPeerTube(q);
+      case 'mirror':
+        return this.searchMirror(q);
+      case 'paragraph':
+        return this.searchParagraph(q);
+      case 'zora':
+        return this.searchZora(q);
+      default:
+        // All other protocols → generic bridge search
+        return this.searchBridge(q);
+    }
   }
 
   // ─── Mirror.xyz Search ────────────────────────────────────────
@@ -608,7 +985,52 @@ export class CrossNetworkSearch {
   // ─── YouTube Search ────────────────────────────────────────────
 
   async searchYouTube(query: string): Promise<SearchResult[]> {
-    // Public YouTube search via Innertube (no API key required for basic search)
+    // 1. Prefer public Invidious instances (no API key required)
+    for (const instance of INVIDIOUS_INSTANCES) {
+      const data = await fetchJsonWithTimeout<
+        Array<{
+          videoId?: string;
+          title?: string;
+          description?: string;
+          videoThumbnails?: Array<{ url?: string; quality?: string }>;
+          author?: string;
+          published?: number;
+          viewCount?: number;
+          lengthSeconds?: number;
+        }>
+      >(
+        `${instance}/api/v1/search?q=${encodeURIComponent(query)}&type=video&page=1`,
+        undefined,
+        3000,
+      );
+      if (data && Array.isArray(data) && data.length > 0) {
+        return data.slice(0, 10).map((v) => {
+          const thumb =
+            v.videoThumbnails?.find((t) => t.quality === 'medium')?.url ||
+            v.videoThumbnails?.find((t) => t.quality === 'high')?.url ||
+            v.videoThumbnails?.[0]?.url;
+          return makeResult({
+            id: `youtube:${v.videoId}`,
+            type: 'video',
+            title: v.title ?? 'Untitled',
+            description: truncate(v.description ?? '', 200),
+            source: 'youtube',
+            relevanceScore: 0.7,
+            thumbnail: thumb,
+            url: `https://www.youtube.com/watch?v=${v.videoId}`,
+            metadata: {
+              channelTitle: v.author ?? '',
+              views: v.viewCount ?? 0,
+              duration: v.lengthSeconds ?? 0,
+              publishedAt: v.published,
+            },
+          });
+        });
+      }
+    }
+
+    // 2. Fallback: Google YouTube Data API when a key is configured
+    if (!this.env.YOUTUBE_API_KEY) return [];
     const data = await fetchJsonWithTimeout<{
       items?: Array<{
         id: { videoId: string };
@@ -626,7 +1048,7 @@ export class CrossNetworkSearch {
         statistics?: { viewCount?: string; likeCount?: string };
       }>;
     }>(
-      `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=10&q=${encodeURIComponent(query)}&key=${this.env.YOUTUBE_API_KEY || ''}`,
+      `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=10&q=${encodeURIComponent(query)}&key=${this.env.YOUTUBE_API_KEY}`,
     );
     if (!data?.items) return [];
     return data.items.map((item) => {
@@ -943,7 +1365,12 @@ export class CrossNetworkSearch {
           signal: AbortSignal.timeout(4000),
         });
         if (!resp.ok) continue;
-        const data = (await resp.json()) as { messages?: Array<{ hash: string; data: { castAddBody: { text: string }; fid: number; timestamp: number } }> };
+        const data = (await resp.json()) as {
+          messages?: Array<{
+            hash: string;
+            data: { castAddBody: { text: string }; fid: number; timestamp: number };
+          }>;
+        };
         for (const msg of data.messages ?? []) {
           const text = msg.data?.castAddBody?.text;
           if (!text) continue;
@@ -963,7 +1390,7 @@ export class CrossNetworkSearch {
             metadata: { author: `fid:${msg.data.fid}`, avatarUrl: '' },
           });
         }
-      } catch { }
+      } catch {}
     }
 
     return items;

@@ -23,7 +23,6 @@ import {
   type ProtocolCategory,
   SIDEBAR_ORDER,
 } from '../../components/feed/feed-protocols';
-import { setLastProtocol } from '../../lib/protocolPreference';
 
 // Bottom-sheet protocol picker — only needed when the user taps "More" on
 // mobile. Lazy so the ~195-line sheet (and its imports) stays out of the
@@ -81,6 +80,17 @@ const MOBILE_TAB_PROTOCOLS = [
   'pixelfed',
 ];
 
+// ─── Mobile sort chips (protocol pages) ────────────────────────────────
+// Mirrors the Latest / Trending / Popular tabs inside ProtocolFeedContent
+// so mobile users can switch feed order without scrolling into the page.
+const MOBILE_SORTS = [
+  { id: 'latest', label: 'Latest' },
+  { id: 'trending', label: 'Trending' },
+  { id: 'popular', label: 'Popular' },
+] as const;
+
+type MobileSortId = (typeof MOBILE_SORTS)[number]['id'];
+
 interface FeedShellProps {
   children: ReactNode;
 }
@@ -94,6 +104,21 @@ export function FeedShell({ children }: FeedShellProps) {
     (pid) => pathname === PROTOCOL_META[pid]?.route || pathname === `/feed/${pid}`,
   );
   const activeConfig = activeProtocol ? PROTOCOL_META[activeProtocol] : null;
+
+  // Current sort on a protocol page. Supports both URL forms:
+  //   /feed/nostr?sort=trending   (query, used by the sort tabs)
+  //   /feed/nostr/trending        (path, used by deep links)
+  const [currentSort, setCurrentSort] = useState<MobileSortId>('latest');
+  useEffect(() => {
+    const segments = pathname.split('/').filter(Boolean);
+    const pathSort = segments[segments.length - 1];
+    const qsSort =
+      typeof window !== 'undefined'
+        ? new URLSearchParams(window.location.search).get('sort')
+        : null;
+    const raw = qsSort ?? pathSort ?? '';
+    setCurrentSort(raw === 'trending' || raw === 'popular' || raw === 'latest' ? raw : 'latest');
+  }, [pathname]);
 
   // ── Feed stats for live indicators ──
   interface SourceStat {
@@ -256,6 +281,45 @@ export function FeedShell({ children }: FeedShellProps) {
               </Link>
             );
           })}
+          {/* Sort options (mobile, protocol pages only) */}
+          {activeProtocol && activeConfig && (
+            <div
+              className="ml-1 flex shrink-0 items-center gap-1 border-l pl-2"
+              style={{ borderColor: 'var(--color-glass-border)' }}
+              role="tablist"
+              aria-label="Feed sort order"
+            >
+              {MOBILE_SORTS.map((s) => {
+                const isActive = currentSort === s.id;
+                return (
+                  <Link
+                    key={s.id}
+                    href={`${activeConfig.route}?sort=${s.id}`}
+                    prefetch
+                    role="tab"
+                    aria-selected={isActive}
+                    data-active={isActive ? 'true' : undefined}
+                    className={`inline-flex shrink-0 items-center rounded-full px-2.5 py-1.5 text-[11px] font-medium whitespace-nowrap transition-colors ${
+                      isActive
+                        ? 'text-[var(--color-fg)]'
+                        : 'text-[var(--color-muted)] hover:text-[var(--color-fg)] bg-[var(--color-overlay)]'
+                    }`}
+                    style={
+                      isActive
+                        ? {
+                            backgroundColor: `${activeConfig.color}18`,
+                            color: activeConfig.color,
+                          }
+                        : undefined
+                    }
+                  >
+                    {s.label}
+                  </Link>
+                );
+              })}
+            </div>
+          )}
+
           {/* Open the full bottom-sheet protocol picker */}
           <button
             type="button"

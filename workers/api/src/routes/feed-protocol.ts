@@ -226,6 +226,13 @@ async function generateProtocolFeed(
 
   const limit = Math.min(Number(params.get('limit')) || 50, 200);
 
+  // Offset-based pagination: ?page=N advances the slice so infinite scroll
+  // requests genuinely new posts on each page. (Previously every page
+  // returned the same top-N — the client deduped them to nothing and
+  // hasMore never flipped, so the feed appeared to hang forever.)
+  const page = Math.max(1, Number(params.get('page')) || 1);
+  const offset = (page - 1) * limit;
+
   // 1. Fetch from providers for this protocol
   const notices: string[] = [];
   const timer = new ProviderTimer();
@@ -241,6 +248,8 @@ async function generateProtocolFeed(
         protocol,
         total: 0,
         limit,
+        page,
+        hasMore: false,
         errors: errors.length > 0 ? errors : undefined,
         notices: notices.length > 0 ? notices : undefined,
         fetchedAt: now,
@@ -378,8 +387,10 @@ async function generateProtocolFeed(
   // 7. Remove stale content
   const freshnessSorted = deprioritizeStaleContent(curated, now);
 
-  // 8. Slice to limit
-  const sliced = freshnessSorted.slice(0, limit);
+  // 8. Paginate: slice the sorted list by page so ?page=2, ?page=3 ...
+  //    return genuinely new posts instead of the same top-N.
+  const sliced = freshnessSorted.slice(offset, offset + limit);
+  const hasMore = offset + sliced.length < freshnessSorted.length;
 
   // 9. Compute protocol-level stats
   const activeUsers24h = new Set(sliced.map((p) => p.author.id)).size;
@@ -397,6 +408,8 @@ async function generateProtocolFeed(
       protocol,
       total: sliced.length,
       limit,
+      page,
+      hasMore,
       errors: errors.length > 0 ? errors : undefined,
       notices: notices.length > 0 ? notices : undefined,
       trending: trendingTopics.slice(0, 10),
@@ -408,11 +421,11 @@ async function generateProtocolFeed(
     },
   };
 
-  // Cache the result
+  // Cache the result (page-scoped so page 2 doesn't clobber page 1)
   void setFeedCache(
     env,
     userId,
-    `protocol:${protocol}:${sort}` as never,
+    `protocol:${protocol}:${sort}:p${page}` as never,
     responseBody,
     responseBody.meta,
   );
@@ -445,7 +458,7 @@ export async function handleProtocolFeed(
     );
   }
 
-  const sort = new URL(request.url).searchParams.get('sort') || 'scored';
+  const sort = new URL(request.url).searchParams.get('sort') || 'latest';
   return generateProtocolFeed(request, env, execCtx, protocol, sort);
 }
 

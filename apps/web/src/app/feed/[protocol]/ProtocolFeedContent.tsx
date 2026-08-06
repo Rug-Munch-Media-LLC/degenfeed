@@ -82,7 +82,7 @@ const LEGACY_SORT_MAP: Record<string, SortMode> = {
 export function normalizeSort(value: string | undefined | null): SortMode {
   if (value && VALID_SORTS.has(value as SortMode)) return value as SortMode;
   if (value && LEGACY_SORT_MAP[value]) return LEGACY_SORT_MAP[value];
-  return 'popular';
+  return 'latest';
 }
 
 // Protocol colors sourced from the canonical registry (@degenfeed/utils)
@@ -91,7 +91,7 @@ export function normalizeSort(value: string | undefined | null): SortMode {
 
 export function ProtocolFeedContent({
   protocol,
-  initialSort = 'popular',
+  initialSort = 'latest',
 }: {
   protocol: string;
   initialSort?: SortMode;
@@ -173,8 +173,11 @@ export function ProtocolFeedContent({
       if (!append) setState('loading');
       let status: number | undefined;
       try {
-        const endpoint = `/api/feed/protocol/${encodeURIComponent(protocol)}/${activeSort}`;
+        // Sort is passed as a query param (?sort=latest|trending|popular)
+        // to the protocol feed route; the worker ranks accordingly.
+        const endpoint = `/api/feed/protocol/${encodeURIComponent(protocol)}`;
         const url = new URL(endpoint, window.location.origin);
+        url.searchParams.set('sort', activeSort);
         url.searchParams.set('limit', '50');
         url.searchParams.set('page', String(pageNum));
 
@@ -239,7 +242,12 @@ export function ProtocolFeedContent({
             meta?: FeedMeta;
           };
           const fallbackFeed = fallbackJson.posts ?? fallbackJson.data ?? [];
-          applyFeed(fallbackFeed, fallbackJson.meta ?? {}, append);
+          // The provider fallback does not implement pagination — every page
+          // would return the same posts and infinite scroll would spin
+          // forever. Only honor an explicit hasMore, never the length
+          // heuristic.
+          const fallbackMeta = { ...(fallbackJson.meta ?? {}), hasMore: false };
+          applyFeed(fallbackFeed, fallbackMeta, append);
           return;
         }
 
@@ -491,7 +499,7 @@ export function ProtocolFeedContent({
           error={error}
           protocolLabel={feedMeta.protocolLabel ?? protocol}
           protocolColor={color}
-          hasMore={hasMore && !loadingMore}
+          hasMore={hasMore}
           onLoadMore={loadMore}
           emptySlot={
             state === 'empty' ? (
@@ -530,6 +538,18 @@ export function ProtocolFeedContent({
               parentPreview: (post.text ?? '').slice(0, 120),
             });
           }}
+          endOfFeedSlot={
+            !hasMore && posts.length > 0 ? (
+              <div className="border-b border-[var(--color-glass-border)] px-4 py-8 text-center">
+                <p className="text-sm font-semibold text-[var(--color-fg)]">
+                  You&apos;re all caught up!
+                </p>
+                <p className="mt-1 text-xs text-[var(--color-muted)]">
+                  No more {protocol} posts — try another sort tab or check back later.
+                </p>
+              </div>
+            ) : undefined
+          }
         />
 
         {/* Tip modal */}

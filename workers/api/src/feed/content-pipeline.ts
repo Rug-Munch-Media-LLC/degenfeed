@@ -106,6 +106,8 @@ export interface UnifiedFeed {
   posts: UnifiedFeedPost[];
   sourceBreakdown: Record<string, number>;
   nextCursor?: string;
+  /** True when another page of posts exists after the returned page. */
+  hasMore?: boolean;
   generatedAt: number;
 }
 
@@ -135,6 +137,8 @@ export interface BuildFeedOptions {
   sort: 'trending' | 'newest' | 'curated' | 'for-you';
   limit: number;
   cursor?: string;
+  /** 0-based offset into the ranked pool (page = offset/limit + 1). */
+  offset?: number;
   execCtx?: ExecutionContext;
 
   // ─── Custom feed recipe filters ───────────────────────────────
@@ -579,6 +583,14 @@ export class ContentPipeline {
   async buildFeed(opts: BuildFeedOptions): Promise<UnifiedFeed> {
     const _startTime = Date.now();
     const limit = Math.min(opts.limit, 200);
+    // Offset-based pagination: page N = offset (N-1)*limit. The candidate
+    // pool is fetched/diversified larger than the page so scrolling can
+    // actually advance (previously cursor/offset were ignored and every
+    // page returned the same first N posts).
+    const offset = Math.max(0, Math.floor(opts.offset ?? 0));
+    // Fetch enough candidates to cover the page + the offset before it
+    // (capped at 400 so a deep page doesn't fan out unbounded).
+    const fetchLimit = Math.min(limit + offset + limit, 400);
 
     // 1. Collect preferences if wallet is provided
     const followed = new Set<string>();
@@ -605,12 +617,21 @@ export class ContentPipeline {
       }
     }
 
-    // 2. Fetch posts from requested sources
-    const allPosts = await this.fetchFromSources(opts.sources, opts.protocols, limit);
+    // 2. Fetch posts from requested sources (pool ≥ page so pagination works)
+    const allPosts = await this.fetchFromSources(opts.sources, opts.protocols, fetchLimit);
 
     // 3. Deduplicate across protocols
     const dedupResult = deduplicateCrossProtocol(allPosts);
     let posts = dedupResult.posts;
+
+    // 3b. Cursor filtering (timestamp-based pagination): only posts older
+    //     than the cursor advance to the next page.
+    if (opts.cursor) {
+      const cursorTs = Number(opts.cursor);
+      if (Number.isFinite(cursorTs) && cursorTs > 0) {
+        posts = posts.filter((p) => p.createdAt < cursorTs);
+      }
+    }
 
     // 4. Apply custom feed recipe filters (if any)
     posts = this.applyRecipeFilters(posts, opts);
@@ -622,6 +643,10 @@ export class ContentPipeline {
         break;
       case 'newest':
         posts.sort((a, b) => b.createdAt - a.createdAt);
+        // Balance new AND trending: weave the hottest recent posts into the
+        // newest-first list so the master feed isn't a pure firehose. ~35%
+        // of the page comes from high-velocity posts, spread evenly.
+        posts = this.blendNewAndTrending(posts, limit + offset);
         break;
       case 'curated':
       case 'for-you': {
@@ -657,12 +682,16 @@ export class ContentPipeline {
     const scoreById = new Map(scored.map((s) => [s.post.id, s.score]));
 
     // 7. Diversify (interleave protocols, rotate authors, mix categories,
-    //    guarantee ≥2 posts per available protocol, cap ≤40% per protocol)
+    //    guarantee ≥2 posts per available protocol, cap ≤40% per protocol).
+    //    Diversify the FULL candidate pool (NOT just the page) so the
+    //    offset slice below can actually advance — trimming to the page
+    //    size here would make hasMore always false.
+    const poolSize = Math.min(candidatePool.length, fetchLimit);
     const diversified = await this.diversifyFeed(
       scored.map((s) => s.post),
       {
         sort: opts.sort,
-        limit,
+        limit: poolSize,
       },
     );
 
@@ -673,11 +702,18 @@ export class ContentPipeline {
       sourceBreakdown[src] = (sourceBreakdown[src] ?? 0) + 1;
     }
 
+    // 8b. Paginate: advance the offset into the diversified pool and return
+    //     exactly `limit` posts. hasMore tells the client whether scrolling
+    //     will yield another page.
+    const available = diversified.length;
+    const paginated = diversified.slice(offset, offset + limit);
+    const hasMore = offset + paginated.length < available;
+
     // 9. Attach badges + quality scores for transparency. `qualityScore` is
     //    an object ({ score, max, ratio, reasons }) matching the frontend
     //    `UnifiedPost` contract — NOT a plain integer (that mismatch crashed
     //    the Q-score tooltip).
-    const enriched = diversified.map((p) => {
+    const enriched = paginated.map((p) => {
       const badge = this.badgeFor(p.protocol);
       const cs = scoreById.get(p.id) ?? {
         quality: 0,
@@ -726,11 +762,67 @@ export class ContentPipeline {
       sourceBreakdown,
       nextCursor:
         enriched.length > 0 ? String(enriched[enriched.length - 1]?.createdAt) : undefined,
+      hasMore,
       generatedAt: Date.now(),
     };
   }
 
   // ── Content Discovery ─────────────────────────────────────────
+
+  /**
+   * Balance new + trending in a newest-first feed.
+   *
+   * The master "latest" timeline shouldn't be a pure firehose nor a pure
+   * popularity list. We keep the newest-first ordering but weave the
+   * hottest posts (engagement velocity, with a recency bonus) into the
+   * stream every ~3 slots so the page shows a mix of fresh AND hot
+   * content without reordering the timeline wholesale.
+   */
+  private blendNewAndTrending(posts: UnifiedPost[], limit: number): UnifiedPost[] {
+    if (posts.length < 8) return posts;
+
+    const now = Date.now();
+    const velocity = new Map<string, number>();
+    for (const p of posts) {
+      const ageHours = Math.max(0.1, (now - p.createdAt) / 3_600_000);
+      const totalEng =
+        p.metrics.likes + p.metrics.reposts + p.metrics.replies + (p.metrics.quotes ?? 0);
+      const recencyBonus = ageHours < 1 ? 2.0 : ageHours < 6 ? 1.5 : 1.0;
+      velocity.set(p.id, (totalEng / ageHours) * recencyBonus);
+    }
+
+    const trendingCount = Math.max(2, Math.ceil(limit * 0.35));
+    const trending = [...posts]
+      .filter((p) => (velocity.get(p.id) ?? 0) > 0)
+      .sort((a, b) => (velocity.get(b.id) ?? 0) - (velocity.get(a.id) ?? 0))
+      .slice(0, trendingCount);
+
+    if (trending.length < 2) return posts;
+
+    const trendingIds = new Set(trending.map((p) => p.id));
+    const result: UnifiedPost[] = [];
+    let ti = 0;
+    let sinceTrend = 0;
+    for (const p of posts) {
+      if (result.length >= limit) break;
+      // Trending posts are reinserted below — skip their natural position.
+      if (trendingIds.has(p.id)) continue;
+      result.push(p);
+      sinceTrend++;
+      if (sinceTrend >= 3 && ti < trending.length) {
+        const hot = trending[ti];
+        if (hot) result.push(hot);
+        ti++;
+        sinceTrend = 0;
+      }
+    }
+    while (ti < trending.length && result.length < limit) {
+      const hot = trending[ti];
+      if (hot) result.push(hot);
+      ti++;
+    }
+    return result;
+  }
 
   /**
    * Get trending content across ALL protocols.

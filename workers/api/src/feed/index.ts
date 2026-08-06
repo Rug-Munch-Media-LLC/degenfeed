@@ -11,6 +11,7 @@ export * from './feed-cache';
 export * from './feed-cache-layer';
 export * from './feed-categories';
 export * from './feed-category-coverage';
+export * from './feed-content-categories';
 export * from './feed-curation-rules';
 export * from './feed-curator';
 export * from './feed-dwell-time';

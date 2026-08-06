@@ -15,10 +15,13 @@ import {
   applyUserFilters,
   buildCategoryFeed,
   buildCategoryMix,
+  buildContentCategoryFeed,
   buildEverythingBlend,
   buildPerProtocolCategoryFeed,
   CATEGORIES,
   CATEGORY_SLUGS,
+  CONTENT_CATEGORIES,
+  CONTENT_CATEGORY_SLUGS,
   collectProviderResults,
   computeAllAuthorStats,
   computeCategoryTrending,
@@ -32,6 +35,7 @@ import {
   fetchFromProviders,
   getCategoryCounts,
   getFeedCache,
+  isContentCategory,
   loadUserRankingContext,
   ProviderTimer,
   predictEngagementBoost,
@@ -56,6 +60,13 @@ export async function handleCategorySlugFeed(
   execCtx?: ExecCtx,
 ): Promise<Response> {
   const categorySlug = slug.toLowerCase();
+
+  // Content-type categories (social, video, audio, …) use the content
+  // category builder which filters by format + protocol whitelist.
+  if (isContentCategory(categorySlug)) {
+    return handleContentCategorySlugFeed(request, env, categorySlug, execCtx);
+  }
+
   if (!CATEGORY_SLUGS.has(categorySlug)) {
     return jsonResponse(
       {
@@ -166,6 +177,108 @@ export async function handleCategorySlugFeed(
             totalPosts: trendingCategory.totalPosts,
           }
         : undefined,
+    },
+  });
+}
+
+// ─── GET /api/feed/category/{content-category} ────────────────────────
+
+/**
+ * Content-type category feed (social, video, audio, newsletters,
+ * discussion, markets, governance, reading). Fetches posts from ALL
+ * protocols, then filters by the category's format + protocol whitelist
+ * and ranks by engagement with diversity constraints.
+ */
+export async function handleContentCategorySlugFeed(
+  request: Request,
+  env: Env,
+  slug: string,
+  execCtx?: ExecCtx,
+): Promise<Response> {
+  const categorySlug = slug.toLowerCase() as (typeof CONTENT_CATEGORY_SLUGS)[number];
+  const def = CONTENT_CATEGORIES[categorySlug];
+
+  const params = new URL(request.url).searchParams;
+  const requestedProtocols = parseProtocols(params.get('protocols'), def.protocols as Protocol[]);
+  const limit = Math.min(Number(params.get('limit')) || 50, 100);
+  const _cookieHeader = request.headers.get('cookie') ?? '';
+
+  const feedStartTime = Date.now();
+
+  // 1. Load user context
+  const userCtx = await loadUserRankingContext(request, env);
+
+  // 2. Fetch from all providers (or the category's protocol whitelist)
+  const notices: string[] = [];
+  const timer = new ProviderTimer();
+  const fetchResults = await Promise.race([
+    fetchFromProviders(env, requestedProtocols, limit, notices, execCtx, timer),
+    new Promise<never>((_, reject) =>
+      setTimeout(
+        () => reject(new Error(`feed generation timeout after ${FEED_GENERATION_TIMEOUT_MS}ms`)),
+        FEED_GENERATION_TIMEOUT_MS,
+      ),
+    ),
+  ]).catch((err: unknown) => {
+    const msg = err instanceof Error ? err.message : 'feed generation timed out';
+    notices.push(msg);
+    console.warn('[content-category]', msg);
+    return [] as Awaited<ReturnType<typeof fetchFromProviders>>;
+  });
+  const { posts: allPosts, errors, perProtocol } = collectProviderResults(fetchResults);
+
+  // 3. Enrich + user filters
+  const deduped = prepareBasePosts(allPosts, {});
+  void writePostsToKV(env, deduped);
+  const allowNonCrypto =
+    params.get('allowNonCrypto') === 'true' || userCtx.preferences?.allowNonCrypto === true;
+  const relevant = applyUserFilters(deduped, {
+    mutedAuthors: userCtx.mutedAuthors,
+    mutedWords: userCtx.mutedWords,
+    mutedCommunities: userCtx.mutedCommunities,
+    blockedCommunities: userCtx.blockedCommunities,
+    allowNonCrypto,
+    preferEnglish: prefersEnglish(
+      params.get('lang') || '',
+      request.headers.get('accept-language') || '',
+    ),
+  });
+  await enrichNostrEngagement(relevant);
+
+  // 4. Build the content-type feed
+  const feed = buildContentCategoryFeed(relevant, categorySlug, {
+    maxPerAuthor: 3,
+    maxPerProtocol: 10,
+    limit,
+  });
+
+  const now = Date.now();
+  const freshPosts = deprioritizeStaleContent(feed.posts, now);
+  const diversityCheck = verifyDiversity(freshPosts);
+  const elapsed = Date.now() - feedStartTime;
+
+  return jsonResponse({
+    data: freshPosts,
+    meta: {
+      total: freshPosts.length,
+      limit,
+      category: {
+        slug: categorySlug,
+        label: def.label,
+        emoji: def.emoji,
+        contentType: true,
+      },
+      perProtocol,
+      errors: errors.length > 0 ? errors : undefined,
+      notices: notices.length > 0 ? notices : undefined,
+      fetchedAt: now,
+      categoryMeta: feed.meta,
+      feedGenerationMs: elapsed,
+      categoryCoverage: {
+        uniqueCategories: diversityCheck.uniqueCategories,
+        dominantCategory: diversityCheck.dominantCategory,
+        dominantPct: diversityCheck.dominantPct,
+      },
     },
   });
 }
