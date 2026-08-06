@@ -309,7 +309,7 @@ async function performProfileSearch(
 
   if (!protocolFilter || protocolFilter === 'farcaster') {
     try {
-      const hubUrl = 'http://127.0.0.1:2281';
+      const hubUrl = env.FARCASTER_HUB_URL || 'http://127.0.0.1:2281';
       // Try resolving as a username via Hubble's on-chain proof
       const nameProofResp = await fetch(
         `${hubUrl}/v1/userNameProofByName?name=${encodeURIComponent(lowerQuery)}`,
@@ -596,7 +596,7 @@ async function getSuggestedProfiles(
   // Supplement with curated FIDs if search results insufficient
   if (results.length < limit) {
     try {
-      const hubUrl = 'http://127.0.0.1:2281';
+      const hubUrl = env.FARCASTER_HUB_URL || 'http://127.0.0.1:2281';
       const curatedFids = [3, 2, 1, 228, 239, 354, 5650, 602, 615, 3621];
       for (const fid of curatedFids) {
         if (results.length >= limit) break;
@@ -648,7 +648,7 @@ async function getTrendingProfiles(
 
   if (!protocolFilter || protocolFilter === 'farcaster') {
     try {
-      const hubUrl = 'http://127.0.0.1:2281';
+      const hubUrl = env.FARCASTER_HUB_URL || 'http://127.0.0.1:2281';
       const curatedFids = [3, 2, 1, 228, 239, 354, 5650, 602, 615, 3621, 7771, 8642, 4120];
       for (const fid of curatedFids) {
         if (results.length >= limit) break;

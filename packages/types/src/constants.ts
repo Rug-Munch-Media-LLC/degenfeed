@@ -85,6 +85,8 @@ export type Protocol =
   | 'unlock'
   | 'mintgate'
   | 'bonfida'
+  // ─── Prediction Markets / NFT Marketplaces (NEW 2026-08-06) ─
+  | 'polymarket'
   // ─── ActivityPub Ecosystem (Headless Forks) ─────────────────
   | 'bookwyrm'
   | 'mobilizon'
@@ -183,6 +185,8 @@ export const PROTOCOLS = [
   'unlock',
   'mintgate',
   'bonfida',
+  // Prediction Markets / NFT Marketplaces
+  'polymarket',
   // ActivityPub Ecosystem
   'bookwyrm',
   'mobilizon',
@@ -402,6 +406,8 @@ export const PLATFORM_TIER_WEIGHTS: Record<string, number> = {
   writefreely: 0.7,
   youtube: 0.9,
   zora: 0.8,
+  // Prediction Markets
+  polymarket: 0.8,
   // ActivityPub Ecosystem
   bookwyrm: 0.7,
   mobilizon: 0.6,

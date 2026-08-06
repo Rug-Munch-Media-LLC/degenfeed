@@ -25,6 +25,12 @@ const zoraMarketplace = new Hono<{ Bindings: Env }>();
 
 const INDEXER_URL = 'http://127.0.0.1:8091';
 
+/** Resolve the Zora indexer URL, preferring the worker env override. */
+function getIndexerUrl(env: Env): string {
+  return env.ZORA_INDEXER_URL || INDEXER_URL;
+}
+
+
 // ═════════════════════════════════════════════════════════════════════════
 // GET /api/zora/marketplace/trending — Trending marketplace listings
 // ═════════════════════════════════════════════════════════════════════════
@@ -34,7 +40,7 @@ zoraMarketplace.get('/trending', async (c) => {
   const sort = c.req.query('sort') ?? 'volume';
 
   try {
-    const url = `${INDEXER_URL}/api/collections?limit=${limit}&sort=${sort}`;
+    const url = `${getIndexerUrl(c.env)}/api/collections?limit=${limit}&sort=${sort}`;
     const res = await fetch(url, { signal: AbortSignal.timeout(5000) });
 
     if (!res.ok) {
@@ -88,7 +94,7 @@ zoraMarketplace.get('/collection/:address', async (c) => {
   }
 
   try {
-    const res = await fetch(`${INDEXER_URL}/api/collections/${addr}`, {
+    const res = await fetch(`${getIndexerUrl(c.env)}/api/collections/${addr}`, {
       signal: AbortSignal.timeout(5000),
     });
 
@@ -140,7 +146,7 @@ zoraMarketplace.get('/nft/:address/sales', async (c) => {
   }
 
   try {
-    const res = await fetch(`${INDEXER_URL}/api/sales?collection=${addr}&limit=100`, {
+    const res = await fetch(`${getIndexerUrl(c.env)}/api/sales?collection=${addr}&limit=100`, {
       signal: AbortSignal.timeout(5000),
     });
 
@@ -177,7 +183,7 @@ zoraMarketplace.post('/buy', async (c) => {
     const { ZoraMarketplace } = await import('@degenfeed/zora-sdk/marketplace');
     const marketplace = new ZoraMarketplace({
       privateKey: c.env.X402_RELAYER_KEY || undefined,
-      indexerUrl: INDEXER_URL,
+      indexerUrl: getIndexerUrl(c.env),
     });
 
     const result = await marketplace.buyNow({
@@ -213,7 +219,7 @@ zoraMarketplace.post('/sell', async (c) => {
     const { ZoraMarketplace } = await import('@degenfeed/zora-sdk/marketplace');
     const marketplace = new ZoraMarketplace({
       privateKey: c.env.X402_RELAYER_KEY || undefined,
-      indexerUrl: INDEXER_URL,
+      indexerUrl: getIndexerUrl(c.env),
     });
 
     const result = await marketplace.sell({
@@ -248,7 +254,7 @@ zoraMarketplace.post('/bid', async (c) => {
     const { ZoraMarketplace } = await import('@degenfeed/zora-sdk/marketplace');
     const marketplace = new ZoraMarketplace({
       privateKey: c.env.X402_RELAYER_KEY || undefined,
-      indexerUrl: INDEXER_URL,
+      indexerUrl: getIndexerUrl(c.env),
     });
 
     const result = await marketplace.placeBid({
@@ -284,7 +290,7 @@ zoraMarketplace.post('/offer', async (c) => {
     const { ZoraMarketplace } = await import('@degenfeed/zora-sdk/marketplace');
     const marketplace = new ZoraMarketplace({
       privateKey: c.env.X402_RELAYER_KEY || undefined,
-      indexerUrl: INDEXER_URL,
+      indexerUrl: getIndexerUrl(c.env),
     });
 
     const result = await marketplace.makeOffer({
@@ -309,12 +315,12 @@ zoraMarketplace.post('/offer', async (c) => {
 zoraMarketplace.get('/analytics', async (c) => {
   try {
     // Get indexer stats
-    const statsRes = await fetch(`${INDEXER_URL}/api/stats`, {
+    const statsRes = await fetch(`${getIndexerUrl(c.env)}/api/stats`, {
       signal: AbortSignal.timeout(5000),
     });
 
     // Get top collections for volume
-    const topRes = await fetch(`${INDEXER_URL}/api/collections?limit=5&sort=volume`, {
+    const topRes = await fetch(`${getIndexerUrl(c.env)}/api/collections?limit=5&sort=volume`, {
       signal: AbortSignal.timeout(5000),
     });
 
@@ -361,7 +367,7 @@ zoraMarketplace.get('/health', async (c) => {
   let indexerHealthy = false;
 
   try {
-    const res = await fetch(`${INDEXER_URL}/health`, { signal: AbortSignal.timeout(3000) });
+    const res = await fetch(`${getIndexerUrl(c.env)}/health`, { signal: AbortSignal.timeout(3000) });
     indexerHealthy = res.ok;
   } catch {
     // Indexer unavailable

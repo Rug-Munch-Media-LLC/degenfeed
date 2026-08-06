@@ -187,16 +187,16 @@ async function fetchMastodonFollowers(
 
 async function fetchFarcasterProfile(
   fid: number,
-  _hubUrl?: string,
+  hubUrl?: string,
 ): Promise<{
   followers: number;
   displayName: string;
   username: string;
 } | null> {
   // Primary: Hubble for user data
-  const hubUrl = 'http://127.0.0.1:2281';
+  const resolvedHub = hubUrl || FARCASTER_DEFAULT_HUB;
   try {
-    const res = await fetch(`${hubUrl}/v1/userDataByFid?fid=${fid}`, {
+    const res = await fetch(`${resolvedHub}/v1/userDataByFid?fid=${fid}`, {
       headers: {
         accept: 'application/json',
         'user-agent': 'DegenFeed/0.1',
@@ -227,8 +227,8 @@ async function fetchFarcasterProfile(
 
   // Fallback: read from hub directly
   try {
-    const hubUrl = FARCASTER_DEFAULT_HUB;
-    const res = await fetch(`${hubUrl}/v1/userDataByFid?fid=${fid}`, {
+    const fallbackHub = hubUrl || FARCASTER_DEFAULT_HUB;
+    const res = await fetch(`${fallbackHub}/v1/userDataByFid?fid=${fid}`, {
       headers: { accept: 'application/json', 'user-agent': 'DegenFeed/0.1' },
       signal: AbortSignal.timeout(5000),
     });
@@ -549,7 +549,7 @@ export async function handleAnalytics(request: Request, env: Env): Promise<Respo
       case 'farcaster':
         if (p.fid) {
           protocolFetchPromises.push(
-            fetchFarcasterProfile(p.fid).then((r) => {
+            fetchFarcasterProfile(p.fid, env.FARCASTER_HUB_URL).then((r) => {
               if (r) followersByProtocol.farcaster = r.followers;
             }),
           );

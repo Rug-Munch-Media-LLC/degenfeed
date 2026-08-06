@@ -17,6 +17,11 @@ const PLATFORM_COLOR = '#8A63D2';
 
 const FARCASTER_HUB = 'http://127.0.0.1:2281';
 
+/** Resolve the Farcaster hub URL, preferring the worker env override. */
+function getHubUrl(env?: { FARCASTER_HUB_URL?: string }): string {
+  return env?.FARCASTER_HUB_URL || FARCASTER_HUB;
+}
+
 // ─── Types ─────────────────────────────────────────────────────────────
 
 interface FarcasterCast {
@@ -47,9 +52,11 @@ interface FarcasterCast {
 export async function fetchFarcasterFrameVideos(
   limit: number = 20,
   signal?: AbortSignal,
+  env?: { FARCASTER_HUB_URL?: string },
 ): Promise<UnifiedVideo[]> {
   try {
-    const casts = await fetchTrendingCasts(limit * 3, signal);
+    const hubUrl = getHubUrl(env);
+    const casts = await fetchTrendingCasts(limit * 3, hubUrl, signal);
     const videos: UnifiedVideo[] = [];
     const seen = new Set<string>();
 
@@ -102,9 +109,13 @@ export async function fetchFarcasterFrameVideos(
 
 // ─── Fetch trending casts ────────────────────────────────────────────────
 
-async function fetchTrendingCasts(limit: number, signal?: AbortSignal): Promise<FarcasterCast[]> {
+async function fetchTrendingCasts(
+  limit: number,
+  hubUrl: string,
+  signal?: AbortSignal,
+): Promise<FarcasterCast[]> {
   try {
-    const url = `${FARCASTER_HUB}/v1/trendingFeed?time_window=24h&limit=${limit}`;
+    const url = `${hubUrl}/v1/trendingFeed?time_window=24h&limit=${limit}`;
     const res = await fetch(url, {
       signal,
       headers: { Accept: 'application/json' },
@@ -137,7 +148,7 @@ async function fetchTrendingCasts(limit: number, signal?: AbortSignal): Promise<
     const curatedFids = [3, 2, 1, 228, 239, 354, 5650];
     for (const fid of curatedFids) {
       try {
-        const res = await fetch(`${FARCASTER_HUB}/v1/castsByFid?fid=${fid}&pageSize=5`, {
+        const res = await fetch(`${hubUrl}/v1/castsByFid?fid=${fid}&pageSize=5`, {
           signal,
           headers: { Accept: 'application/json' },
         });

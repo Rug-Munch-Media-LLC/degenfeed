@@ -522,6 +522,33 @@ app.post('/api/accounts/profile/sync/:protocol', async (c) =>
 );
 app.put('/api/accounts/profile/visibility', async (c) => handleProfileVisibility(c.req.raw, c.env));
 
+// ═══════════════════════════════════════════════════════════════════════════
+// UNIFIED CROSS-SERVICE SSO PROFILE + IMAGE PROXY
+// ═══════════════════════════════════════════════════════════════════════════
+
+// GET /api/profile/me — unified profile across all DegenFeed services
+// (GoToSocial, Lemmy, Pixelfed, PeerTube, WriteFreely) for one username.
+import { handleProfileMe } from './routes/profile-me';
+
+app.get('/api/profile/me', async (c) => handleProfileMe(c.req.raw, c.env));
+
+// GET /api/image-proxy?url=<encoded>&protocol=<protocol> — cross-protocol
+// image proxy with CORS headers, protocol-aware extraction, and 1h caching.
+import { handleImageProxy } from './routes/image-proxy';
+
+app.get('/api/image-proxy', async (c) => handleImageProxy(c.req.raw, c.env));
+app.options('/api/image-proxy', async (c) => {
+  return new Response(null, {
+    status: 204,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, HEAD, OPTIONS',
+      'Access-Control-Allow-Headers': '*',
+      'Access-Control-Max-Age': '86400',
+    },
+  });
+});
+
 // ═══════════════════════════════════════════════════════════════
 // POST-ROUTE REGISTRATIONS (catch-all, static redirects, etc.)
 // ═══════════════════════════════════════════════════════════════

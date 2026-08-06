@@ -65,6 +65,12 @@ ENABLE_REAL_DEPLOYMENTS=false
 # Optional: Sentry DSN for error reporting
 SENTRY_DSN=
 
+# ── Bluesky AT Protocol posting ─────────────────────────────────
+# DID for identity (e.g. did:plc:abc123...)
+BSKY_DID=
+# Set as wrangler secrets for Bluesky write/DM/live access
+BSKY_ACCESS_TOKEN=
+
 # ── Postiz cross-posting ──────────────────────────────────────
 # Base URL of the Postiz instance (default: http://127.0.0.1:3105)
 POSTIZ_BASE_URL=http://127.0.0.1:3105

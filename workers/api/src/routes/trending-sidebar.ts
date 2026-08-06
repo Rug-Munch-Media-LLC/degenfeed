@@ -8,6 +8,10 @@
 
 import { jsonResponse } from '../response-helpers';
 import type { Env } from '../types';
+import { handleHomeFeed } from './feed';
+import { handleDiscoverCommunities } from './discover';
+import { handleSpacesLive } from './spaces/core';
+import { handleUnifiedTipLeaderboard } from './unified-tip-leaderboard';
 
 // ─── Types ────────────────────────────────────────────────────────────────
 
@@ -91,14 +95,14 @@ const CACHE_KEY = 'trending:sidebar:v1';
 const _FETCH_TIMEOUT_MS = 4000;
 const API_TIMEOUT_MS = 2000;
 
-// ─── Feed helper (internal loopback) ───────────────────────────────────────
+// ─── Feed helper (internal call — no localhost loopback) ──────────────────
 
-async function fetchRecentPosts(_env: Env, limit = 100): Promise<unknown[]> {
+async function fetchRecentPosts(env: Env, limit = 100): Promise<unknown[]> {
   try {
     const feedReq = new Request(
-      `http://localhost/api/feed/home?limit=${limit}&sort=hot&protocols=nostr,farcaster,lens,bluesky,mastodon,threads,reddit,rss`,
+      `https://internal/api/feed/home?limit=${limit}&sort=hot&protocols=nostr,farcaster,lens,bluesky,mastodon,threads,reddit,rss`,
     );
-    const feedRes = await fetch(feedReq);
+    const feedRes = await handleHomeFeed(feedReq, env);
     if (!feedRes.ok) return [];
     const body = (await feedRes.json()) as { data?: unknown[] };
     return body.data ?? [];
@@ -156,11 +160,10 @@ function computeTopics(posts: unknown[]): TrendingTopic[] {
     .slice(0, 5);
 }
 
-async function fetchCommunities(_env: Env): Promise<ActiveCommunity[]> {
+async function fetchCommunities(env: Env): Promise<ActiveCommunity[]> {
   try {
-    const res = await fetch(`http://localhost/api/discover/communities`, {
-      signal: AbortSignal.timeout(API_TIMEOUT_MS),
-    });
+    const req = new Request('https://internal/api/discover/communities');
+    const res = await handleDiscoverCommunities(req, env);
     if (!res.ok) return [];
     const body = (await res.json()) as { data?: ActiveCommunity[] };
     return (body.data ?? []).slice(0, 3);
@@ -248,11 +251,10 @@ async function fetchVideos(_env: Env): Promise<PopularVideo[]> {
   return videos.slice(0, 3);
 }
 
-async function fetchLiveSpaces(_env: Env): Promise<LiveSpace[]> {
+async function fetchLiveSpaces(env: Env): Promise<LiveSpace[]> {
   try {
-    const res = await fetch(`http://localhost/api/spaces/live`, {
-      signal: AbortSignal.timeout(API_TIMEOUT_MS),
-    });
+    const req = new Request('https://internal/api/spaces/live');
+    const res = await handleSpacesLive(req, env);
     if (!res.ok) return [];
     const body = (await res.json()) as {
       spaces?: Array<{
@@ -364,11 +366,10 @@ async function fetchFarcasterTrending(env: Env): Promise<TrendingFarcasterCast[]
   }
 }
 
-async function fetchTopTippers(_env: Env): Promise<TopTipper[]> {
+async function fetchTopTippers(env: Env): Promise<TopTipper[]> {
   try {
-    const res = await fetch(`http://localhost/api/tip/unified/leaderboard?period=weekly&limit=3`, {
-      signal: AbortSignal.timeout(API_TIMEOUT_MS),
-    });
+    const req = new Request('https://internal/api/tip/unified/leaderboard?period=weekly&limit=3');
+    const res = await handleUnifiedTipLeaderboard(req, env);
     if (!res.ok) return [];
     const body = (await res.json()) as {
       entries?: Array<{

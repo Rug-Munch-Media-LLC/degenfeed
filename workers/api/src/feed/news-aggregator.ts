@@ -5,6 +5,15 @@
  * clusters, scores, and ranks news stories.
  *
  * Layer in the feed stack: fetch → enrich → dedup → cluster → score → rank
+ *
+ * CPU budget (Cloudflare error 1102 guard):
+ *  - The whole pipeline races a wall-clock deadline (NEWS.AGGREGATION_TIMEOUT_MS,
+ *    default 25s, override NEWS_AGGREGATION_TIMEOUT_MS). On timeout we return
+ *    whatever partial results have been produced so far instead of crashing.
+ *  - RSS fan-out is bounded (3 concurrent fetches, 4s per feed) with an early
+ *    bail once NEWS.MAX_ARTICLES raw items are collected.
+ *  - Article enrichment is capped (NEWS.ENRICH_LIMIT, default 10, override
+ *    NEWS_ENRICH_LIMIT) with 2 concurrent fetches and a 2s per-article timeout.
  */
 
 import type { Env } from '../types';
@@ -45,6 +54,16 @@ import {
   sourceFactuality,
   type BiasLabel,
 } from './news-bias';
+import { NEWS } from '../constants';
+
+/**
+ * Parse a positive integer env override; falls back to `fallback` when the
+ * value is unset, non-numeric, or <= 0.
+ */
+function parsePositiveInt(value: string | undefined, fallback: number): number {
+  const n = Number(value);
+  return Number.isFinite(n) && n > 0 ? Math.floor(n) : fallback;
+}
 
 /**
  * Total number of unique news sources.
@@ -120,9 +139,9 @@ async function fetchProtocolSources(
 
 /**
  * Lightweight fetch to extract og:image, meta description, and author
- * from an article page.
+ * from an article page. Per-article budget is 2s.
  */
-async function enrichArticle(url: string, timeoutMs = 3000): Promise<ArticleEnrichment> {
+async function enrichArticle(url: string, timeoutMs = 2000): Promise<ArticleEnrichment> {
   try {
     const res = await fetch(url, {
       signal: AbortSignal.timeout(timeoutMs),
@@ -259,35 +278,196 @@ function clusterStories(stories: AggregatedStory[]): StoryCluster[] {
 }
 
 /**
- * Main entry point: fetch news from all available sources, deduplicate,
- * enrich with entities/sentiment/credibility, cluster stories, and return
- * ranked results.
+ * Compute freshness, credibility, velocity, final score, and the bias
+ * diversity boost for every story. Idempotent: safe to run on partial
+ * results when the aggregation deadline fires mid-pipeline.
  */
-export async function aggregateNews(
-  env: Env,
-  opts: AggregationOptions = {},
-): Promise<AggregationResult> {
-  const startTime = Date.now();
-  const errors: string[] = [];
+function scoreAndBoost(stories: AggregatedStory[]): void {
+  if (stories.length === 0) return;
+
+  const now = Date.now();
+  for (const story of stories) {
+    const { freshScore, isBreaking } = computeFreshness(story.publishedAt, now);
+    story.isBreaking = isBreaking;
+    story.credibility = computeCredibility(story.sourceMeta, story);
+    story.velocity = story.alsoCoveredBy.length * 0.5 + (story.isBreaking ? 2 : 0);
+    story.score =
+      story.sourceMeta.weight * 1.5 +
+      freshScore * 2.0 +
+      story.credibility * 1.5 +
+      story.velocity * 0.5 +
+      story.sentiment.confidence * 0.5;
+    if (story.entities.tokens.length > 0) story.score += 0.3;
+    if (story.entities.protocols.length > 0) story.score += 0.2;
+    if (story.entities.people.length > 0) story.score += 0.2;
+  }
+
+  // Bias diversity boost (Ground News-style balance): gently lift
+  // stories from bias groups that are under-represented in the top slice
+  // so the feed shows a balanced mix of left / center / right coverage.
+  const topStories = [...stories].sort((a, b) => b.score - a.score).slice(0, 50);
+  const biasCounts: Record<string, number> = { left: 0, center: 0, right: 0 };
+  for (const s of topStories) {
+    const label = s.bias ?? 'center';
+    const bucket = label === 'left' || label === 'center-left' ? 'left' : label === 'right' || label === 'center-right' ? 'right' : 'center';
+    biasCounts[bucket] = (biasCounts[bucket] ?? 0) + 1;
+  }
+  const maxBias = Math.max(1, ...Object.values(biasCounts));
+  for (const story of stories) {
+    const label = story.bias ?? 'center';
+    const bucket = label === 'left' || label === 'center-left' ? 'left' : label === 'right' || label === 'center-right' ? 'right' : 'center';
+    const share = biasCounts[bucket] ?? 0;
+    // Under-represented buckets get up to a +1.8 score lift.
+    const boost = (1 - share / maxBias) * 1.8;
+    if (boost > 0) story.score += boost;
+  }
+}
+
+/**
+ * Filter, sort, aggregate sentiment/trending, attach display attribution,
+ * and assemble the final AggregationResult. Shared by the full pipeline and
+ * the timeout partial-result path.
+ */
+function finalizeNewsResult(
+  stories: AggregatedStory[],
+  clusters: StoryCluster[],
+  opts: AggregationOptions,
+  errors: string[],
+  sourceCount: number,
+  startTime: number,
+): AggregationResult {
+  const now = Date.now();
   const limit = opts.limit ?? 50;
+
+  // Filter by category / search query, then sort.
+  let filtered = stories;
+  if (opts.category && opts.category !== 'all') {
+    const cat = opts.category.toLowerCase();
+    filtered = stories.filter(
+      (s) => s.categories.includes(cat) || s.niches.includes(cat) || s.sourceMeta.category === cat,
+    );
+  }
+  if (opts.query) {
+    const q = opts.query.toLowerCase();
+    filtered = filtered.filter(
+      (s) =>
+        s.title.toLowerCase().includes(q) ||
+        s.summary.toLowerCase().includes(q) ||
+        s.entities.tokens.some((t) => t.toLowerCase().includes(q)),
+    );
+  }
+  const sort = opts.sort ?? 'score';
+  if (sort === 'newest') filtered.sort((a, b) => b.publishedAt - a.publishedAt);
+  else if (sort === 'trending') filtered.sort((a, b) => b.velocity - a.velocity);
+  else filtered.sort((a, b) => b.score - a.score);
+
+  // Aggregate sentiment.
+  const sentimentTotals = { bullish: 0, bearish: 0, neutral: 0 };
+  for (const s of filtered) {
+    if (s.sentiment.label === 'bullish') sentimentTotals.bullish++;
+    else if (s.sentiment.label === 'bearish') sentimentTotals.bearish++;
+    else sentimentTotals.neutral++;
+  }
+
+  // Trending topics.
+  const trendingMap = new Map<string, { count: number; score: number }>();
+  for (const s of filtered.slice(0, 100)) {
+    for (const niche of s.niches) {
+      const entry = trendingMap.get(niche) ?? { count: 0, score: 0 };
+      entry.count++; entry.score += 1;
+      trendingMap.set(niche, entry);
+    }
+    for (const token of s.entities.tokens) {
+      const entry = trendingMap.get(token) ?? { count: 0, score: 0 };
+      entry.count++; entry.score += 2;
+      trendingMap.set(token, entry);
+    }
+  }
+  const trending = Array.from(trendingMap.entries())
+    .map(([topic, v]) => ({ topic, count: v.count, score: v.score }))
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 15);
+
+  const elapsed = Date.now() - startTime;
+  log('info', `[news-aggregator] aggregated ${stories.length} stories from ${sourceCount} sources in ${elapsed}ms`);
+
+  for (const story of filtered) {
+    const displaySources = story.alsoCoveredBy.filter((s) => s !== story.source);
+    (story as unknown as Record<string, unknown>).alsoCoveredByDisplay =
+      displaySources.length > 0
+        ? `Also reported by ${displaySources.slice(0, 3).join(', ')}${displaySources.length > 3 ? ` +${displaySources.length - 3} more` : ''}`
+        : undefined;
+    (story as unknown as Record<string, unknown>).alsoCoveredByCount = displaySources.length;
+  }
+
+  return {
+    stories: filtered.slice(0, limit),
+    clusters,
+    meta: {
+      total: filtered.length,
+      sourceCount,
+      sourcedCount: NEWS_SOURCES.length + NEWSLETTER_FEEDS.length,
+      fetchedAt: now,
+      errors,
+      sentiment: sentimentTotals,
+      trending,
+      biasDistribution: computeBiasDistribution(filtered),
+    },
+  };
+}
+
+/**
+ * Shared progress state between the pipeline and the timeout race. The
+ * `stories` reference is live — the deadline callback reads whatever has
+ * been accumulated so far.
+ */
+interface AggregationProgress {
+  stories: AggregatedStory[];
+  clusters: StoryCluster[];
+  errors: string[];
+  sourceCount: number;
+  fetchedAt: number;
+  stage: 'fetching' | 'deduping' | 'enriching' | 'scored' | 'clustered';
+}
+
+/**
+ * Core aggregation pipeline. Updates `progress` at each stage boundary so a
+ * timeout can resolve with partial results.
+ */
+async function runAggregationPipeline(
+  env: Env,
+  opts: AggregationOptions,
+  progress: AggregationProgress,
+  startTime: number,
+): Promise<AggregationResult> {
+  const errors: string[] = [];
+  progress.errors = errors;
+  const maxArticles = NEWS.MAX_ARTICLES;
+  const enrichLimit = parsePositiveInt(env.NEWS_ENRICH_LIMIT, NEWS.ENRICH_LIMIT);
 
   const sources = opts.sourceIds
     ? NEWS_SOURCES.filter((s) => opts.sourceIds?.includes(s.id) ?? false)
     : NEWS_SOURCES;
   const newsletters = opts.includeNewsletters !== false ? NEWSLETTER_FEEDS : [];
-
-  // 1. Fetch all RSS/Atom feeds in parallel (with concurrency limit)
-  const rawItems: Array<{ item: ParsedRssItem; source: NewsSourceMeta }> = [];
   const allSources = [...sources, ...newsletters];
+  progress.sourceCount = allSources.length;
 
-  await withConcurrencyLimit(allSources, 5, async (source) => {
-    const xml = await fetchRssFeed(source.url);
+  // 1. Fetch all RSS/Atom feeds in parallel (bounded concurrency + early bail)
+  const rawItems: Array<{ item: ParsedRssItem; source: NewsSourceMeta }> = [];
+  let rawCount = 0;
+
+  await withConcurrencyLimit(allSources, NEWS.RSS_FETCH_CONCURRENCY, async (source) => {
+    // Early bail: once we have enough raw articles, stop fetching sources.
+    if (rawCount >= maxArticles) return;
+    const xml = await fetchRssFeed(source.url, NEWS.RSS_FETCH_TIMEOUT_MS);
     if (!xml) return;
     if (xml.length > 2_000_000) return;
     const parsed = parseFeedXml(xml, 15);
     for (const item of parsed) {
+      if (rawCount >= maxArticles) break;
       rawItems.push({ item, source });
     }
+    rawCount = rawItems.length;
   });
 
   // 2. Fetch from protocol-based sources
@@ -306,6 +486,8 @@ export async function aggregateNews(
   const seenUrls = new Map<string, AggregatedStory>();
   const seenHashes = new Map<string, AggregatedStory>();
   const stories: AggregatedStory[] = [];
+  progress.stories = stories; // live reference — timeout sees partial dedup results
+  progress.stage = 'deduping';
 
   for (const { item, source } of rawItems) {
     const canonicalUrl = normalizeUrl(item.link);
@@ -397,12 +579,13 @@ export async function aggregateNews(
   }
 
   // 4. Enrich articles with hero images, meta descriptions, and author names
+  progress.stage = 'enriching';
   const enrichCandidates = stories
     .filter((s) => !s.heroImage || !s.metaDescription || s.authorName === s.source)
-    .slice(0, 30);
+    .slice(0, enrichLimit);
 
-  await withConcurrencyLimit(enrichCandidates, 3, async (story) => {
-    const enrichment = await enrichArticle(story.url);
+  await withConcurrencyLimit(enrichCandidates, NEWS.ENRICH_CONCURRENCY, async (story) => {
+    const enrichment = await enrichArticle(story.url, NEWS.ENRICH_TIMEOUT_MS);
     if (enrichment.heroImage && !story.heroImage) {
       story.heroImage = enrichment.heroImage;
       story.imageUrl = enrichment.heroImage;
@@ -419,120 +602,96 @@ export async function aggregateNews(
     }
   });
 
-  // 5. Compute freshness, velocity, and final scores
-  const now = Date.now();
-  for (const story of stories) {
-    const { freshScore, isBreaking } = computeFreshness(story.publishedAt, now);
-    story.isBreaking = isBreaking;
-    story.credibility = computeCredibility(story.sourceMeta, story);
-    story.velocity = story.alsoCoveredBy.length * 0.5 + (story.isBreaking ? 2 : 0);
-    story.score =
-      story.sourceMeta.weight * 1.5 +
-      freshScore * 2.0 +
-      story.credibility * 1.5 +
-      story.velocity * 0.5 +
-      story.sentiment.confidence * 0.5;
-    if (story.entities.tokens.length > 0) story.score += 0.3;
-    if (story.entities.protocols.length > 0) story.score += 0.2;
-    if (story.entities.people.length > 0) story.score += 0.2;
-  }
-
-  // 5b. Bias diversity boost (Ground News-style balance): gently lift
-  // stories from bias groups that are under-represented in the top slice
-  // so the feed shows a balanced mix of left / center / right coverage.
-  const topStories = [...stories].sort((a, b) => b.score - a.score).slice(0, 50);
-  const biasCounts: Record<string, number> = { left: 0, center: 0, right: 0 };
-  for (const s of topStories) {
-    const label = s.bias ?? 'center';
-    const bucket = label === 'left' || label === 'center-left' ? 'left' : label === 'right' || label === 'center-right' ? 'right' : 'center';
-    biasCounts[bucket] = (biasCounts[bucket] ?? 0) + 1;
-  }
-  const maxBias = Math.max(1, ...Object.values(biasCounts));
-  for (const story of stories) {
-    const label = story.bias ?? 'center';
-    const bucket = label === 'left' || label === 'center-left' ? 'left' : label === 'right' || label === 'center-right' ? 'right' : 'center';
-    const share = biasCounts[bucket] ?? 0;
-    // Under-represented buckets get up to a +1.8 score lift.
-    const boost = (1 - share / maxBias) * 1.8;
-    if (boost > 0) story.score += boost;
-  }
+  // 5. Compute freshness, velocity, final scores, and bias diversity boost
+  scoreAndBoost(stories);
+  progress.stage = 'scored';
 
   // 6. Story clustering
   const clusters = clusterStories(stories);
+  progress.clusters = clusters;
+  progress.stage = 'clustered';
 
-  // 7-9. Filter, search, sort
-  let filtered = stories;
-  if (opts.category && opts.category !== 'all') {
-    const cat = opts.category.toLowerCase();
-    filtered = stories.filter(
-      (s) => s.categories.includes(cat) || s.niches.includes(cat) || s.sourceMeta.category === cat,
-    );
-  }
-  if (opts.query) {
-    const q = opts.query.toLowerCase();
-    filtered = filtered.filter(
-      (s) =>
-        s.title.toLowerCase().includes(q) ||
-        s.summary.toLowerCase().includes(q) ||
-        s.entities.tokens.some((t) => t.toLowerCase().includes(q)),
-    );
-  }
-  const sort = opts.sort ?? 'score';
-  if (sort === 'newest') filtered.sort((a, b) => b.publishedAt - a.publishedAt);
-  else if (sort === 'trending') filtered.sort((a, b) => b.velocity - a.velocity);
-  else filtered.sort((a, b) => b.score - a.score);
+  // 7-11. Filter, search, sort, aggregate, and build the result
+  return finalizeNewsResult(stories, clusters, opts, errors, allSources.length, startTime);
+}
 
-  // 10. Aggregate sentiment
-  const sentimentTotals = { bullish: 0, bearish: 0, neutral: 0 };
-  for (const s of filtered) {
-    if (s.sentiment.label === 'bullish') sentimentTotals.bullish++;
-    else if (s.sentiment.label === 'bearish') sentimentTotals.bearish++;
-    else sentimentTotals.neutral++;
+/**
+ * Build the best AggregationResult we can from whatever the pipeline had
+ * produced when the deadline fired. Stories that were still mid-dedup or
+ * mid-enrich get scored on the spot so the partial result is usable.
+ */
+function buildPartialResult(
+  progress: AggregationProgress,
+  opts: AggregationOptions,
+  startTime: number,
+  timeoutMs: number,
+): AggregationResult {
+  const stories = progress.stories ?? [];
+  const errors = [...progress.errors, `aggregation timed out after ${timeoutMs}ms`];
+
+  if (progress.stage === 'fetching' || progress.stage === 'deduping' || progress.stage === 'enriching') {
+    scoreAndBoost(stories);
   }
 
-  // 11. Trending topics
-  const trendingMap = new Map<string, { count: number; score: number }>();
-  for (const s of filtered.slice(0, 100)) {
-    for (const niche of s.niches) {
-      const entry = trendingMap.get(niche) ?? { count: 0, score: 0 };
-      entry.count++; entry.score += 1;
-      trendingMap.set(niche, entry);
-    }
-    for (const token of s.entities.tokens) {
-      const entry = trendingMap.get(token) ?? { count: 0, score: 0 };
-      entry.count++; entry.score += 2;
-      trendingMap.set(token, entry);
-    }
-  }
-  const trending = Array.from(trendingMap.entries())
-    .map(([topic, v]) => ({ topic, count: v.count, score: v.score }))
-    .sort((a, b) => b.score - a.score)
-    .slice(0, 15);
+  const clusters =
+    progress.clusters.length > 0 ? progress.clusters : stories.length > 0 ? clusterStories(stories) : [];
 
-  const elapsed = Date.now() - startTime;
-  log('info', `[news-aggregator] aggregated ${stories.length} stories from ${allSources.length} sources in ${elapsed}ms`);
+  log(
+    'warn',
+    `[news-aggregator] timeout after ${timeoutMs}ms — returning ${stories.length} partial stories`,
+  );
 
-  for (const story of filtered) {
-    const displaySources = story.alsoCoveredBy.filter((s) => s !== story.source);
-    (story as unknown as Record<string, unknown>).alsoCoveredByDisplay =
-      displaySources.length > 0
-        ? `Also reported by ${displaySources.slice(0, 3).join(', ')}${displaySources.length > 3 ? ` +${displaySources.length - 3} more` : ''}`
-        : undefined;
-    (story as unknown as Record<string, unknown>).alsoCoveredByCount = displaySources.length;
-  }
-
-  return {
-    stories: filtered.slice(0, limit),
+  return finalizeNewsResult(
+    stories,
     clusters,
-    meta: {
-      total: filtered.length,
-      sourceCount: allSources.length,
-      sourcedCount: NEWS_SOURCES.length + NEWSLETTER_FEEDS.length,
-      fetchedAt: now,
-      errors,
-      sentiment: sentimentTotals,
-      trending,
-      biasDistribution: computeBiasDistribution(filtered),
-    },
+    opts,
+    errors,
+    progress.sourceCount,
+    startTime,
+  );
+}
+
+/**
+ * Main entry point: fetch news from all available sources, deduplicate,
+ * enrich with entities/sentiment/credibility, cluster stories, and return
+ * ranked results.
+ *
+ * The entire pipeline races a wall-clock deadline (default 25s, override via
+ * NEWS_AGGREGATION_TIMEOUT_MS). If the deadline fires first, whatever partial
+ * results exist so far are returned instead of erroring with a CPU-time
+ * exceeded (Cloudflare 1102) crash.
+ */
+export async function aggregateNews(
+  env: Env,
+  opts: AggregationOptions = {},
+): Promise<AggregationResult> {
+  const startTime = Date.now();
+  const timeoutMs = parsePositiveInt(env.NEWS_AGGREGATION_TIMEOUT_MS, NEWS.AGGREGATION_TIMEOUT_MS);
+
+  const progress: AggregationProgress = {
+    stories: [],
+    clusters: [],
+    errors: [],
+    sourceCount: 0,
+    fetchedAt: startTime,
+    stage: 'fetching',
   };
+
+  let timeoutId: ReturnType<typeof setTimeout> | undefined;
+  const deadline = new Promise<AggregationResult>((resolve) => {
+    timeoutId = setTimeout(() => {
+      resolve(buildPartialResult(progress, opts, startTime, timeoutMs));
+    }, timeoutMs);
+  });
+
+  const pipeline = runAggregationPipeline(env, opts, progress, startTime);
+
+  const result = await Promise.race([pipeline, deadline]);
+  if (timeoutId) clearTimeout(timeoutId);
+
+  // If the deadline won, the pipeline is still running in the background —
+  // swallow any late rejection so it never surfaces as an unhandled rejection.
+  void pipeline.catch(() => {});
+
+  return result;
 }

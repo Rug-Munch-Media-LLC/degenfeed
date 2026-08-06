@@ -93,6 +93,42 @@ export const TRENDING_INSTANCES: FediverseInstance[] = [
     software: 'mastodon',
     topics: ['general'],
   },
+  // ── Mastodon: General / Large (EXPANDED 2026-08-06) ─────────
+  {
+    url: 'https://c.im',
+    weight: 0.7,
+    label: 'C.im',
+    software: 'mastodon',
+    topics: ['general', 'tech'],
+  },
+  {
+    url: 'https://toot.community',
+    weight: 0.6,
+    label: 'TootCommunity',
+    software: 'mastodon',
+    topics: ['general'],
+  },
+  {
+    url: 'https://mstdn.party',
+    weight: 0.6,
+    label: 'MstdnParty',
+    software: 'mastodon',
+    topics: ['general'],
+  },
+  {
+    url: 'https://tech.lgbt',
+    weight: 0.7,
+    label: 'TechLGBT',
+    software: 'mastodon',
+    topics: ['tech', 'general'],
+  },
+  {
+    url: 'https://tapbots.social',
+    weight: 0.6,
+    label: 'Tapbots',
+    software: 'mastodon',
+    topics: ['general', 'tech'],
+  },
 
   // ── Mastodon: Crypto / Bitcoin / Web3 ──────────────────────────
   {

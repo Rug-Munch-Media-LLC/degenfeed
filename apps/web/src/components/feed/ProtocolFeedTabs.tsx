@@ -39,6 +39,11 @@ const DEFAULT_TABS: ProtocolTab[] = [
   { id: 'peertube', label: 'PeerTube', icon: '\uD83C\uDFAC', color: getProtocolColor('peertube') },
   { id: 'reddit', label: 'Reddit', icon: '\uD83D\uDD34', color: getProtocolColor('reddit') },
   { id: 'rss', label: 'RSS', icon: '\uD83D\uDCF0', color: getProtocolColor('rss') },
+  // ── Governance / Markets / NFT (NEW 2026-08-06) ──
+  { id: 'snapshot', label: 'Snapshot', icon: '\uD83D\uDDF3\uFE0F', color: getProtocolColor('snapshot') },
+  { id: 'tally', label: 'Tally', icon: '\uD83C\uDFDB\uFE0F', color: getProtocolColor('tally') },
+  { id: 'polymarket', label: 'Polymarket', icon: '\uD83D\uDCCA', color: getProtocolColor('polymarket') },
+  { id: 'opensea', label: 'OpenSea', icon: '\u2693', color: getProtocolColor('opensea') },
 ];
 
 export function getProtocolTabs(): ProtocolTab[] {

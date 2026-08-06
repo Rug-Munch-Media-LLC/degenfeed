@@ -20,7 +20,9 @@ import { recordUnifiedTip } from './unified-tip';
 
 const FARCASTER_COIN_PREFIX = 'farcaster:coin:';
 const FARCASTER_LINK_PREFIX = 'farcaster:link:';
-const ZORA_WRAPPER_FACTORY = '0x0000000000000000000000000000000000000000'; // Override via env
+// ZoraFactory (coins) — canonical address on Base:
+// https://docs.zora.co/coins/contracts/factory  [REVIEW]
+const ZORA_WRAPPER_FACTORY = '0x777777751622c0d3258f214F9DF38E35BF45baF3'; // Override via env
 const TTL_1Y = 60 * 60 * 24 * 365;
 
 // ─── Types ──────────────────────────────────────────────────────────────────
@@ -106,14 +108,17 @@ async function getLinkedFid(env: Env, walletAddress: string): Promise<number | n
   }
 }
 
-async function getFarcasterProfile(fid: number): Promise<{
+async function getFarcasterProfile(
+  fid: number,
+  env?: Env,
+): Promise<{
   username: string;
   displayName: string;
   bio: string;
   pfpUrl: string;
   metadataUri: string;
 }> {
-  const hubUrl = 'http://127.0.0.1:2281';
+  const hubUrl = env?.FARCASTER_HUB_URL || 'http://127.0.0.1:2281';
   try {
     const res = await fetch(`${hubUrl}/v1/userDataByFid?fid=${fid}`, {
       headers: { 'user-agent': 'DegenFeed/0.1' },
@@ -293,7 +298,7 @@ export async function handleFarcasterCoinDeploy(request: Request, env: Env): Pro
   const platformFeeBps = Math.min(Math.max(body.feeConfig?.platformFeeBps || 50, 0), 100);
 
   // Get Farcaster profile for metadata
-  const profile = await getFarcasterProfile(fid);
+  const profile = await getFarcasterProfile(fid, env);
   const genSymbol = symbol || generateSymbol(profile.username);
 
   // Deploy on Base via our factory
