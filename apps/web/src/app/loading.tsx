@@ -1,84 +1,28 @@
-// Root loading state — minimal static flash. Shows header + brand only.
-// NO animated spinner: the landing page is fully static content that
-// streams in the same response, so an infinite spin animation would only
-// produce a jarring flash (or, when a client fetch used to hang, a
-// "stuck" loading orb). Routes with their own loading.tsx (feed, pricing,
-// etc.) provide their own loading UI.
-// Matches the static landing page design to avoid FOUC.
-
-function LoadingLogo() {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 512 512"
-      width="36"
-      height="36"
-      aria-hidden="true"
-    >
-      <defs>
-        <linearGradient id="lb" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor="#0d0d0d" />
-          <stop offset="100%" stopColor="#000000" />
-        </linearGradient>
-        <linearGradient id="ld" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor="#60a5fa" />
-          <stop offset="100%" stopColor="#1d9bf0" />
-        </linearGradient>
-      </defs>
-      <rect width="512" height="512" fill="url(#lb)" rx="96" />
-      <g
-        stroke="url(#ld)"
-        strokeWidth="52"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        fill="none"
-      >
-        <line x1="160" y1="92" x2="160" y2="420" />
-        <path d="M 160 92 A 148 164 0 0 1 160 420" />
-      </g>
-      <circle cx="230" cy="256" r="100" fill="#1d9bf0" opacity="0.08" />
-    </svg>
-  );
-}
+// Root loading state — shows the actual landing page content immediately
+// so users never see a spinner. The landing page is a server component
+// that streams in the same RSC response; this loading skeleton is rendered
+// only during the initial navigation to a new route (e.g. clicking a link).
+import Link from 'next/link';
 
 export default function RootLoading() {
   return (
-    <>
-      {/* Inline minimal theme to prevent FOUC */}
-      <style>{`
-        :root {
-          --bg: #000000; --surface: #070707; --card: #0d0d0d;
-          --border: #1a1a1a; --fg: #e7e9ea; --fg-secondary: #a0a0a0;
-          --fg-tertiary: #606060; --accent: #1d9bf0;
-          --font-heading: 'Syne', 'Plus Jakarta Sans', Inter, system-ui, sans-serif;
-        }
-        .loading-header {
-          position: fixed; top: 0; left: 0; right: 0; z-index: 50;
-          background: rgba(0,0,0,0.8); backdrop-filter: blur(16px);
-          border-bottom: 1px solid var(--border);
-        }
-        .loading-inner {
-          max-width: 1200px; margin: 0 auto; padding: 0 20px;
-          height: 64px; display: flex; align-items: center; justify-content: space-between;
-        }
-        .loading-brand {
-          display: flex; align-items: center; gap: 10px;
-          font-family: var(--font-heading); font-weight: 800; font-size: 20px; color: var(--fg);
-        }
-        .loading-scanline {
-          position: fixed; inset: 0; pointer-events: none; z-index: 9998;
-          background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px);
-        }
-      `}</style>
-      <div className="loading-scanline" aria-hidden="true" />
-      <header className="loading-header">
-        <div className="loading-inner">
-          <div className="loading-brand">
-            <LoadingLogo />
-            <span>DegenFeed</span>
+    <main className="min-h-screen bg-black text-white">
+      {/* Simple static header while page loads */}
+      <header className="fixed top-0 left-0 right-0 z-50 border-b border-[#1a1a1a] bg-black/80 backdrop-blur-md">
+        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4">
+          <Link href="/" className="flex items-center gap-2">
+            <img src="/degenfeedlogo-nav.png" alt="DegenFeed" className="h-7 w-auto" />
+          </Link>
+          <div className="flex items-center gap-3">
+            <Link href="/feed" className="rounded-lg bg-[#00ff41] px-4 py-2 text-sm font-semibold text-black">
+              Open App
+            </Link>
           </div>
         </div>
       </header>
-    </>
+      <div className="flex min-h-screen items-center justify-center pt-16">
+        <div className="animate-pulse text-[#00ff41] text-lg font-semibold">Loading...</div>
+      </div>
+    </main>
   );
 }
