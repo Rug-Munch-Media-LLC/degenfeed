@@ -22,7 +22,13 @@ import { CircuitBreaker, CircuitBreakerError, detectNiches } from '@degenfeed/fe
 import type { Protocol, UnifiedIdentity, UnifiedPost } from '@degenfeed/types';
 import { isNostrEvent } from '../schemas';
 import type { FeedProvider, FeedResult, FetchOptions, HealthResult, SchemaGuard } from '../types';
-import { DEFAULT_TIMEOUT_MS, DEFAULT_USER_AGENT, fetchJson, fetchWithFallbacks, withTimeout } from '../utils';
+import {
+  DEFAULT_TIMEOUT_MS,
+  DEFAULT_USER_AGENT,
+  fetchJson,
+  fetchWithFallbacks,
+  withTimeout,
+} from '../utils';
 
 /** Relays that are known to carry NIP-29 group events (best effort). */
 export const NIP29_GROUP_RELAYS = [
@@ -319,7 +325,7 @@ function fetchFromWebSocket(
   });
 }
 
-async function fetchTrendingFallback(timeoutMs: number): Promise<NostrGroupEvent[]> {
+async function fetchTrendingFallback(_timeoutMs: number): Promise<NostrGroupEvent[]> {
   return fetchWithFallbacks(TRENDING_HTTP_ENDPOINTS, async (base) => {
     const url = `${base.replace(/\/$/, '')}?limit=60`;
     const data = await fetchJson<NostrBandTrendingResponse>(url, {
@@ -408,7 +414,10 @@ export class NostrGroupsProvider implements FeedProvider {
           noteEvents.length + metadataEvents.length > 0
             ? `NIP-29: ${metadataEvents.length} groups, ${noteEvents.length} notes`
             : 'popular Nostr community content fallback';
-        return { posts: posts.slice(0, 60), notice: `Nostr groups: ${posts.length} posts (${source})` };
+        return {
+          posts: posts.slice(0, 60),
+          notice: `Nostr groups: ${posts.length} posts (${source})`,
+        };
       });
     } catch (err) {
       if (err instanceof CircuitBreakerError) {
@@ -474,5 +483,3 @@ export class NostrGroupsProvider implements FeedProvider {
     }
   }
 }
-
-
