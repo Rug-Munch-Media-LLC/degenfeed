@@ -33,7 +33,6 @@ import {
   FeedAuthBanner,
   FeedEmptyState,
   FeedErrorState,
-  FeedLoadingSkeleton,
   FeedNewPostsBanner,
   FeedProtocolSummary,
 } from '../../components/feed/FeedStates';
@@ -782,13 +781,9 @@ export default function FeedPage() {
     };
   }, [fetchFeed]);
 
-  if (!ready)
-    return (
-      <div className="mx-auto max-w-2xl px-4 py-20">
-        <FeedLoadingSkeleton />
-      </div>
-    );
-
+  // No auth gate: the unified feed is public and renders for ALL users
+  // (logged in or not). Auth is only required for posting/engaging, which is
+  // handled by FeedAuthBanner (above), handleComposeClick, and handleEngage.
   return (
     <ErrorBoundary>
       <ReadingProgressBar progress={readingProgress} />
