@@ -1,5 +1,10 @@
-// Root loading state — minimal flash. Shows header + subtle pulse.
-// Matches the new landing page design to avoid jarring transitions.
+// Root loading state — minimal static flash. Shows header + brand only.
+// NO animated spinner: the landing page is fully static content that
+// streams in the same response, so an infinite spin animation would only
+// produce a jarring flash (or, when a client fetch used to hang, a
+// "stuck" loading orb). Routes with their own loading.tsx (feed, pricing,
+// etc.) provide their own loading UI.
+// Matches the static landing page design to avoid FOUC.
 
 function LoadingLogo() {
   return (
@@ -64,15 +69,6 @@ export default function RootLoading() {
           position: fixed; inset: 0; pointer-events: none; z-index: 9998;
           background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px);
         }
-        .loading-pulse {
-          width: 60px; height: 60px; border-radius: 50%;
-          border: 3px solid var(--border); border-top-color: var(--accent);
-          animation: spin 0.8s linear infinite;
-          position: fixed; top: 50%; left: 50%; margin: -30px 0 0 -30px;
-          z-index: 100;
-        }
-        @keyframes spin { to { transform: rotate(360deg); } }
-        @media (prefers-reduced-motion: reduce) { .loading-pulse { animation: none; } }
       `}</style>
       <div className="loading-scanline" aria-hidden="true" />
       <header className="loading-header">
@@ -83,7 +79,6 @@ export default function RootLoading() {
           </div>
         </div>
       </header>
-      <div className="loading-pulse" role="status" aria-label="Loading" />
     </>
   );
 }
