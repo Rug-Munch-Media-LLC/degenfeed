@@ -19,6 +19,7 @@ import {
 } from '@degenfeed/feed-core';
 import type { Protocol, UnifiedIdentity, UnifiedPost } from '@degenfeed/types';
 import { getExternalProfileUrl, getPostContentUri } from '@degenfeed/utils';
+import type { Env } from '../types';
 
 // ─── Auto-moderation state ────────────────────────────────────────────
 
@@ -38,6 +39,58 @@ let _removedPosts = new Set<string>();
  * Avoids repeated flagging.
  */
 const _flaggedPosts = new Set<string>();
+
+/**
+ * Hydrate the in-memory ban/removed-post sets from the persistent REPORTS KV
+ * namespace (written by the moderation routes). Bans and post removals only
+ * take effect in the feed once this runs; it is invoked at the top of the
+ * feed fetch paths. Any KV failure leaves the sets empty — the feed serves
+ * normally rather than erroring, at the cost of not filtering.
+ */
+export async function hydrateModerationState(env: Env): Promise<void> {
+  const bannedUsers = new Set<string>();
+  const removedPosts = new Set<string>();
+  if (!env.REPORTS) {
+    setBannedUsers(bannedUsers);
+    setRemovedPosts(removedPosts);
+    return;
+  }
+  try {
+    const rawIdx = await env.REPORTS.get('mod:bans:index');
+    if (rawIdx) {
+      const idx = JSON.parse(rawIdx) as { ids?: string[] };
+      for (const id of idx.ids ?? []) {
+        const banRaw = await env.REPORTS.get(`mod:ban:${id}`);
+        if (!banRaw) continue;
+        try {
+          const ban = JSON.parse(banRaw) as { userId?: string; walletAddress?: string };
+          if (ban.userId) {
+            bannedUsers.add(ban.userId);
+            bannedUsers.add(ban.userId.toLowerCase());
+          }
+          if (ban.walletAddress) {
+            bannedUsers.add(ban.walletAddress);
+            bannedUsers.add(ban.walletAddress.toLowerCase());
+          }
+        } catch {
+          // skip corrupt ban entry
+        }
+      }
+    }
+    const removed = await env.REPORTS.list({ prefix: 'mod:removed:' });
+    for (const key of removed.keys) {
+      const postId = key.name.slice('mod:removed:'.length);
+      if (postId) {
+        removedPosts.add(postId);
+        removedPosts.add(postId.toLowerCase());
+      }
+    }
+  } catch {
+    // KV unavailable — keep empty sets (safe: nothing filtered)
+  }
+  setBannedUsers(bannedUsers);
+  setRemovedPosts(removedPosts);
+}
 
 export function setBannedUsers(users: Set<string>): void {
   _bannedUsers = users;

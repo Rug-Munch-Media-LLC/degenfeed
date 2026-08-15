@@ -1,24 +1,21 @@
-import { NextResponse } from 'next/server';
-// TODO: Wire to worker backend
+import { type NextRequest, NextResponse } from 'next/server';
+import { proxyPost } from '../../_proxy';
+
 export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
 
-import { log } from '@/lib/log';
-
-export async function POST(request: Request) {
-  const body = (await request.json()) as {
-    userId?: string;
-    protocol?: string;
-    reason?: string;
-    walletAddress?: string;
-  };
-
-  if (!body.userId || !body.reason) {
-    return NextResponse.json({ error: 'userId and reason are required' }, { status: 400 });
+/**
+ * POST /api/moderation/ban
+ *
+ * Proxies to the feed-worker backend, which persists the ban in the REPORTS
+ * KV namespace and makes it take effect in the feed pipeline (banned authors
+ * are filtered on the next feed render).
+ */
+export async function POST(request: NextRequest) {
+  try {
+    return await proxyPost('/api/moderation/ban', request);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Internal server error';
+    return NextResponse.json({ error: message, status: 500 }, { status: 500 });
   }
-
-  log('info', `[moderation] Banned user ${body.userId} on ${body.protocol || 'all'}`, {
-    reason: body.reason,
-  });
-
-  return NextResponse.json({ ok: true, userId: body.userId, protocol: body.protocol });
 }
