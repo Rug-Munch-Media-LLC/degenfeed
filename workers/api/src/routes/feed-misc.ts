@@ -13,6 +13,7 @@ import {
   DEFAULT_TIMEOUT_MS,
   fetchRedditPosts,
   getProvider,
+  hydrateModerationState,
   PROVIDER_TIMEOUTS,
   readCachedHealth,
   readJsonCache,
@@ -33,6 +34,8 @@ import type { Env } from '../types';
  * volume-sorted market list.
  */
 export async function handlePolymarketFeed(request: Request, env: Env): Promise<Response> {
+  await hydrateModerationState(env);
+
   const params = new URL(request.url).searchParams;
   const limit = Math.min(Number(params.get('limit')) || 50, 200);
   const cacheKey = `polymarket:v1:${limit}`;
@@ -64,6 +67,8 @@ export async function handlePolymarketFeed(request: Request, env: Env): Promise<
 }
 
 export async function handleRedditFeed(request: Request, env: Env): Promise<Response> {
+  await hydrateModerationState(env);
+
   const params = new URL(request.url).searchParams;
   const subreddit = params.get('subreddit');
   const limit = Math.min(Number(params.get('limit')) || 50, 200);
@@ -131,6 +136,7 @@ export async function handleProviderFeed(
   env: Env,
   provider: string,
 ): Promise<Response> {
+  await hydrateModerationState(env);
   // Accept ANY protocol — falls through to BridgeFeedProvider for unregistered ones
   const valid = new Set<Protocol>(DEFAULT_PROTOCOLS);
   const params = new URL(request.url).searchParams;

@@ -46,7 +46,7 @@ import { rmiUrl } from '@degenfeed/utils';
 import { log } from '../logger';
 import type { Env } from '../types';
 import { readProviderCache, writeProviderCache } from './feed-cache';
-import { sanitizePosts } from './feed-enricher';
+import { hydrateModerationState, sanitizePosts } from './feed-enricher';
 
 // ─── Feed quality monitoring (dynamic import to avoid circular deps) ───
 let _qualityModule: typeof import('./feed-quality-monitor') | null = null;
@@ -1126,6 +1126,10 @@ export async function fetchFromProviders(
   execCtx?: ExecutionContext,
   timer?: ProviderTimer,
 ): Promise<ProviderResult[]> {
+  // Hydrate banned users / removed posts from persistent moderation KV so
+  // bans take effect on the next feed render.
+  await hydrateModerationState(env);
+
   const results = await Promise.allSettled(
     protocols.map(async (protocol): Promise<ProviderResult> => {
       // Check both circuit breakers

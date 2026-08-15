@@ -355,6 +355,34 @@ registerPremiumRoutes(app);
 registerFramesRoutes(app);
 registerNostrGroupRoutes(app);
 
+// ─── Moderation routes (persistent KV-backed reports + bans) ───────
+// Reports, bans, and moderation stats are persisted to the REPORTS KV
+// namespace. Bans are hydrated into the feed pipeline by feed-enricher.
+import {
+  handleBanUser,
+  handleCheckBanned,
+  handleListReports,
+  handleModerationStats,
+  handleRemovePost,
+  handleResolveReport,
+  handleSubmitReport,
+} from './routes/moderation';
+
+// POST /api/moderation/report — Submit a report (authenticated)
+app.post('/api/moderation/report', async (c) => handleSubmitReport(c.req.raw, c.env));
+// GET  /api/moderation/reports — List reports (admin only)
+app.get('/api/moderation/reports', async (c) => handleListReports(c.req.raw, c.env));
+// POST /api/moderation/reports/:id/resolve — Resolve a report (admin only)
+app.post('/api/moderation/reports/:id/resolve', async (c) => handleResolveReport(c.req.raw, c.env));
+// POST /api/moderation/reports/:id/remove — Remove the reported post (admin only)
+app.post('/api/moderation/reports/:id/remove', async (c) => handleRemovePost(c.req.raw, c.env));
+// POST /api/moderation/ban — Ban a user across protocols (admin only)
+app.post('/api/moderation/ban', async (c) => handleBanUser(c.req.raw, c.env));
+// GET  /api/moderation/banned — Check ban status (used by feed pipeline)
+app.get('/api/moderation/banned', async (c) => handleCheckBanned(c.req.raw, c.env));
+// GET  /api/moderation/stats — Moderation statistics (admin only)
+app.get('/api/moderation/stats', async (c) => handleModerationStats(c.req.raw, c.env));
+
 // ─── External platform routes (DegenFeed Connect) ────────────────
 import {
   handleConnectCallback,
@@ -565,7 +593,7 @@ app.get('/api/profile/me', async (c) => handleProfileMe(c.req.raw, c.env));
 import { handleImageProxy } from './routes/image-proxy';
 
 app.get('/api/image-proxy', async (c) => handleImageProxy(c.req.raw, c.env));
-app.options('/api/image-proxy', async (c) => {
+app.options('/api/image-proxy', async (_c) => {
   return new Response(null, {
     status: 204,
     headers: {
