@@ -269,10 +269,15 @@ describe('handleProviderFeed', () => {
     expect(body.meta.protocol).toBe('bluesky');
   });
 
-  it('returns 400 for unknown provider', async () => {
+  it('returns honest empty result for unknown provider (bridge fallthrough)', async () => {
     const req = new Request('http://localhost/api/feed/unknown');
     const res = await handleProviderFeed(req, {}, 'unknown');
-    expect(res.status).toBe(400);
+    // Contract (2026-08): unknown providers fall through to BridgeFeedProvider
+    // and return an explicit empty payload with a notice — never demo content.
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as { data: unknown[]; meta: { notice?: string } };
+    expect(Array.isArray(body.data)).toBe(true);
+    expect(body.meta.notice).toBeTruthy();
   });
 });
 

@@ -215,22 +215,22 @@ async function bridgeFromZora(
   return genericBridgePublish(source, 'zora', target, ta, env);
 }
 
-async function bridgeMastodonToZora(s: SourceContent, _: Record<string, string>, _e: Env) {
+async function bridgeMastodonToZora(s: SourceContent, _auth: Record<string, string>, _e: Env) {
   return bridgeToZora(s, 'mastodon');
 }
-async function bridgeBlueskyToZora(s: SourceContent, _: Record<string, string>, _e: Env) {
+async function bridgeBlueskyToZora(s: SourceContent, _auth: Record<string, string>, _e: Env) {
   return bridgeToZora(s, 'bluesky');
 }
-async function bridgeNostrToZora(s: SourceContent, _: Record<string, string>, _e: Env) {
+async function bridgeNostrToZora(s: SourceContent, _auth: Record<string, string>, _e: Env) {
   return bridgeToZora(s, 'nostr');
 }
-async function bridgeFarcasterToZora(s: SourceContent, _: Record<string, string>, _e: Env) {
+async function bridgeFarcasterToZora(s: SourceContent, _auth: Record<string, string>, _e: Env) {
   return bridgeToZora(s, 'farcaster');
 }
-async function bridgeLensToZora(s: SourceContent, _: Record<string, string>, _e: Env) {
+async function bridgeLensToZora(s: SourceContent, _auth: Record<string, string>, _e: Env) {
   return bridgeToZora(s, 'lens');
 }
-async function bridgeTelegramToZora(s: SourceContent, _: Record<string, string>, _e: Env) {
+async function bridgeTelegramToZora(s: SourceContent, _auth: Record<string, string>, _e: Env) {
   return bridgeToZora(s, 'telegram');
 }
 async function bridgeZoraToMastodon(s: SourceContent, t: Record<string, string>, e: Env) {
@@ -295,35 +295,41 @@ export async function bridgeContent(input: BridgeContentInput, env: Env): Promis
     return { results: [], successCount: 0, failureCount: 1, startedAt, completedAt: Date.now() };
   }
 
-  for (const targetProtocol of targets) {
+  // Never bridge a protocol back to itself
+  const effectiveTargets = targets.filter((t) => t !== normalizeProtocol(input.sourceProtocol));
+
+  // Fetch source once, then publish to all targets in parallel — sequential
+  // publishing multiplies retry backoff across dead endpoints.
+  const source = await fetchSourceContent(
+    input.sourceProtocol,
+    input.sourceNativeId,
+    input.auth ?? {},
+    env,
+  );
+
+  const publishOne = async (targetProtocol: Protocol): Promise<void> => {
+    if (!source) {
+      results.push({
+        ok: false,
+        sourceProtocol: input.sourceProtocol,
+        sourceNativeId: input.sourceNativeId,
+        targetProtocol,
+        error: 'Failed to fetch source content',
+      });
+      return;
+    }
+    const handler = getBridgeHandler(input.sourceProtocol, targetProtocol);
+    if (!handler) {
+      results.push({
+        ok: false,
+        sourceProtocol: input.sourceProtocol,
+        sourceNativeId: input.sourceNativeId,
+        targetProtocol,
+        error: `No bridge handler for ${input.sourceProtocol}→${targetProtocol}`,
+      });
+      return;
+    }
     try {
-      const source = await fetchSourceContent(
-        input.sourceProtocol,
-        input.sourceNativeId,
-        input.auth ?? {},
-        env,
-      );
-      if (!source) {
-        results.push({
-          ok: false,
-          sourceProtocol: input.sourceProtocol,
-          sourceNativeId: input.sourceNativeId,
-          targetProtocol,
-          error: 'Failed to fetch source content',
-        });
-        continue;
-      }
-      const handler = getBridgeHandler(input.sourceProtocol, targetProtocol);
-      if (!handler) {
-        results.push({
-          ok: false,
-          sourceProtocol: input.sourceProtocol,
-          sourceNativeId: input.sourceNativeId,
-          targetProtocol,
-          error: `No bridge handler for ${input.sourceProtocol}→${targetProtocol}`,
-        });
-        continue;
-      }
       const result = await handler(source, input.auth ?? {}, env);
       results.push({
         ok: result.ok,
@@ -350,7 +356,9 @@ export async function bridgeContent(input: BridgeContentInput, env: Env): Promis
         error: err instanceof Error ? err.message : String(err),
       });
     }
-  }
+  };
+
+  await Promise.all(effectiveTargets.map(publishOne));
 
   const successCount = results.filter((r) => r.ok).length;
   return {

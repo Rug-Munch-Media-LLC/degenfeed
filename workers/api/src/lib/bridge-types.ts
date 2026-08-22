@@ -46,6 +46,7 @@ export interface BridgeReport {
 export interface SourceContent {
   text: string;
   title?: string;
+  authorName?: string;
   images?: MediaAttachment[];
   links?: string[];
   hashtags?: string[];

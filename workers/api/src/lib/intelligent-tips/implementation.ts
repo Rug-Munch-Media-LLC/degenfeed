@@ -32,7 +32,7 @@ export interface ProtocolCapability {
   protocol: string;
   nativeMethod: string | null;
   bridgeMethod: 'bridge' | 'link' | null;
-  routingStrategy: 'native' | 'bridge' | 'link';
+  routingStrategy: 'native' | 'bridge' | 'link' | 'frame';
   feeTier: 'free' | 'low' | 'medium' | 'high';
   methods: string[];
   supportsVisibilityControl: boolean;
@@ -324,7 +324,9 @@ export function generateTipSuggestions(input: AmountIntelligenceInput): AmountIn
     });
 
   while (amounts.length < 3) {
-    const next = Math.round((amounts[amounts.length - 1] + 0.25) * 100) / 100;
+    const last = amounts[amounts.length - 1];
+    if (last === undefined) break;
+    const next = Math.round((last + 0.25) * 100) / 100;
     if (seen.has(next)) break;
     amounts.push(next);
   }
@@ -341,8 +343,10 @@ export function generateTipSuggestions(input: AmountIntelligenceInput): AmountIn
     rationale: rationales[i] ?? '',
     recommended: i === 1 || amounts.length < 2,
   }));
-  if (!presets.some((p) => p.recommended))
-    presets[Math.floor(presets.length / 2)].recommended = true;
+  if (!presets.some((p) => p.recommended)) {
+    const mid = presets[Math.floor(presets.length / 2)] ?? presets[0];
+    if (mid) mid.recommended = true;
+  }
 
   // Fee estimates, cheapest first
   const feeEstimates: FeeEstimate[] = [

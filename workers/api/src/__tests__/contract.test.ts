@@ -432,8 +432,9 @@ describe('Contract: Invariant — error shape is consistent everywhere', () => {
     const { handleProviderFeed } = await import('../routes/feed');
     const req = new Request('http://localhost/api/feed/unknown');
     const res = await handleProviderFeed(req, {} as Env, 'unknown');
-    const body = (await res.json()) as Record<string, unknown>;
-    expect(body).toHaveProperty('error');
-    expect(typeof body.error).toBe('string');
+    const body = (await res.json()) as { data: unknown[]; meta: { notice?: string } };
+    // Honest-empty contract: unknown providers yield data:[] + meta.notice
+    expect(Array.isArray(body.data)).toBe(true);
+    expect(typeof body.meta.notice).toBe('string');
   });
 });

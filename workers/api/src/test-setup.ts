@@ -37,10 +37,16 @@ const edgeCache: Cache = {
   async add(_request: RequestInfo | URL): Promise<void> {},
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async addAll(_requests: RequestInfo[]): Promise<void> {},
-  async keys(_request?: RequestInfo | URL, _options?: CacheQueryOptions): Promise<ReadonlyArray<Request>> {
+  async keys(
+    _request?: RequestInfo | URL,
+    _options?: CacheQueryOptions,
+  ): Promise<ReadonlyArray<Request>> {
     return Array.from(edgeCacheStore.keys()).map((k) => new Request(k));
   },
-  async matchAll(_request?: RequestInfo | URL, _options?: CacheQueryOptions): Promise<ReadonlyArray<Response>> {
+  async matchAll(
+    _request?: RequestInfo | URL,
+    _options?: CacheQueryOptions,
+  ): Promise<ReadonlyArray<Response>> {
     return [];
   },
 };
