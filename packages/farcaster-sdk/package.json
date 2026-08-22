@@ -5,12 +5,6 @@
   "type": "module",
   "main": "./src/index.ts",
   "types": "./src/index.ts",
-  "exports": {
-    ".": "./src/index.ts",
-    "./video": "./src/video.ts",
-    "./engage": "./src/engage.ts",
-    "./frames-v2": "./src/frames-v2.ts"
-  },
   "scripts": {
     "typecheck": "tsc --noEmit",
     "test": "vitest run",

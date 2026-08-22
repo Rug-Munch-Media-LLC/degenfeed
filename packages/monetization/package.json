@@ -5,13 +5,6 @@
   "type": "module",
   "main": "./src/index.ts",
   "types": "./src/index.ts",
-  "exports": {
-    ".": "./src/index.ts",
-    "./tier-manager": "./src/TierManager.ts",
-    "./feature-gate": "./src/FeatureGate.ts",
-    "./stripe": "./src/StripeIntegration.ts",
-    "./types": "./src/types.ts"
-  },
   "scripts": {
     "typecheck": "tsc --noEmit",
     "test": "vitest run",

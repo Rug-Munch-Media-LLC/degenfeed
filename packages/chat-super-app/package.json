@@ -1,42 +1,11 @@
 {
   "name": "@degenfeed/chat-super-app",
   "version": "1.0.0",
-  "description": "DegenFeed Chat Super-App — Matrix Hub, Protocol Bridges, E2EE, Self-Destruct, Live Calls",
+  "description": "DegenFeed Chat Super-App \u2014 Matrix Hub, Protocol Bridges, E2EE, Self-Destruct, Live Calls",
   "type": "module",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
-  "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "default": "./dist/index.js"
-    },
-    "./matrix-hub": {
-      "types": "./dist/matrix-hub.d.ts",
-      "import": "./dist/matrix-hub.js"
-    },
-    "./protocol-bridges": {
-      "types": "./dist/protocol-bridges.d.ts",
-      "import": "./dist/protocol-bridges.js"
-    },
-    "./self-destruct": {
-      "types": "./dist/self-destruct.d.ts",
-      "import": "./dist/self-destruct.js"
-    },
-    "./calling": {
-      "types": "./dist/calling.d.ts",
-      "import": "./dist/calling.js"
-    },
-    "./chat-features": {
-      "types": "./dist/chat-features.d.ts",
-      "import": "./dist/chat-features.js"
-    },
-    "./key-verification": {
-      "types": "./dist/key-verification.d.ts",
-      "import": "./dist/key-verification.js"
-    }
-  },
   "files": [
     "dist"
   ],

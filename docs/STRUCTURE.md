@@ -340,7 +340,7 @@ degenfeed-web/
 │   │   ├── push-mirrors.sh
 │   │   └── radicle-setup.sh
 │   ├── perf/                             # Performance scripts
-│   │   └── load-test.js
+│   │   └── load-test.mjs
 │   ├── metrics/                          # Metrics scripts
 │   │   └── dora-track.sh
 │   ├── seed-data/                        # Seed data (JSON)

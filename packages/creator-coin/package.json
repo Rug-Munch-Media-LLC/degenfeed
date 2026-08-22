@@ -5,20 +5,6 @@
   "type": "module",
   "main": "./src/index.ts",
   "types": "./src/index.ts",
-  "exports": {
-    ".": "./src/index.ts",
-    "./client": "./src/client.ts",
-    "./evm": "./src/evm/client.ts",
-    "./solana": "./src/solana/client.ts",
-    "./cross-chain": "./src/cross-chain/bridge.ts",
-    "./live-stream": "./src/live-stream.ts",
-    "./bonding-curve": "./src/bonding-curve.ts",
-    "./fees": "./src/fees.ts",
-    "./types": "./src/types.ts",
-    "./zora-free": "./src/zora-free.ts",
-    "./lens-free": "./src/lens-free.ts",
-    "./farcaster-free": "./src/farcaster-free.ts"
-  },
   "scripts": {
     "typecheck": "tsc --noEmit",
     "build": "tsc",

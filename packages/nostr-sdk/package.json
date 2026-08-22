@@ -5,19 +5,6 @@
   "type": "module",
   "main": "./src/index.ts",
   "types": "./src/index.ts",
-  "exports": {
-    ".": "./src/index.ts",
-    "./event": "./src/event.ts",
-    "./nip19": "./src/nip19.ts",
-    "./nip05": "./src/nip05.ts",
-    "./nip46": "./src/nip46.ts",
-    "./relay": "./src/relay.ts",
-    "./nip53": "./src/nip53.ts",
-    "./nip71": "./src/nip71.ts",
-    "./profile": "./src/profile.ts",
-    "./relay-metadata": "./src/relay-metadata.ts",
-    "./nip29": "./src/nip29.ts"
-  },
   "scripts": {
     "typecheck": "tsc --noEmit",
     "test": "vitest run",

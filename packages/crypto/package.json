@@ -4,13 +4,6 @@
   "type": "module",
   "main": "./src/index.ts",
   "types": "./src/index.ts",
-  "exports": {
-    ".": "./src/index.ts",
-    "./e2e-messaging": "./src/e2e-messaging.ts",
-    "./crypto-seal": "./src/crypto-seal.ts",
-    "./kyber-kem": "./src/kyber-kem.ts",
-    "./mls-group": "./src/mls-group.ts"
-  },
   "dependencies": {
     "@degenfeed/types": "workspace:*",
     "@degenfeed/utils": "workspace:*"
