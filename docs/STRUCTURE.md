@@ -1,7 +1,7 @@
 # DegenFeed — Structural Organization
 
-> **Last updated:** 2026-07-24  
-> **Version:** 0.1.0  
+> **Last updated:** 2026-07-24
+> **Version:** 0.1.0
 > **Repository:** `git.rugmunch.io:RugMunchMedia/degenfeed-web`
 
 ---
