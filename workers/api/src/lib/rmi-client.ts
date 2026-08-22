@@ -31,11 +31,15 @@ export function getApiKey(env: Env): string {
 }
 
 async function rmiFetch(env: Env, path: string, opts: RequestInit = {}): Promise<Response> {
+  // Fail fast when no API key is configured — an unauthenticated call to the
+  // internal API would 401 anyway. Callers fall back to KV by design.
+  const apiKey = getApiKey(env);
+  if (!apiKey) throw new Error('RMI_API_KEY not configured — skipping backend session lookup');
   return fetch(`${API_BASE}${path}`, {
     ...opts,
     headers: {
       'Content-Type': 'application/json',
-      'X-API-Key': getApiKey(env),
+      'X-API-Key': apiKey,
       ...opts.headers,
     },
   });

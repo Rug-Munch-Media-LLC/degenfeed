@@ -130,9 +130,11 @@ export class CircuitBreaker {
   }
 
   /** Test/monitoring surface: { state, failureCount, lastError } */
-  async getStatus(
-    protocol: string,
-  ): Promise<{ state: string; failureCount: number; lastError: string | null }> {
+  async getStatus(protocol: string): Promise<{
+    state: CircuitState['state'];
+    failureCount: number;
+    lastError: string | null;
+  }> {
     const s = await this.getState(protocol);
     // An "open" circuit whose reset timeout has elapsed is effectively half-open
     if (s.state === 'open') {

@@ -49,13 +49,39 @@ function baseEnv(overrides: Partial<Env> = {}): Env {
   } as Env;
 }
 
-function mockFetchOnce(result: unknown): void {
-  vi.mocked(globalThis.fetch).mockResolvedValueOnce(
-    new Response(JSON.stringify(result), {
-      status: 200,
-      headers: { 'content-type': 'application/json' },
+// Explicit FIFO queue consumed by the fetch stub below. (mockResolvedValueOnce
+// proved unreliable across the worker's dynamic imports in this suite.)
+const fetchQueue: unknown[] = [];
+
+let queueInstalled = false;
+function ensureQueueConsumer(): void {
+  if (queueInstalled) return;
+  queueInstalled = true;
+  // vi.stubGlobal handles realm binding correctly under happy-dom
+  // (plain globalThis assignment can miss the realm the worker resolves).
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async (...args: unknown[]) => {
+      const next = fetchQueue.shift();
+      if (process.env.DEBUG_PAYMENT) {
+        const fs = await import('node:fs');
+        const err = new Error();
+        fs.appendFileSync(
+          '/tmp/opencode/payment-debug.txt',
+          `FETCH ${String(args[0])} queued=${JSON.stringify(next)}\n  stack=${(err.stack ?? '').split('\n').slice(2, 4).join(' | ')}\n`,
+        );
+      }
+      return new Response(JSON.stringify(next ?? {}), {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      });
     }),
   );
+}
+
+function mockFetchOnce(result: unknown): void {
+  ensureQueueConsumer();
+  fetchQueue.push(result);
 }
 
 function evmReceipt(status: string) {

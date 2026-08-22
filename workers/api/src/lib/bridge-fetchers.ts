@@ -74,6 +74,7 @@ export async function fetchFromActivityPub(
       const text = stripHtml(data.content || '');
       return {
         text,
+        authorName: data.account?.display_name,
         images: data.media_attachments
           ?.filter((m) => m.type === 'image')
           .map((m) => ({ url: m.url || '', alt: '' })),
@@ -347,13 +348,30 @@ export async function fetchFromZora(
     'zora',
     'fetchFromZora',
     async () => {
-      const res = await fetch(`https://api.zora.co/v2/collections?address=${nativeId}`, {
-        headers: { 'content-type': 'application/json' },
-      });
+      const [contract, tokenId] = nativeId.split(':');
+      const url = tokenId
+        ? `https://api.zora.co/v2/tokens?contract=${contract}&tokenId=${tokenId}`
+        : `https://api.zora.co/v2/collections?address=${contract}`;
+      const res = await fetch(url, { headers: { 'content-type': 'application/json' } });
       if (!res.ok) throw new Error(`Zora fetch failed: ${res.status}`);
       const data = (await res.json()) as {
+        tokens?: Array<{
+          token?: { name?: string; description?: string; image?: { url?: string } };
+        }>;
         data?: { collections?: Array<{ name?: string; description?: string }> };
       };
+      // Token shape (v2 tokens endpoint)
+      const token = data.tokens?.[0]?.token;
+      if (token) {
+        return {
+          text: token.description || token.name || '',
+          title: token.name,
+          images: token.image?.url ? [{ url: token.image.url, alt: token.name || '' }] : [],
+          links: [],
+          hashtags: [],
+        };
+      }
+      // Collection shape (fallback)
       const collection = data.data?.collections?.[0];
       if (!collection) throw new Error('Zora collection not found');
       return {
