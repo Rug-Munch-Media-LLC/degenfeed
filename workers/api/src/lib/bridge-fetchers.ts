@@ -423,3 +423,6 @@ function stripHtml(html: string): string {
     .replace(/\n{3,}/g, '\n\n')
     .trim();
 }
+
+// Re-export the protocol-dispatching reply fetcher (lives in bridge-replies)
+export { fetchReplies } from './bridge-replies';

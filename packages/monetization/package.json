@@ -22,5 +22,9 @@
     "@types/react": "^19.2.17",
     "typescript": "^5.9.3",
     "vitest": "^4.1.10"
+  },
+  "exports": {
+    ".": "./src/index.ts",
+    "./feature-gate": "./src/FeatureGate.tsx"
   }
 }

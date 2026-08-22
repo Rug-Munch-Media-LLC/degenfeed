@@ -49,6 +49,21 @@ vi.stubGlobal('AbortSignal', {
   timeout: vi.fn(() => ({ abort: false }) as AbortSignal),
 });
 
+// NostrLiveBridge opens REAL WebSocket relay pools (nostr-tools) — under fake
+// timers its EOSE timeout never fires and bridgeChat hangs. It is an external
+// API surface, so per this file's contract it is mocked.
+vi.mock('../lib/nostr-live-bridge', () => ({
+  NostrLiveBridge: class {
+    async fetchReactions() {
+      return [];
+    }
+    async getAnnouncement() {
+      return null;
+    }
+    async bridgeChat() {}
+  },
+}));
+
 // ─── CircuitBreaker Tests ──────────────────────────────────────────────────
 
 describe('CircuitBreaker', () => {
@@ -389,7 +404,9 @@ describe('SyncQueue', () => {
   });
 
   it('enqueues and processes actions', async () => {
-    const { enqueueSyncAction, processQueue } = await import('../lib/sync-queue');
+    const { enqueueSyncAction: _enqueueSyncAction, processQueue } = await import(
+      '../lib/sync-queue'
+    );
     mockKvPut.mockResolvedValue(undefined);
     mockKvGet.mockResolvedValue(
       JSON.stringify({
@@ -664,8 +681,12 @@ describe('RealTimeSync', () => {
   });
 
   it('manages protocol subscriptions', async () => {
-    const { subscribeToProtocol, unsubscribeFromProtocol, getSubscriptions, getSubscriptionCount } =
-      await import('../lib/realtime-sync');
+    const {
+      subscribeToProtocol,
+      unsubscribeFromProtocol,
+      getSubscriptions: _getSubscriptions,
+      getSubscriptionCount,
+    } = await import('../lib/realtime-sync');
 
     const identity = { id: 'pubkey-test', handle: 'test-user' };
 

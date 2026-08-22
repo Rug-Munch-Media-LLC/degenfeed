@@ -7,7 +7,7 @@
     "dev": "wrangler dev",
     "dev:node": "tsx src/serve.ts",
     "start:node": "node --import tsx src/serve.ts",
-    "build": "echo 'Cloudflare deploy not available in CI — skipping wrangler deploy'",
+    "build": "echo 'Cloudflare deploy not available in CI \u2014 skipping wrangler deploy'",
     "deploy": "wrangler deploy",
     "typecheck": "tsc --noEmit",
     "lint": "biome check src/",
@@ -44,7 +44,15 @@
     "@simplewebauthn/server": "^11.0.0",
     "@solana/web3.js": "^1.98.4",
     "hono": "^4.13.3",
-    "viem": "^2.55.8"
+    "viem": "^2.55.8",
+    "@degenfeed/auth": "workspace:*",
+    "@degenfeed/chat-super-app": "workspace:*",
+    "@degenfeed/creator-coin": "workspace:*",
+    "@degenfeed/cross-protocol-bridge": "workspace:*",
+    "@degenfeed/crypto": "workspace:*",
+    "@degenfeed/lemmy-sdk": "workspace:*",
+    "@degenfeed/pixelfed-sdk": "workspace:*",
+    "@degenfeed/realtime": "workspace:*"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.5.5",

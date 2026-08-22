@@ -25,5 +25,9 @@
     "@biomejs/biome": "^2.5.5",
     "typescript": "^5.9.3",
     "vitest": "^4.1.10"
+  },
+  "exports": {
+    ".": "./src/index.ts",
+    "./bluesky-invite-pool": "./src/bluesky-invite-pool.ts"
   }
 }

@@ -23,5 +23,16 @@
     "react": "^19.2.8",
     "typescript": "^5.9.3",
     "vitest": "^4.1.10"
+  },
+  "exports": {
+    ".": "./src/index.ts",
+    "./identity-resolver": "./src/identity-resolver.ts",
+    "./chat-discovery": "./src/chat-discovery.ts",
+    "./cross-protocol-router": "./src/cross-protocol-router.ts",
+    "./irc-bridge-client": "./src/irc-bridge-client.ts",
+    "./message-bridge": "./src/message-bridge.ts",
+    "./multi-device-sync": "./src/multi-device-sync.ts",
+    "./protocol-transports": "./src/protocol-transports.ts",
+    "./unified-inbox": "./src/unified-inbox.ts"
   }
 }

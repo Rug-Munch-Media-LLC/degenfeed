@@ -7,6 +7,7 @@
 import type { Hono } from 'hono';
 import { jsonResponse } from '../../response-helpers';
 import type { Env } from '../../types';
+import { handlePreferences } from '../preferences';
 
 export function registerCoreRoutes(app: Hono<{ Bindings: Env }>): void {
   // ─── Health endpoints ─────────────────────────────────────
@@ -52,4 +53,7 @@ export function registerCoreRoutes(app: Hono<{ Bindings: Env }>): void {
     const { handleDeployStatus } = await import('../deploy');
     return handleDeployStatus(c.req.raw, c.env);
   });
+
+  // User ranking preferences (KV-backed)
+  app.all('/api/preferences', async (c) => handlePreferences(c.req.raw, c.env));
 }
