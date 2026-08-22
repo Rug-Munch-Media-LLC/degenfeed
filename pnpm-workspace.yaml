@@ -63,3 +63,7 @@ overrides:
   "vite@5.4.21": "^6.4.3"
   "uuid@8.3.2": "^11.1.1"
   "uuid@9.0.1": "^11.1.1"
+
+  # GHSA-67mh-4wv8-2f99 / GHSA-g7r4-m6w7-qqqr: esbuild dev-server vulnerabilities
+  "esbuild@0.15.18": "^0.25.0"
+  "esbuild@0.27.7": "^0.28.1"
