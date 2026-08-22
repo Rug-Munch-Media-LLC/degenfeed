@@ -134,7 +134,7 @@ jobs:
       - name: Vitest run
         run: npx vitest run --reporter=verbose
       - name: Upload coverage
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v3
         if: always()
         with:
           name: vitest-coverage
@@ -217,7 +217,7 @@ jobs:
         with:
           format: cyclonedx-json
           output: sbom.spdx.json
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v3
         with:
           name: sbom
           path: sbom.spdx.json
@@ -238,7 +238,7 @@ jobs:
           output: 'trivy-results.sarif'
           exit-code: '1'
           severity: 'CRITICAL,HIGH'
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v3
         with:
           name: trivy-results
           path: trivy-results.sarif
@@ -367,7 +367,7 @@ jobs:
         run: pnpm --filter degenfeed-web test:e2e
         env:
           CI: true
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v3
         if: always()
         with:
           name: playwright-report
