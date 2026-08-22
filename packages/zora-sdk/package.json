@@ -23,5 +23,15 @@
   "devDependencies": {
     "typescript": "^5.9.3",
     "viem": "^2.55.8"
+  },
+  "exports": {
+    ".": "./src/index.ts",
+    "./evm": "./src/evm.ts",
+    "./solana": "./src/solana.ts",
+    "./zora-api": "./src/zora-api.ts",
+    "./earnings": "./src/earnings.ts",
+    "./marketplace": "./src/marketplace.ts",
+    "./nft-mint": "./src/nft-mint.ts",
+    "./video": "./src/video.ts"
   }
 }

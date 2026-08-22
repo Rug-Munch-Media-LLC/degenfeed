@@ -129,6 +129,30 @@ export class CircuitBreaker {
     return { ...state };
   }
 
+  /** Test/monitoring surface: { state, failureCount, lastError } */
+  async getStatus(
+    protocol: string,
+  ): Promise<{ state: string; failureCount: number; lastError: string | null }> {
+    const s = await this.getState(protocol);
+    // An "open" circuit whose reset timeout has elapsed is effectively half-open
+    if (s.state === 'open') {
+      const config = this.getEffectiveConfig(protocol);
+      const elapsed = Date.now() - (s.openedAt ?? Date.now());
+      if (elapsed >= config.resetTimeout) {
+        return { state: 'half-open', failureCount: s.failureCount, lastError: s.lastError };
+      }
+    }
+    return { state: s.state, failureCount: s.failureCount, lastError: s.lastError };
+  }
+
+  async resetAll(): Promise<string[]> {
+    const protocols = [...this.states.keys()];
+    for (const p of protocols) {
+      this.reset(p);
+    }
+    return protocols;
+  }
+
   configure(protocol: string, config: CircuitBreakerConfig): void {
     this.configs.set(protocol, { ...DEFAULT_CONFIG, ...config });
   }

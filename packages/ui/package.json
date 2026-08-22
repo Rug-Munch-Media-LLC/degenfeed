@@ -29,5 +29,10 @@
     "@types/react-dom": "^19.2.3",
     "typescript": "^5.9.3",
     "vitest": "^4.1.10"
+  },
+  "exports": {
+    ".": "./src/index.ts",
+    "./server": "./src/server.ts",
+    "./protocol-shell": "./src/protocol-shell/index.ts"
   }
 }

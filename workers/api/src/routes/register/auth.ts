@@ -16,6 +16,7 @@
  */
 
 import type { Hono } from 'hono';
+import { handleSessionSignOut, handleSessionVerify } from '../../session';
 import type { Env } from '../../types';
 import {
   handleGtSAuthorize,
@@ -80,5 +81,8 @@ export function registerAuthRoutes(app: Hono<{ Bindings: Env }>): void {
 
   // ─── Warpcast (Farcaster) ───────────────────────────────────
   app.get('/api/auth/warpcast/authorize', async (c) => handleWarpcastAuthorize(c.req.raw, c.env));
+  // Session cookie lifecycle (GET verify / POST sign-out)
+  app.get('/api/auth/session', async (c) => handleSessionVerify(c.req.raw, c.env));
+  app.post('/api/auth/signout', async (c) => handleSessionSignOut(c.req.raw, c.env));
   app.post('/api/auth/warpcast/callback', async (c) => handleWarpcastCallback(c.req.raw, c.env));
 }
