@@ -257,20 +257,20 @@ jobs:
           echo "DOCKER_BUILDKIT=1" >> $GITHUB_ENV
           echo "BUILDKIT_PROGRESS=plain" >> $GITHUB_ENV
       - name: Build Docker image
-        run: docker build -t registry.rugmunch.io/degenfeed-web:${{ github.sha }} ./apps/web
+        run: docker build -t ${CI_REGISTRY:-registry.rugmunch.io}/degenfeed-web:${{ github.sha }} ./apps/web
       - name: Push to registry
-        run: docker push registry.rugmunch.io/degenfeed-web:${{ github.sha }}
+        run: docker push ${CI_REGISTRY:-registry.rugmunch.io}/degenfeed-web:${{ github.sha }}
       - name: Sign image with keyless (OIDC)
         run: |
-          cosign sign --yes registry.rugmunch.io/degenfeed-web:${{ github.sha }}
+          cosign sign --yes ${CI_REGISTRY:-registry.rugmunch.io}/degenfeed-web:${{ github.sha }}
         env:
           COSIGN_EXPERIMENTAL: "1"
       - name: Verify signature
         run: |
           cosign verify \
-            --certificate-identity "https://git.rugmunch.io/RugMunchMedia/degenfeed-web/.forgejo/workflows/ci.yml@refs/heads/main" \
+            --certificate-identity "${CI_OIDC_ISSUER:-https://git.rugmunch.io}/RugMunchMedia/degenfeed-web/.forgejo/workflows/ci.yml@refs/heads/main" \
             --certificate-oidc-issuer "https://git.rugmunch.io" \
-            registry.rugmunch.io/degenfeed-web:${{ github.sha }}
+            ${CI_REGISTRY:-registry.rugmunch.io}/degenfeed-web:${{ github.sha }}
         env:
           COSIGN_EXPERIMENTAL: "1"
 

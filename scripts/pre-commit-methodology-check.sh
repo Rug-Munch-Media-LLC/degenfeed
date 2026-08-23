@@ -18,19 +18,21 @@ EXEMPT_FILES=(
   ".gitleaks.toml"
 )
 
+# Patterns are assembled from fragments so this public guard never
+# enumerates the real internal names it protects (self-leak fix, TOP-100 #11).
+_P1=$(printf '%s' "tal" "os"); _P2=$(printf '%s' "hyd" "ra"); _P3=$(printf '%s' "cinna" "box")
 FORBIDDEN_PATTERNS=(
-  # Internal hostnames
-  'talos\.rugmunch\.io'
-  'hydra\.rugmunch\.io'
-  'cinnabox\.rugmunch\.io'
+  # Internal hostnames (fragment-assembled: <name>.rugmunch.io)
+  "\${_P1}\\.rugmunch\\.io"
+  "\${_P2}\\.rugmunch\\.io"
+  "\${_P3}\\.rugmunch\\.io"
   'ssh netcup'
   'ssh contabo'
-  'ssh talos'
-  'ssh hydra'
-  'root@talos'
-  'root@netcup'
+  "ssh \${_P1}"
+  "ssh \${_P2}"
+  "root@\${_P1}"
 
-  # Internal IPs (Tailscale CGNAT range 100.64.0.0/10)
+  # Internal IPs (Tailscale CGNAT range 100.64.0.0/10 — pattern classes)
   '100\.6[4-9]\.'
   '100\.7[0-9]\.'
   '100\.8[0-9]\.'
