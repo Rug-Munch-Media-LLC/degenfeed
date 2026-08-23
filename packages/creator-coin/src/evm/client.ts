@@ -181,10 +181,8 @@ export class CreatorCoinEVMClient {
     const platformFeeReceiver = opts.platformFeeReceiver ?? this.walletClient.account?.address;
     if (!platformFeeReceiver) throw new Error('platformFeeReceiver required (or configure wallet)');
 
-    const wormholeCore =
-      opts.wormholeCore ?? '0x0000000000000000000000000000000000000000';
-    const wormholeRelayer =
-      opts.wormholeRelayer ?? '0x0000000000000000000000000000000000000000';
+    const wormholeCore = opts.wormholeCore ?? '0x0000000000000000000000000000000000000000';
+    const wormholeRelayer = opts.wormholeRelayer ?? '0x0000000000000000000000000000000000000000';
     const chainId = opts.chainId ?? 8453n; // Base
 
     const labels_ = [1]; // WalletLabel.Creator
@@ -287,6 +285,35 @@ export class CreatorCoinEVMClient {
     };
   }
 
+  // ─── Quotes (server-side slippage protection) ────────────────────────────
+
+  /**
+   * Quote tokens received for `amountIn` wei on a BUY, straight from the
+   * bonding-curve view (`getTokenAmount`). Pre-fee reference value — callers
+   * apply their own slippage margin before passing `minTokensOut`.
+   */
+  async quoteBuy(tokenAddress: string, amountIn: bigint): Promise<bigint> {
+    return (await this.publicClient.readContract({
+      address: tokenAddress as Address,
+      abi: DEGENFEED_COIN_V4_READ_ABI,
+      functionName: 'getTokenAmount' as never,
+      args: [amountIn],
+    })) as bigint;
+  }
+
+  /**
+   * Quote wei received for selling `amountIn` tokens (`getEthAmount` view).
+   * Pre-fee reference value for computing `minOut` with a slippage margin.
+   */
+  async quoteSell(tokenAddress: string, amountIn: bigint): Promise<bigint> {
+    return (await this.publicClient.readContract({
+      address: tokenAddress as Address,
+      abi: DEGENFEED_COIN_V4_READ_ABI,
+      functionName: 'getEthAmount' as never,
+      args: [amountIn],
+    })) as bigint;
+  }
+
   // ─── Queries ─────────────────────────────────────────────────────────────
 
   async getTokenInfo(tokenAddress: string): Promise<TokenInfo> {
@@ -322,24 +349,39 @@ export class CreatorCoinEVMClient {
         functionName: functionName as never,
       }) as Promise<T>;
 
-    const [name, symbol, totalSupply, price, progressBps, phase, totalRaised, uniqueBuyers, graduated, creator, platformFeeReceiver, createdAt, decimals, isPreBonding, preBondingEnd] =
-      await Promise.all([
-        read<string>('name'),
-        read<string>('symbol'),
-        read<bigint>('totalSupply'),
-        read<bigint>('getCurrentPrice'),
-        read<bigint>('getProgressBps'),
-        read<[bigint, string]>('getCurrentPhase'),
-        read<bigint>('totalRaised'),
-        read<bigint>('uniqueBuyers'),
-        read<boolean>('graduated'),
-        read<string>('creator'),
-        read<string>('platformFeeReceiver'),
-        read<bigint>('createdAt'),
-        read<number>('decimals'),
-        read<boolean>('isPreBonding'),
-        read<bigint>('preBondingEnd'),
-      ]);
+    const [
+      name,
+      symbol,
+      totalSupply,
+      price,
+      progressBps,
+      phase,
+      totalRaised,
+      uniqueBuyers,
+      graduated,
+      creator,
+      platformFeeReceiver,
+      createdAt,
+      decimals,
+      isPreBonding,
+      preBondingEnd,
+    ] = await Promise.all([
+      read<string>('name'),
+      read<string>('symbol'),
+      read<bigint>('totalSupply'),
+      read<bigint>('getCurrentPrice'),
+      read<bigint>('getProgressBps'),
+      read<[bigint, string]>('getCurrentPhase'),
+      read<bigint>('totalRaised'),
+      read<bigint>('uniqueBuyers'),
+      read<boolean>('graduated'),
+      read<string>('creator'),
+      read<string>('platformFeeReceiver'),
+      read<bigint>('createdAt'),
+      read<number>('decimals'),
+      read<boolean>('isPreBonding'),
+      read<bigint>('preBondingEnd'),
+    ]);
 
     return {
       address: tokenAddress,

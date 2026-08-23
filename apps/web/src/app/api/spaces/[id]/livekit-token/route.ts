@@ -1,6 +1,19 @@
+import { createHmac } from 'node:crypto';
 import { NextResponse } from 'next/server';
+import { getSessionFromRequest, requireSession } from '../../../_auth';
 
 export const dynamic = 'force-dynamic';
+
+/**
+ * POST /api/spaces/[id]/livekit-token
+ *
+ * Issues a REAL LiveKit access token (HS256 JWT per LiveKit spec) for the
+ * authenticated session holder. Returns 503 when LiveKit is not configured —
+ * never a fake placeholder token (TOP-100 #3).
+ *
+ * LiveKit token format: standard JWT with
+ *   iss = API key, sub/jti = identity, video grant claims in `video`.
+ */
 
 interface LiveKitConfig {
   apiKey?: string;
@@ -16,46 +29,86 @@ function getLiveKitConfig(): LiveKitConfig {
   };
 }
 
-/**
- * POST /api/spaces/[id]/livekit-token
- * Generates a LiveKit access token for the participant.
- * Body: { userId, displayName, canPublish (optional) }
- */
+function b64url(input: Buffer | string): string {
+  return Buffer.from(input)
+    .toString('base64')
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=+$/, '');
+}
+
+function signLivekitJwt(
+  apiKey: string,
+  apiSecret: string,
+  identity: string,
+  room: string,
+  canPublish: boolean,
+  ttlSeconds = 3600,
+): string {
+  const now = Math.floor(Date.now() / 1000);
+  const header = b64url(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
+  const payload = b64url(
+    JSON.stringify({
+      iss: apiKey,
+      sub: identity,
+      jti: identity,
+      exp: now + ttlSeconds,
+      nbf: now - 10,
+      video: {
+        roomJoin: true,
+        room,
+        canPublish,
+        canSubscribe: true,
+        canPublishData: true,
+      },
+    }),
+  );
+  const signature = createHmac('sha256', apiSecret).update(`${header}.${payload}`).digest();
+  return `${header}.${payload}.${b64url(signature)}`;
+}
+
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const authError = await requireSession(request);
+  if (authError) return authError;
+
   const { id } = await params;
   const config = getLiveKitConfig();
 
   if (!config.apiKey || !config.apiSecret) {
-    // No LiveKit configured — return placeholder for dev
-    return NextResponse.json({
-      token: `dev-token-${id}-${Date.now()}`,
-      room: `space-${id}`,
-      region: 'dev',
-    });
+    // No LiveKit configured — fail honestly instead of issuing a dead token.
+    return NextResponse.json(
+      {
+        error: 'LiveKit is not configured — set LIVEKIT_API_KEY / LIVEKIT_API_SECRET',
+        code: 'LIVEKIT_NOT_CONFIGURED',
+      },
+      { status: 503 },
+    );
   }
 
   try {
     const body = await request.json();
-    const { userId } = body;
-    // In production, generate a proper LiveKit JWT:
-    // import { AccessToken } from 'livekit-server-sdk';
-    // const at = new AccessToken(config.apiKey, config.apiSecret, {
-    //   identity: userId || 'anon',
-    //   name: displayName || 'Listener',
-    // });
-    // at.addGrant({
-    //   roomJoin: true,
-    //   room: `space-${id}`,
-    //   canPublish: canPublish ?? false,
-    //   canSubscribe: true,
-    // });
-    // const token = at.toJwt();
+    const { displayName, canPublish } = body as {
+      userId?: string;
+      displayName?: string;
+      canPublish?: boolean;
+    };
 
-    const token = `livekit-${config.apiKey}-${id}-${userId}-${Date.now()}`;
+    const session = await getSessionFromRequest(request);
+    const identity = session?.address ?? 'anon';
+
+    const token = signLivekitJwt(
+      config.apiKey,
+      config.apiSecret,
+      identity,
+      `space-${id}`,
+      canPublish ?? false,
+    );
 
     return NextResponse.json({
       token,
       room: `space-${id}`,
+      identity,
+      displayName: displayName || 'Listener',
       region: config.wsUrl?.match(/wss:\/\/([^.]+)/)?.[1] ?? 'us',
     });
   } catch {

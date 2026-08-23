@@ -46,13 +46,22 @@ export function CreatorCoinDashboard({
     }) => {
       setLoading(true);
       try {
-        // In production: call API route that uses CreatorCoinClient
-        const res = await fetch('/api/creator-coin/deploy', {
+        // Real deployment path (proxy to Workers API). The former mock route
+        // returned a fabricated txHash and was removed 2026-08-23 (TOP-100 #4).
+        const res = await fetch('/api/creator/coin/deploy', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ...config, creator, crossChain: config.crossChain }),
+          body: JSON.stringify({
+            name: config.name,
+            symbol: config.symbol,
+            creatorAllocation: config.creatorAllocationBps / 100,
+            creator,
+          }),
         });
-        const data: DeployResult = await res.json();
+        const data: DeployResult & { error?: string } = await res.json();
+        if (!res.ok || !data?.primaryAddress) {
+          throw new Error(data?.error ?? 'Deployment failed — no contract address returned');
+        }
 
         const newToken: TokenInfo = {
           address: data.primaryAddress,
