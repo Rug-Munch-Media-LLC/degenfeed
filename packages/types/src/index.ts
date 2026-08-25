@@ -819,13 +819,13 @@ export interface Env {
   STREAMS?: KVNamespaceLike;
   SEEN?: KVNamespaceLike;
   BOOKMARKS?: KVNamespaceLike;
-  VIDEO_STORAGE_BINDING?: KVNamespaceLike;
   // ─── Common string secrets / config ────────────────────────────────────────
   AUTH_SECRET?: string;
   NOSTR_PRIVATE_KEY?: string;
   BSKY_ACCESS_TOKEN?: string;
+  /** Lens protocol API access token */
+  LENS_ACCESS_TOKEN?: string;
   BSKY_DID?: string;
   TELEGRAM_BOT_TOKEN?: string;
   GOTOSOCIAL_INSTANCE_URL?: string;
-  [key: string]: unknown;
 }

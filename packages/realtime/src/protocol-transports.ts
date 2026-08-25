@@ -584,7 +584,7 @@ export class ProtocolTransports {
         return { protocol, ok: false, error: 'No Mastodon identity', attemptedAt: start };
       }
 
-      const accessToken = env.GTS_ACCESS_TOKEN || env.MASTODON_ACCESS_TOKEN;
+      const accessToken = env.MASTODON_ACCESS_TOKEN;
       const instance =
         env.GTS_INSTANCE_URL || env.MASTODON_INSTANCE_URL || 'https://social.degenfeed.xyz';
 

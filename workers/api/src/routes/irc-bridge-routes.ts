@@ -23,7 +23,7 @@ import type { Env } from '../types';
 async function getIrcClient(env: Env) {
   const { IrcBridgeClient } = await import('@degenfeed/realtime/irc-bridge-client');
   const homeserverUrl = String(env.MATRIX_INSTANCE_URL || 'https://matrix.degenfeed.xyz');
-  const accessToken = String(env.MATRIX_ACCESS_TOKEN || env.CACHE_ACCESS_TOKEN || '');
+  const accessToken = String(env.MATRIX_ACCESS_TOKEN || '');
 
   return new IrcBridgeClient({
     homeserverUrl,
@@ -75,7 +75,7 @@ export async function handleIrcChannels(request: Request, env: Env): Promise<Res
       channels,
       total: channels.length,
     });
-  } catch (err) {
+  } catch {
     return jsonResponse({ ok: false, error: 'Failed to list channels' }, 500);
   }
 }
@@ -161,7 +161,7 @@ export async function handleIrcLeave(request: Request, env: Env): Promise<Respon
     await client.leaveChannel(alias);
 
     return noCacheJsonResponse({ ok: true, left: true });
-  } catch (err) {
+  } catch {
     return jsonResponse({ ok: false, error: 'Failed to leave channel' }, 502);
   }
 }
@@ -198,7 +198,7 @@ export async function handleIrcSend(request: Request, env: Env): Promise<Respons
     }
 
     return noCacheJsonResponse({ ok: true, sent: true });
-  } catch (err) {
+  } catch {
     return jsonResponse({ ok: false, error: 'Failed to send message' }, 502);
   }
 }

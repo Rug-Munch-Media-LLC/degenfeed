@@ -407,7 +407,7 @@ export async function handleMakePermanent(request: Request, env: Env): Promise<R
 
     // Arweave permanence requires a funded Irys node.
     // Check if the ARWEAVE_WALLET env var is configured to determine availability.
-    const arweaveConfigured = !!env.ARWEAVE_WALLET || !!env.IRYS_NODE_URL;
+    const arweaveConfigured = !!env.ARWEAVE_WALLET_KEY || !!env.IRYS_NODE_URL;
     const backend = arweaveConfigured ? 'arweave' : 'ipfs';
 
     if (arweaveConfigured) {

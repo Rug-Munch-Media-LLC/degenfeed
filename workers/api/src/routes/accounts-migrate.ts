@@ -51,6 +51,8 @@ export interface MigrationJob {
   totalItems: number;
   processedItems: number;
   errors: string[];
+  /** Terminal failure message (set when status becomes 'failed') */
+  error?: string;
   startedAt: number;
   completedAt?: number;
   result?: {
@@ -610,7 +612,7 @@ async function migrateBlueskyImport(
 }
 
 async function migrateBlueskyExport(
-  wallet: string,
+  _wallet: string,
   walletLower: string,
   targetPds: string,
   authToken: string | undefined,
@@ -663,7 +665,7 @@ async function migrateBlueskyExport(
 }
 
 async function migrateMastodonImport(
-  wallet: string,
+  _wallet: string,
   walletLower: string,
   sourceInstance: string,
   authToken: string | undefined,
@@ -728,7 +730,7 @@ async function migrateMastodonImport(
 }
 
 async function migrateMastodonExport(
-  wallet: string,
+  _wallet: string,
   walletLower: string,
   targetInstance: string,
   authToken: string | undefined,
@@ -773,7 +775,7 @@ async function migrateMastodonExport(
 }
 
 async function migrateFarcasterImport(
-  wallet: string,
+  _wallet: string,
   walletLower: string,
   sourceHub: string,
   _authToken: string | undefined,
@@ -827,7 +829,7 @@ async function migrateFarcasterImport(
 }
 
 async function migrateFarcasterExport(
-  wallet: string,
+  _wallet: string,
   _walletLower: string,
   targetHub: string,
   _authToken: string | undefined,
@@ -844,7 +846,7 @@ async function migrateFarcasterExport(
 }
 
 async function genericImport(
-  wallet: string,
+  _wallet: string,
   walletLower: string,
   protocol: MigrationProtocol,
   sourceInstance: string,
@@ -904,9 +906,9 @@ async function genericImport(
 }
 
 async function genericExport(
-  wallet: string,
+  _wallet: string,
   walletLower: string,
-  protocol: MigrationProtocol,
+  _protocol: MigrationProtocol,
   targetInstance: string,
   authToken: string | undefined,
   env: Env,

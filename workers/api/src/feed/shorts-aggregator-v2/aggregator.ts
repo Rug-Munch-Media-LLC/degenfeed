@@ -184,7 +184,7 @@ export class ShortsAggregatorV2 {
 
   private async fetchOwncastClips(limit: number): Promise<AggregatedShort[]> {
     const shorts: AggregatedShort[] = [];
-    const owncastUrl = this.env.OWCAST_INSTANCE_URL || 'https://owncast.degenfeed.xyz';
+    const owncastUrl = this.env.OWNCAST_INSTANCE_URL || 'https://owncast.degenfeed.xyz';
 
     try {
       const statusRes = await fetch(`${owncastUrl}/api/status`);
