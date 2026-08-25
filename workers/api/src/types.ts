@@ -472,6 +472,17 @@ export interface Env {
   ZORA_VIDEO_CONTRACT?: string;
   /** CDN base URL for short video content */
   DEGENFEED_CDN_URL?: string;
+  /** Legacy S3-compatible object storage (used for Backblaze B2 via its S3 API) */
+  S3_ENDPOINT?: string;
+  S3_ACCESS_KEY_ID?: string;
+  S3_SECRET_ACCESS_KEY?: string;
+  S3_BUCKET?: string;
+  /**
+   * Optional CF-native R2 binding. NOTE: degenfeed production storage is
+   * Backblaze B2 (via the S3_* vars above); this binding stays for
+   * Cloudflare-native deployments only.
+   */
+  R2_BUCKET?: R2Bucket;
 
   // ─── Video Platform Wrappers ────────────────────────────────────────
   /** Zora API relayer for on-chain operations */

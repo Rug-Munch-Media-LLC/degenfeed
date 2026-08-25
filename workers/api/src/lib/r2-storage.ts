@@ -11,8 +11,8 @@
  * but adds lifecycle management, presigned URL generation, and tier support.
  */
 
-import type { Env } from '../types';
 import { log } from '../logger';
+import type { Env } from '../types';
 
 // ─── Types ──────────────────────────────────────────────────────────────
 
@@ -88,8 +88,8 @@ const KV_PREFIX = 'r2:object:';
  * Uses the custom domain if configured, otherwise falls back to R2.dev.
  */
 export function getR2CDNUrl(env: Env, key: string): string {
-  if (env.CDN_URL) {
-    return `${env.CDN_URL.replace(/\/$/, '')}/${key}`;
+  if (env.DEGENFEED_CDN_URL) {
+    return `${env.DEGENFEED_CDN_URL.replace(/\/$/, '')}/${key}`;
   }
   return `https://video.degenfeed.xyz/storage/${key}`;
 }
@@ -498,7 +498,12 @@ interface R2Bucket {
       customMetadata?: Record<string, string>;
     },
   ): Promise<void>;
-  get(key: string): Promise<{ body: ReadableStream; size: number } | null>;
+  get(key: string): Promise<{
+    body: ReadableStream;
+    size: number;
+    etag: string;
+    httpMetadata?: { contentType?: string };
+  } | null>;
   head(key: string): Promise<{
     key: string;
     size: number;

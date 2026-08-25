@@ -207,6 +207,7 @@ export async function getCrossProtocolLeaderboard(
 
     for (let i = 0; i < Math.min(holders.length, limit); i++) {
       const h = holders[i];
+      if (!h) continue;
       const identities = await getHolderIdentities(h.wallet, env);
 
       // Count active protocols (those with recent activity)
@@ -215,7 +216,7 @@ export async function getCrossProtocolLeaderboard(
       // Best display name and avatar
       const displayName =
         identities.find((id) => id.displayName)?.displayName ||
-        h.wallet.slice(0, 6) + '...' + h.wallet.slice(-4);
+        `${h.wallet.slice(0, 6)}...${h.wallet.slice(-4)}`;
       const avatarUrl = identities.find((id) => id.avatarUrl)?.avatarUrl;
 
       enriched.push({
@@ -305,7 +306,7 @@ export async function getHolderBadges(
 
   // Badge: OG Collector — if first purchase was early
   const holder = await getHolderRecord(walletAddress, coinAddress, env);
-  if (holder && holder.firstPurchaseAt) {
+  if (holder?.firstPurchaseAt) {
     const daysSince = (Date.now() - holder.firstPurchaseAt) / 86400000;
     if (daysSince > 30) {
       badges.push({
@@ -366,7 +367,7 @@ export async function recordHolderPurchase(
   balance: string,
   usdValue: number,
   supplyPercent: number,
-  protocols: string[],
+  _protocols: string[],
   env: Env,
 ): Promise<void> {
   if (!env.CACHE) return;
@@ -380,7 +381,7 @@ export async function recordHolderPurchase(
       (h) => h.wallet.toLowerCase() === walletAddress.toLowerCase(),
     );
 
-    if (existing >= 0) {
+    if (existing >= 0 && holders[existing]) {
       holders[existing].balance = balance;
       holders[existing].usdValue = usdValue;
       holders[existing].supplyPercent = supplyPercent;
