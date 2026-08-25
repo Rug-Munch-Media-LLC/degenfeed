@@ -256,7 +256,7 @@ These are protocols DegenFeed **should** consider but are not in any architectur
 
 ### Fix #1: Deploy Bridgy Fed 🔴
 ```bash
-cd /path/to/degenfeed-web
+cd /path/to/degenfeed
 docker compose -f infra/docker/bridgy-fed-compose.yml up -d --build
 # Verify: curl -s https://bridgy.degenfeed.xyz/health
 ```

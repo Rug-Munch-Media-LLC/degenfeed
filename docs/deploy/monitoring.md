@@ -66,7 +66,7 @@ Template config at `deploy/monitoring/prometheus.yml`:
 
 ```yaml
 scrape_configs:
-  - job_name: "degenfeed-web"
+  - job_name: "degenfeed"
     static_configs:
       - targets: ["localhost:3000"]
     metrics_path: "/api/metrics"
@@ -82,7 +82,7 @@ For production, set up a cron job:
 
 ```bash
 # Check every 5 minutes
-*/5 * * * * /path/to/degenfeed-web/scripts/health-check.sh || curl -X POST https://hooks.slack.com/... 
+*/5 * * * * /path/to/degenfeed/scripts/health-check.sh || curl -X POST https://hooks.slack.com/... 
 ```
 
 ## Adding New Monitoring

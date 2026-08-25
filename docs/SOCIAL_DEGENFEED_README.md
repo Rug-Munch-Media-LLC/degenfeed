@@ -82,4 +82,4 @@ Reports are handled by the admin team at Rug Munch Media LLC. To report abusive 
 | App Status | [status.degenfeed.xyz](https://status.degenfeed.xyz) |
 | Report an issue | admin@degenfeed.xyz |
 | Security | security@degenfeed.xyz |
-| Source Code | [git.rugmunch.io/RugMunchMedia/degenfeed-web](https://git.rugmunch.io/RugMunchMedia/degenfeed-web) |
+| Source Code | [git.rugmunch.io/RugMunchMedia/degenfeed](https://git.rugmunch.io/RugMunchMedia/degenfeed) |

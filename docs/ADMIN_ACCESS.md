@@ -19,7 +19,7 @@
 8. [Activity Relay (Fediverse Relay)](#8-activity-relay)
 9. [Nostr Relay](#9-nostr-relay)
 10. [Farcaster](#10-farcaster)
-11. [DegenFeed Web App](#11-degenfeed-web-app)
+11. [DegenFeed Web App](#11-degenfeed-app)
 12. [Emergency Procedures](#12-emergency-procedures)
 13. [Gopass Setup](#13-gopass-setup)
 
@@ -384,7 +384,7 @@ curl -s http://127.0.0.1:8085/ 2>/dev/null
 | **Hubble container** | `degenfeed-hubble` |
 | **Hubble REST API** | `http://127.0.0.1:2281` |
 | **Hubble gRPC API** | `127.0.0.1:2283` (NOT publicly reachable — prevents diff sync) |
-| **Env file (bridge)** | `/path/to/degenfeed-web/bridge/.env` |
+| **Env file (bridge)** | `/path/to/degenfeed/bridge/.env` |
 
 ### Provider Fallback Chain
 
@@ -404,7 +404,7 @@ The bridge Farcaster provider (`bridge/src/providers/farcaster.ts`) uses this fa
 1. **Configure the Hubble bot signer:**
    ```bash
    # Add the bot credentials to bridge .env
-   # Edit /path/to/degenfeed-web/bridge/.env and set:
+   # Edit /path/to/degenfeed/bridge/.env and set:
    FARCASTER_BOT_HUB_URL=http://127.0.0.1:2281
    FARCASTER_BOT_FID=your_bot_fid
    FARCASTER_BOT_SIGNER_KEY=your_signer_private_key_hex
@@ -469,7 +469,7 @@ To fix Hubble sync, the RPC port must be accessible:
 |-------|-------|
 | **Service** | app.degenfeed.xyz |
 | **Admin wallets** | `0x1e3ac01d0fdb976179790bdd02823196a92705c9` |
-| **Container** | `degenfeed-web` |
+| **Container** | `degenfeed` |
 | **Local port** | `127.0.0.1:3100` |
 
 ### Access
@@ -554,7 +554,7 @@ docker start degenfeed-lemmy
 docker start peertube-peertube-1
 docker start degenfeed-nostr-relay
 docker start degenfeed-redlib
-docker start degenfeed-web
+docker start degenfeed
 docker start degenfeed-hubble
 docker start owncast-owncast-1
 ```

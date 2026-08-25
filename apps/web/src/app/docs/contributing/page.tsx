@@ -77,8 +77,8 @@ export default function ContributingPage() {
 
       <H3 id="clone-and-install">Clone and Install</H3>
       <CodeBlock lang="bash">{`# Clone the repository
-git clone https://git.rugmunch.io/RugMunchMedia/degenfeed-web.git
-cd degenfeed-web
+git clone https://git.rugmunch.io/RugMunchMedia/degenfeed.git
+cd degenfeed
 
 # Install all dependencies (monorepo)
 pnpm install
@@ -397,7 +397,7 @@ pnpm typecheck && pnpm lint && pnpm test`}</CodeBlock>
         </p>
         <div className="flex flex-wrap justify-center gap-3">
           <a
-            href="https://git.rugmunch.io/RugMunchMedia/degenfeed-web"
+            href="https://git.rugmunch.io/RugMunchMedia/degenfeed"
             target="_blank"
             rel="noopener noreferrer"
             className="btn-secondary text-xs"
@@ -405,7 +405,7 @@ pnpm typecheck && pnpm lint && pnpm test`}</CodeBlock>
             View on Forgejo
           </a>
           <a
-            href="https://codeberg.org/degenfeed/degenfeed-web"
+            href="https://codeberg.org/degenfeed/degenfeed"
             target="_blank"
             rel="noopener noreferrer"
             className="btn-secondary text-xs"

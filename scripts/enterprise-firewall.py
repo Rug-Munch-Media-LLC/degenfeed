@@ -28,12 +28,12 @@ BLOCKED CONTENT CATEGORIES:
   HIGH_ENTROPY — Suspicious high-entropy strings
 """
 
-import subprocess
-import sys
-import re
-import os
 import hashlib
 import math
+import os
+import re
+import subprocess
+import sys
 from pathlib import Path
 
 # ─── L1: CONTENT FINGERPRINTING ──────────────────────────────────────────────
@@ -60,7 +60,7 @@ def simhash(text, bits=64):
 
 
 def hamming_distance(a, b):
-    return bin(a ^ b).count("1")
+    return (a ^ b).bit_count()
 
 
 # Proprietary function fingerprints — generated from our private codebase
@@ -214,8 +214,11 @@ def check_canary_tokens(content):
         if pattern in content:
             findings.append(
                 (
-                    f"🚨 CANARY BREACH: Token from {location} ({date}) found in public code. "
-                    f"THIS IS A SECURITY INCIDENT.",
+                    (
+                        "🚨 CANARY BREACH: Token from "
+                        f"{location} ({date}) found in public code. "
+                        "THIS IS A SECURITY INCIDENT."
+                    ),
                     "CANARY_BREACH",
                 )
             )
@@ -227,14 +230,14 @@ def check_entropy(content):
     findings = []
     for i, line in enumerate(content.split("\n"), 1):
         stripped = line.strip()
-        if len(stripped) > 30 and len(stripped) < 200:
-            entropy = shannon_entropy(stripped.encode())
-            if entropy > ENTROPY_THRESHOLD:
-                # Avoid flagging known-safe patterns (base64, hashes)
-                if not re.match(r"^[A-Za-z0-9+/=]+$", stripped):
-                    findings.append(
-                        (f"High entropy ({entropy:.1f}) at line {i}", "HIGH_ENTROPY")
-                    )
+        if len(stripped) <= 30 or len(stripped) >= 200:
+            continue
+        entropy = shannon_entropy(stripped.encode())
+        if entropy > ENTROPY_THRESHOLD and not re.match(r"^[A-Za-z0-9+/=]+$", stripped):
+            # Avoid flagging known-safe patterns (base64, hashes)
+            findings.append(
+                (f"High entropy ({entropy:.1f}) at line {i}", "HIGH_ENTROPY")
+            )
     return findings
 
 
@@ -257,7 +260,7 @@ def check_file(filepath):
     try:
         with open(filepath, "r", errors="ignore") as f:
             content = f.read()
-    except Exception:
+    except OSError:
         return []
 
     findings = []
@@ -272,7 +275,10 @@ def check_file(filepath):
 def main():
     # Get staged files
     result = subprocess.run(
-        ["git", "diff", "--cached", "--name-only"], capture_output=True, text=True
+        ["git", "diff", "--cached", "--name-only"],
+        capture_output=True,
+        text=True,
+        check=False,
     )
     staged = [f for f in result.stdout.strip().split("\n") if f and os.path.exists(f)]
 
@@ -329,7 +335,7 @@ def main():
         print(f"\n  {len(all_findings)} violation(s). Commit blocked.")
         print("  This content is proprietary to Rug Munch Media LLC.")
         print(
-            "  Public repos: rmi-backend, rmi-frontend, pryscraper, walletpress, degenfeed-web, rugmunchbot"
+            "  Public repos: rmi-backend, rmi-frontend, pryscraper, walletpress, degenfeed, rugmunchbot"
         )
         print(
             "  Private repos: standards, fleet-infra, fleet-template, rmi-security-framework"

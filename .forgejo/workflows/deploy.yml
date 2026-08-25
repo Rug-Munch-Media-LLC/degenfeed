@@ -20,7 +20,7 @@ concurrency:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: degenfeed-web
+  IMAGE_NAME: degenfeed
   REGISTRY_USER: cryptorugmunch
 
 jobs:
@@ -103,14 +103,14 @@ jobs:
   #         node-version: 22
   #         cache: pnpm
   #     - run: pnpm install --frozen-lockfile
-  #     - run: pnpm --filter degenfeed-web pages:build
+  #     - run: pnpm --filter degenfeed pages:build
   #     - name: Deploy to Cloudflare Pages
   #       uses: cloudflare/wrangler-action@v3
   #       with:
   #         apiToken: ${{ secrets.CF_API_TOKEN }}
   #         accountId: ${{ secrets.CF_ACCOUNT_ID }}
   #         workingDirectory: apps/web
-  #         command: pages deploy .vercel/output/static --project-name degenfeed-web
+  #         command: pages deploy .vercel/output/static --project-name degenfeed
 
   # ── Docker: Build image & push to registry ────────────────────
   docker-build:

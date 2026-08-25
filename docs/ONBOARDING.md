@@ -536,7 +536,7 @@ The Shorts feed is a vertical, TikTok-style scrolling experience:
 ### Support
 
 - **Email:** admin@rugmunch.io
-- **Bug reports:** [Forgejo Issues](https://git.rugmunch.io/RugMunchMedia/degenfeed-web/issues)
+- **Bug reports:** [Forgejo Issues](https://git.rugmunch.io/RugMunchMedia/degenfeed/issues)
 - **Feature requests:** Use the feedback button in the app
 
 ---

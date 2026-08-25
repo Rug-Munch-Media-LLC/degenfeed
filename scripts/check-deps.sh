@@ -181,10 +181,6 @@ echo ""
 # ─── Step 3: npm registry version comparison ──────────────────────────────
 echo -e "${CYAN}[3/6] Comparing against latest npm releases...${NC}"
 
-MAJOR_BUMPS=()
-MINOR_BUMPS=()
-PATCH_BUMPS=()
-
 # Get all direct dependencies from root package.json
 DEPS=$(python3 -c "
 import json
@@ -241,6 +237,7 @@ if grep -q '"left-pad"' "$REPO_DIR/package.json" 2>/dev/null; then
 fi
 # Check Python version if applicable
 if command -v python3 &>/dev/null; then
+    # shellcheck disable=SC2034,SC2155
     PY_VERSION=$(python3 --version 2>/dev/null || echo "unknown")
 fi
 
@@ -276,7 +273,7 @@ if deprecated:
 
 EOL_COUNT=$(wc -l <"$TMPDIR/eol.txt" 2>/dev/null || echo 0)
 if [[ "$EOL_COUNT" -gt 0 ]]; then
-    while IFS='|' read -r status pkg ver msg; do
+    while IFS='|' read -r _status pkg ver msg; do
         [[ -z "$pkg" ]] && continue
         echo -e "  ${RED}DEPRECATED${NC} $pkg@$ver: $msg"
     done <"$TMPDIR/eol.txt"
@@ -343,7 +340,7 @@ def read_val(filename, default=0):
 
 report = {
     'timestamp': os.popen('date -u -Iseconds').read().strip(),
-    'repo': 'degenfeed-web',
+    'repo': 'degenfeed',
     'health_score': int(read_val('score.txt')),
     'node_version': read_val('node_version.txt'),
     'summary': {

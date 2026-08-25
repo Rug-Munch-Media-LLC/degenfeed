@@ -403,7 +403,7 @@ After rotating any key, run:
 
 ```bash
 # 1. Full gitleaks scan
-cd /path/to/degenfeed-web && gitleaks detect --no-git --config .gitleaks.toml -v
+cd /path/to/degenfeed && gitleaks detect --no-git --config .gitleaks.toml -v
 
 # 2. Full gitleaks scan on Elk app (if applicable)
 cd /path/to/degenfeed && gitleaks detect --no-git -v
@@ -412,7 +412,7 @@ cd /path/to/degenfeed && gitleaks detect --no-git -v
 # (Specific verification commands listed per key above)
 
 # 4. Check that dev env works
-cd /path/to/degenfeed-web && lefthook run pre-commit
+cd /path/to/degenfeed && lefthook run pre-commit
 
 # 5. Commit and push
 git add -A && git commit -m "chore(security): rotate <key-name>" && git push

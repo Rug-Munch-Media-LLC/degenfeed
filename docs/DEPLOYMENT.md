@@ -232,7 +232,7 @@ The Next.js app deploys to Cloudflare Pages via `@cloudflare/next-on-pages`.
 
 ```bash
 # Create the Pages project (one-time)
-npx wrangler pages project create degenfeed-web --production-branch main
+npx wrangler pages project create degenfeed --production-branch main
 ```
 
 ### Build output
@@ -442,7 +442,7 @@ Error tracking and infrastructure monitoring is deployed on [HOST-1] and [HOST-2
 docker compose -f infra/monitoring/glitchtip.yml up -d
 ```
 
-Configure projects: create a project for `degenfeed-api` and `degenfeed-web`, then set the DSN:
+Configure projects: create a project for `degenfeed-api` and `degenfeed`, then set the DSN:
 
 ```bash
 wrangler secret put SENTRY_DSN
@@ -521,7 +521,7 @@ make rollback ARGS="--env preview"
 wrangler rollback --env production
 
 # Pages (via Cloudflare API)
-curl -X POST "https://api.cloudflare.com/client/v4/accounts/$CF_ACCT_ID/pages/projects/degenfeed-web/deployments/$DEPLOY_ID/rollback" \
+curl -X POST "https://api.cloudflare.com/client/v4/accounts/$CF_ACCT_ID/pages/projects/degenfeed/deployments/$DEPLOY_ID/rollback" \
   -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN"
 ```
 

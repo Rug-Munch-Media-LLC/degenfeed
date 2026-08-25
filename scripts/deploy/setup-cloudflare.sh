@@ -52,6 +52,7 @@ if [[ -z "${CLOUDFLARE_API_TOKEN:-}" ]]; then
       # for token operations; only scoped tokens work. So we also ask the
       # operator to set CLOUDFLARE_API_TOKEN manually if they have one.
       if [[ -z "${CLOUDFLARE_API_KEY:-}" ]]; then
+        # shellcheck disable=SC2155
         export CLOUDFLARE_API_KEY="$(gopass show -o CLOUDFLARE_API_KEY_PATH)"
       fi
     fi
@@ -70,6 +71,7 @@ fi
 # Resolve account id
 if [[ -z "${CLOUDFLARE_ACCOUNT_ID:-}" ]]; then
   if command -v gopass >/dev/null 2>&1 && gopass show CLOUDFLARE_ACCOUNT_ID_PATH >/dev/null 2>&1; then
+    # shellcheck disable=SC2155
     export CLOUDFLARE_ACCOUNT_ID="$(gopass show -o CLOUDFLARE_ACCOUNT_ID_PATH)"
   fi
 fi
@@ -191,7 +193,7 @@ green "Account: $CLOUDFLARE_ACCOUNT_ID"
 echo
 blue "Next steps for the operator:"
 echo "  1. Set GitHub repo secrets at"
-echo "       https://github.com/RugMunchMedia/degenfeed-web/settings/secrets/actions"
+echo "       https://github.com/RugMunchMedia/degenfeed/settings/secrets/actions"
 echo "     Required secrets:"
 echo "       CLOUDFLARE_API_TOKEN   = ${CLOUDFLARE_API_TOKEN:-<your token>}"
 echo "       CLOUDFLARE_ACCOUNT_ID  = $CLOUDFLARE_ACCOUNT_ID"

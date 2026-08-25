@@ -324,7 +324,7 @@ docker network create rmi-net 2>/dev/null || true
 ### Deploy Bridgy Fed
 
 ```bash
-cd /path/to/degenfeed-web
+cd /path/to/degenfeed
 
 # Build the Docker image
 docker compose -f infra/docker/bridgy-fed-compose.yml build --no-cache bridgy-fed

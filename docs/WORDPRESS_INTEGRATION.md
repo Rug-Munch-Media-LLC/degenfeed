@@ -522,7 +522,7 @@ embeds, themes can be passed via shortcode attributes.
 
 | Channel | Purpose |
 |---------|---------|
-| [GitHub](https://github.com/RugMunchMedia/degenfeed-web) | Plugin issues, PRs |
+| [GitHub](https://github.com/RugMunchMedia/degenfeed) | Plugin issues, PRs |
 | [WordPress.org](https://wordpress.org/plugins/degenfeed-feed) | Plugin page |
 | [Discord](https://discord.gg/degenfeed) | Community support |
 

@@ -88,7 +88,7 @@ services:
   # The main application — profile, feed, creator coin, live streams.
   # Built from the monorepo; ships as a standalone Next.js server.
   degenfeed:
-    image: ghcr.io/rugmunchmedia/degenfeed-web:${IMAGE_TAG:-latest}
+    image: ghcr.io/rugmunchmedia/degenfeed:${IMAGE_TAG:-latest}
     build:
       context: ..
       dockerfile: scripts/self-host/Dockerfile

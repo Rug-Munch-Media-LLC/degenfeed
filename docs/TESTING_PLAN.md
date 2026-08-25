@@ -210,10 +210,10 @@ npx vitest run --coverage
 npx vitest run tests/bridge/
 
 # E2E tests
-pnpm --filter degenfeed-web test:e2e
+pnpm --filter degenfeed test:e2e
 
 # Visual regression
-pnpm --filter degenfeed-web test:visual
+pnpm --filter degenfeed test:visual
 ```
 
 ---

@@ -15,7 +15,7 @@ echo "=== Pushing to GitLab mirror ==="
 if git ls-remote --exit-code gitlab "$BRANCH" &>/dev/null; then
   git push gitlab "$BRANCH"
 else
-  echo "  (skipped — repo may not exist at gitlab.com/cryptorugmuncher/degenfeed-web)"
+  echo "  (skipped — repo may not exist at gitlab.com/cryptorugmuncher/degenfeed)"
 fi
 
 echo ""
@@ -23,7 +23,7 @@ echo "=== Pushing to Codeberg mirror ==="
 if git ls-remote --exit-code codeberg "$BRANCH" &>/dev/null; then
   git push codeberg "$BRANCH"
 else
-  echo "  (skipped — repo may not exist at codeberg.org/cryptorugmunch/degenfeed-web)"
+  echo "  (skipped — repo may not exist at codeberg.org/cryptorugmunch/degenfeed)"
 fi
 
 echo ""
@@ -41,7 +41,7 @@ fi
 
 echo ""
 echo "=== Done ==="
-echo "Forgejo:  https://git.rugmunch.io/RugMunchMedia/degenfeed-web"
-echo "GitLab:   https://gitlab.com/cryptorugmuncher/degenfeed-web"
-echo "Codeberg: https://codeberg.org/cryptorugmunch/degenfeed-web"
+echo "Forgejo:  https://git.rugmunch.io/RugMunchMedia/degenfeed"
+echo "GitLab:   https://gitlab.com/cryptorugmuncher/degenfeed"
+echo "Codeberg: https://codeberg.org/cryptorugmunch/degenfeed"
 echo "Radicle:  rad:z4HA4VujocEo1b3jTFwNk5qEGgF3V (synced weekly via [HOST-2] cron)"

@@ -50,7 +50,7 @@ Guide for developers working on the DegenFeed platform. Includes monorepo struct
 ## Monorepo Structure
 
 ```
-degenfeed-web/
+degenfeed/
 ├── apps/
 │   └── web/                          # Next.js 16 client (app.degenfeed.xyz)
 │       ├── src/

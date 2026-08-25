@@ -72,7 +72,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Build web app (Cloudflare Pages)
-        run: pnpm --filter degenfeed-web pages:build
+        run: pnpm --filter degenfeed pages:build
 
       - name: Deploy to Cloudflare Pages (preview)
         id: deploy-web
@@ -81,7 +81,7 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           workingDirectory: apps/web
-          command: pages deploy .vercel/output/static --project-name degenfeed-web --branch ${{ github.head_ref }}
+          command: pages deploy .vercel/output/static --project-name degenfeed --branch ${{ github.head_ref }}
 
   preview-healthcheck:
     name: Preview Health Check
@@ -103,7 +103,7 @@ jobs:
           # Pages preview URL format: https://<branch>.<project>.pages.dev
           BRANCH_SLUG="${{ github.head_ref }}"
           SANITIZED=$(echo "$BRANCH_SLUG" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9-]/-/g')
-          PREVIEW_WEB_URL="https://${SANITIZED}.degenfeed-web.pages.dev"
+          PREVIEW_WEB_URL="https://${SANITIZED}.degenfeed.pages.dev"
           curl -sf --max-time 15 "${PREVIEW_WEB_URL}/" | grep -q "DegenFeed" && echo "PASS: Web preview responds" || echo "WARN: Web preview health check failed"
 
   preview-comment:
@@ -119,7 +119,7 @@ jobs:
               .toLowerCase()
               .replace(/[^a-z0-9-]/g, '-');
 
-            const PREVIEW_WEB_URL = `https://${BRANCH_SLUG}.degenfeed-web.pages.dev`;
+            const PREVIEW_WEB_URL = `https://${BRANCH_SLUG}.degenfeed.pages.dev`;
             const PREVIEW_API_URL = `https://degenfeed-api-preview.${CLOUDFLARE_ACCOUNT_ID}.workers.dev`;
 
             // Find any existing comment from this bot

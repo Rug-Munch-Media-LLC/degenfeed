@@ -235,7 +235,7 @@ export function FAQClient() {
           </a>{' '}
           or join the community on{' '}
           <a
-            href="https://git.rugmunch.io/RugMunchMedia/degenfeed-web"
+            href="https://git.rugmunch.io/RugMunchMedia/degenfeed"
             target="_blank"
             className="text-degen-400 underline"
             rel="noopener"

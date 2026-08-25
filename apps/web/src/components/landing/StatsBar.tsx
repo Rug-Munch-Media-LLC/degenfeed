@@ -75,7 +75,7 @@ export function StatsBar() {
         {/* Built in public */}
         <div className="text-center">
           <a
-            href="https://git.rugmunch.io/RugMunchMedia/degenfeed-web"
+            href="https://git.rugmunch.io/RugMunchMedia/degenfeed"
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-2 rounded-full border px-5 py-2 text-xs font-semibold transition-all duration-200 hover:bg-[var(--color-accent-soft)]"

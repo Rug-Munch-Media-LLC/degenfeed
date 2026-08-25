@@ -140,8 +140,8 @@ const web2Bridge = [
 
 const openSourceRepos = [
   {
-    href: 'https://git.rugmunch.io/RugMunchMedia/degenfeed-web',
-    name: 'degenfeed-web',
+    href: 'https://git.rugmunch.io/RugMunchMedia/degenfeed',
+    name: 'degenfeed',
     desc: 'This monorepo — Next.js frontend, protocol SDKs, feed engines, and docs.',
   },
   {
@@ -553,7 +553,7 @@ export default function AboutPage() {
           </div>
           <div className="flex flex-wrap gap-3">
             <a
-              href="https://git.rugmunch.io/RugMunchMedia/degenfeed-web"
+              href="https://git.rugmunch.io/RugMunchMedia/degenfeed"
               target="_blank"
               rel="noopener noreferrer"
               className="btn-primary px-6 py-2.5 text-sm gap-2"
@@ -753,7 +753,7 @@ export default function AboutPage() {
             Meet the Protocols
           </Link>
           <a
-            href="https://git.rugmunch.io/RugMunchMedia/degenfeed-web"
+            href="https://git.rugmunch.io/RugMunchMedia/degenfeed"
             target="_blank"
             rel="noopener noreferrer"
             className="btn-secondary px-6 py-2.5 text-sm gap-2"

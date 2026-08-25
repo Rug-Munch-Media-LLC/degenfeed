@@ -104,7 +104,7 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: npx playwright install --with-deps chromium
-      - run: pnpm --filter degenfeed-web test:e2e
+      - run: pnpm --filter degenfeed test:e2e
 
   a11y:
     runs-on: ubuntu-latest
@@ -118,9 +118,9 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - name: Biome a11y lint
-        run: pnpm --filter degenfeed-web lint
+        run: pnpm --filter degenfeed lint
       - name: Axe-core E2E a11y
-        run: pnpm --filter degenfeed-web test:e2e --project=axe-a11y
+        run: pnpm --filter degenfeed test:e2e --project=axe-a11y
 
   lighthouse:
     runs-on: ubuntu-latest
@@ -155,7 +155,7 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - name: Build web
-        run: pnpm --filter degenfeed-web build
+        run: pnpm --filter degenfeed build
       - name: Build worker (dry-run)
         run: pnpm --filter @degenfeed/api-worker build
 

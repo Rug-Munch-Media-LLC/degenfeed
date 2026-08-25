@@ -1,5 +1,5 @@
 {
-  "name": "degenfeed-web",
+  "name": "degenfeed",
   "image": "mcr.microsoft.com/devcontainers/typescript-node:22-bookworm",
   "customizations": {
     "vscode": {

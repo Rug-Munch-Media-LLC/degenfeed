@@ -1,7 +1,7 @@
 # NEXT WINS — Production Roadmap & Priorities
 
 > **Synthesis Date:** 2026-07-25
-> **Scope:** degenfeed-web monorepo (2,390 TS/TSX files, 43 packages, 241 routes, 420 components, 189 pages)
+> **Scope:** degenfeed monorepo (2,390 TS/TSX files, 43 packages, 241 routes, 420 components, 189 pages)
 > **Infrastructure:** [HOST-1] (netcup), [HOST-2] (contabo), [HOST-3], Cloudflare (Pages + Workers + KV + DNS)
 
 ---
@@ -174,7 +174,7 @@
 | Feed cold-start elimination | C5 | 2d | Pre-warm on deploy, predictive warming |
 | Split remaining large files >800 lines | H1 | 3d | Target: no file >800 lines |
 | Dark mode persistence | L7 | 0.5d | localStorage + system preference respect |
-| Add radicle remote | L8 | 0.5d | degenfeed-web on radicle network |
+| Add radicle remote | L8 | 0.5d | degenfeed on radicle network |
 
 ### MONTH 3+: Features and Expansion (Sep 21 - Oct 31)
 

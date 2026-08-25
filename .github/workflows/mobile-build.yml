@@ -70,7 +70,7 @@ jobs:
           PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
 
       - name: Build web app
-        run: pnpm --filter degenfeed-web build
+        run: pnpm --filter degenfeed build
         env:
           NEXT_PUBLIC_SITE_URL: https://app.degenfeed.xyz
 

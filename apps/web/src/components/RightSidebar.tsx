@@ -43,7 +43,7 @@ const FOOTER_LINKS = [
   { href: '/privacy', label: 'Privacy' },
   { href: '/terms', label: 'Terms' },
   { href: '/status', label: 'Status' },
-  { href: 'https://git.rugmunch.io/RugMunchMedia/degenfeed-web', label: 'Source' },
+  { href: 'https://git.rugmunch.io/RugMunchMedia/degenfeed', label: 'Source' },
 ];
 
 /* === Search bar ============================================= */

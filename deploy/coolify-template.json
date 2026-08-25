@@ -74,7 +74,7 @@
       "required": false
     }
   ],
-  "compose_file": "https://raw.githubusercontent.com/RugMunchMedia/degenfeed-web/main/deploy/docker-compose.prod.yml",
-  "env_file": "https://raw.githubusercontent.com/RugMunchMedia/degenfeed-web/main/deploy/.env.example",
+  "compose_file": "https://raw.githubusercontent.com/RugMunchMedia/degenfeed/main/deploy/docker-compose.prod.yml",
+  "env_file": "https://raw.githubusercontent.com/RugMunchMedia/degenfeed/main/deploy/.env.example",
   "post_install_message": "## DegenFeed Self-Hosted is LIVE! 🚀\n\n| URL | Description |\n|-----|------------|\n| https://$DOMAIN/ | DegenFeed profile + content hub |\n| https://$DOMAIN/articles | Blog (Ghost) |\n| https://$DOMAIN/articles/ghost | Blog Admin |\n| https://$DOMAIN/coin | Creator Coin |\n| https://$DOMAIN/live | Live Streams |\n| @$CREATOR_USERNAME@$DOMAIN | ActivityPub handle |\n\n### Next Steps\n\n1. **Set up your blog:** Visit https://$DOMAIN/articles/ghost to create admin account\n2. **Connect accounts:** Go to Settings → Connected Accounts\n3. **Creator coin:** Configure at https://$DOMAIN/admin/coin\n4. **Backups:** Set up automated backups (see docs)\n\n### Useful Commands\n\n```bash\n# View logs\ndocker compose logs -f\n\n# Update\ndocker compose pull && docker compose up -d\n\n# Backup\ntar czf backup.tar.gz data/ .env articles/\n```\n\n📖 Full guide: https://docs.degenfeed.xyz/self-host\n💬 Support: https://discord.gg/degenfeed"
 }

@@ -11,7 +11,7 @@
 #   Help:            ./deploy.sh --help
 #
 # One-liner (from GitHub):
-#   bash <(curl -sSL https://raw.githubusercontent.com/RugMunchMedia/degenfeed-web/main/deploy/deploy.sh)
+#   bash <(curl -sSL https://raw.githubusercontent.com/RugMunchMedia/degenfeed/main/deploy/deploy.sh)
 #
 # Options:
 #   --domain DOMAIN       Your domain (required)
@@ -253,7 +253,7 @@ else
     warn "docker-compose.prod.yml not found alongside this script."
     step "Downloading from GitHub..."
     curl -sSL -o "${INSTALL_DIR}/docker-compose.yml" \
-        "https://raw.githubusercontent.com/RugMunchMedia/degenfeed-web/main/deploy/docker-compose.prod.yml"
+        "https://raw.githubusercontent.com/RugMunchMedia/degenfeed/main/deploy/docker-compose.prod.yml"
     info "Downloaded docker-compose.yml"
 fi
 
@@ -264,7 +264,7 @@ if [[ -f "${SCRIPT_DIR}/nginx.conf" ]]; then
 else
     step "Downloading nginx.conf from GitHub..."
     curl -sSL -o "${INSTALL_DIR}/nginx.conf" \
-        "https://raw.githubusercontent.com/RugMunchMedia/degenfeed-web/main/deploy/nginx.conf"
+        "https://raw.githubusercontent.com/RugMunchMedia/degenfeed/main/deploy/nginx.conf"
     info "Downloaded nginx.conf"
 fi
 

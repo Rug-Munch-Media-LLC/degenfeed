@@ -35,7 +35,7 @@
 3. Check mobile: responsive at 390px width
 4. Check dark theme: all surfaces visible on black background
 5. Check loading/error/empty states are handled
-6. Run `pnpm typecheck` (or `pnpm --filter degenfeed-web typecheck` or `make typecheck`)
+6. Run `pnpm typecheck` (or `pnpm --filter degenfeed typecheck` or `make typecheck`)
 
 ### Phase 5: Test
 1. Write vitest unit test for logic

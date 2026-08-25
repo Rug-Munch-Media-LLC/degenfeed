@@ -28,7 +28,7 @@ import type { Env } from '../types';
 
 const RUGMUNCH_STATE_TTL_SECONDS = 600;
 const DISCOVERY_CACHE_TTL_SECONDS = 3600;
-const DEFAULT_CLIENT_ID = 'degenfeed-web';
+const DEFAULT_CLIENT_ID = 'degenfeed';
 const DEFAULT_BASE_URL = 'https://rugmunch.io';
 
 const RUGMUNCH_HOSTS = ['degenfeed.xyz', 'app.degenfeed.xyz'];
@@ -93,11 +93,7 @@ function generateState(): string {
   ).join('');
 }
 
-async function storeOidcState(
-  env: Env,
-  state: string,
-  nonce: string,
-): Promise<void> {
+async function storeOidcState(env: Env, state: string, nonce: string): Promise<void> {
   if (!env.CACHE) return;
   try {
     await env.CACHE.put(`rugmunch:oidc:${state}`, JSON.stringify({ nonce }), {
@@ -117,10 +113,7 @@ async function consumeOidcState(env: Env, state: string): Promise<string | null>
     const parsed = JSON.parse(existing) as { nonce?: string };
     return parsed.nonce ?? null;
   } catch (err) {
-    console.warn(
-      '[rugmunch-oidc] consumeState failed:',
-      err instanceof Error ? err.message : err,
-    );
+    console.warn('[rugmunch-oidc] consumeState failed:', err instanceof Error ? err.message : err);
     return null;
   }
 }
@@ -136,7 +129,7 @@ function base64UrlDecode(input: string): Uint8Array {
   return bytes;
 }
 
-function base64UrlEncode(bytes: Uint8Array): string {
+function _base64UrlEncode(bytes: Uint8Array): string {
   let bin = '';
   for (const b of bytes) bin += String.fromCharCode(b);
   return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');

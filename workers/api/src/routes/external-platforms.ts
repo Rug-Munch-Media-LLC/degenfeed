@@ -14,7 +14,7 @@
  * - Media upload optimization
  *
  * @see /path/to/degenfeed/postiz/README.md
- * @see /path/to/degenfeed-web/workers/api/src/lib/postiz-bridge.ts
+ * @see /path/to/degenfeed/workers/api/src/lib/postiz-bridge.ts
  */
 
 import { getUserTier } from '../lib/membership-tiers';

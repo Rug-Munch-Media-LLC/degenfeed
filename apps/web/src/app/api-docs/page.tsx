@@ -887,7 +887,7 @@ def search_identity(handle: str):
           </a>
           . Report issues on{' '}
           <a
-            href="https://git.rugmunch.io/RugMunchMedia/degenfeed-web"
+            href="https://git.rugmunch.io/RugMunchMedia/degenfeed"
             target="_blank"
             rel="noopener noreferrer"
             className="text-degen-400 underline"

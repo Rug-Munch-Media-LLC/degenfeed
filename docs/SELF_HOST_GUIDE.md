@@ -547,7 +547,7 @@ Nostr, Farcaster, Bluesky, Mastodon, Lens, etc.
 | Channel | Purpose |
 |---------|---------|
 | [Discord](https://discord.gg/degenfeed) | Community support, questions |
-| [GitHub Issues](https://github.com/RugMunchMedia/degenfeed-web/issues) | Bug reports, feature requests |
+| [GitHub Issues](https://github.com/RugMunchMedia/degenfeed/issues) | Bug reports, feature requests |
 | [Docs](https://docs.degenfeed.xyz) | Full documentation |
 | [Email](mailto:selfhost@degenfeed.xyz) | Enterprise inquiries |
 
@@ -556,7 +556,7 @@ Nostr, Farcaster, Bluesky, Mastodon, Lens, etc.
 ## License
 
 DegenFeed Self-Hosted is open source under the
-[MIT License](https://github.com/RugMunchMedia/degenfeed-web/blob/main/LICENSE).
+[MIT License](https://github.com/RugMunchMedia/degenfeed/blob/main/LICENSE).
 
 ---
 

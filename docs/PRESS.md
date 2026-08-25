@@ -19,7 +19,7 @@
 | **Funding** | Self-funded. No VC. |
 | **Pricing** | Free to browse and use. Premium ($10/mo), Creator ($25/mo) |
 | **Website** | [app.degenfeed.xyz](https://app.degenfeed.xyz) |
-| **Source Code** | [git.rugmunch.io/RugMunchMedia/degenfeed-web](https://git.rugmunch.io/RugMunchMedia/degenfeed-web) |
+| **Source Code** | [git.rugmunch.io/RugMunchMedia/degenfeed](https://git.rugmunch.io/RugMunchMedia/degenfeed) |
 | **Contact** | admin@rugmunch.io |
 
 ---
@@ -148,8 +148,8 @@ For media assets, screenshots, or logos, email admin@rugmunch.io.
 
 - **App:** [app.degenfeed.xyz](https://app.degenfeed.xyz)
 - **Docs:** [docs.degenfeed.xyz](https://docs.degenfeed.xyz)
-- **Source (Forgejo):** [git.rugmunch.io/RugMunchMedia/degenfeed-web](https://git.rugmunch.io/RugMunchMedia/degenfeed-web)
-- **Source (Codeberg):** [codeberg.org/degenfeed/degenfeed-web](https://codeberg.org/degenfeed/degenfeed-web)
+- **Source (Forgejo):** [git.rugmunch.io/RugMunchMedia/degenfeed](https://git.rugmunch.io/RugMunchMedia/degenfeed)
+- **Source (Codeberg):** [codeberg.org/degenfeed/degenfeed](https://codeberg.org/degenfeed/degenfeed)
 - **Source (GitHub):** [github.com/RugMunchMedia/degenfeed](https://github.com/RugMunchMedia/degenfeed)
 - **Blog Post:** [docs/BLOG.md](BLOG.md)
 

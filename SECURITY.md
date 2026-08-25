@@ -42,7 +42,7 @@ Only the latest deployed version receives security patches.
 
 ## Scope
 
-- `degenfeed-web` monorepo (all packages and apps)
+- `degenfeed` monorepo (all packages and apps)
 - Cloudflare Worker (`degenfeed-api`)
 - `social.degenfeed.xyz` (GotoSocial instance)
 - `degenfeed.xyz` (Cloudflare Pages)

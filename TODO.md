@@ -1,4 +1,4 @@
-# degenfeed-web — Production TODO
+# degenfeed — Production TODO
 **Last audit:** 2026-07-31 · **Status:** Live & serving, rough edges · **Grade:** C
 
 ## 🔴 BLOCKING
@@ -42,7 +42,7 @@
 - [ ] Add tests for crossposter
 - [ ] Fix `middleware.ts` → `proxy.ts` rename in docs
 - [ ] Run knip dead-code analysis
-- [ ] Remove duplicate degenfeed-web.service (failed systemd unit)
+- [ ] Remove duplicate degenfeed.service (failed systemd unit)
 - [ ] Fix RSS health 403s from tier-1 sources
 - [ ] Consider CDN image optimization
 

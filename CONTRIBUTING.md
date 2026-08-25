@@ -1,7 +1,7 @@
 <!--
 SPDX-License-Identifier: MIT
 Copyright (c) 2026 Rug Munch Media LLC
-Part of DegenFeed Web — https://git.rugmunch.io/RugMunchMedia/degenfeed-web
+Part of DegenFeed Web — https://git.rugmunch.io/RugMunchMedia/degenfeed
 -->
 
 # Contributing to DegenFeed Web
@@ -13,9 +13,9 @@ Part of DegenFeed Web — https://git.rugmunch.io/RugMunchMedia/degenfeed-web
 
 | Platform | URL |
 |----------|-----|
-| **Primary** | https://git.rugmunch.io/RugMunchMedia/degenfeed-web |
-| **GitLab mirror** | https://gitlab.com/rugmunchmedia/degenfeed-web |
-| **Codeberg mirror** | https://codeberg.org/degenfeed/degenfeed-web |
+| **Primary** | https://git.rugmunch.io/RugMunchMedia/degenfeed |
+| **GitLab mirror** | https://gitlab.com/rugmunchmedia/degenfeed |
+| **Codeberg mirror** | https://codeberg.org/degenfeed/degenfeed |
 
 PRs accepted on all platforms. Issues tracked on the primary Forgejo instance.
 
@@ -30,7 +30,7 @@ pnpm lint && pnpm typecheck && pnpm test     # pre-push gate
 git add -A
 git commit -m "feat(web): my change"
 git push origin feat/my-change
-# Open a PR on Forgejo (git.rugmunch.io/RugMunchMedia/degenfeed-web)
+# Open a PR on Forgejo (git.rugmunch.io/RugMunchMedia/degenfeed)
 ```
 
 ## Repository Model
@@ -67,7 +67,7 @@ Allowed types: `feat`, `fix`, `docs`, `refactor`, `style`, `test`, `chore`,
 
 | Remote      | URL                                                              | Role                          |
 |-------------|------------------------------------------------------------------|-------------------------------|
-| `origin`    | `ssh://git@git.rugmunch.io:2222/RugMunchMedia/degenfeed-web.git` | Canonical — Forgejo.          |
+| `origin`    | `ssh://git@git.rugmunch.io:2222/RugMunchMedia/degenfeed.git` | Canonical — Forgejo.          |
 | `external-*`| codeberg / github / gitlab (read-only mirrors)                   | Optional community mirrors.   |
 
 ## Pre-Push Checklist
