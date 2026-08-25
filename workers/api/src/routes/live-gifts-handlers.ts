@@ -17,29 +17,26 @@
  *   - creator-rewards.ts → recordCreatorMetrics (earnings accrual)
  */
 
-import { getPlatformBadge } from '../lib/stream-chat';
-import { broadcastToAll } from '../ws-broadcast';
 import { jsonResponse } from '../response-helpers';
 import { hasSuspiciousPayload, sanitizeString, validateBodySize } from '../sanitize';
 import { requireSession } from '../session';
 import type { Env } from '../types';
+import { broadcastToAll } from '../ws-broadcast';
 import { CHANNELS } from '../ws-channels';
 import {
-  calculateCreatorEarnings,
   checkStreakTier,
   GIFT_PACKAGES,
   GIFT_STREAK_TIERS,
+  GIFT_STREAM_STATE_PREFIX,
   GIFT_TIERS,
   GIFT_TYPES,
   type GiftRecord,
   type GiftStreakTier,
-  type GiftType,
   type GiftTypeId,
   isSupportedGiftChain,
   isValidGiftTypeId,
   kvGetJson,
   kvPutJson,
-  liveGiftLeaderboardKey,
   lookupGiftType,
   type StreamGiftState,
   streamGiftKey,
@@ -143,10 +140,11 @@ export async function recordGift(
     const streakKeys = Object.keys(state.streaks);
     if (streakKeys.length > MAX_STREAK_SENDERS) {
       const sorted = streakKeys.sort(
-        (a, b) => state.streaks[b].lastGiftAt - state.streaks[a].lastGiftAt,
+        (a, b) => (state.streaks[b]?.lastGiftAt ?? 0) - (state.streaks[a]?.lastGiftAt ?? 0),
       );
       for (let i = MAX_STREAK_SENDERS; i < sorted.length; i++) {
-        delete state.streaks[sorted[i]];
+        const key = sorted[i];
+        if (key) delete state.streaks[key];
       }
     }
   }
@@ -336,8 +334,7 @@ export async function recordGift(
 
   // ── Broadcast to Nostr (if sender/receiver have Nostr identities) ──
   try {
-    const { default: NostrSdk } = await import('@degenfeed/nostr-sdk');
-    if (NostrSdk && creatorId && options.senderId && env.NOSTR_PRIVATE_KEY) {
+    if (creatorId && options.senderId && env.NOSTR_PRIVATE_KEY) {
       const { NostrLiveBridge } = await import('../lib/nostr-live-bridge');
       const bridge = new NostrLiveBridge(env);
       // Fire-and-forget: announce gift as a zap-like note
@@ -729,8 +726,7 @@ export async function handleGiftPayout(request: Request, env: Env): Promise<Resp
     // Queue actual payout — in production this would trigger
     // an on-chain tx or Lightning withdrawal to the creator's wallet
     try {
-      const { default: NostrSdk } = await import('@degenfeed/nostr-sdk');
-      if (NostrSdk && env.NOSTR_PRIVATE_KEY) {
+      if (env.NOSTR_PRIVATE_KEY) {
         // Publish a zap receipt / payout announcement on Nostr
         const event = {
           kind: 9735, // Zap receipt

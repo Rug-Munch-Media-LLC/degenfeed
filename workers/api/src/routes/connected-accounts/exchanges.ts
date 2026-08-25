@@ -1,7 +1,11 @@
 // OAuth code exchange handlers
 // Each provider requires CLIENT_ID + CLIENT_SECRET in environment
 
-async function notYetImplemented(provider: string) {
+function notYetImplemented(provider: string): {
+  success: false;
+  reason: string;
+  provider: string;
+} {
   console.warn(`[oauth] ${provider} exchange not yet implemented`);
   return { success: false, reason: 'not_implemented', provider };
 }

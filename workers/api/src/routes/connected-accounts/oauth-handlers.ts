@@ -126,6 +126,17 @@ export async function handleOAuthCallback(
   const tokenResult = await exchangeCodeForToken(platform, code, env, url);
   if (tokenResult instanceof Response) return tokenResult;
 
+  // Exchange stubs report failure as { success: false, reason, provider }
+  if ('success' in tokenResult) {
+    return jsonResponse(
+      {
+        error: `OAuth exchange not available for ${platform}`,
+        reason: tokenResult.reason,
+      },
+      501,
+    );
+  }
+
   const session = await requireSession(request, env);
   if (session instanceof Response) return session;
 
@@ -179,6 +190,7 @@ async function exchangeCodeForToken(
       expiresAt?: number;
       metadata?: Record<string, string>;
     }
+  | { success: false; reason: string; provider: string }
   | Response
 > {
   const baseUrl = `${currentUrl.protocol}//${currentUrl.hostname}`;
