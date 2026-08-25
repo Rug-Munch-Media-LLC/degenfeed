@@ -26,6 +26,7 @@
  */
 
 import { log } from '../index';
+import { kvGetJson } from '../lib/kv-json';
 import { jsonResponse, noCacheJsonResponse } from '../response-helpers';
 import { requireSession } from '../session';
 import type { Env } from '../types';
@@ -411,7 +412,7 @@ async function syncProfileToAll(
 }
 
 async function syncProfileToProtocol(
-  wallet: string,
+  _wallet: string,
   walletLower: string,
   protocol: string,
   profile: ProfileData,
@@ -1003,11 +1004,14 @@ export async function aggregateProfile(
 ): Promise<Record<string, unknown>> {
   const cacheKey = `profile:aggregated:${wallet}`;
   if (!opts?.forceRefresh) {
-    const cached = await env.IDENTITIES?.get(cacheKey, 'json');
+    const cached = await kvGetJson(env.IDENTITIES, cacheKey);
     if (cached) return cached as Record<string, unknown>;
   }
   // Build profile from cross-protocol identity
-  const identity = await env.IDENTITIES?.get(`identity:${wallet}`, 'json') as Record<string, unknown> | null;
+  const identity = (await kvGetJson(env.IDENTITIES, `identity:${wallet}`)) as Record<
+    string,
+    unknown
+  > | null;
   const profile: Record<string, unknown> = {
     wallet,
     displayName: '',
@@ -1047,7 +1051,7 @@ export async function getSyncStatus(
   for (const protocol of PROTOCOLS_WITH_PROFILE_API) {
     const key = `sync:${wallet}:${protocol}`;
     const ts = await env.IDENTITIES?.get(key);
-    status[protocol] = { synced: !!ts, lastSync: ts ? parseInt(ts) : undefined };
+    status[protocol] = { synced: !!ts, lastSync: ts ? parseInt(ts, 10) : undefined };
   }
   return status;
 }
@@ -1062,7 +1066,13 @@ export async function pushProfile(
   const walletLower = wallet.toLowerCase();
   for (const protocol of PROTOCOLS_WITH_PROFILE_API) {
     try {
-      const result = await syncProfileToProtocol(wallet, walletLower, protocol, profile as ProfileData, env);
+      const result = await syncProfileToProtocol(
+        wallet,
+        walletLower,
+        protocol,
+        profile as ProfileData,
+        env,
+      );
       results.push(result);
     } catch (err) {
       results.push({ protocol, ok: false, error: (err as Error).message });

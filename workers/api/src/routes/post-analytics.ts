@@ -14,6 +14,7 @@
  */
 
 import type { MasterPost } from '@degenfeed/cross-protocol-bridge';
+import { kvGetJson } from '../lib/kv-json';
 import { requirePremiumTier } from '../premium';
 import { jsonResponse, methodNotAllowed } from '../response-helpers';
 import { requireSession } from '../session';
@@ -122,7 +123,7 @@ export async function handleAnalyticsSummary(request: Request, env: Env): Promis
     // Try cache first
     const cacheKey = `${PREFIX_ANALYTICS}summary:${address}:${range.label}`;
     if (env.CACHE) {
-      const cached = await env.CACHE.get(cacheKey, 'json');
+      const cached = await kvGetJson(env.CACHE, cacheKey);
       if (cached) return jsonResponse(cached as Record<string, unknown>);
     }
 
@@ -400,7 +401,7 @@ export async function recordPostAnalytics(
 
   // Update summary index
   const indexKey = `${PREFIX_ANALYTICS}index:${address}`;
-  const indexRaw = await env.CACHE.get(indexKey, 'json');
+  const indexRaw = await kvGetJson(env.CACHE, indexKey);
   const index: string[] = (indexRaw as string[]) ?? [];
   index.push(postId);
   await env.CACHE.put(indexKey, JSON.stringify(index.slice(-5000)), { expirationTtl: 86400 * 365 });
@@ -432,7 +433,7 @@ export async function updatePostEngagement(
 
   const address = walletAddress.toLowerCase();
   const key = `${PREFIX_ENGAGEMENT}${address}:${postId}`;
-  const raw = await env.CACHE.get(key, 'json');
+  const raw = await kvGetJson(env.CACHE, key);
   if (!raw) return;
 
   const analytics = raw as PostAnalytics;
@@ -623,7 +624,7 @@ async function getPostAnalytics(
 ): Promise<PostAnalytics | null> {
   if (!env.CACHE) return null;
   try {
-    const raw = await env.CACHE.get(`${PREFIX_ENGAGEMENT}${address}:${postId}`, 'json');
+    const raw = await kvGetJson(env.CACHE, `${PREFIX_ENGAGEMENT}${address}:${postId}`);
     return raw as PostAnalytics | null;
   } catch {
     return null;
@@ -644,7 +645,7 @@ async function getAllPostAnalytics(address: string, env: Env): Promise<PostAnaly
       });
 
       for (const key of page.keys) {
-        const raw = await env.CACHE.get(key.name, 'json');
+        const raw = await kvGetJson(env.CACHE, key.name);
         if (raw) posts.push(raw as PostAnalytics);
       }
 

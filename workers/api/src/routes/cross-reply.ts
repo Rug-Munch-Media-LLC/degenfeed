@@ -25,6 +25,7 @@
  *   7. Return success with the new post URI
  */
 
+import { kvGetJson } from '../lib/kv-json';
 import { jsonResponse, methodNotAllowed, noCacheJsonResponse } from '../response-helpers';
 import { ALLOWED_PROTOCOLS, hasSuspiciousPayload, sanitizeString } from '../sanitize';
 import type { Env } from '../types';
@@ -210,7 +211,7 @@ export async function handleCrossReply(request: Request, env: Env): Promise<Resp
   // 2. Get user's linked identity for the reply protocol
   let protocolIdentity: { id: string; auth?: Record<string, string> } | null = null;
   try {
-    const identityRaw = (await env.CACHE?.get(`identity:${walletAddress}`, 'json')) as
+    const identityRaw = (await kvGetJson(env.CACHE, `identity:${walletAddress}`)) as
       | Record<string, { id: string; auth?: Record<string, string> }>
       | null
       | undefined;
@@ -402,7 +403,7 @@ async function echoReplyToParentProtocol(
     case 'mastodon': {
       // Look up the user's Mastodon identity from the bridge KV
       try {
-        const identityRaw = (await env.CACHE?.get(`identity:${walletAddress}`, 'json')) as
+        const identityRaw = (await kvGetJson(env.CACHE, `identity:${walletAddress}`)) as
           | Record<
               string,
               {
@@ -453,7 +454,7 @@ async function echoReplyToParentProtocol(
     case 'nostr': {
       // Experimental: echo to Nostr using user's nsec from KV
       try {
-        const identityRaw = (await env.CACHE?.get(`identity:${walletAddress}`, 'json')) as
+        const identityRaw = (await kvGetJson(env.CACHE, `identity:${walletAddress}`)) as
           | Record<
               string,
               {

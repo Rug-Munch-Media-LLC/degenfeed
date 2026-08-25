@@ -34,14 +34,8 @@
  *   GET  /api/shorts/zora/creator  — Creator's Zora video NFTs
  */
 
-import type { ShortVideoSource } from '@degenfeed/shorts-provider';
-import type { UserInterestProfile } from '@degenfeed/shorts-provider/scorer';
-import { ShortsAggregator } from '../feed/shorts-aggregator';
 import { ShortsAggregatorV2 } from '../feed/shorts-aggregator-v2';
 import { ShortsAlgorithm, type UserShortsProfile, type WatchEvent } from '../feed/shorts-algorithm';
-import { FEED_SOURCE_LABELS, UnifiedShortsFeed } from '../feed/shorts-unified';
-import { type ShortProtocol, UnifiedShortsPipeline } from '../lib/unified-shorts';
-import { ZoraVideoIntegration } from '../lib/zora-video';
 import { jsonResponse, methodNotAllowed, noCacheJsonResponse } from '../response-helpers';
 import { requireSession } from '../session';
 import type { Env } from '../types';
@@ -175,7 +169,7 @@ export async function handleShortsTrendingV2(request: Request, env: Env): Promis
     });
 
     scored.sort((a, b) => b._score - a._score);
-    const topShorts = scored.slice(0, limit).map(({ _score: _, ...rest }) => rest);
+    const topShorts = scored.slice(0, limit).map(({ _score, ...rest }) => rest);
 
     // Get trending categories
     const algorithm = new ShortsAlgorithm();
@@ -391,10 +385,10 @@ export async function handleShortsFeedback(request: Request, env: Env): Promise<
 
     if (body.action === 'dislike' || body.action === 'not_interested') {
       // Add to negative feedback list for filtering
-      const negativeList = (await env.SHORTS?.get(
+      const negativeList = (await kvGetJson<string[]>(
+        env.SHORTS,
         `shorts:negative:${session.address}`,
-        'json',
-      ).catch(() => null)) as string[] | null;
+      )) as string[] | null;
       const updated = [...(negativeList ?? []), body.shortId].slice(-500);
       await env.SHORTS?.put(`shorts:negative:${session.address}`, JSON.stringify(updated), {
         expirationTtl: 86400 * 90,
@@ -469,7 +463,7 @@ function parseSessionCookie(request: Request): { address: string } | null {
 
 // ─── Helper: infer feed sources from query param ──────────────────────────
 
-function getFeedSources(raw: string): string[] {
+function _getFeedSources(raw: string): string[] {
   const validSources = [
     'loops',
     'activitypub',

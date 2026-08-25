@@ -87,7 +87,7 @@ export interface PostExplanation {
 
 // ─── Signal metadata ────────────────────────────────────────────────────
 
-const SIGNAL_META: Record<string, { icon: string; label: string; settingLink: string }> = {
+const SIGNAL_META = {
   recency: {
     icon: '🕐',
     label: 'Recency',
@@ -191,7 +191,7 @@ export function explainPost(post: UnifiedPost, ctx: ExplainerContext): PostExpla
   const mutedNiches = ctx.mutedNiches ?? new Set<string>();
 
   // 1. Score the post using the unified scorer
-  const { total, breakdown, transparency } = scorePost(post, {
+  const { total, breakdown } = scorePost(post, {
     mode:
       (ctx.mode as
         | 'standard'

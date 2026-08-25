@@ -1,4 +1,5 @@
 import { checkPublishRateLimit } from '../lib/community-store';
+import { kvGetJson } from '../lib/kv-json';
 import { requirePremiumTier } from '../premium';
 import { jsonResponse } from '../response-helpers';
 import {
@@ -971,7 +972,7 @@ export async function handleListScheduledCrossPosts(request: Request, env: Env):
       const page: { keys: { name: string }[]; list_complete: boolean; cursor?: string } =
         await env.CACHE.list({ prefix: 'scheduled:crosspost:', cursor, limit: 100 });
       for (const key of page.keys) {
-        const entry = await env.CACHE.get(key.name, 'json');
+        const entry = await kvGetJson(env.CACHE, key.name);
         if (entry) scheduled.push(entry as (typeof scheduled)[0]);
       }
       cursor = page.list_complete ? undefined : page.cursor;
@@ -1041,7 +1042,7 @@ export async function executeDueScheduledCrossPosts(env: Env): Promise<number> {
 
     for (const key of page.keys) {
       try {
-        const raw = await env.CACHE.get(key.name, 'json');
+        const raw = await kvGetJson(env.CACHE, key.name);
         if (!raw) continue;
 
         const entry = raw as {

@@ -14,6 +14,7 @@
 
 import type { Protocol } from '@degenfeed/types';
 import type { Env } from '../types';
+import { kvGetJson } from './kv-json';
 
 // ─── Types ────────────────────────────────────────────────────────────────
 
@@ -147,7 +148,7 @@ export async function storeCrosspostMap(
 export async function getCrosspostMap(env: Env, dfUri: string): Promise<CrosspostMap | null> {
   if (!env.CACHE) return null;
   try {
-    const raw = (await env.CACHE.get(`${CROSSPOST_PREFIX}${dfUri}`, 'json')) as CrosspostMap | null;
+    const raw = (await kvGetJson(env.CACHE, `${CROSSPOST_PREFIX}${dfUri}`)) as CrosspostMap | null;
     return raw;
   } catch {
     return null;
@@ -257,7 +258,7 @@ export async function recordEditSync(
 export async function getEditSyncEntry(env: Env, dfUri: string): Promise<EditSyncEntry | null> {
   if (!env.CACHE) return null;
   try {
-    return (await env.CACHE.get(`${EDIT_SYNC_PREFIX}${dfUri}`, 'json')) as EditSyncEntry | null;
+    return (await kvGetJson(env.CACHE, `${EDIT_SYNC_PREFIX}${dfUri}`)) as EditSyncEntry | null;
   } catch {
     return null;
   }
@@ -313,7 +314,7 @@ export async function getPendingEditSyncs(env: Env): Promise<EditSyncEntry[]> {
       });
 
       for (const key of page.keys) {
-        const entry = (await env.CACHE.get(key.name, 'json')) as EditSyncEntry | null;
+        const entry = (await kvGetJson(env.CACHE, key.name)) as EditSyncEntry | null;
         if (entry && !entry.fullySynced) {
           pending.push(entry);
         }
@@ -374,7 +375,7 @@ export async function getSiblingProtocols(
   if (!env.CACHE) return [];
   try {
     const key = `${SIBLING_INDEX_PREFIX}${protocol}:${nativeId}`;
-    const raw = await env.CACHE.get(key, 'json');
+    const raw = await kvGetJson(env.CACHE, key);
     return (raw as Protocol[]) ?? [];
   } catch {
     return [];

@@ -12,6 +12,7 @@
  * Complements post-analytics.ts (which provides the aggregate dashboard).
  */
 
+import { kvGetJson } from '../../lib/kv-json';
 import { requirePremiumTier } from '../../premium';
 import { jsonResponse, methodNotAllowed } from '../../response-helpers';
 import { requireSession } from '../../session';
@@ -152,7 +153,7 @@ export async function handleRecordEngagement(request: Request, env: Env): Promis
     const postKey = `${PREFIX_POST_ANALYTICS}${address}:${body.entryId}`;
     let perf: PostPerformance;
 
-    const existing = await env.CACHE?.get(postKey, 'json');
+    const existing = await kvGetJson(env.CACHE, postKey);
     if (existing) {
       perf = existing as PostPerformance;
     } else {
@@ -241,7 +242,7 @@ export async function handleGetPostPerformance(request: Request, env: Env): Prom
 
     const address = session.address.toLowerCase();
     const key = `${PREFIX_POST_ANALYTICS}${address}:${entryId}`;
-    const raw = await env.CACHE?.get(key, 'json');
+    const raw = await kvGetJson(env.CACHE, key);
 
     if (!raw) {
       return jsonResponse(
@@ -289,7 +290,7 @@ export async function handleListPostAnalytics(request: Request, env: Env): Promi
     if (env.CACHE) {
       const page = await env.CACHE.list({ prefix, cursor: nextCursor, limit });
       for (const key of page.keys) {
-        const raw = await env.CACHE.get(key.name, 'json');
+        const raw = await kvGetJson(env.CACHE, key.name);
         if (raw) posts.push(raw as PostPerformance);
       }
       hasMore = !page.list_complete;
@@ -349,7 +350,7 @@ export async function handleAnalyticsSummary(request: Request, env: Env): Promis
       do {
         const page = await env.CACHE.list({ prefix, cursor, limit: 100 });
         for (const key of page.keys) {
-          const raw = await env.CACHE.get(key.name, 'json');
+          const raw = await kvGetJson(env.CACHE, key.name);
           if (raw) allPosts.push(raw as PostPerformance);
         }
         cursor = page.list_complete ? undefined : page.cursor;
@@ -533,7 +534,7 @@ async function updateProtocolStats(
 ): Promise<void> {
   try {
     const key = `${PREFIX_PROTOCOL_STATS}${walletAddress}:${protocol}`;
-    const existing = await env.CACHE?.get(key, 'json');
+    const existing = await kvGetJson(env.CACHE, key);
     const stats: ProtocolStats = existing
       ? (existing as ProtocolStats)
       : {

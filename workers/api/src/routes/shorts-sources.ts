@@ -1,3 +1,4 @@
+import { kvGetJson } from '../lib/kv-json';
 /**
  * @routes/shorts-sources — Shorts Source Management Routes
  *
@@ -360,7 +361,7 @@ export async function handleSourceSuggestions(_request: Request, env: Env): Prom
 
 async function loadSources(env: Env): Promise<ManagedSource[]> {
   try {
-    const raw = await env.SHORTS?.get(KV_CONFIG_KEY, 'json');
+    const raw = await kvGetJson(env.SHORTS, KV_CONFIG_KEY);
     if (
       raw &&
       typeof raw === 'object' &&

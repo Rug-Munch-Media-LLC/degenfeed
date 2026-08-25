@@ -1,24 +1,18 @@
-import { detectNiches } from '@degenfeed/feed-core';
-import {
-  type AggregatedShort,
-  type ExtendedSource,
-  ShortsAggregatorV2,
-} from '../feed/shorts-aggregator-v2';
-import { ShortsAlgorithm, type UserShortsProfile, type WatchEvent } from '../feed/shorts-algorithm';
+import type { ExtendedSource } from '../feed/shorts-aggregator-v2';
+import type { WatchEvent } from '../feed/shorts-algorithm';
+import { kvGetJson } from '../lib/kv-json';
 import { jsonResponse, methodNotAllowed, noCacheJsonResponse } from '../response-helpers';
 import { requireSession } from '../session';
 import type { Env } from '../types';
-import type {
-  VibeScore,
-  VineCategory,
-  VineChallenge,
-  VineFeedResponse,
-  VineLeaderboardEntry,
-  VineQueue,
-  VineShort,
-  VineStarProfile,
+import type { VibeScore, VineCategory, VineFeedResponse, VineShort } from './vine-shorts-types';
+import {
+  loadVineProfile,
+  recordRevine,
+  saveVineProfile,
+  VINE_CATEGORIES,
+  VINE_CATEGORY_META,
+  VineAggregator,
 } from './vine-shorts-types';
-import { VINE_CATEGORIES, VineAggregator, VineAlgorithm } from './vine-shorts-types';
 export async function handleVineFeed(request: Request, env: Env): Promise<Response> {
   if (request.method !== 'GET') return methodNotAllowed(['GET']);
 
@@ -31,7 +25,7 @@ export async function handleVineFeed(request: Request, env: Env): Promise<Respon
     const seenIds = new Set(seenParam ? seenParam.split(',').filter(Boolean) : []);
 
     const aggregator = new VineAggregator(env);
-    const { shorts, featured, sourceCounts } = await aggregator.aggregateVineShorts(limit * 2);
+    const { shorts, featured } = await aggregator.aggregateVineShorts(limit * 2);
 
     // Apply filters
     let filtered = shorts;
@@ -84,7 +78,7 @@ export async function handleVineFeed(request: Request, env: Env): Promise<Respon
 
     // New content injection: 20% from unseen sources
     const newContentRatio = 0.2;
-    const existingCount = diversified.length;
+    const _existingCount = diversified.length;
     const newContentNeeded = Math.ceil(limit * newContentRatio);
     const newContent = filtered
       .filter((s) => !diversified.some((d) => d.id === s.id))
@@ -116,7 +110,7 @@ export async function handleVineFeed(request: Request, env: Env): Promise<Respon
       vibeRange,
       featured,
       hasMore: filtered.length > limit,
-      cursor: final.length > 0 ? `${final[final.length - 1]!.id}:${Date.now()}` : null,
+      cursor: final.length > 0 ? `${final[final.length - 1]?.id}:${Date.now()}` : null,
       aggregatedAt: Date.now(),
     };
 
@@ -500,7 +494,7 @@ export async function handleVineChallengeJoin(request: Request, env: Env): Promi
 
     // Record challenge entry
     const key = `vine:challenge:entries:${body.challengeId}`;
-    const existing = await env.SHORTS?.get(key, 'json').catch(() => null);
+    const existing = await kvGetJson(env.SHORTS, key).catch(() => null);
     const entries: Array<{ shortId: string; userId: string; enteredAt: number }> =
       (existing as any[]) ?? [];
 
@@ -678,7 +672,7 @@ export async function handleVineWatch(request: Request, env: Env): Promise<Respo
 
     // Update user's category preferences based on watch
     const categoryPrefs = await loadVineProfile(env, session.address);
-    const short = await env.SHORTS?.get(`vine:short:${body.shortId}`, 'json').catch(() => null);
+    const short = await kvGetJson(env.SHORTS, `vine:short:${body.shortId}`).catch(() => null);
 
     // Increment category affinity
     if (short && typeof short === 'object') {

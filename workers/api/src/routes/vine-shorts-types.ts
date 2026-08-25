@@ -50,9 +50,7 @@ import {
   type ExtendedSource,
   ShortsAggregatorV2,
 } from '../feed/shorts-aggregator-v2';
-import { ShortsAlgorithm, type UserShortsProfile, type WatchEvent } from '../feed/shorts-algorithm';
-import { jsonResponse, methodNotAllowed, noCacheJsonResponse } from '../response-helpers';
-import { requireSession } from '../session';
+import { kvGetJson } from '../lib/kv-json';
 import type { Env } from '../types';
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -232,7 +230,7 @@ function computeVibeScore(short: AggregatedShort): VibeScore {
   const durationBonus = short.duration <= 10 ? 20 : short.duration <= 30 ? 10 : 0;
   const engagementBonus = Math.min(short.engagementRate * 50, 20);
   const qualityBonus = short.qualityScore * 30;
-  const viewBonus = Math.min(Math.log10(short.views + 1) * 5, 15);
+  const _viewBonus = Math.min(Math.log10(short.views + 1) * 5, 15);
   const tagDiversity = Math.min(short.tags.length * 5, 15);
 
   // Compute sub-scores
@@ -527,7 +525,7 @@ async function fetchFlashesShorts(env: Env, limit: number): Promise<AggregatedSh
 
       for (const item of data?.feed ?? []) {
         const embed = item.post.record.embed;
-        if (!embed || embed.$type !== 'app.bsky.embed.video') continue;
+        if (embed?.$type !== 'app.bsky.embed.video') continue;
 
         const videoUrl =
           embed.playlist || `https://video.bsky.app/watch/${item.post.uri.split('/').pop()}`;
@@ -582,7 +580,7 @@ async function fetchFlashesShorts(env: Env, limit: number): Promise<AggregatedSh
 // VINE AGGREGATOR — Pulls from ALL sources, scores by vibe, curates
 // ═══════════════════════════════════════════════════════════════════════════
 
-class VineAggregator {
+export class VineAggregator {
   private env: Env;
 
   constructor(env: Env) {
@@ -663,7 +661,7 @@ class VineAggregator {
    */
   async getQueue(userId?: string): Promise<VineQueue> {
     const cacheKey = `vine:queue:${userId ?? 'anonymous'}`;
-    const cached = await this.env.SHORTS?.get(cacheKey, 'json').catch(() => null);
+    const cached = await kvGetJson(this.env.SHORTS, cacheKey).catch(() => null);
 
     if (cached && typeof cached === 'object' && (cached as VineQueue).expiresAt > Date.now()) {
       return cached as VineQueue;
@@ -716,7 +714,7 @@ class VineAggregator {
    */
   async getChallenges(): Promise<VineChallenge[]> {
     // Load from KV; fallback to default challenges
-    const cached = await this.env.SHORTS?.get('vine:challenges', 'json').catch(() => null);
+    const cached = await kvGetJson(this.env.SHORTS, 'vine:challenges').catch(() => null);
     if (cached) return cached as VineChallenge[];
 
     // Default active challenges
@@ -786,7 +784,7 @@ class VineAggregator {
     reason?: string,
   ): Promise<{ success: boolean; status: string }> {
     const submissionsKey = 'vine:featured:submissions';
-    const existing = await this.env.SHORTS?.get(submissionsKey, 'json').catch(() => null);
+    const existing = await kvGetJson(this.env.SHORTS, submissionsKey).catch(() => null);
     const submissions: Array<{
       shortId: string;
       submitter: string;
@@ -863,7 +861,7 @@ class VineAggregator {
     return [...creatorStats.entries()]
       .sort((a, b) => b[1].totalVibeScore - a[1].totalVibeScore)
       .slice(0, limit)
-      .map(([name, stats], idx) => ({
+      .map(([name, stats], _idx) => ({
         creatorName: name,
         creatorHandle: shorts.find((s) => s.creatorName === name)?.creatorHandle ?? name,
         creatorAvatar: stats.avatar,
@@ -888,7 +886,7 @@ function vineProfileKey(address: string): string {
   return `${VINE_KV_PREFIX}profile:${address}`;
 }
 
-async function loadVineProfile(env: Env, address?: string): Promise<Record<string, number>> {
+export async function loadVineProfile(env: Env, address?: string): Promise<Record<string, number>> {
   if (!address) return {};
   try {
     const raw = await env.SHORTS?.get(vineProfileKey(address), 'json');
@@ -899,7 +897,7 @@ async function loadVineProfile(env: Env, address?: string): Promise<Record<strin
   return {};
 }
 
-async function saveVineProfile(
+export async function saveVineProfile(
   env: Env,
   address: string,
   profile: Record<string, number>,
@@ -909,9 +907,9 @@ async function saveVineProfile(
   });
 }
 
-async function recordRevine(env: Env, shortId: string, userId: string): Promise<void> {
+export async function recordRevine(env: Env, shortId: string, userId: string): Promise<void> {
   const key = `${VINE_KV_PREFIX}revines:${shortId}`;
-  const existing = await env.SHORTS?.get(key, 'json').catch(() => null);
+  const existing = await kvGetJson(env.SHORTS, key).catch(() => null);
   const userIds: string[] = (existing as string[]) ?? [];
   if (!userIds.includes(userId)) {
     userIds.push(userId);

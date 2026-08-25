@@ -1,3 +1,5 @@
+import type { Env } from '../types';
+import { kvGetJson } from './kv-json';
 /**
  * @degenfeed/api-worker — Bridgy Fed Bridge Service
  *
@@ -16,12 +18,11 @@
  */
 import {
   dequeueRaw,
-  enqueue as queueEnqueue,
   getApiKey,
   parsePayload,
+  enqueue as queueEnqueue,
   useRmiQueueApi,
 } from './queue-client';
-import type { Env } from '../types';
 
 // ─── Constants ──────────────────────────────────────────────────────────────
 
@@ -36,7 +37,7 @@ const KV_BRIDGY_CONFIG_PREFIX = 'bridgy:config:';
 const KV_BRIDGY_USERS_PREFIX = 'bridgy:users:';
 const KV_BRIDGY_CROSSPOST_PREFIX = 'bridgy:crosspost:';
 const KV_BRIDGY_HEALTH_PREFIX = 'bridgy:health:cache';
-const KV_BRIDGY_REGISTRATION_PREFIX = 'bridgy:registration:';
+const _KV_BRIDGY_REGISTRATION_PREFIX = 'bridgy:registration:';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -162,7 +163,7 @@ export class BridgyFedService {
     // Check KV cache first (30-second TTL)
     try {
       if (this.env.CACHE) {
-        const cached = await this.env.CACHE.get(KV_BRIDGY_HEALTH_PREFIX + 'overall', 'json');
+        const cached = await kvGetJson(this.env.CACHE, `${KV_BRIDGY_HEALTH_PREFIX}overall`);
         if (cached && typeof cached === 'object' && 'checkedAt' in cached) {
           const cachedStatus = cached as unknown as BridgyHealthStatus;
           if (checkedAt - cachedStatus.checkedAt < 30_000) {
@@ -217,7 +218,7 @@ export class BridgyFedService {
     if (this.env.CACHE) {
       (async () => {
         try {
-          await this.env.CACHE.put(KV_BRIDGY_HEALTH_PREFIX + 'overall', JSON.stringify(status), {
+          await this.env.CACHE.put(`${KV_BRIDGY_HEALTH_PREFIX}overall`, JSON.stringify(status), {
             expirationTtl: 60,
           });
         } catch {
@@ -294,10 +295,7 @@ export class BridgyFedService {
           getApiKey(this.env),
         );
       } catch (err) {
-        console.warn(
-          `[bridgy-service] Queue API enqueue failed for config ${config.id}:`,
-          err,
-        );
+        console.warn(`[bridgy-service] Queue API enqueue failed for config ${config.id}:`, err);
       }
     }
 
@@ -365,7 +363,7 @@ export class BridgyFedService {
         });
 
         for (const key of page.keys) {
-          const raw = await this.env.CACHE.get(key.name, 'json');
+          const raw = await kvGetJson(this.env.CACHE, key.name);
           if (raw) {
             const user = raw as unknown as BridgyUserBridge;
             if (options?.activeOnly && !user.active) continue;
@@ -431,7 +429,7 @@ export class BridgyFedService {
     // Store cross-post record in KV
     if (this.env.CACHE) {
       try {
-        const crosspostKey = KV_BRIDGY_CROSSPOST_PREFIX + `${request.sourceInstance}:${startTime}`;
+        const crosspostKey = `${KV_BRIDGY_CROSSPOST_PREFIX}${request.sourceInstance}:${startTime}`;
         await this.env.CACHE.put(
           crosspostKey,
           JSON.stringify({
@@ -469,7 +467,7 @@ export class BridgyFedService {
     }
 
     if (this.env.CACHE) {
-      const key = KV_BRIDGY_USERS_PREFIX + `${bridge.sourceInstance}:${bridge.userId}`;
+      const key = `${KV_BRIDGY_USERS_PREFIX}${bridge.sourceInstance}:${bridge.userId}`;
       try {
         await this.env.CACHE.put(key, JSON.stringify(bridge), {
           expirationTtl: 86400 * 365,
@@ -571,7 +569,7 @@ export class BridgyFedService {
    *   - Monitoring bridge health
    */
   private async sendToBridgyFed(
-    text: string,
+    _text: string,
     sourceInstance: string,
     targetProtocol: string,
     options?: {
@@ -727,7 +725,7 @@ export class BridgyFedService {
         });
 
         for (const key of page.keys) {
-          const raw = await this.env.CACHE.get(key.name, 'json');
+          const raw = await kvGetJson(this.env.CACHE, key.name);
           if (raw) {
             instances.push(raw as unknown as BridgyFedConfig);
           }
