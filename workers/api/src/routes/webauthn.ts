@@ -149,7 +149,7 @@ async function renameCredential(
 /**
  * Safely encode a Uint8Array to a base64url string for JSON transport.
  */
-function uint8ArrayToBase64URL(uint8: Uint8Array): string {
+function _uint8ArrayToBase64URL(uint8: Uint8Array): string {
   const base64 = btoa(String.fromCharCode(...uint8));
   return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
@@ -157,7 +157,7 @@ function uint8ArrayToBase64URL(uint8: Uint8Array): string {
 /**
  * Safely decode a base64url string back to Uint8Array.
  */
-function base64URLToUint8Array(base64url: string): Uint8Array {
+function _base64URLToUint8Array(base64url: string): Uint8Array {
   const base64 = base64url.replace(/-/g, '+').replace(/_/g, '/');
   const padding = 4 - (base64.length % 4);
   const padded = padding === 4 ? base64 : base64 + '='.repeat(padding);
@@ -184,10 +184,10 @@ export async function handleWebAuthnRegisterBegin(request: Request, env: Env): P
 
     const wallet = session.address;
 
-    const options = generateRegistrationOptions({
+    const options = await generateRegistrationOptions({
       rpName: RP_NAME,
       rpID: RP_ID,
-      userID: wallet,
+      userID: new TextEncoder().encode(wallet),
       userName: wallet.slice(0, 12),
       userDisplayName: `Wallet ${wallet.slice(0, 8)}`,
       authenticatorSelection: {
@@ -242,7 +242,9 @@ export async function handleWebAuthnRegisterComplete(
     await deleteChallenge(env, wallet);
 
     const verification = await verifyRegistrationResponse({
-      response: body.response as Parameters<typeof verifyRegistrationResponse>[0]['response'],
+      response: body.response as unknown as Parameters<
+        typeof verifyRegistrationResponse
+      >[0]['response'],
       expectedChallenge,
       expectedOrigin: ORIGIN,
       expectedRPID: RP_ID,
@@ -253,12 +255,14 @@ export async function handleWebAuthnRegisterComplete(
     }
 
     const { registrationInfo } = verification;
-    const credentialID = uint8ArrayToBase64URL(registrationInfo.credentialID as Uint8Array);
+    // v11: credential fields live under registrationInfo.credential;
+    // credential.id is already Base64URLString
+    const credentialID = registrationInfo.credential.id;
 
     const credential: StoredCredential = {
       credentialID,
-      publicKey: registrationInfo.credentialPublicKey as Uint8Array,
-      counter: registrationInfo.counter,
+      publicKey: registrationInfo.credential.publicKey,
+      counter: registrationInfo.credential.counter,
       transports: (body.response as Record<string, unknown>).transports as string[] | undefined,
       name: body.name || `Passkey (${new Date().toLocaleDateString()})`,
       createdAt: Date.now(),
@@ -308,10 +312,10 @@ export async function handleWebAuthnAuthenticateBegin(
       return jsonResponse({ error: 'No passkeys registered for this wallet' }, 404);
     }
 
-    const options = generateAuthenticationOptions({
+    const options = await generateAuthenticationOptions({
       rpID: RP_ID,
       allowCredentials: credentials.map((cred) => ({
-        id: base64URLToUint8Array(cred.credentialID),
+        id: cred.credentialID,
         transports: cred.transports as AuthenticatorTransport[] | undefined,
       })),
       userVerification: 'preferred',
@@ -383,15 +387,16 @@ export async function handleWebAuthnAuthenticateComplete(
     await deleteChallenge(env, wallet);
 
     const verification = await verifyAuthenticationResponse({
-      response: credentialResponse as Parameters<
+      response: credentialResponse as unknown as Parameters<
         typeof verifyAuthenticationResponse
       >[0]['response'],
       expectedChallenge,
       expectedOrigin: ORIGIN,
       expectedRPID: RP_ID,
-      authenticator: {
-        credentialID: storedCredential.credentialID,
-        credentialPublicKey: storedCredential.publicKey,
+      // v11: stored credential passed as `credential` (WebAuthnCredential)
+      credential: {
+        id: storedCredential.credentialID,
+        publicKey: storedCredential.publicKey,
         counter: storedCredential.counter,
       },
     });

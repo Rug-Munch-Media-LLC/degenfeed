@@ -227,27 +227,26 @@ export async function startSimulcast(
     for (const [platform, integrationId] of Object.entries(connectedPlatforms)) {
       if (!SIMULCAST_PLATFORMS.includes(platform as SimulcastPlatform)) continue;
 
-      simulcast.platforms[platform] = {
+      const platformStatus: SimulcastPlatformStatus = {
         platform: platform as SimulcastTarget,
         status: 'starting',
         viewerCount: 0,
       };
+      simulcast.platforms[platform] = platformStatus;
 
       platformStartPromises.push(
         startExternalPlatformStream(id, platform as SimulcastPlatform, integrationId, config, env)
           .then((result) => {
-            simulcast.platforms[platform] = {
-              ...simulcast.platforms[platform],
-              status: result.success ? 'live' : 'error',
-              streamUrl: result.streamUrl,
-              embedUrl: result.streamUrl,
-              error: result.error,
-              startedAt: result.success ? Date.now() : undefined,
-            };
+            platformStatus.status = result.success ? 'live' : 'error';
+            platformStatus.streamUrl = result.streamUrl;
+            platformStatus.embedUrl = result.streamUrl;
+            platformStatus.error = result.error;
+            platformStatus.startedAt = result.success ? Date.now() : undefined;
+            simulcast.platforms[platform] = { ...platformStatus };
           })
           .catch((err) => {
             simulcast.platforms[platform] = {
-              ...simulcast.platforms[platform],
+              ...platformStatus,
               status: 'error',
               error: err instanceof Error ? err.message : String(err),
             };
@@ -332,7 +331,7 @@ export async function stopSimulcast(
     simulcast.status = 'stopping';
 
     // Stop each external platform
-    const stopPromises: Promise<void>[] = [];
+    const stopPromises: Promise<unknown>[] = [];
     for (const [platform, status] of Object.entries(simulcast.platforms)) {
       if (platform === 'loops') continue;
       if (status.status === 'live' || status.status === 'starting') {
@@ -425,9 +424,11 @@ export async function setSimulcastPlatformStatus(
     } else {
       // Stop platform
       await stopExternalPlatformStream(platform, env);
+      const prev = simulcast.platforms[platform];
       simulcast.platforms[platform] = {
-        ...simulcast.platforms[platform],
+        platform,
         status: 'stopped',
+        viewerCount: prev?.viewerCount ?? 0,
       };
     }
 
@@ -517,7 +518,9 @@ export async function getActiveSimulcast(
 
     // Get the most recent active simulcast
     for (let i = ids.length - 1; i >= 0; i--) {
-      const sRaw = await env.STREAMS?.get(simulcastKey(ids[i]));
+      const id = ids[i];
+      if (!id) continue;
+      const sRaw = await env.STREAMS?.get(simulcastKey(id));
       if (sRaw) {
         const s = JSON.parse(sRaw) as SimulcastStream;
         if (s.status === 'active' || s.status === 'starting') {
@@ -676,9 +679,9 @@ async function stopExternalPlatformStream(
  * PeerTube, and Owncast ActivityPub.
  */
 async function announceOnAllProtocols(
-  simulcastId: string,
+  _simulcastId: string,
   config: SimulcastConfig,
-  walletAddress: string,
+  _walletAddress: string,
   env: Env,
 ): Promise<void> {
   const instanceUrl = env.OWNCAST_INSTANCE_URL ?? 'https://owncast.degenfeed.xyz';
@@ -715,12 +718,8 @@ async function publishToFarcaster(text: string, url: string, env: Env): Promise<
 
   if (!signerKey || !fid) return;
 
-  // Use the Farcaster live wrapper or direct Hubble API
+  // Submit cast directly via Hubble submitMessage
   try {
-    const { publishLiveCast } = await import('./farcaster-live-wrapper');
-    await publishLiveCast(text, url, env);
-  } catch {
-    // Fallback: use the farcaster frames v2 route
     const body = {
       text: text.slice(0, 320), // Farcaster cast limit
       embeds: [{ url }],
@@ -734,6 +733,8 @@ async function publishToFarcaster(text: string, url: string, env: Env): Promise<
       body: JSON.stringify(body),
       signal: AbortSignal.timeout(5000),
     });
+  } catch {
+    // Best-effort
   }
 }
 
@@ -741,7 +742,7 @@ async function publishToFarcaster(text: string, url: string, env: Env): Promise<
  * Publish a go-live announcement to Nostr (kind 1 text note + kind 30311 live event).
  */
 async function publishToNostr(
-  text: string,
+  _text: string,
   config: SimulcastConfig,
   url: string,
   env: Env,
@@ -750,16 +751,15 @@ async function publishToNostr(
   if (!nsec) return;
 
   try {
-    const { nostrPlatformWrapper } = await import('./video-platform-wrapper');
-    await nostrPlatformWrapper.announceLiveStream?.(
-      {
-        title: config.title,
-        description: config.description,
-        streamUrl: url,
-        tags: config.tags,
-        category: config.category,
-      },
+    const { nostrLiveStrategy } = await import('./live-shorts/strategies/nostr-live');
+    await nostrLiveStrategy.announceLive(
       env,
+      `simulcast-${Date.now()}`,
+      'degenfeed',
+      'degenfeed',
+      config.title,
+      url,
+      0,
     );
   } catch {
     // Best-effort
@@ -776,11 +776,15 @@ async function publishToBluesky(text: string, url: string, env: Env): Promise<vo
 
   try {
     const { atProtoLiveStrategy } = await import('../lib/live-shorts/strategies/atproto-live');
-    await atProtoLiveStrategy.publishToBluesky?.({
-      text: text.slice(0, 300),
-      embedUrl: url,
-      createdAt: new Date().toISOString(),
-    });
+    await atProtoLiveStrategy.announceLive(
+      env,
+      `simulcast-${Date.now()}`,
+      'degenfeed',
+      'degenfeed',
+      text.slice(0, 300),
+      url,
+      0,
+    );
   } catch {
     // Best-effort
   }
@@ -816,20 +820,12 @@ async function publishToMastodon(text: string, env: Env): Promise<void> {
  * Publish a go-live event to PeerTube.
  */
 async function publishToPeerTube(config: SimulcastConfig, url: string, env: Env): Promise<void> {
-  const peertubeUrl = env.PEERTUBE_INSTANCE_URL ?? 'https://video.degenfeed.xyz';
-
-  try {
-    // PeerTube doesn't have a direct "go live" API without a channel
-    // This announces via the channel's social features if available
-    const { PeerTubeLiveStream } = await import('@degenfeed/peertube-provider');
-    const peertube = new PeerTubeLiveStream({
-      instanceUrl: peertubeUrl,
-    });
-
-    await peertube.updateChannelDescription?.({
-      status: `🔴 LIVE: ${config.title}`,
-    });
-  } catch {
-    // Best-effort
-  }
+  // PeerTube federation announces automatically when a live stream is created
+  // via PeerTubeLiveStream.createStream() (OAuth token + channel context required).
+  // Standalone simulcast go-live announcements have no channel context here,
+  // so this is a no-op unless client credentials are configured for a future
+  // authenticated announcement flow.
+  if (!env.PEERTUBE_CLIENT_ID || !env.PEERTUBE_CLIENT_SECRET) return;
+  void config;
+  void url;
 }

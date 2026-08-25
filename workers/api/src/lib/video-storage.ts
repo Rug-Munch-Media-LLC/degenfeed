@@ -90,8 +90,8 @@ function variantKey(baseKey: string, variant: string): string {
  * Generate a Cloudflare CDN URL for an R2 object.
  */
 function generateCDNUrl(env: Env, key: string): string {
-  if (env.CDN_URL) {
-    return `${env.CDN_URL.replace(/\/$/, '')}/${key}`;
+  if (env.DEGENFEED_CDN_URL) {
+    return `${env.DEGENFEED_CDN_URL.replace(/\/$/, '')}/${key}`;
   }
   // Fallback: R2.dev subdomain or custom domain
   if (env.VIDEO_STORAGE_BINDING) {

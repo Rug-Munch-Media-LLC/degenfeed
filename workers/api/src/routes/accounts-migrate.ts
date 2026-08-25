@@ -61,6 +61,8 @@ export interface MigrationJob {
     preservedUsername?: boolean;
     identityPreserved?: boolean;
     targetUrl?: string;
+    /** Human-readable note about migration limitations (e.g. Farcaster FID transfer) */
+    note?: string;
   };
 }
 
@@ -501,7 +503,7 @@ async function migrateBlueskyImport(
   sourcePds: string,
   authToken: string | undefined,
   env: Env,
-): Promise<MigrationJob['result']> {
+): Promise<NonNullable<MigrationJob['result']>> {
   const pdsUrl = sourcePds.replace(/\/$/, '');
   let migratedContent = 0;
   let migratedFollowers = 0;
@@ -617,7 +619,7 @@ async function migrateBlueskyExport(
   targetPds: string,
   authToken: string | undefined,
   env: Env,
-): Promise<MigrationJob['result']> {
+): Promise<NonNullable<MigrationJob['result']>> {
   // Export to external Bluesky/AT Protocol PDS
   const pdsUrl = targetPds.replace(/\/$/, '');
   let migratedContent = 0;
@@ -670,7 +672,7 @@ async function migrateMastodonImport(
   sourceInstance: string,
   authToken: string | undefined,
   env: Env,
-): Promise<MigrationJob['result']> {
+): Promise<NonNullable<MigrationJob['result']>> {
   let migratedContent = 0;
   const apiBase = `${sourceInstance.replace(/\/$/, '')}/api/v1`;
 
@@ -735,7 +737,7 @@ async function migrateMastodonExport(
   targetInstance: string,
   authToken: string | undefined,
   env: Env,
-): Promise<MigrationJob['result']> {
+): Promise<NonNullable<MigrationJob['result']>> {
   let migratedContent = 0;
   const apiBase = `${targetInstance.replace(/\/$/, '')}/api/v1`;
 
@@ -780,7 +782,7 @@ async function migrateFarcasterImport(
   sourceHub: string,
   _authToken: string | undefined,
   env: Env,
-): Promise<MigrationJob['result']> {
+): Promise<NonNullable<MigrationJob['result']>> {
   let migratedContent = 0;
   const hubUrl = sourceHub.replace(/\/$/, '');
 
@@ -834,7 +836,7 @@ async function migrateFarcasterExport(
   targetHub: string,
   _authToken: string | undefined,
   _env: Env,
-): Promise<MigrationJob['result']> {
+): Promise<NonNullable<MigrationJob['result']>> {
   // Farcaster export requires on-chain operations (transferring FID)
   return {
     migratedContent: 0,
@@ -853,7 +855,7 @@ async function genericImport(
   _authToken: string | undefined,
   data: unknown,
   env: Env,
-): Promise<MigrationJob['result']> {
+): Promise<NonNullable<MigrationJob['result']>> {
   const store = env.CONTENT_LIBRARY || env.CACHE;
   if (!store || !data) {
     return {
@@ -865,9 +867,14 @@ async function genericImport(
   }
 
   let migratedContent = 0;
-  const items = Array.isArray(data)
+  const dataRecord = (data ?? {}) as Record<string, unknown>;
+  const items: unknown[] = Array.isArray(data)
     ? data
-    : (data as Record<string, unknown>).items || (data as Record<string, unknown>).posts || [data];
+    : Array.isArray(dataRecord.items)
+      ? dataRecord.items
+      : Array.isArray(dataRecord.posts)
+        ? dataRecord.posts
+        : [data];
 
   for (const item of items.slice(0, 500)) {
     const entry = item as Record<string, unknown>;
@@ -912,7 +919,7 @@ async function genericExport(
   targetInstance: string,
   authToken: string | undefined,
   env: Env,
-): Promise<MigrationJob['result']> {
+): Promise<NonNullable<MigrationJob['result']>> {
   const store = env.CONTENT_LIBRARY || env.CACHE;
   if (!store)
     return {
