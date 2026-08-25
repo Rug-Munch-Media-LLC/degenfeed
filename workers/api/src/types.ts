@@ -74,7 +74,7 @@ export interface Env {
   /** Mirror bridge base URL (fallback for the Arweave GraphQL path) */
   MIRROR_BRIDGE_URL?: string;
   /** Owncast instance URL for live streaming clips */
-  OWCAST_INSTANCE_URL?: string;
+  OWNCAST_INSTANCE_URL?: string;
   /** Comma-separated list of Lemmy instances to fetch from */
   LEMMY_INSTANCES?: string;
   /** Comma-separated list of Pixelfed instances to fetch from */
@@ -140,6 +140,8 @@ export interface Env {
   FARCASTER_SIGNER_UUID?: string;
   /** Mastodon/ActivityPub access token */
   MASTODON_ACCESS_TOKEN?: string;
+  /** Mastodon instance URL (wrangler: MASTODON_INSTANCE_URL) */
+  MASTODON_INSTANCE_URL?: string;
   /** ActivityPub instance URL */
   AP_INSTANCE_URL?: string;
   /** Discord bot token */

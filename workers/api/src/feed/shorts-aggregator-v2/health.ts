@@ -35,7 +35,7 @@ export async function checkSourcesHealth(env: Env): Promise<SourceHealth[]> {
           return makeHealthy(source, res.ok);
         }
         case 'owncast': {
-          const owncastUrl = env.OWCAST_INSTANCE_URL || 'https://owncast.degenfeed.xyz';
+          const owncastUrl = env.OWNCAST_INSTANCE_URL || 'https://owncast.degenfeed.xyz';
           const res = await fetch(`${owncastUrl}/api/status`, {
             signal: AbortSignal.timeout(3000),
           });

@@ -476,7 +476,7 @@ export class MessageTransport {
     const protocol: TransportProtocol = 'farcaster';
 
     try {
-      const mnemonic = env.FARCASTER_MNEMONIC || (await this.getFarcasterMnemonic(env));
+      const mnemonic = env.FARCASTER_BOT_MNEMONIC || (await this.getFarcasterMnemonic(env));
       if (!mnemonic) {
         return {
           protocol,
