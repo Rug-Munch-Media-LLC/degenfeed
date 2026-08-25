@@ -2,7 +2,8 @@ import { log } from '../../logger';
 import { badRequest, ok, serverError } from '../../response-helpers';
 import { requireSession } from '../../session';
 import type { Env } from '../../types';
-import type { MigrationDirection, MigrationJob, MigrationPlatform } from './types';
+import { generateJobId, storeJob } from '../data-migrate';
+import type { MigrationJob } from './types';
 
 export async function handleExportToMastodon(request: Request, env: Env): Promise<Response> {
   const session = await requireSession(request, env);
@@ -132,7 +133,8 @@ export async function handleExportToMastodon(request: Request, env: Env): Promis
     job.error = (err as Error).message;
     job.completedAt = Date.now();
     await storeJob(env, job);
-    return serverError(env, err, { route: 'handleExportToMastodon' });
+    log('error', 'export failed', { route: 'handleExportToMastodon', error: String(err) });
+    return serverError();
   }
 }
 
@@ -266,7 +268,8 @@ export async function handleExportToNostr(request: Request, env: Env): Promise<R
     job.error = (err as Error).message;
     job.completedAt = Date.now();
     await storeJob(env, job);
-    return serverError(env, err, { route: 'handleExportToNostr' });
+    log('error', 'export failed', { route: 'handleExportToNostr', error: String(err) });
+    return serverError();
   }
 }
 
@@ -398,7 +401,8 @@ export async function handleExportToBluesky(request: Request, env: Env): Promise
     job.error = (err as Error).message;
     job.completedAt = Date.now();
     await storeJob(env, job);
-    return serverError(env, err, { route: 'handleExportToBluesky' });
+    log('error', 'export failed', { route: 'handleExportToBluesky', error: String(err) });
+    return serverError();
   }
 }
 

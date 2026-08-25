@@ -62,13 +62,13 @@ function migrationLockKey(wallet: string, platform: string): string {
 
 // ─── Helpers ──────────────────────────────────────────────────
 
-function generateJobId(): string {
+export function generateJobId(): string {
   const ts = Date.now().toString(36);
   const rand = Math.random().toString(36).slice(2, 8);
   return `${ts}-${rand}`;
 }
 
-async function storeJob(env: Env, job: MigrationJob): Promise<void> {
+export async function storeJob(env: Env, job: MigrationJob): Promise<void> {
   const store = env.CACHE;
   if (!store) return;
   try {
@@ -97,7 +97,7 @@ async function getJob(env: Env, wallet: string, jobId: string): Promise<Migratio
   }
 }
 
-async function listJobs(env: Env, wallet: string): Promise<MigrationJob[]> {
+export async function listJobs(env: Env, wallet: string): Promise<MigrationJob[]> {
   if (!env.CACHE) return [];
   try {
     const idxRaw = await env.CACHE.get(migrationIndexKey(wallet));
@@ -593,7 +593,8 @@ async function handleGenericImport(
     job.completedAt = Date.now();
     await storeJob(env, job);
 
-    return serverError(env, err, { route: `handleImport${platform}` });
+    log('error', 'migration failed', { route: 'handleImport', platform, error: String(err) });
+    return serverError();
   } finally {
     await releaseLock(env, walletLower, platform);
   }
@@ -734,7 +735,8 @@ export async function handleExportToMastodon(request: Request, env: Env): Promis
     job.error = (err as Error).message;
     job.completedAt = Date.now();
     await storeJob(env, job);
-    return serverError(env, err, { route: 'handleExportToMastodon' });
+    log('error', 'migration failed', { route: 'handleExportToMastodon', error: String(err) });
+    return serverError();
   }
 }
 
@@ -868,7 +870,8 @@ export async function handleExportToNostr(request: Request, env: Env): Promise<R
     job.error = (err as Error).message;
     job.completedAt = Date.now();
     await storeJob(env, job);
-    return serverError(env, err, { route: 'handleExportToNostr' });
+    log('error', 'migration failed', { route: 'handleExportToNostr', error: String(err) });
+    return serverError();
   }
 }
 
@@ -1000,7 +1003,8 @@ export async function handleExportToBluesky(request: Request, env: Env): Promise
     job.error = (err as Error).message;
     job.completedAt = Date.now();
     await storeJob(env, job);
-    return serverError(env, err, { route: 'handleExportToBluesky' });
+    log('error', 'migration failed', { route: 'handleExportToBluesky', error: String(err) });
+    return serverError();
   }
 }
 

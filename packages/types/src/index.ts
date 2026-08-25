@@ -828,4 +828,31 @@ export interface Env {
   BSKY_DID?: string;
   TELEGRAM_BOT_TOKEN?: string;
   GOTOSOCIAL_INSTANCE_URL?: string;
+  // ─── Cross-protocol bridge config (mirrors workers/api Env) ────────────────
+  /** Matrix homeserver URL */
+  MATRIX_INSTANCE_URL?: string;
+  /** Matrix bot access token */
+  MATRIX_ACCESS_TOKEN?: string;
+  /** Matrix outbound sender key for encrypted rooms */
+  MATRIX_SENDER_KEY?: string;
+  /** Nostr bot secret key (nsec bech32) */
+  NOSTR_NSEC?: string;
+  /** Neynar (Farcaster) API key — wrangler secret */
+  NEYNAR_API_KEY?: string;
+  /** Farcaster signer UUID */
+  FARCASTER_SIGNER_UUID?: string;
+  /** Mastodon/ActivityPub access token */
+  MASTODON_ACCESS_TOKEN?: string;
+  /** ActivityPub instance URL */
+  AP_INSTANCE_URL?: string;
+  /** Discord bot token */
+  DISCORD_BOT_TOKEN?: string;
+  /** IRC bridge service URL */
+  IRC_BRIDGE_URL?: string;
+  /** XMPP bridge service URL */
+  XMPP_BRIDGE_URL?: string;
+  /** Signal CLI API base URL */
+  SIGNAL_API_URL?: string;
+  /** Sending phone number for Signal */
+  SIGNAL_NUMBER?: string;
 }

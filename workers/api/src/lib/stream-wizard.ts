@@ -13,8 +13,9 @@
  * configures simulcast targets, and launches the stream.
  */
 
-import type { Env } from '../types';
 import { log } from '../logger';
+import { methodNotAllowed } from '../response-helpers';
+import type { Env } from '../types';
 import { SimulcastEngine, type SimulcastPlatform } from './simulcast';
 import {
   type SimulcastTarget,
@@ -219,7 +220,7 @@ export class StreamWizard {
       tags: (config.tags ?? []).slice(0, 10),
     };
 
-    state.steps[0].completed = true;
+    state.steps[0]!.completed = true;
     state.currentStep = 1;
     state.updatedAt = Date.now();
 
@@ -242,7 +243,7 @@ export class StreamWizard {
 
     const audienceCfg = AUDIENCE_CONFIGS[expectedViewers];
     const router = new StreamingRouter(this.env);
-    const decision = router.decideMode(audienceCfg.maxViewers);
+    const decision = router.evaluateRouting(audienceCfg.maxViewers);
 
     const recommendation: AudienceConfig = {
       expectedViewers,
@@ -254,7 +255,7 @@ export class StreamWizard {
     };
 
     wizardState.audienceConfig = recommendation;
-    wizardState.steps[1].completed = true;
+    wizardState.steps[1]!.completed = true;
     wizardState.currentStep = 2;
     wizardState.updatedAt = Date.now();
 
@@ -291,7 +292,7 @@ export class StreamWizard {
       saveReplay: options?.saveReplay ?? true,
     };
 
-    state.steps[2].completed = true;
+    state.steps[2]!.completed = true;
     state.currentStep = 3;
     state.updatedAt = Date.now();
 
@@ -310,7 +311,7 @@ export class StreamWizard {
     if (!state) throw new Error('Wizard session not found');
 
     state.monetizationConfig = config;
-    state.steps[3].completed = true;
+    state.steps[3]!.completed = true;
     state.currentStep = 4;
     state.updatedAt = Date.now();
 
@@ -337,19 +338,19 @@ export class StreamWizard {
 
     // Determine simulcast targets
     const simulcastTargets = state.broadcastConfig?.platforms ?? [this.getDefaultPlatform(mode)];
-    const targets: SimulcastTarget[] = simulcastTargets.map((platform) => ({
+    const _targets: SimulcastTarget[] = simulcastTargets.map((platform) => ({
       platform,
       enabled: true,
       health: 'healthy' as const,
     }));
 
     // Create the stream
-    const stream = await router.createStream(state.creatorId, state.streamConfig.title, 0, {
+    const stream = await router.createStream({
+      creatorId: state.creatorId,
+      title: state.streamConfig.title,
+      currentViewers: 0,
       autoSwitch: true,
       privacy: 'public',
-      tokenGated: state.monetizationConfig?.tokenGated,
-      tokenAddress: state.monetizationConfig?.tokenAddress,
-      simulcastTargets: targets,
     });
 
     // Start simulcast if multiple platforms selected
@@ -394,13 +395,13 @@ export class StreamWizard {
       streamKey: stream.streamKey,
       playbackUrl: stream.playbackUrl,
       simulcastSessionId,
-      simulcastTargets: simulcastTargets.map((t) => (typeof t === 'string' ? t : t.platform)),
+      simulcastTargets,
       ipfsVodEnabled: true,
-      costEstimate: router.getEstimatedCost(mode, state.audienceConfig.estimatedMaxViewers),
+      costEstimate: router.evaluateRouting(state.audienceConfig.estimatedMaxViewers).estimatedCost,
     };
 
     state.goLiveResult = result;
-    state.steps[4].completed = true;
+    state.steps[4]!.completed = true;
     state.completed = true;
     state.updatedAt = Date.now();
 
