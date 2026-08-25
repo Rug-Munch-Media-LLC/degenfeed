@@ -6,6 +6,7 @@ export const ALL_SSO_PROTOCOLS: SSOProtocolDef[] = [
     label: 'Nostr',
     category: 'social',
     instanceUrl: 'ws://127.0.0.1:8085',
+    apiEndpoint: 'http://127.0.0.1:8085/api/v1',
     requiresPremium: false,
     icon: 'nostr',
     color: '#7e5bef',
@@ -47,7 +48,7 @@ export const ALL_SSO_PROTOCOLS: SSOProtocolDef[] = [
   {
     id: 'pixelfed',
     label: 'Pixelfed',
-    category: 'media',
+    category: 'social',
     instanceUrl: 'https://photos.degenfeed.xyz',
     apiEndpoint: 'http://127.0.0.1:8087/api/v1',
     healthEndpoint: 'http://127.0.0.1:8087/api/v1/instance',
@@ -58,7 +59,7 @@ export const ALL_SSO_PROTOCOLS: SSOProtocolDef[] = [
   {
     id: 'peertube',
     label: 'PeerTube',
-    category: 'media',
+    category: 'video',
     instanceUrl: 'https://video.degenfeed.xyz',
     apiEndpoint: 'http://127.0.0.1:9011/api/v1',
     healthEndpoint: 'http://127.0.0.1:9011/api/v1/config',
@@ -69,8 +70,9 @@ export const ALL_SSO_PROTOCOLS: SSOProtocolDef[] = [
   {
     id: 'writefreely',
     label: 'WriteFreely',
-    category: 'writing',
+    category: 'blog',
     instanceUrl: 'https://blog.degenfeed.xyz',
+    apiEndpoint: 'https://blog.degenfeed.xyz/api',
     healthEndpoint: 'http://127.0.0.1:8086/',
     requiresPremium: false,
     icon: 'pen',
@@ -79,8 +81,9 @@ export const ALL_SSO_PROTOCOLS: SSOProtocolDef[] = [
   {
     id: 'owncast',
     label: 'Owncast',
-    category: 'media',
+    category: 'live',
     instanceUrl: 'https://live.degenfeed.xyz',
+    apiEndpoint: 'https://live.degenfeed.xyz/api',
     healthEndpoint: 'http://127.0.0.1:8092/',
     requiresPremium: false,
     icon: 'broadcast',
@@ -89,8 +92,9 @@ export const ALL_SSO_PROTOCOLS: SSOProtocolDef[] = [
   {
     id: 'castopod',
     label: 'Castopod',
-    category: 'media',
+    category: 'podcast',
     instanceUrl: 'https://podcast.degenfeed.xyz',
+    apiEndpoint: 'https://podcast.degenfeed.xyz/api/v1',
     healthEndpoint: 'http://127.0.0.1:8088/',
     requiresPremium: false,
     icon: 'mic',
