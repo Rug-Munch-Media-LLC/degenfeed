@@ -51,6 +51,8 @@ export interface TransportMessage {
     requestReadReceipt?: boolean;
     /** Message expiration timestamp */
     expiresAt?: number;
+    /// Conflict-resolution timestamp (first message wins)
+    timestamp?: number;
     /** Content type hint for the transport layer */
     contentType?: string;
   };

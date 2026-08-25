@@ -437,14 +437,18 @@ export class ContentRouter {
    * Resolve IPFS CID through the fastest available gateway.
    */
   private resolveIPFS(cid: string): string {
-    return IPFS_GATEWAYS[0]?.url.replace('{cid}', cid);
+    const gw = IPFS_GATEWAYS[0];
+    if (!gw) return `https://ipfs.degenfeed.xyz/ipfs/`;
+    return gw.url.replace('{cid}', cid);
   }
 
   /**
    * Resolve Arweave transaction ID through the fastest available gateway.
    */
   private resolveArweave(txId: string): string {
-    return ARWEAVE_GATEWAYS[0]?.url.replace('{id}', txId);
+    const gw = ARWEAVE_GATEWAYS[0];
+    if (!gw) return `https://arweave.net/`;
+    return gw.url.replace('{id}', txId);
   }
 
   /**
@@ -471,13 +475,15 @@ export class ContentRouter {
     // Add IPFS mirror if content hash is available
     if (protocol === 'ipfs' && options?.contentHash) {
       for (let i = 1; i < IPFS_GATEWAYS.length; i++) {
+        const gw = IPFS_GATEWAYS[i];
+        if (!gw) continue;
         sources.push({
           protocol: 'https',
-          url: IPFS_GATEWAYS[i]?.url.replace('{cid}', options.contentHash),
+          url: gw.url.replace('{cid}', options.contentHash),
           mirrors: [],
           contentHash: options.contentHash,
           platform: 'ipfs',
-          region: IPFS_GATEWAYS[i]?.region,
+          region: gw.region,
         });
       }
     }
@@ -605,14 +611,18 @@ export class ContentRouter {
     // IPFS content: multiple gateway fallbacks
     if (protocol === 'ipfs' && contentHash) {
       for (let i = 1; i < IPFS_GATEWAYS.length; i++) {
-        fallbacks.push(IPFS_GATEWAYS[i]?.url.replace('{cid}', contentHash));
+        const gw = IPFS_GATEWAYS[i];
+        if (!gw) continue;
+        fallbacks.push(gw.url.replace('{cid}', contentHash));
       }
     }
 
     // Arweave content: multiple gateway fallbacks
     if (protocol === 'arweave' && contentHash) {
       for (let i = 1; i < ARWEAVE_GATEWAYS.length; i++) {
-        fallbacks.push(ARWEAVE_GATEWAYS[i]?.url.replace('{id}', contentHash));
+        const gw = ARWEAVE_GATEWAYS[i];
+        if (!gw) continue;
+        fallbacks.push(gw.url.replace('{id}', contentHash));
       }
     }
 
@@ -694,14 +704,18 @@ export async function checkContentReachable(url: string, timeoutMs = 3000): Prom
  */
 export function getIPFSGatewayUrl(cid: string, preferDegenFeed = true): string {
   const gateways = preferDegenFeed ? IPFS_GATEWAYS : IPFS_GATEWAYS.slice(1);
-  return gateways[0]?.url.replace('{cid}', cid);
+  const gw = gateways[0];
+  if (!gw) return `https://ipfs.degenfeed.xyz/ipfs/`;
+  return gw.url.replace('{cid}', cid);
 }
 
 /**
  * Get the best Arweave gateway URL for a transaction ID.
  */
 export function getArweaveGatewayUrl(txId: string): string {
-  return ARWEAVE_GATEWAYS[0]?.url.replace('{id}', txId);
+  const gw = ARWEAVE_GATEWAYS[0];
+  if (!gw) return `https://arweave.net/`;
+  return gw.url.replace('{id}', txId);
 }
 
 /**

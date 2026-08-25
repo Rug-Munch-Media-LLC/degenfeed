@@ -19,8 +19,8 @@
  *   - e2e-messaging.ts (encrypted payloads)
  */
 
-import type { Env } from '../types';
 import { log } from '../logger';
+import type { Env } from '../types';
 import type { TransportMessage, TransportProtocol, TransportResult } from './message-transport';
 
 // ─── Types ────────────────────────────────────────────────────────────────
@@ -121,7 +121,7 @@ export async function createDeliveryRecord(
     fromId: message.fromId,
     toId: message.toId,
     status: 'pending',
-    protocolStatus: {},
+    protocolStatus: {} as DeliveryRecord['protocolStatus'],
     createdAt: Date.now(),
     sentAt: null,
     deliveredAt: null,
@@ -484,8 +484,8 @@ export async function syncToDevices(
     // Try real-time delivery via WebSocket
     if (device.wsConnectionId) {
       try {
-        const { broadcastToConnection } = await import('../ws-broadcast');
-        broadcastToConnection(device.wsConnectionId, 'sync:message', {
+        const { broadcastToUser } = await import('../ws-broadcast');
+        broadcastToUser(userId, 'dm:new', {
           ...message,
           deviceId: device.deviceId,
         });
@@ -606,8 +606,9 @@ export async function resolveConflict(
  * Send a delivery receipt webhook via the n8n webhook system.
  * Called when a message status changes.
  */
-export async function notifyDeliveryWebhook(env: Env, record: DeliveryRecord): Promise<void> {
-  const webhookUrl = env.WEBHOOK_BASE_URL || 'https://hooks.degenfeed.xyz/chat/delivery';
+export async function notifyDeliveryWebhook(_env: Env, record: DeliveryRecord): Promise<void> {
+  // n8n chat-delivery webhook (production default; no env override configured)
+  const webhookUrl = 'https://hooks.degenfeed.xyz/chat/delivery';
 
   try {
     await fetch(webhookUrl, {
