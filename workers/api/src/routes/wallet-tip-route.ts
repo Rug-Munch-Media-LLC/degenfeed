@@ -67,6 +67,11 @@ export interface WalletRouteResult {
   recommendedChain: SupportedChain;
   /** Human-readable instructions */
   instructions: string;
+  /** HATEOAS links for the client */
+  _links?: {
+    self: string;
+    tipAction: string;
+  };
   /** Action URL if link/QR needed */
   actionUrl?: string;
   /** Fee estimate in USD */
@@ -90,7 +95,6 @@ const CHAIN_FEE_PRIORITY: Array<{
 
 // ─── Fee estimates per chain in USD ─────────────────────────────────────
 
-// @ts-expect-error TS6133 unused
 const _CHAIN_FEES: Record<string, number> = {
   lightning: 0.001,
   solana: 0.002,
@@ -274,10 +278,9 @@ export async function handleWalletRoute(request: Request, env: Env): Promise<Res
       canSendDirect = false;
       const capability = getProtocolCapability(protocol);
       action = 'protocol_native';
-      instructions = `Use ${capability.label}'s native tipping mechanism. ${capability.nativeMethod ? `Native method: ${capability.nativeMethod}` : 'No native tipping available — use link.'}`;
-      actionUrl =
-        capability.docsUrl ||
-        `${baseUrl}/tip/${encodeURIComponent(protocol)}/${encodeURIComponent(recipientId)}`;
+      const capLabel = protocol.charAt(0).toUpperCase() + protocol.slice(1);
+      instructions = `Use ${capLabel}'s native tipping mechanism. ${capability.nativeMethod ? `Native method: ${capability.nativeMethod}` : 'No native tipping available — use link.'}`;
+      actionUrl = `${baseUrl}/tip/${encodeURIComponent(protocol)}/${encodeURIComponent(recipientId)}`;
       break;
     }
     default: {
@@ -301,7 +304,7 @@ export async function handleWalletRoute(request: Request, env: Env): Promise<Res
     canSendDirect,
     _links: {
       self: `/api/tip/wallet-route?recipientId=${encodeURIComponent(recipientId)}&protocol=${encodeURIComponent(protocol)}`,
-      tipAction: actionUrl,
+      tipAction: actionUrl ?? `${baseUrl}/tip/${encodeURIComponent(protocol)}`,
     },
   } satisfies WalletRouteResult);
 }
@@ -371,7 +374,7 @@ export async function handleWalletRouteExecute(request: Request, env: Env): Prom
         platform:
           protocol === 'degenfeed'
             ? 'degenfeed'
-            : (protocol as Parameters<typeof recordUnifiedTip>[0]['platform']),
+            : (protocol as Parameters<typeof recordUnifiedTip>[1]['platform']),
         entityId: entityId || recipientId,
         entityType,
         amountUsd,
