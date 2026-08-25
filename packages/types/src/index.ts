@@ -855,4 +855,19 @@ export interface Env {
   SIGNAL_API_URL?: string;
   /** Sending phone number for Signal */
   SIGNAL_NUMBER?: string;
+  // ─── Realtime transport config (mirrors workers/api Env) ──────────────────
+  /** Farcaster hub URL */
+  FARCASTER_HUB_URL?: string;
+  /** GoToSocial instance URL */
+  GTS_INSTANCE_URL?: string;
+  /** Mastodon instance URL */
+  MASTODON_INSTANCE_URL?: string;
+  /** Lens GraphQL API URL */
+  LENS_API_URL?: string;
+  /** Matrix admin token */
+  MATRIX_ADMIN_TOKEN?: string;
+  /** XMPP bridge API URL */
+  XMPP_API_URL?: string;
+  /** XMPP admin token */
+  XMPP_ADMIN_TOKEN?: string;
 }
