@@ -469,12 +469,13 @@ export function optimizeImages(
 
   for (let i = 0; i < count; i++) {
     const img = images[i];
+    if (!img) continue;
     // Append CDN resize params if the image is hosted on our CDN
     const optimizedUrl = appendImageTransformParams(
       img.url,
       constraints.maxWidth,
       constraints.maxHeight,
-      constraints.formats[0],
+      constraints.formats[0] ?? 'auto',
       constraints.maxSizeMB,
     );
     result.push({ url: optimizedUrl, alt: img.alt || `${i + 1}` });
@@ -552,7 +553,7 @@ export function optimizeLinks(
 
   for (let i = 0; i < maxLinks; i++) {
     const url = links[i];
-    if (!isHttpUrl(url)) continue;
+    if (!url || !isHttpUrl(url)) continue;
 
     const withUtm = campaign
       ? appendUtmParams(url, {
@@ -710,7 +711,7 @@ const TONE_PROFILES: Record<
  * Adjusts exclamation count, emoji usage, and formality.
  */
 export function adaptLanguage(text: string, protocol: string): LanguageAdaptationResult {
-  const profile = TONE_PROFILES[protocol] ?? TONE_PROFILES.mastodon;
+  const profile = TONE_PROFILES[protocol] ?? TONE_PROFILES.mastodon!;
   const changes: string[] = [];
   let adapted = text;
 
@@ -815,7 +816,7 @@ export function autoFormatPost(
 
   return {
     protocol,
-    text: isThread && thread ? thread[0].text : text,
+    text: isThread && thread ? (thread[0]?.text ?? text) : text,
     title: post.title,
     mediaUrls: optimizedImages?.map((i) => i.url),
     mediaAlts: optimizedImages?.map((i) => i.alt),

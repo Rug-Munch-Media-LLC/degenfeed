@@ -13,10 +13,15 @@
  */
 
 import type { Address } from 'viem';
-import { GrantsService } from '../lib/grants-service';
+import {
+  type CreateGrantProgramInput,
+  GrantsService,
+  type SubmitGrantApplicationInput,
+} from '../lib/grants-service';
 import { InvestmentService } from '../lib/investment-service';
 import { formatSignatureProgress, MultiSigService } from '../lib/multisig-service';
 import {
+  type CreateStreamInput,
   flowRateToMonthly,
   formatFlowRate,
   StreamingPaymentsService,
@@ -26,9 +31,9 @@ import type { Env } from '../types';
 
 // ─── Request Body Parsing ─────────────────────────────────────────────
 
-async function parseBody(request: Request): Promise<Record<string, unknown> | null> {
+async function parseBody<T = Record<string, unknown>>(request: Request): Promise<T | null> {
   try {
-    return await request.json();
+    return (await request.json()) as T;
   } catch {
     return null;
   }
@@ -113,7 +118,10 @@ export async function handleMultisigPropose(request: Request, env: Env): Promise
 
   try {
     const service = new MultiSigService(env);
-    const tx = await service.proposeTransaction(daoId, body);
+    const tx = await service.proposeTransaction(
+      daoId,
+      body as Parameters<typeof service.proposeTransaction>[1],
+    );
     return jsonResponse({ data: tx }, 201);
   } catch (err: unknown) {
     return jsonResponse({ error: (err as Error).message || 'Failed to propose transaction' }, 400);
@@ -142,9 +150,9 @@ export async function handleMultisigSign(request: Request, env: Env): Promise<Re
       daoId,
       txId,
       body.signer as Address,
-      body.approved ?? true,
-      body.reason,
-      body.signature,
+      (body.approved as boolean | undefined) ?? true,
+      body.reason as string | undefined,
+      body.signature as string | undefined,
     );
     const summary = service.getSignatureSummary(tx);
     return jsonResponse({
@@ -172,7 +180,11 @@ export async function handleMultisigExecute(request: Request, env: Env): Promise
 
   try {
     const service = new MultiSigService(env);
-    const tx = await service.executeTransaction(daoId, txId, body?.executionTx);
+    const tx = await service.executeTransaction(
+      daoId,
+      txId,
+      body?.executionTx as string | undefined,
+    );
     return jsonResponse({ data: tx });
   } catch (err: unknown) {
     return jsonResponse({ error: (err as Error).message || 'Failed to execute transaction' }, 400);
@@ -201,7 +213,7 @@ export async function handleMultisigCancel(request: Request, env: Env): Promise<
       daoId,
       txId,
       body.cancelledBy as Address,
-      body.reason,
+      body.reason as string | undefined,
     );
     return jsonResponse({ data: tx });
   } catch (err: unknown) {
@@ -262,7 +274,9 @@ export async function handleMultisigSaveConfig(request: Request, env: Env): Prom
 
   try {
     const service = new MultiSigService(env);
-    const config = await service.saveConfig({ ...body, daoId });
+    const config = await service.saveConfig({ ...body, daoId } as Parameters<
+      typeof service.saveConfig
+    >[0]);
     return jsonResponse({ data: config }, 201);
   } catch (err: unknown) {
     return jsonResponse({ error: (err as Error).message || 'Failed to save config' }, 400);
@@ -281,7 +295,7 @@ export async function handleStreamCreate(request: Request, env: Env): Promise<Re
   const daoId = getDaoId(request);
   if (!daoId) return jsonResponse({ error: 'Invalid DAO ID' }, 400);
 
-  const body = await parseBody(request);
+  const body = await parseBody<CreateStreamInput>(request);
   if (!body) return jsonResponse({ error: 'Invalid request body' }, 400);
 
   try {
@@ -495,7 +509,7 @@ export async function handleGrantCreateProgram(request: Request, env: Env): Prom
   const daoId = getDaoId(request);
   if (!daoId) return jsonResponse({ error: 'Invalid DAO ID' }, 400);
 
-  const body = await parseBody(request);
+  const body = await parseBody<CreateGrantProgramInput>(request);
   if (!body) return jsonResponse({ error: 'Invalid request body' }, 400);
 
   try {
@@ -532,7 +546,7 @@ export async function handleGrantApply(request: Request, env: Env): Promise<Resp
   const daoId = getDaoId(request);
   if (!daoId) return jsonResponse({ error: 'Invalid DAO ID' }, 400);
 
-  const body = await parseBody(request);
+  const body = await parseBody<SubmitGrantApplicationInput>(request);
   if (!body) return jsonResponse({ error: 'Invalid request body' }, 400);
 
   try {
@@ -588,8 +602,8 @@ export async function handleGrantReview(request: Request, env: Env): Promise<Res
       daoId,
       appId,
       body.reviewer as Address,
-      body.comment,
-      body.rating ?? 3,
+      body.comment as string,
+      typeof body.rating === 'number' ? body.rating : 3,
     );
     return jsonResponse({ data: app });
   } catch (err: unknown) {
@@ -619,8 +633,8 @@ export async function handleGrantVote(request: Request, env: Env): Promise<Respo
       daoId,
       appId,
       body.voter as Address,
-      body.choice,
-      body.reason,
+      body.choice as 'for' | 'against' | 'abstain',
+      body.reason as string | undefined,
     );
     return jsonResponse({ data: app });
   } catch (err: unknown) {
@@ -649,9 +663,9 @@ export async function handleGrantFinalize(request: Request, env: Env): Promise<R
     const app = await service.finalizeApplication(
       daoId,
       appId,
-      body.decision,
+      body.decision as 'rejected' | 'approved',
       body.finalizedBy as Address,
-      body.reason,
+      body.reason as string | undefined,
     );
     return jsonResponse({ data: app });
   } catch (err: unknown) {
@@ -679,7 +693,7 @@ export async function handleGrantSubmitMilestone(request: Request, env: Env): Pr
 
   try {
     const service = new GrantsService(env);
-    const app = await service.submitMilestone(daoId, appId, milestoneId, body.proof);
+    const app = await service.submitMilestone(daoId, appId, milestoneId, body.proof as string);
     return jsonResponse({ data: app });
   } catch (err: unknown) {
     return jsonResponse({ error: (err as Error).message || 'Failed to submit milestone' }, 400);
@@ -782,7 +796,10 @@ export async function handleInvestmentCreateProposal(
 
   try {
     const service = new InvestmentService(env);
-    const proposal = await service.createProposal(daoId, body);
+    const proposal = await service.createProposal(
+      daoId,
+      body as Parameters<typeof service.createProposal>[1],
+    );
     return jsonResponse({ data: proposal }, 201);
   } catch (err: unknown) {
     return jsonResponse({ error: (err as Error).message || 'Failed to create proposal' }, 400);
@@ -831,7 +848,7 @@ export async function handleInvestmentVote(request: Request, env: Env): Promise<
       daoId,
       proposalId,
       body.voter as Address,
-      body.choice,
+      body.choice as 'for' | 'against' | 'abstain',
     );
     return jsonResponse({ data: proposal });
   } catch (err: unknown) {

@@ -32,7 +32,7 @@ export interface QueueEntry {
   recyclingStrategy?: RecyclingStrategy;
   minEngagementScore?: number;
   autoThread?: boolean;
-  thread?: import('../lib/auto-formatter').ThreadSegment[];
+  thread?: import('../../lib/auto-formatter').ThreadSegment[];
   aiOptimizedTime?: string;
   aiOptimized?: boolean;
   results?: Record<string, { success: boolean; error?: string; nativeId?: string }>;

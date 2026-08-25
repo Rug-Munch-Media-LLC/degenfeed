@@ -125,8 +125,8 @@ async function resolveProfilesByWallet(wallet: string): Promise<{
     .filter((p) => p.id && p.handle?.localName)
     .map((p) => ({
       id: p.id,
-      handle: p.handle!.localName,
-      displayName: p.metadata?.displayName || p.handle!.localName,
+      handle: p.handle?.localName,
+      displayName: p.metadata?.displayName || p.handle?.localName,
     }));
 
   return {
@@ -372,7 +372,11 @@ export async function handleLensAuth(request: Request, env: Env): Promise<Respon
         defaultProfile.metadata?.displayName || defaultProfile.handle?.localName || 'Unknown',
     };
   } else {
-    selectedProfile = allProfiles[0];
+    selectedProfile = allProfiles[0] ?? null;
+  }
+
+  if (!selectedProfile) {
+    return jsonResponse({ error: 'No Lens profiles found for this wallet' }, 400);
   }
 
   // 6. Verify wallet ownership — the session already proves wallet control

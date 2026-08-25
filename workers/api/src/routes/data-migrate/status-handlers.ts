@@ -1,6 +1,7 @@
-import { jsonResponse, noCacheJsonResponse } from '../../response-helpers';
+import { ok } from '../../response-helpers';
+import { requireSession } from '../../session';
 import type { Env } from '../../types';
-import type { MigrationJob } from './types';
+import { listJobs } from '../data-migrate';
 
 export async function handleMigrationStatus(request: Request, env: Env): Promise<Response> {
   const session = await requireSession(request, env);
