@@ -287,6 +287,31 @@ export const PROVIDER_TIMEOUTS: Record<Protocol, number> = {
   // ── Link Aggregators / Communities (NEW 2026-08-06) ─────
   lobsters: 5000,
   'nostr-groups': 7000, // NIP-29 relay fan-out can be slow
+  // ── Remaining Protocol members (utility / storage / video platforms) ──
+  vimeo: 8000,
+  loops: 6000,
+  wordpress: 5000,
+  telegram: 5000,
+  arweave: 6000,
+  filecoin: 6000,
+  sia: 6000,
+  storj: 6000,
+  'swarm-eth': 6000,
+  bonfida: 5000,
+  coinvise: 5000,
+  ens: 5000,
+  flarum: 5000,
+  infra: 4000,
+  ion: 5000,
+  juicebox: 5000,
+  keri: 4000,
+  lit: 5000,
+  mintgate: 5000,
+  newsletters: 5000,
+  syndicate: 5000,
+  unlock: 5000,
+  unstoppable: 5000,
+  veramo: 5000,
 };
 
 // ─── Per-provider fetch timer ────────────────────────────────────
@@ -548,7 +573,7 @@ export class BridgeFeedProvider implements FeedProvider {
         // through to clients. Log a warning and return an empty result.
         const isDemo =
           body.meta?.isDemo === true ||
-          posts.some((p) => (p as Record<string, unknown>)?._demo === true);
+          posts.some((p) => (p as unknown as Record<string, unknown>)?._demo === true);
         if (isDemo) {
           log('warn', `bridge:${this.protocol}: bridge returned demo/seed content — discarding`, {
             provider: this.protocol,
