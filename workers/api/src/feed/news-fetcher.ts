@@ -1,3 +1,7 @@
+import type { Protocol } from '@degenfeed/types';
+import type { Env } from '../types';
+import type { NewsSourceMeta } from './news-types';
+
 export interface ParsedRssItem {
   title: string;
   link: string;
@@ -57,23 +61,6 @@ function extractAll(tag: string, xml: string): string[] {
     m = re.exec(xml);
   }
   return out;
-}
-
-interface ParsedRssItem {
-  title: string;
-  link: string;
-  description: string;
-  pubDate: string;
-  creator?: string;
-  content?: string;
-  image?: string;
-  categories: string[];
-  /** Media thumbnail URL (media:thumbnail) */
-  mediaThumbnail?: string;
-  /** Enclosure URL (podcast/video/image) */
-  enclosureUrl?: string;
-  /** Enclosure type (image/jpeg, etc.) */
-  enclosureType?: string;
 }
 
 function _parseFeedXml(xml: string, maxItems = 20): ParsedRssItem[] {

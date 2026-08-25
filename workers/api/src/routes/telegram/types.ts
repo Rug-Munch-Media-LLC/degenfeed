@@ -49,4 +49,12 @@ export interface TelegramUpdate {
     message?: { message_id: number; chat?: { id: number } };
     data?: string;
   };
+  /** Bot membership change (added to / removed from a chat) */
+  my_chat_member?: {
+    chat: { id: number; type: string; title?: string; username?: string; first_name?: string };
+    from?: { id: number; is_bot: boolean; first_name: string; username?: string };
+    new_chat_member: { status: string; user?: { id: number; is_bot: boolean } };
+    old_chat_member?: { status: string };
+    date?: number;
+  };
 }

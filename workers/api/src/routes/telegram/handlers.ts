@@ -78,7 +78,7 @@ export async function handleTelegramWebhook(request: Request, env: Env): Promise
   }
 
   // Text message / command
-  if (update.message?.text) {
+  if (update.message?.text && update.message.chat) {
     const { chat, from, text, message_id } = update.message;
     if (text.startsWith('/')) {
       return handleBotCommand(

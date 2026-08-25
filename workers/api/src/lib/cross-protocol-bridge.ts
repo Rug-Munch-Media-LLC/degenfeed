@@ -13,7 +13,6 @@
  * Every provider gets a health check. [Built per rules — see AGENTS.md]
  */
 
-import type { Protocol } from '@degenfeed/types';
 import type { Env } from '../types';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
@@ -115,7 +114,7 @@ export interface BridgeInboxEntry {
 
 // ─── Constants ──────────────────────────────────────────────────────────────
 
-const KV_BRIDGE_MESSAGE_PREFIX = 'bridge:msg:';
+const _KV_BRIDGE_MESSAGE_PREFIX = 'bridge:msg:';
 const KV_BRIDGE_CONV_PREFIX = 'bridge:conv:';
 const KV_BRIDGE_INBOX_PREFIX = 'bridge:inbox:';
 
@@ -393,6 +392,7 @@ export class CrossProtocolBridge {
     peerId: string,
     message: BridgeMessage,
   ): Promise<void> {
+    if (!env.CACHE) return;
     const raw = await env.CACHE.get(`${KV_BRIDGE_INBOX_PREFIX}${ownerId}`);
     const threads: BridgeInboxEntry[] = raw ? JSON.parse(raw) : [];
 
@@ -518,8 +518,9 @@ export class CrossProtocolBridge {
         if (inboxRaw) {
           const threads: BridgeInboxEntry[] = JSON.parse(inboxRaw);
           const threadIdx = threads.findIndex((t) => t.peerId === peerId);
-          if (threadIdx >= 0) {
-            threads[threadIdx]!.unreadCount -= Math.min(threads[threadIdx]!.unreadCount, count);
+          if (threadIdx >= 0 && threads[threadIdx]) {
+            const thread = threads[threadIdx];
+            thread.unreadCount -= Math.min(thread.unreadCount, count);
             await env.CACHE.put(`${KV_BRIDGE_INBOX_PREFIX}${userId}`, JSON.stringify(threads), {
               expirationTtl: 86400 * 90,
             });
@@ -544,7 +545,7 @@ export class CrossProtocolBridge {
   /**
    * Get protocol health for all transports.
    */
-  async getProtocolHealthStatus(env: Env): Promise<Record<string, boolean>> {
+  async getProtocolHealthStatus(_env: Env): Promise<Record<string, boolean>> {
     const { getProtocolHealth } = await import('@degenfeed/realtime/protocol-transports');
     const protocols = ['nostr', 'farcaster', 'bluesky', 'mastodon', 'matrix', 'telegram', 'lens'];
     const status: Record<string, boolean> = {};
