@@ -425,7 +425,8 @@ export function calculateCreatorEarnings(grossUsd: number): number {
 export function checkStreakTier(count: number): GiftStreakTier | undefined {
   // Check from highest to lowest so the best tier is returned
   for (let i = GIFT_STREAK_TIERS.length - 1; i >= 0; i--) {
-    if (count >= GIFT_STREAK_TIERS[i].count) return GIFT_STREAK_TIERS[i];
+    const tier = GIFT_STREAK_TIERS[i];
+    if (tier && count >= tier.count) return tier;
   }
   return undefined;
 }

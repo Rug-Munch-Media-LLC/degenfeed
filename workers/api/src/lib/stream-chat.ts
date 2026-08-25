@@ -537,7 +537,7 @@ export async function handleSendChat(
       case 'farcaster': {
         // Farcaster chat: publish a cast in reply to the stream
         try {
-          const { publishFarcasterCast } = await import('./farcaster-live');
+          await import('./farcaster-live');
           // This would publish a cast with the message
         } catch {
           // Non-critical
@@ -591,7 +591,11 @@ async function cacheMessages(env: Env, streamId: string, messages: ChatMessage[]
   }
 }
 
-async function appendMessage(env: Env, streamId: string, message: ChatMessage): Promise<void> {
+export async function appendMessage(
+  env: Env,
+  streamId: string,
+  message: ChatMessage,
+): Promise<void> {
   try {
     const key = chatKey(streamId);
     const existing = await env.CACHE?.get(key);
