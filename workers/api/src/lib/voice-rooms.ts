@@ -475,12 +475,14 @@ export async function getSignals(
 // ─── Internal Helpers ───────────────────────────────────────────────────────
 
 async function saveRoom(env: Env, room: VoiceRoom): Promise<void> {
+  if (!env.CACHE) return;
   await env.CACHE.put(`${VOICE_ROOM_PREFIX}${room.id}`, JSON.stringify(room), {
     expirationTtl: ROOM_TTL_SECONDS,
   });
 }
 
 async function addToActiveSet(env: Env, roomId: string): Promise<void> {
+  if (!env.CACHE) return;
   const raw = await env.CACHE.get(VOICE_ROOM_ACTIVE_SET);
   const ids: string[] = raw ? JSON.parse(raw) : [];
   if (!ids.includes(roomId)) {
@@ -492,6 +494,7 @@ async function addToActiveSet(env: Env, roomId: string): Promise<void> {
 }
 
 async function removeFromActiveSet(env: Env, roomId: string): Promise<void> {
+  if (!env.CACHE) return;
   const raw = await env.CACHE.get(VOICE_ROOM_ACTIVE_SET);
   if (!raw) return;
   const ids: string[] = JSON.parse(raw);
@@ -505,6 +508,7 @@ async function removeFromActiveSet(env: Env, roomId: string): Promise<void> {
 }
 
 async function addRoomToUserIndex(env: Env, userId: string, roomId: string): Promise<void> {
+  if (!env.CACHE) return;
   const key = `${VOICE_ROOM_PREFIX}user:${userId.toLowerCase()}`;
   const raw = await env.CACHE.get(key);
   const ids: string[] = raw ? JSON.parse(raw) : [];
@@ -517,6 +521,7 @@ async function addRoomToUserIndex(env: Env, userId: string, roomId: string): Pro
 }
 
 async function removeRoomFromUserIndex(env: Env, userId: string, roomId: string): Promise<void> {
+  if (!env.CACHE) return;
   const key = `${VOICE_ROOM_PREFIX}user:${userId.toLowerCase()}`;
   const raw = await env.CACHE.get(key);
   if (!raw) return;

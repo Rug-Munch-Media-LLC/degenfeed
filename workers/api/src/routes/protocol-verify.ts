@@ -167,7 +167,7 @@ async function checkNativeFeed(
   nativeId: string,
   instanceUrl?: string,
   _env?: Env,
-): Promise<{ name: string; status: 'passed' | 'failed'; detail: string }> {
+): Promise<{ name: string; status: 'passed' | 'failed' | 'skipped'; detail: string }> {
   try {
     switch (protocol) {
       case 'mastodon': {
@@ -299,7 +299,7 @@ async function checkDegenFeedMain(
   nativeId: string,
   text?: string,
   _env?: Env,
-): Promise<{ name: string; status: 'passed' | 'failed'; detail: string }> {
+): Promise<{ name: string; status: 'passed' | 'failed' | 'skipped'; detail: string }> {
   try {
     // Query the local DegenFeed API for the post
     const dfApiUrl = 'https://degenfeed.xyz';
@@ -358,7 +358,7 @@ async function checkDegenFeedProtocol(
   nativeId: string,
   text?: string,
   _env?: Env,
-): Promise<{ name: string; status: 'passed' | 'failed'; detail: string }> {
+): Promise<{ name: string; status: 'passed' | 'failed' | 'skipped'; detail: string }> {
   try {
     const dfApiUrl = 'https://degenfeed.xyz';
     const res = await fetch(`${dfApiUrl}/api/feed/protocol/${protocol}?limit=50`, {
@@ -412,7 +412,7 @@ async function checkSearch(
   _nativeId: string,
   text?: string,
   _env?: Env,
-): Promise<{ name: string; status: 'passed' | 'failed'; detail: string }> {
+): Promise<{ name: string; status: 'passed' | 'failed' | 'skipped'; detail: string }> {
   if (!text || text.length < 10) {
     return {
       name: 'Search discoverability',

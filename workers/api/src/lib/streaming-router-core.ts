@@ -11,7 +11,6 @@ import { LivepeerService } from './livepeer-service';
 import { BandwidthTracker } from './streaming-router-bandwidth';
 import type { ActiveStream, StreamingMode, StreamRouteDecision } from './streaming-router-types';
 import { STREAMING_THRESHOLDS } from './streaming-router-types';
-import { WebRTCSessionManager } from './webrtc-streaming';
 
 const KV_STREAM_PREFIX = 'stream:';
 const KV_ACTIVE_INDEX = 'stream:active';
@@ -118,13 +117,14 @@ export class StreamingRouter {
 
     switch (newMode) {
       case 'p2p': {
-        const webrtc = new WebRTCSessionManager(env);
-        const session = await webrtc.createSession(stream.streamId, stream.creatorId);
-        stream.webrtcSessionId = session.sessionId;
+        // WebRTC requires the broadcaster's SDP offer, which only exists
+        // once they go live in the studio. Session creation happens there;
+        // URLs point at the live page where the handshake completes.
+        stream.webrtcSessionId = undefined;
         stream.rtmpUrl = '';
         stream.streamKey = '';
-        stream.playbackUrl = session.playbackUrl;
-        stream.embedUrl = session.embedUrl;
+        stream.playbackUrl = `https://degenfeed.xyz/live/${stream.streamId}`;
+        stream.embedUrl = `https://degenfeed.xyz/live/${stream.streamId}/embed`;
         break;
       }
       case 'owncast': {
@@ -148,7 +148,7 @@ export class StreamingRouter {
         const lpStream = await livepeer.createStream(stream.title);
         stream.livepeerStreamId = lpStream.id;
         stream.livepeerPlaybackId = lpStream.playbackId;
-        stream.rtmpUrl = lpStream.rtmpUrl;
+        stream.rtmpUrl = lpStream.rtmpIngestUrl;
         stream.streamKey = lpStream.streamKey;
         stream.playbackUrl = `https://lp-playback.com/hls/${lpStream.playbackId}`;
         stream.embedUrl = `https://lp-playback.com/embed/${lpStream.playbackId}`;
@@ -230,13 +230,11 @@ export class StreamingRouter {
     await this.cleanupMode(stream, stream.mode);
 
     let ipfsCid: string | undefined;
-    if (this.env.IPFS_ENABLED) {
-      try {
-        const { cid } = await this.archiveToIPFS(stream);
-        ipfsCid = cid;
-      } catch {
-        /* IPFS archival failed */
-      }
+    try {
+      const { cid } = await this.archiveToIPFS(stream);
+      ipfsCid = cid;
+    } catch {
+      /* IPFS archival failed */
     }
 
     await this.env.CACHE?.delete(`${KV_STREAM_PREFIX}${streamId}`);
@@ -279,7 +277,15 @@ export class StreamingRouter {
       endedAt: Date.now(),
       playbackUrl: stream.playbackUrl,
     };
-    const cid = await uploadToIPFS(JSON.stringify(manifest), this.env);
+    const manifestBlob = new Blob([JSON.stringify(manifest)], {
+      type: 'application/json',
+    });
+    const result = await uploadToIPFS(
+      manifestBlob,
+      `stream-manifest-${stream.streamId}.json`,
+      this.env,
+    );
+    const cid = result.cid;
     if (stream) stream.ipfsVodCid = cid;
     return { cid };
   }
