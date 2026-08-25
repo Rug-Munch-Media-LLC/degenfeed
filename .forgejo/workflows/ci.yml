@@ -19,6 +19,7 @@ concurrency:
 jobs:
   pre-commit-mirror:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - name: Install lefthook
@@ -36,6 +37,7 @@ jobs:
 
   commitlint:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
@@ -58,6 +60,7 @@ jobs:
   # ── Gate 0: Oxlint pre-pass (fast common checks) ────────────────
   oxlint-fast:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - uses: pnpm/action-setup@v4
@@ -73,6 +76,7 @@ jobs:
   # ── Gate: Biome standalone lint + format check ─────────────────
   biome:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - uses: pnpm/action-setup@v4
@@ -92,6 +96,7 @@ jobs:
   lint:
     needs: [oxlint-fast, biome]
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - uses: pnpm/action-setup@v4
@@ -109,6 +114,7 @@ jobs:
   # ── Gate 2: TypeScript type-check ────────────────────────────
   typecheck:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - uses: pnpm/action-setup@v4
@@ -124,6 +130,7 @@ jobs:
   # ── Gate: Vitest standalone unit tests ────────────────────────
   vitest:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - uses: pnpm/action-setup@v4
@@ -146,6 +153,7 @@ jobs:
   # ── Gate 3: Unit + integration tests (via turbo) ─────────────
   test:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - uses: pnpm/action-setup@v4
@@ -169,6 +177,7 @@ jobs:
   # ── Gate 4: Build (all packages + apps) ──────────────────────
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     needs: [lint, typecheck, test]
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
@@ -188,6 +197,7 @@ jobs:
   # ── Gate 5: Bundle size gating ──────────────────────────────────
   bundlewatch:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     needs: build
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
@@ -204,6 +214,7 @@ jobs:
   # ── Gate 6: SBOM (Software Bill of Materials) ──────────────────
   sbom:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     needs: build
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
@@ -228,6 +239,7 @@ jobs:
   # ── Gate: Container vulnerability scan (Trivy) ─────────────────
   trivy-scan:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     needs: build
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
@@ -249,6 +261,7 @@ jobs:
   # ── Gate: Container image signing (Cosign) — main only ───────
   sign-image:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     needs: build
     if: github.ref == 'refs/heads/main'
     steps:
@@ -280,6 +293,7 @@ jobs:
   # ── Gate 6: Dependency freshness ──────────────────────────────
   deps-freshness:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     needs: build
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
@@ -298,6 +312,7 @@ jobs:
   # ── Gate 6: Security — secret scanning + dep audit ───────────
   security:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
@@ -327,6 +342,7 @@ jobs:
   # ── Gate 6: Dead-code detection with knip ─────────────────────
   knip:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - uses: pnpm/action-setup@v4
@@ -342,6 +358,7 @@ jobs:
   # ── Gate 7: Markdown link check ──────────────────────────────
   links:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - name: Install lychee
@@ -353,6 +370,7 @@ jobs:
   # ── Gate 8: E2E tests (Playwright) ──────────────────────────
   e2e:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     needs: [lint, typecheck]
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
@@ -380,6 +398,7 @@ jobs:
   # Mirrors pre-commit hooks from lefthook.yml
   lefthook-mirror:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - name: Check file sizes
@@ -389,6 +408,7 @@ jobs:
 # Append these jobs under `jobs:` in any repo's ci.yml. Self-contained.
   supply-chain:
     runs-on: docker-x64
+    timeout-minutes: 30
     container:
       image: nikolaik/python-nodejs:python3.11-nodejs22
     steps:
@@ -408,6 +428,7 @@ jobs:
   nightly-deep-scan:
     if: ${{ github.event_name == 'schedule' }}
     runs-on: docker-x64
+    timeout-minutes: 30
     container:
       image: nikolaik/python-nodejs:python3.11-nodejs22
     steps:
