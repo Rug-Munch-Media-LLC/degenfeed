@@ -12,6 +12,7 @@
  */
 
 import type { Protocol } from '@degenfeed/types';
+import { kvGetJson } from '../lib/kv-json';
 import type { PublishInput } from '../lib/publish-orchestrator';
 import { jsonResponse, methodNotAllowed, noCacheJsonResponse } from '../response-helpers';
 import { ALLOWED_PROTOCOLS, hasSuspiciousPayload, sanitizeString } from '../sanitize';
@@ -238,6 +239,7 @@ export async function handleZoraBridge(request: Request, env: Env): Promise<Resp
 
   try {
     const { wrapContentAsCreatorCoin, wrapContentAsNft } = await import('../lib/zora-wrapper');
+    type ZoraMintResult = Awaited<ReturnType<typeof wrapContentAsNft>>;
 
     // Determine the wrap type based on what's provided
     const privateKey = body.privateKey ?? '';
@@ -252,7 +254,7 @@ export async function handleZoraBridge(request: Request, env: Env): Promise<Resp
       );
     }
 
-    let result;
+    let result: ZoraMintResult;
 
     if (body.nftContractAddress && body.imageUrl) {
       // Mint as NFT
@@ -507,7 +509,7 @@ export async function handleBridgeStatus(request: Request, env: Env): Promise<Re
     (async () => {
       if (!env.CACHE) return null;
       try {
-        return (await env.CACHE.get(`bridge:zora:${postUri}`, 'json')) as Record<
+        return (await kvGetJson(env.CACHE, `bridge:zora:${postUri}`)) as Record<
           string,
           unknown
         > | null;
@@ -533,7 +535,7 @@ export async function handleBridgeStatus(request: Request, env: Env): Promise<Re
           limit: 100,
         });
         for (const key of page.keys) {
-          const entry = await env.CACHE.get(key.name, 'json');
+          const entry = await kvGetJson(env.CACHE, key.name);
           if (entry) wrapRecords.push(entry as Record<string, unknown>);
         }
         cursor = page.list_complete ? undefined : page.cursor;

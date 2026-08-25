@@ -17,6 +17,7 @@
  */
 
 import { Hono } from 'hono';
+import { kvGetJson } from '../lib/kv-json';
 import { jsonResponse, noCacheJsonResponse } from '../response-helpers';
 import { requireSession } from '../session';
 import type { Env } from '../types';
@@ -213,7 +214,7 @@ creatorConfig.put('/config/vesting', async (c) => {
 
   // Store the config
   const key = CREATOR_CONFIG_PREFIX + auth.address;
-  const existing = (await c.env.CACHE?.get(key, 'json').catch(
+  const existing = (await kvGetJson(c.env.CACHE, key).catch(
     () => null,
   )) as Partial<CreatorConfig> | null;
 
@@ -292,7 +293,7 @@ creatorConfig.put('/config/fees', async (c) => {
 
   // Store
   const key = CREATOR_CONFIG_PREFIX + auth.address;
-  const existing = (await c.env.CACHE?.get(key, 'json').catch(
+  const existing = (await kvGetJson(c.env.CACHE, key).catch(
     () => null,
   )) as Partial<CreatorConfig> | null;
 
@@ -349,7 +350,7 @@ creatorConfig.post('/config/cross-chain', async (c) => {
 
   // Store cross-chain mapping in KV
   const mappingKey = `${CROSS_CHAIN_PREFIX}${body.originChainId}:${body.originProtocol}:${body.originCreatorId}`;
-  const existingMappings = (await c.env.CACHE?.get(mappingKey, 'json').catch(() => null)) as
+  const existingMappings = (await kvGetJson(c.env.CACHE, mappingKey).catch(() => null)) as
     | CrossChainMapping[]
     | null;
 
@@ -368,7 +369,7 @@ creatorConfig.post('/config/cross-chain', async (c) => {
 
   // Also update creator config
   const configKey = CREATOR_CONFIG_PREFIX + auth.address;
-  const config = (await c.env.CACHE?.get(configKey, 'json').catch(
+  const config = (await kvGetJson(c.env.CACHE, configKey).catch(
     () => null,
   )) as Partial<CreatorConfig> | null;
   const crossChainTokens = [...(config?.crossChainTokens || []), newMapping];
@@ -407,7 +408,7 @@ creatorConfig.get('/:id/tokens', async (c) => {
 
   // Search by wallet address
   const walletKey = CREATOR_CONFIG_PREFIX + creatorId.toLowerCase();
-  const walletConfig = (await c.env.CACHE?.get(walletKey, 'json').catch(
+  const walletConfig = (await kvGetJson(c.env.CACHE, walletKey).catch(
     () => null,
   )) as Partial<CreatorConfig> | null;
 
@@ -418,7 +419,7 @@ creatorConfig.get('/:id/tokens', async (c) => {
 
   // Search by Farcaster FID
   const fcKey = `${CROSS_CHAIN_PREFIX}8453:farcaster:${creatorId}`;
-  const fcMapping = (await c.env.CACHE?.get(fcKey, 'json').catch(() => null)) as
+  const fcMapping = (await kvGetJson(c.env.CACHE, fcKey).catch(() => null)) as
     | CrossChainMapping[]
     | null;
   if (fcMapping) {
@@ -427,7 +428,7 @@ creatorConfig.get('/:id/tokens', async (c) => {
 
   // Search by Lens profile ID
   const lensKey = `${CROSS_CHAIN_PREFIX}8453:lens:${creatorId}`;
-  const lensMapping = (await c.env.CACHE?.get(lensKey, 'json').catch(() => null)) as
+  const lensMapping = (await kvGetJson(c.env.CACHE, lensKey).catch(() => null)) as
     | CrossChainMapping[]
     | null;
   if (lensMapping) {
@@ -578,9 +579,7 @@ creatorConfig.post('/coin/lens', async (c) => {
 
 async function getCreatorConfig(env: Env, address: string): Promise<CreatorConfig> {
   const key = CREATOR_CONFIG_PREFIX + address.toLowerCase();
-  const raw = (await env.CACHE?.get(key, 'json').catch(
-    () => null,
-  )) as Partial<CreatorConfig> | null;
+  const raw = (await kvGetJson(env.CACHE, key).catch(() => null)) as Partial<CreatorConfig> | null;
 
   return {
     creatorAddress: address,
@@ -707,7 +706,7 @@ function validateVesting(config: VestingConfig, repScore: number): string[] {
 
   // Reputation-based gating
   const availablePresets = Object.entries(VESTING_PRESETS).filter(
-    ([_, p]) => repScore >= p.minReputation,
+    ([, p]) => repScore >= p.minReputation,
   );
   const mostLiberal = availablePresets[availablePresets.length - 1];
   if (mostLiberal) {

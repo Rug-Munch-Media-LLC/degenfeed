@@ -12,6 +12,7 @@
  */
 
 import { Hono } from 'hono';
+import type { UnifiedVideo } from '../feed/video-aggregator-types';
 import { noCacheJsonResponse } from '../response-helpers';
 import type { Env } from '../types';
 
@@ -72,7 +73,13 @@ unifiedVideoFeed.get('/trending', async (c) => {
 
   try {
     const sources = await getAvailableSources(c.env);
-    const allItems = await gatherVideos(sources.slice(0, 5), undefined, limit * 2, undefined, c.env);
+    const allItems = await gatherVideos(
+      sources.slice(0, 5),
+      undefined,
+      limit * 2,
+      undefined,
+      c.env,
+    );
 
     // Sort by engagement score for trending
     const trending = (allItems.items ?? [])
@@ -190,7 +197,7 @@ async function gatherVideos(
               limit: perSourceLimit,
               sort: 'trending',
             });
-            items = (videos as Record<string, unknown>[]).map((v) => ({
+            items = videos.map((v) => ({
               id: `yt-${v.id}`,
               title: v.title,
               description: v.description ?? '',
@@ -219,7 +226,7 @@ async function gatherVideos(
           case 'peertube': {
             const { fetchPeerTubeTrending } = await import('../feed/video-bridges/peertube');
             const ptVideos = await fetchPeerTubeTrending('', perSourceLimit);
-            items = (ptVideos as Record<string, unknown>[]).map((v) => ({
+            items = ptVideos.map((v: UnifiedVideo) => ({
               id: `pt-${v.id}`,
               title: v.title,
               description: v.description ?? '',
@@ -234,8 +241,8 @@ async function gatherVideos(
               channelId: v.creatorId,
               channelAvatar: v.creatorAvatar ?? '',
               channelUrl: v.creatorUrl ?? '',
-              publishedAt: new Date(v.publishedAt).getTime(),
-              publishedLabel: timeAgoLabel(new Date(v.publishedAt).getTime()),
+              publishedAt: v.publishedMs,
+              publishedLabel: timeAgoLabel(v.publishedMs),
               views: v.viewCount ?? 0,
               likes: v.likeCount ?? 0,
               category: v.category ?? 'general',
@@ -248,7 +255,7 @@ async function gatherVideos(
           case 'rumble': {
             const { fetchRumbleTrending } = await import('../feed/video-bridges/rumble');
             const rbVideos = await fetchRumbleTrending('', perSourceLimit);
-            items = (rbVideos as Record<string, unknown>[]).map((v) => ({
+            items = rbVideos.map((v: UnifiedVideo) => ({
               id: `rb-${v.id}`,
               title: v.title,
               description: v.description ?? '',
@@ -263,8 +270,8 @@ async function gatherVideos(
               channelId: v.creatorId,
               channelAvatar: v.creatorAvatar ?? '',
               channelUrl: v.creatorUrl ?? '',
-              publishedAt: new Date(v.publishedAt).getTime(),
-              publishedLabel: timeAgoLabel(new Date(v.publishedAt).getTime()),
+              publishedAt: v.publishedMs,
+              publishedLabel: timeAgoLabel(v.publishedMs),
               views: v.viewCount ?? 0,
               likes: v.likeCount ?? 0,
               category: v.category ?? 'general',
@@ -277,7 +284,7 @@ async function gatherVideos(
           case 'odysee': {
             const { fetchOdyseeTrending } = await import('../feed/video-bridges/odysee');
             const odVideos = await fetchOdyseeTrending('', perSourceLimit);
-            items = (odVideos as Record<string, unknown>[]).map((v) => ({
+            items = odVideos.map((v: UnifiedVideo) => ({
               id: `od-${v.id}`,
               title: v.title,
               description: v.description ?? '',
@@ -292,8 +299,8 @@ async function gatherVideos(
               channelId: v.creatorId,
               channelAvatar: v.creatorAvatar ?? '',
               channelUrl: v.creatorUrl ?? '',
-              publishedAt: new Date(v.publishedAt).getTime(),
-              publishedLabel: timeAgoLabel(new Date(v.publishedAt).getTime()),
+              publishedAt: v.publishedMs,
+              publishedLabel: timeAgoLabel(v.publishedMs),
               views: v.viewCount ?? 0,
               likes: v.likeCount ?? 0,
               category: v.category ?? 'general',
@@ -306,7 +313,7 @@ async function gatherVideos(
           case 'dtube': {
             const { fetchDTubeTrending } = await import('../feed/video-bridges/dtube');
             const dtVideos = await fetchDTubeTrending('', perSourceLimit);
-            items = (dtVideos as Record<string, unknown>[]).map((v) => ({
+            items = dtVideos.map((v: UnifiedVideo) => ({
               id: `dt-${v.id}`,
               title: v.title,
               description: v.description ?? '',
@@ -321,8 +328,8 @@ async function gatherVideos(
               channelId: v.creatorId,
               channelAvatar: v.creatorAvatar ?? '',
               channelUrl: v.creatorUrl ?? '',
-              publishedAt: new Date(v.publishedAt).getTime(),
-              publishedLabel: timeAgoLabel(new Date(v.publishedAt).getTime()),
+              publishedAt: v.publishedMs,
+              publishedLabel: timeAgoLabel(v.publishedMs),
               views: v.viewCount ?? 0,
               likes: v.likeCount ?? 0,
               category: v.category ?? 'general',
@@ -361,29 +368,31 @@ async function gatherVideos(
                 const bridge = await import(bridgePath);
                 const fetcher = bridge.default || bridge.fetchFeed || bridge.fetchTrending;
                 if (typeof fetcher === 'function') {
-                  const bridgeItems = await fetcher(source.id, perSourceLimit, env);
+                  const bridgeItems = (await fetcher(
+                    source.id,
+                    perSourceLimit,
+                    env,
+                  )) as UnifiedVideo[];
                   if (Array.isArray(bridgeItems) && bridgeItems.length > 0) {
-                    items = (bridgeItems as Record<string, unknown>[]).map((v) => ({
+                    items = bridgeItems.map((v) => ({
                       id: `${source.id}-${v.id || crypto.randomUUID().slice(0, 8)}`,
                       title: v.title || `Video from ${source.label}`,
                       description: v.description || '',
-                      thumbnailUrl: v.thumbnailUrl || v.thumbnail || '',
-                      videoUrl: v.videoUrl || v.url || '',
+                      thumbnailUrl: v.thumbnail || '',
+                      videoUrl: v.url || '',
                       duration: v.duration || 0,
                       durationLabel: formatDurationLabel(v.duration || 0),
                       source: source.id,
                       sourceLabel: source.label,
                       sourceColor: source.color,
-                      channelName: v.channelName || v.creatorName || `${source.label} Creator`,
-                      channelId: v.channelId || v.creatorId || `${source.id}:creator`,
-                      channelAvatar: v.channelAvatar || v.creatorAvatar || '',
-                      channelUrl: v.channelUrl || v.creatorUrl || '',
-                      publishedAt: v.publishedAt ? new Date(v.publishedAt).getTime() : Date.now(),
-                      publishedLabel: v.publishedAt
-                        ? timeAgoLabel(new Date(v.publishedAt).getTime())
-                        : '',
-                      views: v.views || v.viewCount || 0,
-                      likes: v.likes || v.likeCount || 0,
+                      channelName: v.creatorName || `${source.label} Creator`,
+                      channelId: v.creatorId || `${source.id}:creator`,
+                      channelAvatar: v.creatorAvatar || '',
+                      channelUrl: v.creatorUrl || '',
+                      publishedAt: v.publishedMs || Date.now(),
+                      publishedLabel: v.publishedMs ? timeAgoLabel(v.publishedMs) : '',
+                      views: v.viewCount || 0,
+                      likes: v.likeCount || 0,
                       category: v.category || 'general',
                       tags: v.tags || [],
                       isLive: v.isLive || false,

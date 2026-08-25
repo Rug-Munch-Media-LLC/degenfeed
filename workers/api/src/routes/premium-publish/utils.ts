@@ -2,6 +2,7 @@
  * @degenfeed/api-worker — Premium Publish Utils
  */
 
+import { kvGetJson } from '../../lib/kv-json';
 import type { Env } from '../types';
 import type { QueueEntry, QueueStatus } from './types';
 import { PREFIX_QUEUE } from './types';
@@ -13,7 +14,7 @@ export async function getQueueEntry(
 ): Promise<QueueEntry | null> {
   if (!env.CACHE) return null;
   try {
-    const raw = await env.CACHE.get(`${PREFIX_QUEUE}${walletAddress}:${id}`, 'json');
+    const raw = await kvGetJson(env.CACHE, `${PREFIX_QUEUE}${walletAddress}:${id}`);
     return raw as QueueEntry | null;
   } catch {
     return null;
@@ -36,7 +37,7 @@ export async function listQueueEntries(
       limit,
     });
     for (const key of page.keys) {
-      const raw = await env.CACHE.get(key.name, 'json');
+      const raw = await kvGetJson(env.CACHE, key.name);
       if (!raw) continue;
       const entry = raw as QueueEntry;
       if (statusFilter && entry.status !== statusFilter) continue;
@@ -64,7 +65,7 @@ export async function listAllQueueEntries(env: Env, walletAddress: string): Prom
         limit: 100,
       });
       for (const key of page.keys) {
-        const raw = await env.CACHE.get(key.name, 'json');
+        const raw = await kvGetJson(env.CACHE, key.name);
         if (raw) entries.push(raw as QueueEntry);
       }
       cursor = page.list_complete ? undefined : page.cursor;

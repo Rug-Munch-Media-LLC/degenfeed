@@ -17,6 +17,7 @@
 
 import { buildUnifiedPost } from '@degenfeed/feed-core';
 import type { Protocol, UnifiedPost } from '@degenfeed/types';
+import { kvGetJson } from '../lib/kv-json';
 import { jsonResponse, methodNotAllowed, noCacheJsonResponse } from '../response-helpers';
 import { ALLOWED_PROTOCOLS, sanitizeString } from '../sanitize';
 import type { Env } from '../types';
@@ -112,7 +113,7 @@ export async function recordThreadRelationship(
   let rootUri = canonical;
   let depth = 1;
   try {
-    const parentMeta = (await env.CACHE.get(`bridge:reply:parent:${canonical}`, 'json')) as {
+    const parentMeta = (await kvGetJson(env.CACHE, `bridge:reply:parent:${canonical}`)) as {
       rootUri?: string;
       depth?: number;
     } | null;
@@ -126,7 +127,7 @@ export async function recordThreadRelationship(
 
   const threadKey = `bridge:reply:thread:${rootUri}`;
   try {
-    const edges = ((await env.CACHE.get(threadKey, 'json')) as ThreadEdge[] | null) ?? [];
+    const edges = ((await kvGetJson(env.CACHE, threadKey)) as ThreadEdge[] | null) ?? [];
     if (!edges.some((e) => e.replyUri === replyUri)) {
       edges.push({ replyUri, parentUri: canonical, protocol, depth });
     }
@@ -220,7 +221,7 @@ async function fetchBridgeReplies(env: Env, dfUri: string): Promise<ThreadReply[
         const rest = key.name.slice(prefix.length);
         const protocol = rest.split(':')[0] ?? '';
         if (!ALLOWED_PROTOCOLS.has(protocol)) continue;
-        const entry = (await env.CACHE.get(key.name, 'json')) as BridgeEntry | null;
+        const entry = (await kvGetJson(env.CACHE, key.name)) as BridgeEntry | null;
         if (!entry?.replyProtocol) continue;
         const nativeId =
           entry.replyId || key.name.slice(prefix.length + protocol.length + 1) || key.name;
@@ -321,9 +322,7 @@ export async function handleUnifiedThread(
     fetchBridgeReplies(env, dfUri),
     (async (): Promise<CrosspostSibling[]> => {
       try {
-        const raw = (await env.CACHE?.get(`crosspost:${dfUri}`, 'json')) as
-          | CrosspostSibling[]
-          | null;
+        const raw = (await kvGetJson(env.CACHE, `crosspost:${dfUri}`)) as CrosspostSibling[] | null;
         return raw ?? [];
       } catch {
         return [];
@@ -370,7 +369,7 @@ export async function handleUnifiedThread(
   // 4. Apply nesting from the thread edge index
   try {
     const edges =
-      ((await env.CACHE?.get(`bridge:reply:thread:${dfUri}`, 'json')) as ThreadEdge[] | null) ?? [];
+      ((await kvGetJson(env.CACHE, `bridge:reply:thread:${dfUri}`)) as ThreadEdge[] | null) ?? [];
     for (const edge of edges) {
       const edgeParsed = parseDfUri(edge.replyUri);
       if (!edgeParsed) continue;

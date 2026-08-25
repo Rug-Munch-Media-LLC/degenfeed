@@ -13,6 +13,7 @@ import type { MasterPost } from '@degenfeed/cross-protocol-bridge';
 import { adaptForProtocols } from '@degenfeed/cross-protocol-bridge';
 import type { Protocol } from '@degenfeed/types';
 import type { Env } from '../types';
+import { kvGetJson } from './kv-json';
 import type { PublishInput } from './publish-orchestrator';
 import { orchestratePublish } from './publish-orchestrator';
 
@@ -138,7 +139,7 @@ export async function executeCrossPublish(
       };
     }
 
-    const { params, adapter } = result;
+    const { params } = result;
     const charCount = params.text.length;
     const hasMedia = !!params.mediaUrls && params.mediaUrls.length > 0;
 
@@ -266,7 +267,7 @@ async function storeCrossPostLink(
 
   // Store in the author's post list
   const authorKey = `crosspost:author:${record.author}`;
-  const existing = await env.CACHE.get(authorKey, 'json').catch(() => null);
+  const existing = await kvGetJson(env.CACHE, authorKey).catch(() => null);
   const batchList: string[] = Array.isArray(existing) ? (existing as string[]) : [];
   batchList.push(batchId);
   await env.CACHE.put(authorKey, JSON.stringify(batchList.slice(-100)), {
@@ -284,13 +285,13 @@ export async function getAuthorCrossPostBatches(
   if (!env.CACHE) return [];
 
   const authorKey = `crosspost:author:${author}`;
-  const batchIds: string[] = (await env.CACHE.get(authorKey, 'json').catch(() => [])) as string[];
+  const batchIds: string[] = (await kvGetJson(env.CACHE, authorKey).catch(() => [])) as string[];
 
   if (!batchIds || batchIds.length === 0) return [];
 
   const records = await Promise.all(
     batchIds.map(async (id) => {
-      const raw = await env.CACHE.get(`crosspost:batch:${id}`, 'json').catch(() => null);
+      const raw = await kvGetJson(env.CACHE, `crosspost:batch:${id}`).catch(() => null);
       return raw as CrossPostLinkRecord | null;
     }),
   );
@@ -306,7 +307,7 @@ export async function getCrossPostBatch(
   env: Env,
 ): Promise<CrossPostLinkRecord | null> {
   if (!env.CACHE) return null;
-  const raw = await env.CACHE.get(`crosspost:batch:${batchId}`, 'json').catch(() => null);
+  const raw = await kvGetJson(env.CACHE, `crosspost:batch:${batchId}`).catch(() => null);
   return raw as CrossPostLinkRecord | null;
 }
 
@@ -321,7 +322,7 @@ export async function deleteCrossPostBatch(batchId: string, env: Env): Promise<b
     if (record) {
       // Remove from author's list
       const authorKey = `crosspost:author:${record.author}`;
-      const existing: string[] = (await env.CACHE.get(authorKey, 'json').catch(
+      const existing: string[] = (await kvGetJson(env.CACHE, authorKey).catch(
         () => [],
       )) as string[];
       if (Array.isArray(existing)) {

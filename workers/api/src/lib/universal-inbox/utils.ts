@@ -4,10 +4,11 @@
  * Shared helpers for KV operations, pagination, HTML stripping, and protocol formatting.
  */
 
-import type { Env } from '../../index';
-import type { InboxFeed, InboxItem, InboxItemKind } from './types';
-import { MAX_INBOX_AGE_MS, MAX_INBOX_ITEMS, DEFAULT_PAGE_SIZE, PROTOCOL_LABELS, PROTOCOL_CAPABILITIES } from './constants';
 import type { Protocol } from '@degenfeed/types';
+import type { Env } from '../../index';
+import { kvGetJson } from '../kv-json';
+import { MAX_INBOX_AGE_MS, MAX_INBOX_ITEMS, PROTOCOL_LABELS } from './constants';
+import type { InboxFeed, InboxItem, InboxItemKind } from './types';
 
 // ─── HTML Stripping ───────────────────────────────────────────────────────
 
@@ -102,7 +103,7 @@ export async function getUserLinkedProtocols(
 
   try {
     if (env.CACHE) {
-      const identityRaw = (await env.CACHE.get(`identity:${walletAddress}`, 'json')) as Record<
+      const identityRaw = (await kvGetJson(env.CACHE, `identity:${walletAddress}`)) as Record<
         string,
         {
           id: string;
