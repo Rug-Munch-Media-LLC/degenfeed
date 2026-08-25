@@ -148,8 +148,7 @@ export function ProtocolNavSection() {
     const meta = PROTOCOL_META[pid];
     if (!meta) return false;
     return (
-      meta.label.toLowerCase().includes(trimmedFilter) ||
-      pid.toLowerCase().includes(trimmedFilter)
+      meta.label.toLowerCase().includes(trimmedFilter) || pid.toLowerCase().includes(trimmedFilter)
     );
   };
 
@@ -225,7 +224,7 @@ export function ProtocolNavSection() {
             onClick={() => setFilter('')}
             className="mt-1 text-[9px] font-medium text-[var(--color-muted)] hover:text-[var(--color-fg)] transition-colors"
           >
-            Clear search ({countProtocolMatches(trimmedFilter, CATEGORY_PROTOCOLS, matchesFilter)})
+            Clear search ({countProtocolMatches(CATEGORY_PROTOCOLS, matchesFilter)})
           </button>
         )}
       </div>
@@ -284,7 +283,6 @@ export function ProtocolNavSection() {
 
 /** Count protocols that match the active filter across all categories. */
 function countProtocolMatches(
-  filter: string,
   categoryProtocols: Record<string, string[]>,
   matches: (pid: string) => boolean,
 ): number {

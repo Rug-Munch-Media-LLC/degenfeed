@@ -15,15 +15,17 @@ import { PremiumGate } from '../PremiumGate';
 
 export interface PlatformInfo {
   id: string;
+  /** External platform key (mirrors id; used by composer routing) */
+  platform: string;
   name: string;
   icon: string;
   description: string;
   capabilities: string[];
   connected: boolean;
   connectedAccount?: {
-    displayName: string;
+    displayName?: string;
     avatarUrl?: string;
-    connectedAt: string;
+    connectedAt?: string;
   };
 }
 
@@ -173,6 +175,7 @@ export function ConnectPlatformModal({ isOpen, onClose, onRefresh }: ConnectPlat
       setPlatforms(
         platformList.map((p) => ({
           ...p,
+          platform: p.id,
           connected: connectedMap.has(p.id),
           connectedAccount: connectedMap.get(p.id)
             ? {

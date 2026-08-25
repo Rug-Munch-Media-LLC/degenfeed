@@ -268,7 +268,7 @@ export default function EarningsPage() {
           <div className="mb-8 rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-5">
             <h3 className="mb-4 text-sm font-bold text-[var(--color-fg)]">Earnings by Protocol</h3>
             <div className="space-y-3">
-              {Object.entries(data?.byProtocol)
+              {Object.entries(data?.byProtocol ?? {})
                 .sort(([, a], [, b]) => b - a)
                 .map(([protocol, usd]) => (
                   <div key={protocol} className="flex items-center gap-3">
@@ -311,7 +311,7 @@ export default function EarningsPage() {
           <div className="mb-8 rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-5">
             <h3 className="mb-4 text-sm font-bold text-[var(--color-fg)]">Earnings by Chain</h3>
             <div className="space-y-3">
-              {Object.entries(data?.byChain)
+              {Object.entries(data?.byChain ?? {})
                 .sort(([, a], [, b]) => b - a)
                 .map(([chain, usd]) => (
                   <div key={chain} className="flex items-center gap-3">
@@ -361,6 +361,7 @@ export default function EarningsPage() {
                   const height = maxHistory > 0 ? (value / maxHistory) * 100 : 0;
                   return (
                     <div
+                      // biome-ignore lint/suspicious/noArrayIndexKey: bar-chart ticks are positional, no stable id exists
                       key={i}
                       className="flex-1 rounded-t-sm transition-all duration-300 hover:opacity-80"
                       style={{

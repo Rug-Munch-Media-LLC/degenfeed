@@ -179,6 +179,7 @@ export default function AudiencePage() {
                   const height = (value / maxGrowth) * 100;
                   return (
                     <div
+                      // biome-ignore lint/suspicious/noArrayIndexKey: bar-chart ticks are positional, no stable id exists
                       key={i}
                       className="flex-1 rounded-t-sm transition-all duration-300 hover:opacity-80"
                       style={{
@@ -205,7 +206,7 @@ export default function AudiencePage() {
             <div className="rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-5">
               <h3 className="mb-3 text-sm font-bold text-[var(--color-fg)]">Top Instances</h3>
               <div className="space-y-2">
-                {Object.entries(data?.demographics.byInstance)
+                {Object.entries(data?.demographics.byInstance ?? {})
                   .sort(([, a], [, b]) => b - a)
                   .slice(0, 8)
                   .map(([instance, count]) => {
@@ -240,7 +241,10 @@ export default function AudiencePage() {
                   .sort((a, b) => b.count - a.count)
                   .slice(0, 8)
                   .map((c) => {
-                    const max = Math.max(...data?.demographics.byCommunity.map((x) => x.count), 1);
+                    const max = Math.max(
+                      ...(data?.demographics.byCommunity ?? []).map((x) => x.count),
+                      1,
+                    );
                     return (
                       <div key={c.name} className="flex items-center gap-2">
                         <span className="w-0 flex-1 truncate text-[11px] text-[var(--color-fg)]">
