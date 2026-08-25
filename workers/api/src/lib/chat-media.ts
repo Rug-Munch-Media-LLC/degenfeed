@@ -11,8 +11,8 @@
  *   - Existing message transport layer
  */
 
-import type { Env } from '../types';
 import { log } from '../logger';
+import type { Env } from '../types';
 import { getIPFSGatewayUrl, uploadBufferToIPFS } from './ipfs-storage';
 import { uploadToR2 } from './r2-storage';
 import { storeVideo } from './video-storage-router';
@@ -240,26 +240,21 @@ export async function uploadChatMedia(
     // Route based on type and size
     if (type === 'video' || type === 'audio') {
       // Use video-storage-router for media with duration
-      const storageResult = await storeVideo(
+      const contentId = `chat-${senderId}-${Date.now()}`;
+      const storageResult = await storeVideo(env, {
+        contentId,
         buffer,
-        fileName,
-        mimeType,
-        options?.duration ?? 0,
-        env,
-        {
-          creatorWallet: senderId,
-          title: fileName,
-          explicitType: options?.duration && options?.duration < 60 ? 'short' : 'longform',
-          isPremium: options?.isPremium,
-        },
-      );
+        duration: options?.duration ?? 0,
+        isPremium: options?.isPremium,
+        format: mimeType,
+      });
 
-      media.file!.url = storageResult.primaryUrl;
+      media.file!.url = storageResult.cdnUrl || storageResult.url;
       media.file!.storage = storageResult.backend === 'ipfs' ? 'ipfs' : 'r2';
-      media.file!.ipfsCid = storageResult.ipfsCid;
-      media.file!.r2Key = storageResult.r2Key;
-      media.file!.thumbnailUrl = storageResult.ipfsCid
-        ? `${getIPFSGatewayUrl(storageResult.ipfsCid)}?format=thumbnail`
+      media.file!.ipfsCid = storageResult.ipfsHash;
+      media.file!.r2Key = contentId;
+      media.file!.thumbnailUrl = storageResult.ipfsHash
+        ? `${getIPFSGatewayUrl(storageResult.ipfsHash)}?format=thumbnail`
         : undefined;
     } else {
       // Images and other files
