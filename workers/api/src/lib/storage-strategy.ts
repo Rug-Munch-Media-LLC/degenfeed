@@ -41,7 +41,7 @@ import { formatSize } from './video-storage-router';
 // ─── Constants ──────────────────────────────────────────────────────────
 
 /** Cost per GB per month for each backend (USD). 0 = free tier */
-export const BACKEND_COSTS: Record<string, number> = {
+export const BACKEND_COSTS = {
   blossom: 0, // Free — nostr.build Blossom (20MB/clip, 3min max)
   ipfs_storacha: 0, // Free 5GB via Storacha (web3.storage)
   ipfs_pinata: 0, // Free 1GB via Pinata
@@ -57,7 +57,7 @@ export const BACKEND_COSTS: Record<string, number> = {
 };
 
 /** Free tier limits per backend */
-export const FREE_TIER_LIMITS: Record<string, number> = {
+export const FREE_TIER_LIMITS = {
   blossom: 20 * 1024 * 1024, // 20MB per clip (per-file, nostr.build free)
   ipfs_storacha: 5 * 1024 * 1024 * 1024, // 5 GiB
   ipfs_pinata: 1 * 1024 * 1024 * 1024, // 1 GB
@@ -204,6 +204,7 @@ export function determineStorageTier(
   if (isPremium || contentType === 'premium') {
     return {
       backend: 'arweave',
+      isZeroCost: false,
       contentType: contentType ?? 'premium',
       reason: `Premium content → Arweave via Irys (~${estimateArweaveCost(size)} one-time)`,
       mirrorToIPFS: false,
@@ -231,6 +232,7 @@ export function determineStorageTier(
     if (size <= BLOSSOM_MAX_SIZE && duration <= BLOSSOM_MAX_DURATION) {
       return {
         backend: 'blossom',
+        isZeroCost: true,
         contentType: contentType ?? 'short',
         reason: `Short clip (${duration}s, ${formatSize(size)}) → Blossom (nostr.build) — free 20MB/3min tier`,
         mirrorToIPFS: false,
@@ -251,6 +253,7 @@ export function determineStorageTier(
     if (size <= ipfsFreeRemaining) {
       return {
         backend: 'ipfs',
+        isZeroCost: true,
         contentType: contentType ?? 'short',
         reason: `Short content (${duration}s, ${formatSize(size)}) → IPFS via Storacha (free 5GB)`,
         mirrorToIPFS: false,
@@ -270,6 +273,7 @@ export function determineStorageTier(
       // Free tier exhausted, use R2
       return {
         backend: 'r2',
+        isZeroCost: false,
         contentType: contentType ?? 'short',
         reason: `Short content — IPFS free tier exhausted, routed to R2 ($0.015/GB/mo)`,
         mirrorToIPFS: false,
@@ -300,6 +304,7 @@ export function determineStorageTier(
     // Short-enough VODs can still use the Blossom free tier
     return {
       backend: 'blossom',
+      isZeroCost: true,
       contentType: contentType ?? 'longform',
       reason: `Short VOD (${duration}s, ${formatSize(size)}) → Blossom (nostr.build) — free`,
       mirrorToIPFS: false,
@@ -321,6 +326,7 @@ export function determineStorageTier(
     // Small VODs can still go to IPFS
     return {
       backend: 'ipfs',
+      isZeroCost: true,
       contentType: contentType ?? 'longform',
       reason: `Small VOD (${formatSize(size)}) → IPFS via Storacha (free)`,
       mirrorToIPFS: false,
@@ -347,6 +353,7 @@ export function determineStorageTier(
 
     return {
       backend: 'r2',
+      isZeroCost: false,
       contentType: contentType ?? 'longform',
       reason: `VOD ${formatSize(size)} → ${label}${isCold ? ' (cold, auto-downgraded)' : ''}`,
       mirrorToIPFS: false,
@@ -368,6 +375,7 @@ export function determineStorageTier(
     // 500MB–2GB → Backblaze B2 (cheapest)
     return {
       backend: 'b2',
+      isZeroCost: false,
       contentType: contentType ?? 'longform',
       reason: `Large VOD ${formatSize(size)} → Backblaze B2 ($0.006/GB/mo — cheapest bulk)`,
       mirrorToIPFS: false,
@@ -388,6 +396,7 @@ export function determineStorageTier(
   // >2GB → B2 (cold bulk storage)
   return {
     backend: 'b2',
+    isZeroCost: false,
     contentType: contentType ?? 'longform',
     reason: `Very large VOD ${formatSize(size)} → Backblaze B2 (cheapest bulk, CDN-cached)`,
     mirrorToIPFS: false,
@@ -411,7 +420,8 @@ export function determineStorageTier(
  * Estimate the monthly cost for a given file size and backend.
  */
 export function estimateMonthlyCost(sizeBytes: number, backend: string): number {
-  const costPerGBmo = BACKEND_COSTS[backend] ?? 0.015;
+  const table = BACKEND_COSTS as Record<string, number>;
+  const costPerGBmo = table[backend] ?? 0.015;
   return (sizeBytes / 1_073_741_824) * costPerGBmo;
 }
 
