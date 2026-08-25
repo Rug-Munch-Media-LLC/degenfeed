@@ -17,6 +17,12 @@ import { act, renderHook, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { useFeedData } from '../../apps/web/src/hooks/feed/useFeedData';
 
+// FeedTuner is a .tsx component module — mock it so the node-env root vitest
+// run never has to parse JSX (hook only uses encodeTopicWeights).
+vi.mock('../../apps/web/src/components/FeedTuner', () => ({
+  encodeTopicWeights: vi.fn(() => ''),
+}));
+
 // Mock fetchWithCache to control data flow
 vi.mock('../../apps/web/src/lib/fetchWithCache', () => ({
   fetchWithSwr: vi.fn(),

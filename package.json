@@ -26,7 +26,8 @@
     "deps:freshness": "npx npm-check-updates --format group",
     "changeset": "changeset",
     "version:ci": "changeset version",
-    "release:ci": "changeset publish"
+    "release:ci": "changeset publish",
+    "test:workers": "vitest run --include \"tests/workers-integration/**\" --reporter=verbose"
   },
   "devDependencies": {
     "@asamuzakjp/css-color": "^6.0.5",
