@@ -7,7 +7,7 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178c6?logo=typescript)](https://www.typescriptlang.org)
 [![Next.js](https://img.shields.io/badge/Next.js-16-000000?logo=next.js)](https://nextjs.org)
 [![Cloudflare](https://img.shields.io/badge/edge-Cloudflare-F38020?logo=cloudflare)](https://cloudflare.com)
-[![License](https://img.shields.io/badge/license-AGPL--3.0-blue)](LICENSE)
+[![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 
 **🌐 Live at [app.degenfeed.xyz](https://app.degenfeed.xyz) — no account required to browse**  
 **📖 Docs: [docs.degenfeed.xyz](https://docs.degenfeed.xyz)**  
