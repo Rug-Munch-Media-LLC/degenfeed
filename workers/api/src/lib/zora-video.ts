@@ -271,6 +271,7 @@ export class ZoraVideoIntegration {
       const nodes = data?.data?.tokens?.nodes ?? [];
       const chain = 'base';
       const config = CHAIN_CONFIG[chain];
+      if (!config) return [];
 
       return nodes
         .filter(
@@ -278,7 +279,7 @@ export class ZoraVideoIntegration {
             n,
           ): n is NonNullable<typeof n> & {
             token: NonNullable<typeof n.token>;
-          } => n?.token?.content?.mimeType?.startsWith('video/'),
+          } => n?.token?.content?.mimeType?.startsWith('video/') === true,
         )
         .map((n) => ({
           tokenId: n.token.tokenId,
@@ -358,6 +359,7 @@ export class ZoraVideoIntegration {
 
       const nodes = data?.data?.tokens?.nodes ?? [];
       const config = CHAIN_CONFIG.base;
+      if (!config) return [];
 
       return nodes
         .filter(
@@ -365,7 +367,7 @@ export class ZoraVideoIntegration {
             n,
           ): n is NonNullable<typeof n> & {
             token: NonNullable<typeof n.token>;
-          } => n?.token?.content?.mimeType?.startsWith('video/'),
+          } => n?.token?.content?.mimeType?.startsWith('video/') === true,
         )
         .map((n) => ({
           tokenId: n.token.tokenId,
