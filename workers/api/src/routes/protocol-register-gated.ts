@@ -23,16 +23,7 @@
  *   4. Auto-links identity in IDENTITIES KV
  */
 
-import {
-  getPlatformAccounts,
-  registerBookWyrm,
-  registerFunkwhale,
-  registerMastodon,
-  registerMobilizon,
-  registerPeerTube,
-  registerPixelfed,
-  registerWriteFreely,
-} from '@degenfeed/crossplatform-register';
+import { getPlatformAccounts, registerOnPlatform } from '@degenfeed/crossplatform-register';
 import { identityKey } from '@degenfeed/utils';
 import { log } from '../index';
 import { sealForWallet } from '../lib/crypto-seal';
@@ -162,13 +153,13 @@ async function handleGatedRegistration(
     const existing = accounts.find(
       (a) => a.platform === protocol || a.platform === mapProtocolToPlatform(protocol),
     );
-    if (existing?.identifier) {
+    if (existing?.accountInfo?.identifier) {
       return jsonResponse(
         {
           error: `Already registered on ${PROTOCOL_ACCESS[protocol]?.label ?? protocol}`,
           protocol,
           username: existing.username,
-          identifier: existing.identifier,
+          identifier: existing.accountInfo.identifier,
           profileUrl: existing.accountInfo?.profileUrl,
         },
         409,
@@ -238,30 +229,10 @@ async function registerOnProtocol(
     castopodInstanceUrl: env.CASTOPOD_INSTANCE_URL || 'https://podcasts.degenfeed.xyz',
   };
 
-  // ActivityPub (Free) — uses crossplatform-register
-  switch (protocol) {
-    case 'gts':
-    case 'mastodon':
-      return registerMastodon(username, walletAddress, opts);
-    case 'peertube':
-      return registerPeerTube(username, walletAddress, opts);
-    case 'pixelfed':
-      return registerPixelfed(username, walletAddress, opts);
-    case 'writefreely':
-      return registerWriteFreely(username, walletAddress, opts);
-    case 'bookwyrm':
-      return registerBookWyrm(username, walletAddress, opts);
-    case 'mobilizon':
-      return registerMobilizon(username, walletAddress, opts);
-    case 'funkwhale':
-      return registerFunkwhale(username, walletAddress, opts);
-    default:
-      return {
-        platform: protocol as never,
-        status: 'failed' as const,
-        error: `Protocol registration not yet implemented for: ${protocol}`,
-      };
-  }
+  // ActivityPub (Free) — the crossplatform-register package owns per-protocol
+  // registration; 'gts' maps to its mastodon/GotoSocial flow.
+  if (protocol === 'gts') protocol = 'mastodon';
+  return registerOnPlatform(protocol, username, walletAddress, opts);
 }
 
 // ─── Identity Auto-Linking ─────────────────────────────────────────────────
