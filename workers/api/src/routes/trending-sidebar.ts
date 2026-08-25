@@ -8,8 +8,8 @@
 
 import { jsonResponse } from '../response-helpers';
 import type { Env } from '../types';
-import { handleHomeFeed } from './feed';
 import { handleDiscoverCommunities } from './discover';
+import { handleHomeFeed } from './feed';
 import { handleSpacesLive } from './spaces/core';
 import { handleUnifiedTipLeaderboard } from './unified-tip-leaderboard';
 
@@ -343,9 +343,10 @@ async function fetchFarcasterTrending(env: Env): Promise<TrendingFarcasterCast[]
           casts.push({
             hash: msg.hash,
             text: text.slice(0, 200),
-            author: { username: `fid:${msg.data.fid}` },
-            reactions: { likes_count: 0, recasts_count: 0 },
-          } as TrendingFarcasterCast);
+            authorName: `fid:${msg.data.fid}`,
+            likes: 0,
+            recasts: 0,
+          });
         }
       } catch {
         continue;
@@ -356,10 +357,10 @@ async function fetchFarcasterTrending(env: Env): Promise<TrendingFarcasterCast[]
     return casts.slice(0, 3).map((c) => ({
       hash: c.hash,
       text: c.text.slice(0, 120),
-      authorName: c.author.display_name ?? c.author.username ?? 'Unknown',
-      authorAvatar: c.author.pfp_url,
-      likes: c.reactions?.likes_count ?? 0,
-      recasts: c.reactions?.recasts_count ?? 0,
+      authorName: c.authorName || 'Unknown',
+      authorAvatar: undefined,
+      likes: c.likes,
+      recasts: c.recasts,
     }));
   } catch {
     return [];

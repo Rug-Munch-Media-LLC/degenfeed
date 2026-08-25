@@ -334,41 +334,11 @@ export async function handleTipLeaderboardProtocols(
 export async function handleTipLeaderboardCoins(_request: Request, env: Env): Promise<Response> {
   const url = new URL(_request.url);
   const period: TipPeriod = sanitizePeriodFromUrl(url.searchParams.get('period'));
-  const record = await kvGetJson<LeaderboardRecord>(env, leaderboardKey(period));
-  if (!record || !Array.isArray(record.entries) || record.entries.length === 0) {
-    return jsonResponse({ coins: [], count: 0, period });
-  }
-  // Group tip entries by coin symbol, then sum and sort
-  const coinGroups = new Map<
-    string,
-    { coin: string; name: string; totalUsd: number; tipCount: number; creators: Set<string> }
-  >();
-  for (const entry of record.entries) {
-    const coinSymbol = entry.entityLabel || entry.entityId;
-    if (!coinSymbol) continue;
-    const group = coinGroups.get(coinSymbol) ?? {
-      coin: coinSymbol,
-      name: entry.entityLabel || coinSymbol,
-      totalUsd: 0,
-      tipCount: 0,
-      creators: new Set<string>(),
-    };
-    group.totalUsd += entry.amountUsd;
-    group.tipCount++;
-    if (entry.toUserId) group.creators.add(entry.toUserId);
-    coinGroups.set(coinSymbol, group);
-  }
-  const coins = [...coinGroups.values()]
-    .map((g) => ({
-      coin: g.coin,
-      name: g.name,
-      totalUsd: g.totalUsd,
-      tipCount: g.tipCount,
-      creators: g.creators.size,
-    }))
-    .sort((a, b) => b.totalUsd - a.totalUsd)
-    .slice(0, Math.min(Number(url.searchParams.get('limit')) || 25, 100));
-  return jsonResponse({ coins, count: coins.length, period });
+  // Per-coin breakdown requires event-level storage (UnifiedTipEvent carries
+  // entityId/entityLabel). Leaderboard entries aggregate per-user only, so
+  // until event persistence lands this endpoint honestly returns an empty set.
+  void env;
+  return jsonResponse({ coins: [], count: 0, period });
 }
 
 function sanitizePeriodFromUrl(raw: string | null): TipPeriod {
