@@ -90,3 +90,6 @@ packages/farcaster-sdk/src/*.map
 packages/lens-sdk/src/*.js
 packages/lens-sdk/src/*.d.ts
 packages/lens-sdk/src/*.map
+
+# agent session artifacts never get committed
+docs/SESSION_TODO.md
