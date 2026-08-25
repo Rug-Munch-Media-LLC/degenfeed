@@ -79,7 +79,10 @@ export async function handleSSOProvision(request: Request, env: Env): Promise<Re
       failed: result.failed,
     });
 
-    return jsonResponse({ data: result }, result.failed > 0 && result.created === 0 ? 200 : 201);
+    return jsonResponse(
+      { data: result },
+      result.failed.length > 0 && result.created === 0 ? 200 : 201,
+    );
   } catch (err) {
     log('error', 'SSO provisioning failed', { wallet: wallet.slice(0, 8), error: String(err) });
     return jsonResponse({ error: `Provisioning failed: ${String(err)}` }, 500);
@@ -125,7 +128,7 @@ export async function handleSSOProvisionSingle(request: Request, env: Env): Prom
   const username = body.username || `df_${wallet.slice(2, 10)}`;
 
   try {
-    const result = await provisionSingleProtocol(protoDef, username, wallet, env);
+    const result = await provisionSingleProtocol(wallet, protocolId, env);
 
     // Update wallet state
     const state = await getOrInitWalletState(wallet, env);
@@ -215,17 +218,16 @@ export async function handleSSOSessionCreate(request: Request, env: Env): Promis
   if (session instanceof Response) return session;
 
   const wallet = session.address;
-  const ip =
+  const _ip =
     request.headers.get('cf-connecting-ip') || request.headers.get('x-forwarded-for') || 'unknown';
 
   try {
-    const result = await createCrossNetworkSession(wallet, env, ip);
+    const session = await createCrossNetworkSession(wallet, env);
     return jsonResponse({
       data: {
-        sessionId: result.session.sessionId,
-        token: result.sessionToken,
-        expiresAt: result.session.expiresAt,
-        crossSignedTokens: result.session.crossSignedTokens,
+        sessionId: session.sessionId,
+        token: session.sessionId,
+        expiresAt: session.expiresAt,
       },
     });
   } catch (err) {
@@ -254,7 +256,7 @@ export async function handleSSOSessionVerify(request: Request, env: Env): Promis
     return jsonResponse({ error: 'Missing token' }, 400);
   }
 
-  const payload = await verifySessionToken(body.token, secret);
+  const payload = await verifySessionToken(body.token, env);
   if (!payload) {
     return jsonResponse({ error: 'Invalid or expired token' }, 401);
   }
@@ -266,7 +268,7 @@ export async function handleSSOSessionVerify(request: Request, env: Env): Promis
   }
 
   // Refresh the session in the background
-  await refreshCrossNetworkSession(payload.wallet, payload.sessionId, env).catch(() => {});
+  await refreshCrossNetworkSession(payload.sessionId, env).catch(() => {});
 
   return jsonResponse({
     data: {
@@ -285,7 +287,7 @@ export async function handleSSOSessionRefresh(request: Request, env: Env): Promi
   const session = await requireSession(request, env);
   if (session instanceof Response) return session;
 
-  const wallet = session.address;
+  const _wallet = session.address;
   const secret = env.AUTH_SECRET;
   if (!secret) {
     return jsonResponse({ error: 'Auth secret not configured' }, 500);
@@ -303,20 +305,20 @@ export async function handleSSOSessionRefresh(request: Request, env: Env): Promi
     return jsonResponse({ error: 'Missing sessionId' }, 400);
   }
 
-  const refreshed = await refreshCrossNetworkSession(wallet, sessionId, env);
+  const refreshed = await refreshCrossNetworkSession(sessionId, env);
   if (!refreshed) {
     return jsonResponse({ error: 'Session not found or expired' }, 404);
   }
 
   // Issue a new session token with updated expiry
-  const newToken = await signSessionToken(wallet, sessionId, refreshed.nonce, secret);
+  const newToken = await signSessionToken(refreshed);
 
   return jsonResponse({
     data: {
       sessionId: refreshed.sessionId,
       token: newToken,
       expiresAt: refreshed.expiresAt,
-      lastRefreshAt: refreshed.lastRefreshAt,
+      lastRefreshAt: refreshed.lastUsed,
     },
   });
 }
@@ -329,7 +331,7 @@ export async function handleSSOSessionRevoke(request: Request, env: Env): Promis
   const session = await requireSession(request, env);
   if (session instanceof Response) return session;
 
-  const wallet = session.address;
+  const _wallet = session.address;
 
   let body: { sessionId?: string };
   try {
@@ -343,7 +345,7 @@ export async function handleSSOSessionRevoke(request: Request, env: Env): Promis
     return jsonResponse({ error: 'Missing sessionId' }, 400);
   }
 
-  const success = await revokeCrossNetworkSession(wallet, sessionId, env);
+  const success = await revokeCrossNetworkSession(sessionId, env);
   return jsonResponse({
     data: { revoked: success, sessionId },
   });
@@ -362,7 +364,7 @@ export async function handleSSOSessionRevokeAll(request: Request, env: Env): Pro
   const result = await revokeAllSessions(wallet, env);
   return jsonResponse({
     data: result,
-    message: `Revoked ${result.revoked} sessions across all protocols.`,
+    message: `Revoked ${result} sessions across all protocols.`,
   });
 }
 
@@ -417,7 +419,13 @@ export async function handleSSOActivityRecord(request: Request, env: Env): Promi
     return jsonResponse({ error: 'Missing protocol or type' }, 400);
   }
 
-  await recordActivity(wallet, body.protocol, body.type, body.metadata, env);
+  await recordActivity(
+    wallet,
+    body.protocol,
+    body.type,
+    typeof body.metadata === 'string' ? body.metadata : JSON.stringify(body.metadata ?? {}),
+    env,
+  );
 
   return jsonResponse({ data: { success: true } });
 }
@@ -434,11 +442,14 @@ export async function handleSSOExport(request: Request, env: Env): Promise<Respo
 
   try {
     const bundle = await exportIdentityBundle(wallet, env);
+    if (!bundle) {
+      return jsonResponse({ error: 'No identity bundle found for wallet' }, 404);
+    }
 
     // Don't include recovery data in the response body directly
     const exportResponse = {
       wallet: bundle.wallet,
-      version: bundle.version,
+      masterSessionId: bundle.masterSessionId,
       exportedAt: bundle.exportedAt,
       accounts: bundle.accounts.map((a) => ({
         protocol: a.protocol,
@@ -446,9 +457,6 @@ export async function handleSSOExport(request: Request, env: Env): Promise<Respo
         username: a.username,
         profileUrl: a.profileUrl,
       })),
-      did: bundle.did,
-      hasRecoveryData: bundle.recoveryData !== null,
-      walletSignature: bundle.walletSignature,
     };
 
     // If there's recovery data, include it encrypted
@@ -483,11 +491,14 @@ export async function handleSSOImport(request: Request, env: Env): Promise<Respo
   }
 
   try {
-    const state = await importIdentityBundle(body.bundle, env);
+    const ok = await importIdentityBundle(session.address.toLowerCase(), body.bundle, env);
+    if (!ok) {
+      return jsonResponse({ error: 'Import failed' }, 500);
+    }
     return jsonResponse({
       data: {
-        wallet: state.wallet,
-        accountsRestored: state.accounts.filter((a) => a.registered).length,
+        wallet: session.address.toLowerCase(),
+        imported: true,
       },
     });
   } catch (err) {
@@ -517,11 +528,10 @@ export async function handleSSORecoveryGenerate(request: Request, env: Env): Pro
   }
 
   try {
-    const result = await generateRecoveryCode(wallet, body.passphrase, env);
+    const recoveryCode = await generateRecoveryCode(wallet, env);
     return jsonResponse({
       data: {
-        recoveryCode: result.recoveryCode,
-        backupSize: result.backupEncrypted.length,
+        recoveryCode,
         message: 'Store your recovery code safely. It can restore all protocol accounts.',
       },
     });
@@ -538,7 +548,7 @@ export async function handleSSORecoveryRestore(request: Request, env: Env): Prom
   const session = await requireSession(request, env);
   if (session instanceof Response) return session;
 
-  const wallet = session.address;
+  const _wallet = session.address;
 
   let body: { recoveryCode?: string; encryptedBackup?: string };
   try {
@@ -552,12 +562,15 @@ export async function handleSSORecoveryRestore(request: Request, env: Env): Prom
   }
 
   try {
-    const state = await recoverWithCode(wallet, body.recoveryCode, body.encryptedBackup, env);
+    // recoverWithCode validates the code and returns the bound wallet (or null)
+    const recoveredWallet = await recoverWithCode(body.recoveryCode, env);
+    if (!recoveredWallet) {
+      return jsonResponse({ error: 'Invalid or expired recovery code' }, 401);
+    }
     return jsonResponse({
       data: {
-        wallet: state.wallet,
-        accountsRestored: state.accounts.filter((a) => a.registered).length,
-        message: 'Accounts restored successfully. You may need to re-provision some protocols.',
+        wallet: recoveredWallet,
+        message: 'Recovery code verified. Re-provision protocols to restore accounts.',
       },
     });
   } catch (err) {

@@ -161,6 +161,15 @@ export async function isSessionRevoked(nonce: string, env: Env): Promise<boolean
 
 // ─── Wallet State ──────────────────────────────────────────────────────
 
+/** Persist wallet state to the SSO store (shared by dashboard + bridge flows). */
+export async function persistWalletState(
+  walletAddress: string,
+  state: SSOWalletState,
+  env: Env,
+): Promise<void> {
+  await ssoStoreSet(env, ssoWalletStateKey(walletAddress), JSON.stringify(state));
+}
+
 export async function getOrInitWalletState(
   walletAddress: string,
   env: Env,
@@ -327,7 +336,14 @@ export async function provisionSingleProtocol(
   walletAddress: string,
   protocolId: string,
   env: Env,
-): Promise<{ ok: boolean; username?: string; error?: string }> {
+): Promise<{
+  ok: boolean;
+  username?: string;
+  error?: string;
+  /** 'created' | 'pending' | 'failed' — mirrors registerOnPlatform's verdict */
+  status?: 'created' | 'pending' | 'failed';
+  profileUrl?: string;
+}> {
   const username = `df${walletAddress.slice(2, 10)}`;
   try {
     const protoConfig = PROTOCOL_USERNAME_EMAIL_MAP[protocolId];
@@ -371,12 +387,15 @@ export async function provisionSingleProtocol(
         ok: true,
         username: registration.username,
         error: registration.status === 'pending' ? registration.error : undefined,
+        status: registration.status === 'pending' ? 'pending' : 'created',
+        profileUrl: registration.accountInfo?.profileUrl || undefined,
       };
     }
 
     return {
       ok: false,
       error: registration.error || 'Registration returned failed status',
+      status: 'failed',
     };
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Unknown error';

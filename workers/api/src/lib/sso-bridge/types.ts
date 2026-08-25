@@ -26,6 +26,10 @@ export interface SSOWalletState {
   masterSessionId: string | null;
   lastActive: number;
   provisionedAt: number;
+  /** Decentralized identifier minted at provisioning (optional legacy field) */
+  identityDID?: string;
+  /** Wall-clock creation time (ms) */
+  createdAt?: number;
 }
 export interface SSOSession {
   sessionId: string;

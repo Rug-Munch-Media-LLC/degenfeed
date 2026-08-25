@@ -16,6 +16,8 @@ export const CHANNELS = {
   USER_PREFIX: 'user:',
   /** Real-time cross-platform bridged chat for streams */
   STREAM_CHAT: 'stream:chat',
+  /** Creator video published (upload/short live) */
+  VIDEO_PUBLISH: 'video:publish',
 
   // ── Feed real-time events (DegenFeed timeline) ──
   /** Emitted when a new post is available from any protocol */
