@@ -25,16 +25,7 @@
  *   6. Returns the new account info
  */
 
-import {
-  getPlatformAccounts,
-  registerBookWyrm,
-  registerFunkwhale,
-  registerMastodon,
-  registerMobilizon,
-  registerPeerTube,
-  registerPixelfed,
-  registerWriteFreely,
-} from '@degenfeed/crossplatform-register';
+import { getPlatformAccounts, registerOnPlatform } from '@degenfeed/crossplatform-register';
 import type { CrossProtocolIdentity } from '@degenfeed/utils';
 import { identityKey } from '@degenfeed/utils';
 import { log } from '../index';
@@ -242,8 +233,9 @@ export async function handleProtocolStatus(request: Request, env: Env): Promise<
     const id = acct.platform;
     if (id in protocolStatus) {
       const info = acct.accountInfo;
+      const base = protocolStatus[id];
+      if (!base) continue;
       protocolStatus[id] = {
-        ...protocolStatus[id],
         registered: true,
         username: acct.username || null,
         profileUrl:
@@ -251,6 +243,9 @@ export async function handleProtocolStatus(request: Request, env: Env): Promise<
           (info?.username
             ? `${SELF_HOSTED_PROTOCOLS.find((p) => p.id === id)?.instanceUrl || ''}/@${info.username}`
             : null),
+        label: base.label,
+        icon: base.icon,
+        color: base.color,
       };
     }
   }
@@ -371,39 +366,10 @@ async function registerOnProtocol(
     pixelfedInstanceUrl: env.PIXELFED_INSTANCE_URL || 'https://pixelfed.social',
   };
 
-  switch (protocol) {
-    case 'mastodon':
-      return registerMastodon(username, walletAddress, opts);
-    case 'peertube':
-      return registerPeerTube(username, walletAddress, opts);
-    case 'lemmy':
-      return registerLemmyWrapper(username, walletAddress, opts);
-    case 'pixelfed':
-      return registerPixelfed(username, walletAddress, opts);
-    case 'writefreely':
-      return registerWriteFreely(username, walletAddress, opts);
-    case 'bookwyrm':
-      return registerBookWyrm(username, walletAddress, opts);
-    case 'mobilizon':
-      return registerMobilizon(username, walletAddress, opts);
-    case 'funkwhale':
-      return registerFunkwhale(username, walletAddress, opts);
-    default:
-      return {
-        platform: protocol as never,
-        status: 'failed' as const,
-        error: `Unsupported protocol: ${protocol}`,
-      };
-  }
-}
-
-async function registerLemmyWrapper(
-  username: string,
-  walletAddress: string,
-  opts: Record<string, unknown>,
-) {
-  const { registerLemmy } = await import('@degenfeed/crossplatform-register');
-  return registerLemmy(username, walletAddress, opts);
+  // The crossplatform-register package owns per-protocol registration
+  // (mastodon/peertube/lemmy/pixelfed/writefreely/bookwyrm/mobilizon/funkwhale
+  // + farcaster/lens/bluesky/nostr). Dispatch through its single entry point.
+  return registerOnPlatform(protocol, username, walletAddress, opts);
 }
 
 // ─── Identity Auto-Linking ─────────────────────────────────────────────

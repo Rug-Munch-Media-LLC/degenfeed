@@ -28,6 +28,7 @@ import {
   jsonToCsv,
 } from '../lib/data-portability';
 import { getBookmarks } from '../lib/rmi-client';
+import { log } from '../logger';
 import { ok, serverError } from '../response-helpers';
 import { requireSession } from '../session';
 import type { Env } from '../types';
@@ -247,7 +248,7 @@ async function gatherAllUserData(
       (async () => {
         try {
           const listResult = await env.CACHE?.list({ prefix: `security:audit:${walletLower}:` });
-          for (const key of listResult.keys.slice(0, 200)) {
+          for (const key of (listResult?.keys ?? []).slice(0, 200)) {
             const raw = await env.CACHE?.get(key.name);
             if (raw) activityLog.push({ type: 'security_audit', data: JSON.parse(raw) });
           }
@@ -303,7 +304,8 @@ export async function handleExportManifest(request: Request, env: Env): Promise<
 
     return ok(manifest);
   } catch (err) {
-    return serverError(env, err, { route: 'handleExportManifest' });
+    log('error', 'export failed', { route: 'handleExportManifest', error: String(err) });
+    return serverError();
   }
 }
 
@@ -347,7 +349,8 @@ export async function handleExportJson(request: Request, env: Env): Promise<Resp
       },
     });
   } catch (err) {
-    return serverError(env, err, { route: 'handleExportJson' });
+    log('error', 'export failed', { route: 'handleExportJson', error: String(err) });
+    return serverError();
   }
 }
 
@@ -409,7 +412,8 @@ export async function handleExportCsv(request: Request, env: Env): Promise<Respo
       },
     });
   } catch (err) {
-    return serverError(env, err, { route: 'handleExportCsv' });
+    log('error', 'export failed', { route: 'handleExportCsv', error: String(err) });
+    return serverError();
   }
 }
 
@@ -499,7 +503,8 @@ export async function handleExportHtml(request: Request, env: Env): Promise<Resp
       },
     });
   } catch (err) {
-    return serverError(env, err, { route: 'handleExportHtml' });
+    log('error', 'export failed', { route: 'handleExportHtml', error: String(err) });
+    return serverError();
   }
 }
 
@@ -552,7 +557,8 @@ export async function handleExportActivityPub(request: Request, env: Env): Promi
       },
     });
   } catch (err) {
-    return serverError(env, err, { route: 'handleExportActivityPub' });
+    log('error', 'export failed', { route: 'handleExportActivityPub', error: String(err) });
+    return serverError();
   }
 }
 
@@ -596,7 +602,8 @@ export async function handleExportNostr(request: Request, env: Env): Promise<Res
       },
     });
   } catch (err) {
-    return serverError(env, err, { route: 'handleExportNostr' });
+    log('error', 'export failed', { route: 'handleExportNostr', error: String(err) });
+    return serverError();
   }
 }
 
@@ -649,7 +656,8 @@ export async function handleExportAtProto(request: Request, env: Env): Promise<R
       },
     });
   } catch (err) {
-    return serverError(env, err, { route: 'handleExportAtProto' });
+    log('error', 'export failed', { route: 'handleExportAtProto', error: String(err) });
+    return serverError();
   }
 }
 
@@ -700,6 +708,7 @@ export async function handleExportSolid(request: Request, env: Env): Promise<Res
       },
     });
   } catch (err) {
-    return serverError(env, err, { route: 'handleExportSolid' });
+    log('error', 'export failed', { route: 'handleExportSolid', error: String(err) });
+    return serverError();
   }
 }
