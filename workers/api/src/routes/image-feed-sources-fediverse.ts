@@ -356,7 +356,7 @@ export async function fetchNostrImages(env: Env, limit: number): Promise<Unified
           sourceLabel: meta.label,
           category: guessCategory(
             ev.content,
-            ev.tags.map((t) => t[0]),
+            ev.tags.map((t) => t[0] ?? ''),
             'nostr',
           ),
           createdAt: ev.created_at * 1000,
@@ -371,7 +371,7 @@ export async function fetchNostrImages(env: Env, limit: number): Promise<Unified
           tags: ev.tags
             .filter((t) => t[0] === 't')
             .map((t) => t[1])
-            .filter(Boolean),
+            .filter((v): v is string => Boolean(v)),
         });
       }
     } catch {
@@ -433,9 +433,25 @@ export async function fetchBlueskyImages(env: Env, limit: number): Promise<Unifi
     for (const entry of json?.feed ?? []) {
       const p = entry.post;
       if (!p) continue;
-      const embedImages =
+      const embedImages: Array<{
+        thumb?: string;
+        fullsize?: string;
+        alt?: string;
+        aspectRatio?: { width: number; height: number };
+      }> =
         p.embed?.images ??
-        (p.record?.embed as { images?: Array<Record<string, unknown>> } | undefined)?.images ??
+        (
+          p.record?.embed as
+            | {
+                images?: Array<{
+                  thumb?: string;
+                  fullsize?: string;
+                  alt?: string;
+                  aspectRatio?: { width: number; height: number };
+                }>;
+              }
+            | undefined
+        )?.images ??
         [];
       if (!embedImages.length) continue;
       const img = embedImages[0]!;
