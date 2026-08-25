@@ -67,11 +67,11 @@ export function ImageViewer({
         case '+':
         case '=':
           e.preventDefault();
-          setZoom((z) => Math.min(3, (z + 1) as ZoomLevel));
+          setZoom((z) => (z >= 3 ? 3 : ((z + 1) as ZoomLevel)));
           break;
         case '-':
           e.preventDefault();
-          setZoom((z) => Math.max(1, (z - 1) as ZoomLevel));
+          setZoom((z) => (z <= 1 ? 1 : ((z - 1) as ZoomLevel)));
           break;
       }
     };
@@ -97,8 +97,11 @@ export function ImageViewer({
       .catch(() => {});
   }, [showComments, image]);
 
-  const handleZoomIn = useCallback(() => setZoom((z) => Math.min(3, (z + 1) as ZoomLevel)), []);
-  const handleZoomOut = useCallback(() => setZoom((z) => Math.max(1, (z - 1) as ZoomLevel)), []);
+  const handleZoomIn = useCallback(() => setZoom((z) => (z >= 3 ? 3 : ((z + 1) as ZoomLevel))), []);
+  const handleZoomOut = useCallback(
+    () => setZoom((z) => (z <= 1 ? 1 : ((z - 1) as ZoomLevel))),
+    [],
+  );
   const handleReset = useCallback(() => {
     setZoom(1);
     setPan({ x: 0, y: 0 });

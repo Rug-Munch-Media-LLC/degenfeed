@@ -425,7 +425,7 @@ export class SolanaCreatorTokenSDK {
     // For now, we fetch the TokenState using the mint-based derivation or
     // scan program accounts. In production, maintain a PDA index.
     try {
-      const _tokenStateAccount = await this.program.account.tokenState.fetch(tokenState);
+      await this.program.account.tokenState.fetch(tokenState);
       // This won't work directly because tokenState is derived from mint, not the other way.
       // We need a different approach.
     } catch {
@@ -435,7 +435,6 @@ export class SolanaCreatorTokenSDK {
       ]);
       if (accounts.length === 0) throw new Error(`Token not found: ${mint}`);
 
-      const _tokenStatePda = accounts[0]?.publicKey;
       const data = accounts[0]?.account as any;
 
       return {

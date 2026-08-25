@@ -5,7 +5,7 @@
  * protocols: audio, social, video, photos, publishing.
  */
 
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
 import {
   getProtocolColor,

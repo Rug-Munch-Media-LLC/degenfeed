@@ -108,6 +108,7 @@ export function useAltTextReminder() {
       return () => clearTimeout(timer);
     }
     setShowReminder(false);
+    return undefined;
   }, [hasImage, altTextAdded]);
 
   const dismissReminder = useCallback(() => {

@@ -130,9 +130,9 @@ export function useSmartTip() {
           senderChains: (params?.senderChains ?? availableChains).join(','),
           recipientChains: (params?.recipientChains ?? ['base', 'solana']).join(','),
           amountUsd: String(params?.amountUsd ?? 10),
-          recipientHasLightning: String(!!params?.recipientHasLightning ?? true),
-          recipientHasSolana: String(!!params?.recipientHasSolana ?? true),
-          recipientHasEvm: String(!!params?.recipientHasEvm ?? true),
+          recipientHasLightning: String(params?.recipientHasLightning ?? true),
+          recipientHasSolana: String(params?.recipientHasSolana ?? true),
+          recipientHasEvm: String(params?.recipientHasEvm ?? true),
         });
 
         const res = await fetch(`/api/tip/smart-chain?${searchParams.toString()}`, {

@@ -89,14 +89,6 @@ export function useOfflineQueue() {
     };
   }, []);
 
-  // Auto-replay when coming back online
-  useEffect(() => {
-    if (isOnline && queue.length > 0 && !replayingRef.current) {
-      replayAll();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOnline, replayAll, queue.length]);
-
   /** Add an action to the queue */
   const enqueue = useCallback((action: Omit<ActionQueueItem, 'id' | 'timestamp' | 'retries'>) => {
     const item: ActionQueueItem = {
@@ -148,6 +140,14 @@ export function useOfflineQueue() {
     setQueue(remaining);
     replayingRef.current = false;
   }, [queue]);
+
+  // Auto-replay when coming back online
+  useEffect(() => {
+    if (isOnline && queue.length > 0 && !replayingRef.current) {
+      replayAll();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOnline, replayAll, queue.length]);
 
   /** Clear all queued actions */
   const clearQueue = useCallback(() => {

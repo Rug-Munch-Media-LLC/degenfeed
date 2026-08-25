@@ -25,7 +25,7 @@ interface KVStore {
 }
 
 function getKV(env: Env): KVStore | null {
-  const kv = getKV(env);
+  const kv = env.CACHE;
   return (kv as unknown as KVStore) ?? null;
 }
 
@@ -117,6 +117,7 @@ export interface BridgeStatus {
 export class MatrixHub {
   private conduitUrl: string;
   private accessToken: string | null = null;
+  private adminToken: string | null = null;
   private bridgeConfigs: Map<BridgeProtocol, BridgeConfig> = new Map();
   private bridgeRooms: Map<string, BridgeRoom> = new Map();
 
@@ -168,7 +169,7 @@ export class MatrixHub {
   private async registerBridgeBot(env: Env): Promise<boolean> {
     try {
       const botUsername = `degenfeed_bridge_${Date.now()}`;
-      const botPassword = crypto.randomUUID().replace(/-/g, '') + 'Aa1!';
+      const botPassword = `${crypto.randomUUID().replace(/-/g, '')}Aa1!`;
 
       // Register via Conduit's admin API
       const res = await fetch(`${this.conduitUrl}/_matrix/client/v3/register`, {
@@ -213,7 +214,8 @@ export class MatrixHub {
    */
   private async adminRegisterBot(env: Env, username: string, password: string): Promise<boolean> {
     try {
-      const adminToken = env.MATRIX_ADMIN_TOKEN || process.env.MATRIX_ADMIN_TOKEN;
+      const adminToken =
+        env.MATRIX_ADMIN_TOKEN || process.env.MATRIX_ADMIN_TOKEN || this.adminToken;
       if (!adminToken) return false;
 
       const res = await fetch(`${this.conduitUrl}/_matrix/client/v3/admin/register`, {

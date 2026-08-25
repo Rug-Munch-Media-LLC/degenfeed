@@ -31,18 +31,14 @@
  */
 
 import {
+  type DiversityConfig,
   diversifyFeed,
   isSerendipitous,
-  type DiversityConfig,
   type ScoredItem,
 } from '@degenfeed/feed-core';
 import type { UnifiedPost } from '@degenfeed/types';
-import { EMPTY_ALGO_PROFILE, hasAlgoProfileSignal, type AlgoProfile } from './algoProfile';
-import {
-  filterFeed,
-  type FeedAlgorithmPrefs,
-  type FeedControls,
-} from './feedRanking';
+import { type AlgoProfile, EMPTY_ALGO_PROFILE, hasAlgoProfileSignal } from './algoProfile';
+import { type FeedAlgorithmPrefs, type FeedControls, filterFeed } from './feedRanking';
 
 // ─── Small helpers ─────────────────────────────────────────────────────
 
@@ -113,12 +109,7 @@ export function freshnessScore(post: UnifiedPost, now: number): FreshnessResult 
 
 export function engagementScore(post: UnifiedPost): number {
   const m = post.metrics;
-  const raw =
-    m.likes +
-    m.reposts * 2 +
-    m.replies * 3 +
-    (m.quotes ?? 0) * 4 +
-    (m.views ?? 0) / 10;
+  const raw = m.likes + m.reposts * 2 + m.replies * 3 + (m.quotes ?? 0) * 4 + (m.views ?? 0) / 10;
   return clamp01(Math.log(1 + raw) / Math.log(1 + 10_000));
 }
 
@@ -132,12 +123,7 @@ export interface VelocityResult {
 
 export function velocityScore(post: UnifiedPost, now: number): VelocityResult {
   const m = post.metrics;
-  const total =
-    m.likes +
-    m.reposts * 2 +
-    m.replies * 3 +
-    (m.quotes ?? 0) * 4 +
-    (m.views ?? 0) / 10;
+  const total = m.likes + m.reposts * 2 + m.replies * 3 + (m.quotes ?? 0) * 4 + (m.views ?? 0) / 10;
   const ageHours = Math.max(0.1, (now - post.createdAt) / 3_600_000);
   const rate = total / ageHours;
   const score = clamp01(Math.log(1 + rate) / Math.log(1 + 500));
@@ -155,7 +141,7 @@ export function qualityScore(post: UnifiedPost): number {
   if (ratio !== undefined) return clamp01(ratio);
   const dbg = post.feedDebug?.qualityScore;
   if (dbg !== undefined) return clamp01(dbg);
-  const spam = ((post as unknown as { spamScore?: number }).spamScore ?? 0) ?? 0;
+  const spam = (post as unknown as { spamScore?: number }).spamScore ?? 0;
   const len = (post.text ?? '').trim().length;
   const hasMedia = post.embeds.some((e) => e.kind === 'image' || e.kind === 'video');
   let s = (1 - spam) * 0.6 + Math.min(len / 400, 1) * 0.4;
@@ -220,7 +206,10 @@ export function reputationScore(post: UnifiedPost): ReputationResult {
  * New creators (very low follower count) get a discovery boost for their
  * first 24 hours so they aren't crushed by established accounts.
  */
-export function coldStartBoost(post: UnifiedPost, now: number): { boost: number; isColdStart: boolean } {
+export function coldStartBoost(
+  post: UnifiedPost,
+  now: number,
+): { boost: number; isColdStart: boolean } {
   const ageHours = (now - post.createdAt) / 3_600_000;
   const followers = post.author?.followerCount ?? 0;
   if (ageHours < 24 && followers < 50) {
@@ -236,7 +225,10 @@ export interface PersonalizationResult {
   reasons: string[];
 }
 
-export function personalizationScore(post: UnifiedPost, profile: AlgoProfile): PersonalizationResult {
+export function personalizationScore(
+  post: UnifiedPost,
+  profile: AlgoProfile,
+): PersonalizationResult {
   const reasons: string[] = [];
   let s = 0;
 
@@ -368,10 +360,7 @@ function compositeScore(
     signals.protocolBoost;
 
   // Explicit niche selection gets a boost (user asked for it).
-  if (
-    controls.niches.length > 0 &&
-    post.niches.some((n) => controls.niches.includes(n))
-  ) {
+  if (controls.niches.length > 0 && post.niches.some((n) => controls.niches.includes(n))) {
     score += 0.2;
   }
 
@@ -385,7 +374,7 @@ function compositeScore(
   return Math.max(0, score);
 }
 
-function diversityConfig(controls: FeedControls): DiversityConfig {
+function diversityConfig(controls: FeedControls, totalItems: number): DiversityConfig {
   const pd = controls.algorithm.protocolDiversity;
   return {
     maxConsecutiveCategory: 3,
@@ -393,7 +382,7 @@ function diversityConfig(controls: FeedControls): DiversityConfig {
     maxConsecutiveProtocol: pd >= 80 ? 1 : pd >= 60 ? 2 : pd >= 40 ? 3 : 6,
     maxTotalCategory: 8,
     maxTotalCreator: 4,
-    maxTotalProtocol: 6,
+    maxTotalProtocol: Math.max(6, totalItems),
     serendipityFraction: serendipityFraction(controls.algorithm),
     serendipityMinScore: 0.2,
     filterBubbleFraction: 0,
@@ -419,7 +408,8 @@ function attachTransparency(
   if (signals.velocity.score > 0.45) reasons.push('trending-now');
   if (signals.personalization.reasons.includes('followed')) reasons.push('followed');
   if (signals.personalization.reasons.includes('personalized-topic')) reasons.push('on-topic');
-  if (signals.personalization.reasons.includes('personalized-protocol')) reasons.push('personalized');
+  if (signals.personalization.reasons.includes('personalized-protocol'))
+    reasons.push('personalized');
   if (signals.reputation.reasons.includes('verified-author')) reasons.push('verified-author');
   if (signals.reputation.reasons.includes('big-creator')) reasons.push('big-creator');
   if (signals.reputation.reasons.includes('indie-creator')) reasons.push('indie-creator');
@@ -483,16 +473,15 @@ function isRunSafe(items: ScoredItem[], index: number, maxConsecutive: number): 
   return run <= maxConsecutive;
 }
 
-function enforceMaxConsecutiveCreator(
-  items: ScoredItem[],
-  maxConsecutive: number,
-): ScoredItem[] {
+function enforceMaxConsecutiveCreator(items: ScoredItem[], maxConsecutive: number): ScoredItem[] {
   const result = [...items];
   const n = result.length;
   if (n <= maxConsecutive) return result;
   const swap = (a: number, b: number) => {
     const tmp = result[a];
-    result[a] = result[b];
+    const other = result[b];
+    if (tmp === undefined || other === undefined) return;
+    result[a] = other;
     result[b] = tmp;
   };
 
@@ -579,7 +568,7 @@ export function rankTopAlgo(
     };
   });
 
-  const result = diversifyFeed(items, diversityConfig(controls));
+  const result = diversifyFeed(items, diversityConfig(controls, filtered.length));
 
   // Hard guarantee: never >2 posts from the same creator in a row.
   const diversified = enforceMaxConsecutiveCreator(result.items, 2);

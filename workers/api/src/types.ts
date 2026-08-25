@@ -322,8 +322,8 @@ export interface Env {
   RS_ADMIN_USER?: string;
   /** Restreamer admin password for JWT login */
   RS_ADMIN_PASSWORD?: string;
-  /** Owncast instance URL for live streaming / restream HLS source */
-  OWNCAST_INSTANCE_URL?: string;
+  /** Owncast instance URL for live streaming / restream HLS source (defined above) */
+  // OWNCAST_INSTANCE_URL?: string;
 
   // ─── Cross-platform registration ─────────────────────────────────────
   /** KV namespace for storing platform account records */
@@ -370,8 +370,8 @@ export interface Env {
   GHOST_INSTANCE_URL?: string;
   /** WriteFreely instance URL — blog.degenfeed.xyz */
   WRITEFREELY_INSTANCE_URL?: string;
-  /** Owncast instance URL — live.degenfeed.xyz */
-  OWNCAST_INSTANCE_URL?: string;
+  /** Owncast instance URL — live.degenfeed.xyz (defined above) */
+  // OWNCAST_INSTANCE_URL?: string;
   /** Mobilizon instance URL — events.degenfeed.xyz */
   MOBILIZON_INSTANCE_URL?: string;
   /** BookWyrm instance URL — books.degenfeed.xyz */

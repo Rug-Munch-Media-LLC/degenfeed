@@ -223,7 +223,7 @@ export function useDaoList() {
 }
 
 export function useMyDaos() {
-  const { user } = useAuth();
+  const { primaryIdentity: user } = useAuth();
   const [daos, setDaos] = useState<Dao[]>([]);
   const [loading, setLoading] = useState(true);
 

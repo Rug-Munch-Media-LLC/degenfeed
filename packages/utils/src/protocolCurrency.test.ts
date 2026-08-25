@@ -3,7 +3,13 @@
  */
 
 import { describe, expect, it } from 'vitest';
-import { CURRENCY_META, getDefaultCurrency, PROTOCOL_DEFAULT_CURRENCY } from './protocolCurrency';
+import {
+  CURRENCY_META,
+  type CurrencyKey,
+  getCurrencyMeta,
+  getDefaultCurrency,
+  PROTOCOL_DEFAULT_CURRENCY,
+} from './protocolCurrency';
 
 describe('PROTOCOL_DEFAULT_CURRENCY', () => {
   it('should map farcaster to base', () => {
@@ -67,7 +73,7 @@ describe('getDefaultCurrency', () => {
 
 describe('CURRENCY_META', () => {
   it('should have metadata for all supported currencies', () => {
-    const currencies = ['eth', 'base', 'matic', 'sol', 'btc', 'usdc'];
+    const currencies: CurrencyKey[] = ['eth', 'base', 'matic', 'sol', 'btc', 'usdc'];
     for (const c of currencies) {
       expect(CURRENCY_META[c]).toBeDefined();
       expect(CURRENCY_META[c]?.label).toBeTruthy();
@@ -87,5 +93,18 @@ describe('CURRENCY_META', () => {
 
   it('should have correct SOL color', () => {
     expect(CURRENCY_META.sol?.color).toBe('#9945ff');
+  });
+});
+
+describe('getCurrencyMeta', () => {
+  it('returns exact metadata for known currencies', () => {
+    expect(getCurrencyMeta('eth').symbol).toBe('ETH');
+    expect(getCurrencyMeta('usdc').label).toBe('USD Coin');
+  });
+
+  it('falls back to ETH metadata for unknown currency keys (never undefined)', () => {
+    const meta = getCurrencyMeta('not-a-currency');
+    expect(meta).toBeDefined();
+    expect(meta.symbol).toBe('ETH');
   });
 });

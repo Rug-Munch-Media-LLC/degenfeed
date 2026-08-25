@@ -13,12 +13,13 @@
  *   POST /api/chat/call/voicemail — Leave a voicemail
  */
 
+import type { CallManager } from '@degenfeed/chat-super-app';
 import { jsonResponse, methodNotAllowed, noCacheJsonResponse } from '../response-helpers';
 import { requireSession } from '../session';
 import type { Env } from '../types';
 
-let _callManager: typeof import('@degenfeed/chat-super-app').CallManager | null = null;
-async function getCallManager() {
+let _callManager: CallManager | null = null;
+async function getCallManager(): Promise<CallManager> {
   if (!_callManager) {
     const mod = await import('@degenfeed/chat-super-app');
     _callManager = mod.getCallManager();
@@ -221,7 +222,7 @@ export async function handleCallMute(request: Request, env: Env): Promise<Respon
 
   try {
     const cm = await getCallManager();
-    const call = await cm.toggleMute(env, body.callId, session.address, body.muted);
+    const _call = await cm.toggleMute(env, body.callId, session.address, body.muted);
     return jsonResponse({ ok: true, muted: body.muted });
   } catch (err) {
     return jsonResponse(
@@ -330,7 +331,7 @@ export async function handleCallActive(request: Request, env: Env): Promise<Resp
       })),
       count: activeCalls.length,
     });
-  } catch (err) {
+  } catch {
     return jsonResponse({ error: 'Failed to get active calls' }, 500);
   }
 }
@@ -355,7 +356,7 @@ export async function handleCallHistory(request: Request, env: Env): Promise<Res
       calls: history,
       total: history.length,
     });
-  } catch (err) {
+  } catch {
     return jsonResponse({ error: 'Failed to get call history' }, 500);
   }
 }

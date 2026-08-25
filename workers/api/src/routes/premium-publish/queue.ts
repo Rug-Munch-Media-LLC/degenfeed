@@ -6,14 +6,6 @@
 
 import type { MasterPost } from '@degenfeed/cross-protocol-bridge';
 import {
-  type QueueItem,
-  dequeueRaw,
-  enqueue as queueEnqueue,
-  getApiKey,
-  parsePayload,
-  useRmiQueueApi,
-} from '../../lib/queue-client';
-import {
   type AutoFormatOptions,
   autoFormatForProtocols,
   getBestPostingTime,
@@ -24,6 +16,14 @@ import {
   requireProtocolLimit,
   requireQuota,
 } from '../../lib/premium-gate';
+import {
+  dequeueRaw,
+  getApiKey,
+  parsePayload,
+  type QueueItem,
+  enqueue as queueEnqueue,
+  useRmiQueueApi,
+} from '../../lib/queue-client';
 import { requirePremiumTier, TIER_LIMITS } from '../../premium';
 import { jsonResponse, methodNotAllowed } from '../../response-helpers';
 import { sanitizeString, sanitizeStringArray } from '../../sanitize';
@@ -129,11 +129,13 @@ export async function handleQueueAdd(request: Request, env: Env): Promise<Respon
       const bestTimes = getBestPostingTime(protocols);
       if (bestTimes.length > 0) {
         const best = bestTimes[0];
-        const suggestedDate = getNextDateForDayAndHour(best.dayOfWeek, best.hourUTC);
-        entry.scheduledAt = suggestedDate.toISOString();
-        entry.aiOptimizedTime = suggestedDate.toISOString();
-        entry.aiOptimized = true;
-        entry.status = 'scheduled';
+        if (best) {
+          const suggestedDate = getNextDateForDayAndHour(best.dayOfWeek, best.hourUTC);
+          entry.scheduledAt = suggestedDate.toISOString();
+          entry.aiOptimizedTime = suggestedDate.toISOString();
+          entry.aiOptimized = true;
+          entry.status = 'scheduled';
+        }
       }
     }
     if (env.CACHE) {
@@ -320,11 +322,12 @@ export async function handleBatchPublish(request: Request, env: Env): Promise<Re
     const intervalMinutes = body.scheduleInterval ?? 0;
     const address = session.address.toLowerCase();
     const tier = await getUserTier(address, env);
-    const limits = TIER_LIMITS[tier] ?? TIER_LIMITS.basic;
-    if (entries.length > limits.batchSize) {
+    const limits = TIER_LIMITS[tier];
+    const batchSizeLimit = (limits || TIER_LIMITS.basic).scheduledPosts;
+    if (entries.length > batchSizeLimit) {
       return jsonResponse(
         {
-          error: `Batch size ${entries.length} exceeds limit of ${limits.batchSize}. Upgrade to Pro for larger batches.`,
+          error: `Batch size ${entries.length} exceeds limit of ${batchSizeLimit}. Upgrade to Pro for larger batches.`,
           upgrade: true,
           requiredTier: 'platinum',
         },
@@ -336,6 +339,10 @@ export async function handleBatchPublish(request: Request, env: Env): Promise<Re
     for (let i = 0; i < entries.length; i++) {
       try {
         const entry = entries[i];
+        if (!entry) {
+          errors.push({ index: i, error: 'Missing entry' });
+          continue;
+        }
         if (!entry.text) {
           errors.push({ index: i, error: 'Missing text' });
           continue;
@@ -431,13 +438,18 @@ export async function handleCalendarView(request: Request, env: Env): Promise<Re
     const grouped = new Map<string, QueueEntry[]>();
     for (const entry of allEntries) {
       if (entry.status !== 'scheduled' && entry.status !== 'queued') continue;
-      const dateKey = entry.scheduledAt ? entry.scheduledAt.split('T')[0] : 'unscheduled';
+      let dateKey: string = 'unscheduled';
+      if (entry.scheduledAt && entry.scheduledAt.length > 0) {
+        const parts = entry.scheduledAt.split('T');
+        if (parts[0]) dateKey = parts[0];
+      }
       if (!grouped.has(dateKey)) grouped.set(dateKey, []);
       grouped.get(dateKey)?.push(entry);
     }
     const current = new Date(start);
     while (current <= end) {
-      const dateKey = current.toISOString().split('T')[0];
+      const isoDate = current.toISOString();
+      const dateKey: string = isoDate.split('T')[0] ?? 'unscheduled';
       const entriesForDay = grouped.get(dateKey) ?? [];
       const recurringForDay = getRecurringEntriesForDate(allEntries, current);
       calendarDays.push({
@@ -580,10 +592,7 @@ async function executeDuePremiumPostsViaApi(env: Env): Promise<number> {
             getApiKey(env),
           );
         } catch (enqErr) {
-          console.error(
-            `[premium-executor] Re-enqueue failed for ${entry.id}:`,
-            enqErr,
-          );
+          console.error(`[premium-executor] Re-enqueue failed for ${entry.id}:`, enqErr);
         }
       }
       executed++;
@@ -662,7 +671,7 @@ async function executeQueueEntry(entry: QueueEntry, env: Env): Promise<void> {
       adaptLanguage: true,
     };
     autoFormatForProtocols(entry.masterPost, entry.protocols, options);
-    const { executeCrossPublish } = await import('../lib/cross-publish-orchestrator');
+    const { executeCrossPublish } = await import('../../lib/cross-publish-orchestrator');
     const report = await executeCrossPublish(
       {
         masterPost: entry.masterPost,
@@ -671,14 +680,25 @@ async function executeQueueEntry(entry: QueueEntry, env: Env): Promise<void> {
       },
       env,
     );
-    entry.results = report.results as Record<
-      string,
-      { success: boolean; error?: string; nativeId?: string }
-    >;
-    for (const [protocol, result] of Object.entries(report.results)) {
-      const { recordBridgeOperation } = await import('../lib/bridge-reliability');
-      await recordBridgeOperation(env, protocol, result.ok, 0, result.error).catch(() => {});
+    const resultsRecord: Record<string, { success: boolean; error?: string; nativeId?: string }> =
+      {};
+    for (const protocolResult of report.results) {
+      const protocol = protocolResult.protocol;
+      resultsRecord[protocol] = {
+        success: protocolResult.status === 'published' || protocolResult.status === 'scheduled',
+        error: protocolResult.error,
+        nativeId: protocolResult.postId,
+      };
+      const { recordBridgeOperation } = await import('../../lib/bridge-reliability');
+      await recordBridgeOperation(
+        env,
+        protocol,
+        protocolResult.status === 'published' || protocolResult.status === 'scheduled',
+        0,
+        protocolResult.error,
+      ).catch(() => {});
     }
+    entry.results = resultsRecord;
   } catch (err) {
     entry.error = err instanceof Error ? err.message : String(err);
     entry.status = 'failed';

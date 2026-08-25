@@ -10,12 +10,13 @@
  *   GET  /api/chat/:id/timer-display   — Get timer display string for header
  */
 
+import type { SelfDestructManager } from '@degenfeed/chat-super-app';
 import { jsonResponse, methodNotAllowed, noCacheJsonResponse } from '../response-helpers';
 import { requireSession } from '../session';
 import type { Env } from '../types';
 
-let _selfDestruct: typeof import('@degenfeed/chat-super-app').SelfDestructManager | null = null;
-async function getSelfDestruct() {
+let _selfDestruct: SelfDestructManager | null = null;
+async function getSelfDestruct(): Promise<SelfDestructManager> {
   if (!_selfDestruct) {
     const mod = await import('@degenfeed/chat-super-app');
     _selfDestruct = mod.getSelfDestructManager();
@@ -172,7 +173,7 @@ export async function handleTimerDisplay(
       enabled: timer?.enabled || false,
       duration: timer?.duration || 0,
     });
-  } catch (err) {
+  } catch {
     return jsonResponse({ error: 'Failed to get timer display' }, 500);
   }
 }
@@ -303,7 +304,7 @@ export async function handleScreenshotDetected(request: Request, env: Env): Prom
     await sd.reportScreenshot(env, body.conversationId, body.messageId, session.address);
 
     return jsonResponse({ ok: true, detected: true }, 200);
-  } catch (err) {
+  } catch {
     return jsonResponse({ error: 'Failed to report screenshot' }, 500);
   }
 }

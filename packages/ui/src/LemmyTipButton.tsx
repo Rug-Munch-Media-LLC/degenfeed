@@ -1,6 +1,6 @@
 'use client';
 
-import { CURRENCY_META } from '@degenfeed/utils';
+import { getCurrencyMeta } from '@degenfeed/utils';
 import { useCallback, useState } from 'react';
 
 /**
@@ -214,7 +214,7 @@ export function LemmyTipButton({
   }
 
   // Full mode: for posts (non-compact)
-  const currencyMeta = CURRENCY_META[selectedMethod.key] ?? CURRENCY_META.eth;
+  const currencyMeta = getCurrencyMeta(selectedMethod.key);
   // biome-ignore lint/style/noNonNullAssertion: fallback to eth is guaranteed above
   const meta = currencyMeta!;
 

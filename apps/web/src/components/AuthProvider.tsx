@@ -336,6 +336,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         const protocol = pending.protocol;
         const profile = pending.profile;
+
+        // Only process pending identities for Mastodon/GotoSocial.
+        // Other protocols (nostr, farcaster, etc.) have their own sign-in flows
+        // and should not be auto-saved from the pending-identity bridge.
+        if (protocol !== 'mastodon' && protocol !== 'gotosocial') {
+          return;
+        }
+
         const effectiveProtocol = profile?.provider || protocol;
         const publicId = String(profile?.id || profile?.email || profile?.username || 'unknown');
 

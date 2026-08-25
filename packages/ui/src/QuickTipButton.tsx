@@ -1,6 +1,6 @@
 'use client';
 
-import { CURRENCY_META } from '@degenfeed/utils';
+import { getCurrencyMeta } from '@degenfeed/utils';
 import { useState } from 'react';
 
 /**
@@ -42,7 +42,7 @@ export function QuickTipButton({
     (connectedProtocol ? PROTOCOL_CURRENCY[connectedProtocol] : undefined) ??
     'eth';
 
-  const currencyMeta = (CURRENCY_META[effectiveCurrency] ?? CURRENCY_META.eth)!;
+  const currencyMeta = getCurrencyMeta(effectiveCurrency);
 
   const [showAmounts, setShowAmounts] = useState(false);
   const [tipping, setTipping] = useState(false);

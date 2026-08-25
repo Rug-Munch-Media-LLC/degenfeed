@@ -8,12 +8,13 @@
  *   GET  /api/chat/keys/verified     — Get list of verified peers
  */
 
+import type { KeyVerificationManager } from '@degenfeed/chat-super-app';
 import { jsonResponse, methodNotAllowed, noCacheJsonResponse } from '../response-helpers';
 import { requireSession } from '../session';
 import type { Env } from '../types';
 
-let _keyManager: typeof import('@degenfeed/chat-super-app').KeyVerificationManager | null = null;
-async function getKeyManager() {
+let _keyManager: KeyVerificationManager | null = null;
+async function getKeyManager(): Promise<KeyVerificationManager> {
   if (!_keyManager) {
     const mod = await import('@degenfeed/chat-super-app');
     _keyManager = mod.getKeyVerificationManager();
@@ -201,7 +202,7 @@ export async function handleGetVerifiedPeers(request: Request, env: Env): Promis
       verifiedPeers: peers,
       count: peers.length,
     });
-  } catch (err) {
+  } catch {
     return jsonResponse({ error: 'Failed to get verified peers' }, 500);
   }
 }
@@ -231,7 +232,7 @@ export async function handleCheckVerification(
       peerId,
       protocol,
     });
-  } catch (err) {
+  } catch {
     return jsonResponse({ error: 'Failed to check verification' }, 500);
   }
 }

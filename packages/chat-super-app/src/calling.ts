@@ -13,11 +13,72 @@
 
 import type { Env } from '@degenfeed/types';
 
+// ─── Local WebSocket Broadcast Types (replaces fragile relative import) ──────
+// [REVIEW] These interfaces mirror workers/api/src/ws-broadcast.ts and ws-channels.ts
+// Keep in sync if those change. A proper package export would be better.
+
+export type ChannelName =
+  | 'feed:new'
+  | 'feed:update'
+  | 'feed:freshness'
+  | 'notifications:new'
+  | 'notifications:markAllRead'
+  | 'notifications:read'
+  | 'dm:new'
+  | 'dm:typing'
+  | 'space:update'
+  | 'tip:received'
+  | 'tip:global'
+  | 'stream:chat'
+  | 'feed:new-post'
+  | 'feed:trending-update'
+  | 'feed:engagement-update'
+  | 'feed:protocol-status'
+  | 'call:incoming'
+  | 'call:state'
+  | `user:${string}`
+  | `subscribe:feed:${'for-you' | 'home' | 'trending'}`
+  | `subscribe:protocol:${string}`;
+
+interface WSBroadcastInterface {
+  broadcastToAll: (channel: string, data: unknown) => void;
+  broadcastToUser: (userId: string, channel: string, data: unknown) => void;
+}
+
+// ─── WS broadcast (local fire-and-forget; mirrors workers/api ws-broadcast) ──
+const WS_BROADCAST_URL = 'https://realtime.degenfeed.xyz/broadcast';
+
+function wsSend(payload: { channel: string; data: unknown; userId?: string }): void {
+  void fetch(WS_BROADCAST_URL, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(payload),
+  }).catch(() => {
+    // realtime worker may not be reachable — silently ignore
+  });
+}
+
+const broadcastToUser: WSBroadcastInterface['broadcastToUser'] = (userId, channel, data) =>
+  wsSend({ channel, data, userId });
+
 // ─── Types ─────────────────────────────────────────────────────────────────
 
 export type CallType = 'audio' | 'video' | 'screen';
-export type CallState = 'ringing' | 'connecting' | 'connected' | 'ended' | 'missed' | 'rejected' | 'voicemail';
-export type CallEndReason = 'user-ended' | 'timeout' | 'rejected' | 'network-error' | 'busy' | 'voicemail';
+export type CallState =
+  | 'ringing'
+  | 'connecting'
+  | 'connected'
+  | 'ended'
+  | 'missed'
+  | 'rejected'
+  | 'voicemail';
+export type CallEndReason =
+  | 'user-ended'
+  | 'timeout'
+  | 'rejected'
+  | 'network-error'
+  | 'busy'
+  | 'voicemail';
 
 export interface CallParticipant {
   userId: string;
@@ -73,7 +134,17 @@ export interface Voicemail {
 }
 
 export interface CallSignallingMessage {
-  type: 'offer' | 'answer' | 'ice-candidate' | 'hangup' | 'mute' | 'unmute' | 'camera-off' | 'camera-on' | 'screen-share-start' | 'screen-share-stop';
+  type:
+    | 'offer'
+    | 'answer'
+    | 'ice-candidate'
+    | 'hangup'
+    | 'mute'
+    | 'unmute'
+    | 'camera-off'
+    | 'camera-on'
+    | 'screen-share-start'
+    | 'screen-share-stop';
   callId: string;
   senderId: string;
   sdp?: string;
@@ -164,18 +235,16 @@ export class CallManager {
     // Set ringing timeout
     this.scheduleTimeout(callId, callSession, env);
 
-    console.log(`[calling] Call ${callId} initiated: ${type} with ${participants.length} participants`);
+    console.log(
+      `[calling] Call ${callId} initiated: ${type} with ${participants.length} participants`,
+    );
     return callSession;
   }
 
   /**
    * Accept an incoming call.
    */
-  async acceptCall(
-    env: Env,
-    callId: string,
-    userId: string,
-  ): Promise<CallSession | null> {
+  async acceptCall(env: Env, callId: string, userId: string): Promise<CallSession | null> {
     const call = this.activeCalls.get(callId);
     if (!call) return null;
 
@@ -204,7 +273,7 @@ export class CallManager {
   async endCall(
     env: Env,
     callId: string,
-    endedBy: string,
+    _endedBy: string,
     reason: CallEndReason = 'user-ended',
   ): Promise<CallSession | null> {
     const call = this.activeCalls.get(callId);
@@ -242,10 +311,12 @@ export class CallManager {
    * Get all active calls for a user.
    */
   getActiveCallsForUser(userId: string): CallSession[] {
-    return Array.from(this.activeCalls.values()).filter(
-      (call) =>
-        call.state === 'ringing' || call.state === 'connecting' || call.state === 'connected',
-    ).filter((call) => call.participants.some((p) => p.userId === userId));
+    return Array.from(this.activeCalls.values())
+      .filter(
+        (call) =>
+          call.state === 'ringing' || call.state === 'connecting' || call.state === 'connected',
+      )
+      .filter((call) => call.participants.some((p) => p.userId === userId));
   }
 
   /**
@@ -289,11 +360,7 @@ export class CallManager {
   /**
    * Start screen sharing.
    */
-  async startScreenShare(
-    env: Env,
-    callId: string,
-    userId: string,
-  ): Promise<CallSession | null> {
+  async startScreenShare(env: Env, callId: string, _userId: string): Promise<CallSession | null> {
     const call = this.activeCalls.get(callId);
     if (!call) return null;
 
@@ -305,11 +372,7 @@ export class CallManager {
   /**
    * Stop screen sharing.
    */
-  async stopScreenShare(
-    env: Env,
-    callId: string,
-    _userId: string,
-  ): Promise<CallSession | null> {
+  async stopScreenShare(env: Env, callId: string, _userId: string): Promise<CallSession | null> {
     const call = this.activeCalls.get(callId);
     if (!call) return null;
 
@@ -354,15 +417,13 @@ export class CallManager {
   async startRecording(
     env: Env,
     callId: string,
-    requestedBy: string,
+    _requestedBy: string,
   ): Promise<CallSession | null> {
     const call = this.activeCalls.get(callId);
     if (!call) return null;
 
     // Check consent from all participants
-    const allConsented = call.participants.every(
-      (p) => call.recordingConsent[p.userId],
-    );
+    const allConsented = call.participants.every((p) => call.recordingConsent[p.userId]);
 
     if (!allConsented) {
       // Request consent — don't start yet
@@ -394,10 +455,7 @@ export class CallManager {
   /**
    * Stop recording.
    */
-  async stopRecording(
-    env: Env,
-    callId: string,
-  ): Promise<CallSession | null> {
+  async stopRecording(env: Env, callId: string): Promise<CallSession | null> {
     const call = this.activeCalls.get(callId);
     if (!call) return null;
 
@@ -457,11 +515,7 @@ export class CallManager {
   /**
    * Get call history for a user.
    */
-  async getCallHistory(
-    env: Env,
-    userId: string,
-    limit = 50,
-  ): Promise<CallHistoryEntry[]> {
+  async getCallHistory(env: Env, userId: string, limit = 50): Promise<CallHistoryEntry[]> {
     const kv = env.CACHE ?? env.CONTENT_LIBRARY;
     if (!kv) return [];
 
@@ -479,10 +533,7 @@ export class CallManager {
   /**
    * Handle an incoming call signalling message (WebRTC).
    */
-  async handleSignalling(
-    env: Env,
-    message: CallSignallingMessage,
-  ): Promise<CallSession | null> {
+  async handleSignalling(env: Env, message: CallSignallingMessage): Promise<CallSession | null> {
     const call = this.activeCalls.get(message.callId);
     if (!call) return null;
 
@@ -543,8 +594,6 @@ export class CallManager {
     participant: string,
   ): Promise<string> {
     const livekitKey = env.LIVEKIT_API_KEY || process.env.LIVEKIT_API_KEY;
-    const livekitSecret = env.LIVEKIT_API_SECRET || process.env.LIVEKIT_API_SECRET;
-    const livekitHost = env.LIVEKIT_HOST || process.env.LIVEKIT_HOST || 'http://localhost:7880';
 
     // If no LiveKit configured, return a placeholder token
     if (!livekitKey) {
@@ -642,11 +691,8 @@ export class CallManager {
           );
         }
 
-        // Broadcast via WebSocket
-        const { broadcastToUser } = await import(
-          /* @vite-ignore */ '../../workers/api/src/ws-broadcast'
-        ).catch(() => ({ broadcastToUser: () => {} }));
-        broadcastToUser(participantId, 'call:incoming', {
+        // Broadcast via WebSocket — fire-and-forget to realtime worker
+        await broadcastToUser(participantId, 'call:incoming', {
           callId: call.callId,
           conversationId: call.conversationId,
           type: call.type,
@@ -705,12 +751,14 @@ export class CallManager {
       const entry: CallHistoryEntry = {
         callId: call.callId,
         conversationId: call.conversationId,
-        withUserId: call.initiator === participant.userId
-          ? call.participants.find((p) => p.userId !== participant.userId)?.userId || ''
-          : call.initiator,
-        withDisplayName: call.initiator === participant.userId
-          ? call.participants.find((p) => p.userId !== participant.userId)?.displayName || ''
-          : participant.displayName,
+        withUserId:
+          call.initiator === participant.userId
+            ? call.participants.find((p) => p.userId !== participant.userId)?.userId || ''
+            : call.initiator,
+        withDisplayName:
+          call.initiator === participant.userId
+            ? call.participants.find((p) => p.userId !== participant.userId)?.displayName || ''
+            : participant.displayName,
         type: call.type,
         state: call.state,
         duration: call.duration || 0,
@@ -738,10 +786,7 @@ export class CallManager {
   /**
    * Store a WebRTC signalling message.
    */
-  private async storeSignallingMessage(
-    env: Env,
-    message: CallSignallingMessage,
-  ): Promise<void> {
+  private async storeSignallingMessage(env: Env, message: CallSignallingMessage): Promise<void> {
     const kv = env.CACHE ?? env.CONTENT_LIBRARY;
     if (!kv) return;
 
@@ -780,7 +825,8 @@ export function createPeerConnection(
   };
 
   pc.ontrack = (event) => {
-    onTrack(event.streams[0]);
+    const stream = event.streams[0];
+    if (stream) onTrack(stream);
   };
 
   pc.onconnectionstatechange = () => {
@@ -793,10 +839,7 @@ export function createPeerConnection(
 /**
  * Get user media (microphone/camera).
  */
-export async function getUserMedia(
-  video = false,
-  audio = true,
-): Promise<MediaStream> {
+export async function getUserMedia(video = false, _audio = true): Promise<MediaStream> {
   try {
     return await navigator.mediaDevices.getUserMedia({
       video: video ? { width: { ideal: 1280 }, height: { ideal: 720 } } : false,

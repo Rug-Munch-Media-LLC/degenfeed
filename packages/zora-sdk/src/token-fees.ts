@@ -115,7 +115,6 @@ export async function collectTokenGenerationFee(
   creator: string,
   chain: 'base' | 'solana',
 ): Promise<FeePaymentResult> {
-  const _fee = chain === 'solana' ? TOKEN_GENERATION_FEE_SOL : TOKEN_GENERATION_FEE_ETH;
   const currency = chain === 'solana' ? 'SOL' : 'ETH';
   const receiptId = generateReceiptId(creator, chain);
 

@@ -215,11 +215,12 @@ export async function fetchZoraLiveMints(
         .map((a) => a.value);
 
       // Detect if this is associated with a live event
-      const isLiveEvent =
+      const isLiveEvent = Boolean(
         mintInfo.mintStatus === 'LIVE' ||
-        tags.some((t) => ['live', 'live-mint', 'stream'].includes(t.toLowerCase())) ||
-        metadata?.name?.toLowerCase().includes('live') ||
-        metadata?.description?.toLowerCase().includes('live stream');
+          tags.some((t) => ['live', 'live-mint', 'stream'].includes(t.toLowerCase())) ||
+          metadata?.name?.toLowerCase().includes('live') ||
+          metadata?.description?.toLowerCase().includes('live stream'),
+      );
 
       events.push({
         id: `${token.contract.chain}:${token.contract.address}:${token.tokenId}`,
@@ -242,7 +243,7 @@ export async function fetchZoraLiveMints(
         thumbnailUrl: metadata?.thumbnailUrl,
         tags,
         collectorCount: token.collectorCount ?? 0,
-        royaltyBps: token.royalties?.bps ?? 0,
+        royaltyBps: token.royalities?.bps ?? 0,
       });
     }
 
@@ -467,10 +468,10 @@ export function buildZoraBidTransaction(
   try {
     // Min ABIs for Zora module manager
     const SWEEPER_ADDRESS = '0x0000000000a9d0e2e6b3c3e9e3e9e3e9e3e9e3e9';
-    const _BUYER_ADDRESS = '0x0000000000000000000000000000000000000001';
 
-    const _fourByte = '0xab834bbc'; // fillSweepOffer(bytes32,address,uint256,address,uint256)
-    const encoded = '0x'; // simplified — real encoding uses viem encodeFunctionData
+    // fillSweepOffer(bytes32,address,uint256,address,uint256) selector — real
+    // encoding will use viem encodeFunctionData when the sweeper is wired up.
+    const encoded = '0x';
 
     return {
       to: SWEEPER_ADDRESS,

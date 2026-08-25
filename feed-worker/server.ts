@@ -10,12 +10,16 @@
  */
 
 import http from 'node:http';
-import { hostname } from 'node:os';
 
 // ─── Configuration ─────────────────────────────────────────────────────
 const PORT = 8787;
 const MEILI_URL = 'http://127.0.0.1:7700';
-const MEILI_KEY = process.env.MEILI_KEY ?? 'dev-key-change-in-production';
+const MEILI_KEY = process.env.MEILI_KEY ?? '';
+if (!MEILI_KEY) {
+  console.error(
+    '[feed-worker] MEILI_KEY is not set — MeiliSearch-backed endpoints (search/for-you/trending) will return 503. Set MEILI_KEY to the MeiliSearch API key.',
+  );
+}
 const GTS_URL = 'http://127.0.0.1:8082';
 const LEMMY_URL = 'http://127.0.0.1:8536';
 const NOSTR_URL = 'http://127.0.0.1:8085';
@@ -119,7 +123,7 @@ interface FeedResponse {
 
 // ─── Helpers ───────────────────────────────────────────────────────────
 
-function json(body: unknown, status = 200): http.ServerResponse {
+function _json(body: unknown, status = 200): http.ServerResponse {
   const res = new http.ServerResponse({} as unknown as http.IncomingMessage);
   res.statusCode = status;
   res.setHeader('content-type', 'application/json');
@@ -169,7 +173,7 @@ function meiliDocToUnifiedPost(doc: MeiliDoc): UnifiedPost {
   const embeds = parseEmbeds(doc.embeds);
 
   // Build author identity
-  const hostnamePart = doc.authorHandle?.includes('@')
+  const _hostnamePart = doc.authorHandle?.includes('@')
     ? doc.authorHandle.split('@')[1] || protocol
     : protocol;
   const primaryId = doc.authorId || `${protocol}:${doc.authorHandle || 'unknown'}`;
@@ -239,7 +243,7 @@ async function handleMastodon(limit: number): Promise<FeedResponse> {
     const posts = statuses.map((s: Record<string, unknown>) => {
       const account = (s.account as Record<string, unknown>) || {};
       const orig = (s.reblog as Record<string, unknown>) || s;
-      const origAccount = (orig.account as Record<string, unknown>) || account;
+      const _origAccount = (orig.account as Record<string, unknown>) || account;
       const media = (orig.media_attachments as Array<Record<string, unknown>>) || [];
       const tags = (orig.tags as Array<Record<string, unknown>>) || [];
       const rawText = orig.spoiler_text
@@ -367,12 +371,12 @@ async function handleLemmy(limit: number): Promise<FeedResponse> {
   }
 }
 
-async function handleNostr(limit: number): Promise<FeedResponse> {
+async function _handleNostr(limit: number): Promise<FeedResponse> {
   try {
     // Nostr relay REQ for recent text notes (kind 1)
-    const subId = 'feed-' + Date.now().toString(36);
-    const req = JSON.stringify([subId, { kinds: [1], limit }]);
-    const wsUrl = NOSTR_URL.replace(/^http/, 'ws');
+    const subId = `feed-${Date.now().toString(36)}`;
+    const _req = JSON.stringify([subId, { kinds: [1], limit }]);
+    const _wsUrl = NOSTR_URL.replace(/^http/, 'ws');
 
     // Try fetching via NIP-11 info first, fall back gracefully
     return {
@@ -402,6 +406,18 @@ async function handleMeiliSearch(
   limit: number,
   sort?: string,
 ): Promise<FeedResponse> {
+  if (!MEILI_KEY) {
+    return {
+      data: [],
+      meta: {
+        total: 0,
+        limit,
+        source: source || 'all',
+        errors: ['MeiliSearch not configured: MEILI_KEY missing'],
+        fetchedAt: Date.now(),
+      },
+    };
+  }
   try {
     const filter = source ? `source=${source}` : undefined;
     const body: Record<string, unknown> = { q: '', limit };
@@ -501,7 +517,7 @@ async function handleRequest(req: http.IncomingMessage, res: http.ServerResponse
   const url = new URL(req.url || '/', `http://${req.headers.host || 'localhost'}`);
   const path = url.pathname;
   const limit = Math.min(Number(url.searchParams.get('limit')) || 25, 100);
-  const page = Number(url.searchParams.get('page')) || 1;
+  const _page = Number(url.searchParams.get('page')) || 1;
   const sort = url.searchParams.get('sort') || 'createdAt:desc';
 
   // CORS headers for local dev

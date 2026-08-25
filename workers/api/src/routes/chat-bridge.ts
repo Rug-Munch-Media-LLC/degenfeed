@@ -11,13 +11,14 @@
  * One Matrix room = one DegenFeed chat conversation.
  */
 
+// Lazy-load the chat super-app
+import type { MatrixHub } from '@degenfeed/chat-super-app';
 import { jsonResponse, methodNotAllowed, noCacheJsonResponse } from '../response-helpers';
 import { requireSession } from '../session';
 import type { Env } from '../types';
 
-// Lazy-load the chat super-app
-let _matrixHub: typeof import('@degenfeed/chat-super-app').MatrixHub | null = null;
-async function getHub() {
+let _matrixHub: MatrixHub | null = null;
+async function getHub(): Promise<MatrixHub> {
   if (!_matrixHub) {
     const mod = await import('@degenfeed/chat-super-app');
     _matrixHub = mod.getMatrixHub();

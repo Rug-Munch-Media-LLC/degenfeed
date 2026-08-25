@@ -209,19 +209,6 @@ export function VineFeed({ vineFeed, onDismiss }: VineFeedProps) {
     [currentIndex, shorts.length],
   );
 
-  // ── Double-tap to like ───────────────────────────────────────────────
-
-  const handleDoubleTap = useCallback(() => {
-    const now = Date.now();
-    if (now - lastTapTime.current < 350) {
-      handleLike();
-      setShowToast('❤️');
-      lastTapTime.current = 0;
-    } else {
-      lastTapTime.current = now;
-    }
-  }, [handleLike]); // eslint-disable-line react-hooks/exhaustive-deps
-
   // ── Like Action ──────────────────────────────────────────────────────
 
   const handleLike = useCallback(() => {
@@ -237,6 +224,19 @@ export function VineFeed({ vineFeed, onDismiss }: VineFeedProps) {
       return next;
     });
   }, [currentShort, recordWatch]);
+
+  // ── Double-tap to like ───────────────────────────────────────────────
+
+  const handleDoubleTap = useCallback(() => {
+    const now = Date.now();
+    if (now - lastTapTime.current < 350) {
+      handleLike();
+      setShowToast('❤️');
+      lastTapTime.current = 0;
+    } else {
+      lastTapTime.current = now;
+    }
+  }, [handleLike]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Revine Action ────────────────────────────────────────────────────
 

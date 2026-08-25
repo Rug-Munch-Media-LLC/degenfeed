@@ -27,15 +27,15 @@ import type { Env } from '@degenfeed/types';
 // ─── Types ─────────────────────────────────────────────────────────────────
 
 export type SelfDestructDuration =
-  | 0           // Off
-  | 5           // 5 seconds
-  | 30          // 30 seconds
-  | 60          // 1 minute
-  | 300         // 5 minutes
-  | 3600        // 1 hour
-  | 86400       // 24 hours
-  | 604800      // 7 days
-  | 2592000;    // 30 days
+  | 0 // Off
+  | 5 // 5 seconds
+  | 30 // 30 seconds
+  | 60 // 1 minute
+  | 300 // 5 minutes
+  | 3600 // 1 hour
+  | 86400 // 24 hours
+  | 604800 // 7 days
+  | 2592000; // 30 days
 
 export const SELF_DESTRUCT_OPTIONS: Array<{ value: SelfDestructDuration; label: string }> = [
   { value: 0, label: 'Off' },
@@ -205,11 +205,9 @@ export class SelfDestructManager {
 
     const kv = env.CACHE ?? env.CONTENT_LIBRARY;
     if (kv) {
-      await kv.put(
-        `${DISAPPEARING_PREFIX}${messageId}`,
-        JSON.stringify(disappearing),
-        { expirationTtl: Math.ceil(duration * 1.5) },
-      );
+      await kv.put(`${DISAPPEARING_PREFIX}${messageId}`, JSON.stringify(disappearing), {
+        expirationTtl: Math.ceil(duration * 1.5),
+      });
     }
 
     return disappearing;
@@ -218,10 +216,7 @@ export class SelfDestructManager {
   /**
    * Mark a view-once media as viewed. It will be cleaned up shortly after.
    */
-  async markViewOnceViewed(
-    env: Env,
-    mediaId: string,
-  ): Promise<ViewOnceMedia | null> {
+  async markViewOnceViewed(env: Env, mediaId: string): Promise<ViewOnceMedia | null> {
     const kv = env.CACHE ?? env.CONTENT_LIBRARY;
     if (!kv) return null;
 
@@ -279,10 +274,7 @@ export class SelfDestructManager {
   /**
    * Get view-once media (returns null if already viewed or expired).
    */
-  async getViewOnce(
-    env: Env,
-    mediaId: string,
-  ): Promise<ViewOnceMedia | null> {
+  async getViewOnce(env: Env, mediaId: string): Promise<ViewOnceMedia | null> {
     const kv = env.CACHE ?? env.CONTENT_LIBRARY;
     if (!kv) return null;
 
@@ -354,7 +346,7 @@ export class SelfDestructManager {
   /**
    * Delete all expired messages from KV.
    */
-  private async cleanupExpiredMessages(env: Env): Promise<number> {
+  private async cleanupExpiredMessages(_env: Env): Promise<number> {
     // Note: In production, this would be a KV list operation.
     // For now, we rely on KV TTL for automatic cleanup.
     // This method exists for when we need to do additional cleanup
@@ -366,7 +358,7 @@ export class SelfDestructManager {
    * Mark existing messages in a conversation for deletion when a timer is set.
    */
   private async markExistingMessagesForDeletion(
-    env: Env,
+    _env: Env,
     conversationId: string,
     duration: SelfDestructDuration,
   ): Promise<void> {
@@ -389,9 +381,10 @@ export class SelfDestructManager {
  *   - onbeforecopy: detect copy attempts
  */
 
-export function createScreenshotDetector(
-  onScreenshot: () => void,
-): { start: () => void; stop: () => void } {
+export function createScreenshotDetector(onScreenshot: () => void): {
+  start: () => void;
+  stop: () => void;
+} {
   let isActive = false;
   let lastVisibilityChange = 0;
 

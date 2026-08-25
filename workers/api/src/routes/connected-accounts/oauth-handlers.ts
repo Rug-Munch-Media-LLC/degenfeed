@@ -7,8 +7,57 @@ import { requireSession } from '../../session';
 import type { Env } from '../../types';
 import { consumeState, generateOAuthState, storeState } from '../oauth-state';
 import { buildOAuthUrl } from './oauth-urls';
-import { CENTRALIZED_PLATFORMS, type CentralizedPlatform, PLATFORM_LABELS } from './types';
+import { PLATFORM_LABELS } from './types';
 import { connectedAccountKey, getStatePrefix } from './utils';
+
+// Local type definitions for missing exports
+const CENTRALIZED_PLATFORMS = [
+  'reddit',
+  'medium',
+  'youtube',
+  'linkedin',
+  'instagram',
+  'pinterest',
+  'tiktok',
+  'substack',
+] as const;
+
+type CentralizedPlatform = (typeof CENTRALIZED_PLATFORMS)[number];
+
+// Local exchange wrappers with correct signatures
+async function exchangeRedditCodeWrapper(code: string, _env: Env, redirectUri: string) {
+  const { exchangeRedditCode } = await import('./exchanges');
+  return exchangeRedditCode(code, redirectUri);
+}
+async function exchangeMediumCodeWrapper(code: string, _env: Env, redirectUri: string) {
+  const { exchangeMediumCode } = await import('./exchanges');
+  return exchangeMediumCode(code, redirectUri);
+}
+async function exchangeGoogleCodeWrapper(
+  code: string,
+  _env: Env,
+  redirectUri: string,
+  _service: string,
+) {
+  const { exchangeGoogleCode } = await import('./exchanges');
+  return exchangeGoogleCode(code, redirectUri);
+}
+async function exchangeLinkedInCodeWrapper(code: string, _env: Env, redirectUri: string) {
+  const { exchangeLinkedInCode } = await import('./exchanges');
+  return exchangeLinkedInCode(code, redirectUri);
+}
+async function exchangeInstagramCodeWrapper(code: string, _env: Env, redirectUri: string) {
+  const { exchangeInstagramCode } = await import('./exchanges');
+  return exchangeInstagramCode(code, redirectUri);
+}
+async function exchangePinterestCodeWrapper(code: string, _env: Env, redirectUri: string) {
+  const { exchangePinterestCode } = await import('./exchanges');
+  return exchangePinterestCode(code, redirectUri);
+}
+async function exchangeTikTokCodeWrapper(code: string, _env: Env, redirectUri: string) {
+  const { exchangeTikTokCode } = await import('./exchanges');
+  return exchangeTikTokCode(code, redirectUri);
+}
 
 /**
  * POST /api/accounts/connect/:platform — Initiate OAuth for a platform.
@@ -37,7 +86,7 @@ export async function handleConnectPlatform(
   const baseUrl = `${url.protocol}//${url.hostname}`;
   const redirectUri = `${baseUrl}/api/accounts/callback/${platform}`;
 
-  const oauthUrl = buildOAuthUrl(platform, env, state, redirectUri);
+  const oauthUrl = buildOAuthUrl(env, platform, state, redirectUri);
   if (oauthUrl instanceof Response) return oauthUrl;
 
   return jsonResponse({
@@ -81,7 +130,6 @@ export async function handleOAuthCallback(
   if (session instanceof Response) return session;
 
   const wallet = session.address.toLowerCase();
-  const { ConnectedAccount } = await import('./types');
 
   const account = {
     platform,
@@ -136,31 +184,21 @@ async function exchangeCodeForToken(
   const baseUrl = `${currentUrl.protocol}//${currentUrl.hostname}`;
   const redirectUri = `${baseUrl}/api/accounts/callback/${platform}`;
 
-  const {
-    exchangeRedditCode,
-    exchangeMediumCode,
-    exchangeGoogleCode,
-    exchangeLinkedInCode,
-    exchangeInstagramCode,
-    exchangePinterestCode,
-    exchangeTikTokCode,
-  } = await import('./exchanges');
-
   switch (platform) {
     case 'reddit':
-      return exchangeRedditCode(code, env, redirectUri);
+      return exchangeRedditCodeWrapper(code, env, redirectUri);
     case 'medium':
-      return exchangeMediumCode(code, env, redirectUri);
+      return exchangeMediumCodeWrapper(code, env, redirectUri);
     case 'youtube':
-      return exchangeGoogleCode(code, env, redirectUri, 'youtube');
+      return exchangeGoogleCodeWrapper(code, env, redirectUri, 'youtube');
     case 'linkedin':
-      return exchangeLinkedInCode(code, env, redirectUri);
+      return exchangeLinkedInCodeWrapper(code, env, redirectUri);
     case 'instagram':
-      return exchangeInstagramCode(code, env, redirectUri);
+      return exchangeInstagramCodeWrapper(code, env, redirectUri);
     case 'pinterest':
-      return exchangePinterestCode(code, env, redirectUri);
+      return exchangePinterestCodeWrapper(code, env, redirectUri);
     case 'tiktok':
-      return exchangeTikTokCode(code, env, redirectUri);
+      return exchangeTikTokCodeWrapper(code, env, redirectUri);
     default:
       return jsonResponse({ error: `Unsupported platform: ${platform}` }, 400);
   }

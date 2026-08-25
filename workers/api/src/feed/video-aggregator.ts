@@ -7,6 +7,7 @@
  * Thin class — platform fetchers live in sibling modules.
  */
 
+import type { VideoPlatform } from '../lib/creator-resolver';
 import { VIDEO_PLATFORM_COLORS, VIDEO_PLATFORM_LABELS } from '../lib/creator-resolver';
 import { fetchZoraTrendingVideos } from '../lib/zora-deep';
 import type { Env } from '../types';
@@ -117,7 +118,7 @@ export class VideoAggregator {
       fetchPeerTubeTrending(this.env, category),
     ];
 
-    const pf = (name: string) => !opts.platforms || opts.platforms.includes(name);
+    const pf = (name: string) => !opts.platforms || opts.platforms.includes(name as VideoPlatform);
     if (pf('rumble')) fetchers.push(fetchRumbleTrending(category));
     if (pf('odysee')) fetchers.push(fetchOdyseeTrending(category));
     if (pf('dtube')) fetchers.push(fetchDTubeTrending(category));
@@ -134,7 +135,7 @@ export class VideoAggregator {
     if (pf('arweave')) fetchers.push(fetchArweaveTrending(category, 10));
     if (pf('zora')) {
       fetchers.push(
-        fetchZoraTrendingVideos(this.env, { limit: 20, chain: 'BASE' }).then((tokens) =>
+        fetchZoraTrendingVideos(this.env, 20, { chain: 'BASE' }).then((tokens) =>
           tokens.map(
             (t): UnifiedVideo => ({
               id: `zora-video:${t.contractAddress}:${t.tokenId}`,
@@ -265,6 +266,42 @@ export class VideoAggregator {
       label: VIDEO_PLATFORM_LABELS[platform] ?? platform,
       color: VIDEO_PLATFORM_COLORS[platform] ?? '#666666',
     };
+  }
+
+  /**
+   * Get personalized feed for a wallet based on followed creators.
+   * Fetches follows from KV, then aggregates videos from all followed creators.
+   */
+  async getPersonalizedFeed(
+    wallet: string,
+    opts: VideoAggregatorOptions = {},
+  ): Promise<UnifiedVideo[]> {
+    const limit = opts.limit ?? 20;
+    const followKey = `follow:${wallet.toLowerCase()}`;
+    const cachedFollows = await this.env.CACHE?.get(followKey);
+    if (!cachedFollows) return [];
+
+    const creatorIds: string[] = JSON.parse(cachedFollows) as string[];
+    if (creatorIds.length === 0) return [];
+
+    const fetchers = creatorIds.map((id) =>
+      this.getCreatorVideos(id, { limit: Math.ceil(limit / creatorIds.length) + 5 }),
+    );
+
+    const results = await Promise.allSettled(fetchers);
+    const allVideos: UnifiedVideo[] = [];
+    for (const r of results) {
+      if (r.status === 'fulfilled') allVideos.push(...r.value);
+    }
+
+    return this.mergeAndRank(allVideos, { ...opts, limit });
+  }
+
+  /**
+   * Alias for search() to match route expectations.
+   */
+  async searchVideos(query: string, opts: { limit?: number } = {}): Promise<UnifiedVideo[]> {
+    return this.search(query, opts.limit ?? 20);
   }
 }
 

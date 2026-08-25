@@ -1,4 +1,5 @@
 import type { StoredIdentity } from '@degenfeed/storage';
+import { PROTOCOL_COLORS, PROTOCOL_ICONS } from '@degenfeed/utils';
 import type { ResolvedIdentity, TabDefinition } from './types';
 
 // Protocol colors/labels/icons come from the canonical registry

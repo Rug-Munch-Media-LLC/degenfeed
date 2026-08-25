@@ -156,7 +156,7 @@ export async function withConcurrencyLimit<T, R>(
   limit: number,
   fn: (item: T) => Promise<R>,
 ): Promise<R[]> {
-  const results: R[] = new Array(items.length);
+  const results: R[] = Array.from({ length: items.length });
   const queue = items.map((item, index) => ({ item, index }));
   const runners = new Set<Promise<void>>();
 
@@ -231,7 +231,14 @@ export function isValidEmail(s: string): boolean {
 
 // ─── Protocol → currency mapping for tipping ──────────────────────────
 
-export { CURRENCY_META, PROTOCOL_DEFAULT_CURRENCY, getDefaultCurrency } from './protocolCurrency';
+export {
+  CURRENCY_META,
+  type CurrencyKey,
+  type CurrencyMeta,
+  getCurrencyMeta,
+  getDefaultCurrency,
+  PROTOCOL_DEFAULT_CURRENCY,
+} from './protocolCurrency';
 
 // ─── Cross-protocol identity resolution ────────────────────────────────
 
@@ -241,7 +248,7 @@ export { IDENTITY_KV_PREFIX, identityKey, PROTOCOL_ID_REGISTRY } from './crossPr
 // ─── Handle resolution ─────────────────────────────────────────────────
 
 export type { HandleResolution } from './identity';
-export { resolveHandle, resolveFediverseHandle } from './identity';
+export { resolveFediverseHandle, resolveHandle } from './identity';
 
 // ─── Profile URL generation ────────────────────────────────────────────
 

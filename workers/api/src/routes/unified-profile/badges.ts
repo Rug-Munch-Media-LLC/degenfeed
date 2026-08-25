@@ -8,6 +8,12 @@ import { aggregateProfile } from '../../lib/profile-sync';
 import { jsonResponse, noCacheJsonResponse } from '../../response-helpers';
 import type { Env } from '../../types';
 
+interface AggregatedProfile {
+  badges: string[];
+  verificationLevel: number;
+  protocols: Record<string, unknown>;
+}
+
 export async function handleProfileBadges(
   _request: Request,
   env: Env,
@@ -15,7 +21,8 @@ export async function handleProfileBadges(
 ): Promise<Response> {
   if (!wallet || wallet.length < 10) return jsonResponse({ error: 'Invalid wallet address' }, 400);
   try {
-    const profile = await aggregateProfile(wallet, env);
+    const rawProfile = await aggregateProfile(wallet, env);
+    const profile = rawProfile as unknown as AggregatedProfile;
     let attestationCount = 0;
     try {
       const raw = await env.IDENTITIES?.get(`attest:wallet:${wallet.toLowerCase()}`);
@@ -28,11 +35,11 @@ export async function handleProfileBadges(
     }
     return noCacheJsonResponse({
       data: {
-        badges: profile.badges,
-        verificationLevel: profile.verificationLevel,
-        connectedProtocols: (
-          Object.keys(profile.protocols) as Array<keyof typeof profile.protocols>
-        ).filter((p) => Object.keys(profile.protocols[p] as Record<string, unknown>).length > 0),
+        badges: profile.badges ?? [],
+        verificationLevel: profile.verificationLevel ?? 0,
+        connectedProtocols: Object.keys(profile.protocols ?? {}).filter(
+          (p) => Object.keys(profile.protocols[p] as Record<string, unknown>).length > 0,
+        ),
         attestationCount,
       },
     });

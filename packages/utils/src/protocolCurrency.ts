@@ -43,10 +43,7 @@ export function getDefaultCurrency(connectedProtocols: string[], postProtocol?: 
 /**
  * Human-readable labels and icons for each tipping currency.
  */
-export const CURRENCY_META: Record<
-  string,
-  { label: string; symbol: string; icon: string; color: string }
-> = {
+export const CURRENCY_META = {
   eth: {
     label: 'Ethereum',
     symbol: 'ETH',
@@ -83,4 +80,22 @@ export const CURRENCY_META: Record<
     icon: '●',
     color: '#2775ca',
   },
-};
+} as const;
+
+export type CurrencyKey = keyof typeof CURRENCY_META;
+
+export interface CurrencyMeta {
+  label: string;
+  symbol: string;
+  icon: string;
+  color: string;
+}
+
+/**
+ * Look up display metadata for a tipping currency, falling back to ETH
+ * for unknown currency keys. Always defined — safe for direct rendering.
+ */
+export function getCurrencyMeta(currency: string): CurrencyMeta {
+  const meta = (CURRENCY_META as Record<string, CurrencyMeta>)[currency];
+  return meta ?? CURRENCY_META.eth;
+}
