@@ -116,7 +116,7 @@ function BalloonAnimation({ duration }: { duration: number }) {
       id: i,
       x: Math.random() * (typeof window !== 'undefined' ? window.innerWidth : 800),
       y: (typeof window !== 'undefined' ? window.innerHeight : 600) + 50 + Math.random() * 100,
-      color: colors[Math.floor(Math.random() * colors.length)],
+      color: colors[Math.floor(Math.random() * colors.length)] ?? '#FF6B6B',
     }));
     setBalloons(initial);
 

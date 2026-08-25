@@ -115,7 +115,7 @@ export function TipButton({
       const data = (await res.json()) as { chains?: SmartChainOption[] };
       if (data.chains && data.chains.length > 0) {
         setSmartChains(data.chains);
-        setSelectedChain(data.chains[0]?.chain);
+        setSelectedChain(data.chains[0]?.chain ?? '');
       } else {
         setSelectedChain('base');
       }

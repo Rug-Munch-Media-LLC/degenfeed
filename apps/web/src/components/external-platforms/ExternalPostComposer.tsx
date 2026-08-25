@@ -104,7 +104,14 @@ export function ExternalPostComposer({
       try {
         const res = await fetch('/api/external/accounts');
         const data = (await res.json()) as {
-          data?: { accounts?: PlatformInfo[] };
+          data?: {
+            accounts?: Array<{
+              platform: string;
+              displayName?: string;
+              avatarUrl?: string;
+              connectedAt?: string;
+            }>;
+          };
         };
         const accounts = data.data?.accounts ?? [];
 

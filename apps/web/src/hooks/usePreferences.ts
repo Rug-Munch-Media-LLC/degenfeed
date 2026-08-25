@@ -295,13 +295,16 @@ export function usePreferences() {
   }, []);
 
   const toggleNotificationType = useCallback(
-    (protocol: Protocol, type: NotificationType) => {
+    (protocol: string, type: string) => {
       setPrefs((p) => {
+        if (!(protocol in p.notifications)) return p;
+        const proto = protocol as Protocol;
+        const ntype = type as NotificationType;
         const updated = {
           ...p.notifications,
-          [protocol]: {
-            ...p.notifications[protocol],
-            [type]: !p.notifications[protocol]?.[type],
+          [proto]: {
+            ...p.notifications[proto],
+            [ntype]: !p.notifications[proto]?.[ntype],
           },
         };
         setLocal(LS_NOTIFICATIONS, updated);
@@ -323,10 +326,33 @@ export function usePreferences() {
     [persistToServer],
   );
 
-  const setContent = useCallback((content: ContentSettings) => {
-    setPrefs((p) => ({ ...p, content }));
-    setLocal(LS_CONTENT, content);
-  }, []);
+  const VALID_FEEDS = ['following', 'for-you', 'trending'] as const;
+  const setContent = useCallback(
+    (
+      content: Partial<{
+        defaultFeed: string;
+        mutedWords: string[];
+        mutedUsers: string[];
+        blockedUsers: string[];
+      }>,
+    ) => {
+      setPrefs((p) => {
+        const merged = { ...p.content, ...content };
+        if (!(VALID_FEEDS as readonly string[]).includes(merged.defaultFeed)) {
+          merged.defaultFeed = p.content.defaultFeed;
+        }
+        const next: ContentSettings = {
+          defaultFeed: merged.defaultFeed as ContentSettings['defaultFeed'],
+          mutedWords: merged.mutedWords,
+          mutedUsers: merged.mutedUsers,
+          blockedUsers: merged.blockedUsers,
+        };
+        setLocal(LS_CONTENT, next);
+        return { ...p, content: next };
+      });
+    },
+    [],
+  );
 
   /* === Save to KV API ======================================== */
 

@@ -17,6 +17,7 @@ export type ShortSource =
   | 'loops'
   | 'activitypub'
   | 'atprotocol'
+  | 'flashes'
   | 'nostr'
   | 'farcaster'
   | 'lens'
