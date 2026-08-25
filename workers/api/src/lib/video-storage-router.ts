@@ -52,7 +52,8 @@ export type StorageBackend =
   | 'r2'
   | 'arweave'
   | 'r2+ipfs' // R2 primary + IPFS mirror
-  | 'r2+arweave'; // R2 primary + Arweave permanent copy
+  | 'r2+arweave' // R2 primary + Arweave permanent copy
+  | 'b2'; // Backblaze B2 bulk storage
 
 /** Result of routing analysis */
 export interface RoutingDecision {
@@ -133,6 +134,17 @@ const ZERO_COST_PLATFORMS = {
  *   5. Long-form VOD → Check PeerTube federation first, then R2
  *   6. Livestream VOD → R2 + IPFS mirror
  */
+/**
+ * Human-readable byte size (e.g. "1.5 MB"). Shared by storage strategy
+ * and chat file helpers.
+ */
+export function formatSize(bytes: number): string {
+  if (bytes === 0) return '0 B';
+  const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(1024));
+  return `${(bytes / 1024 ** i).toFixed(i === 0 ? 0 : 1)} ${units[i]}`;
+}
+
 export function analyzeStorageRoute(params: {
   /** Original video URL (if sourced from external platform) */
   externalUrl?: string;
