@@ -48,6 +48,7 @@ function hexToRgb(hex: string): string {
 interface FeedMeta {
   total?: number;
   limit?: number;
+  hasMore?: boolean;
   perProtocol?: Record<string, number>;
   errors?: string[];
   notices?: string[];

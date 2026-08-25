@@ -1,7 +1,7 @@
 'use client';
 
 import { CrossPlatformSetup, type PlatformAccount } from '@degenfeed/ui';
-import { useCallback, useState } from 'react';
+import { type Dispatch, type SetStateAction, useCallback, useState } from 'react';
 import { usePremium } from '../../hooks/usePremium';
 import { useAuth } from '../AuthProvider';
 import { useToast } from '../Toast';
@@ -12,7 +12,7 @@ interface SubscriptionSectionProps {
   setShowUpgradeModal: (v: boolean) => void;
   refreshPremium: () => Promise<void>;
   crossPlatformKey: number;
-  setCrossPlatformKey: (k: number) => void;
+  setCrossPlatformKey: Dispatch<SetStateAction<number>>;
 }
 
 export function SubscriptionSection({

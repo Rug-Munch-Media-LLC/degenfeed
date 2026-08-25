@@ -76,7 +76,10 @@ function getEpisodeMeta(post: UnifiedPost): EpisodeMeta {
       (raw.podcastTitle as string) || (audioMeta.podcast as string) || post.author.displayName,
     description: (raw.description as string) || stripHtml(post.html) || post.text,
     feedLabel: raw.feedLabel as string,
-    image: (raw.image as string) || (post.image as string) || (post.media as string),
+    image:
+      (raw.image as string) ||
+      (post.image as string) ||
+      (post.media ?? []).find((m) => m.type === 'image')?.url,
   };
 }
 
@@ -102,11 +105,13 @@ function EpisodeAudioPlayer({ src, title }: { src: string; title: string }) {
     audio.addEventListener('timeupdate', onTime);
     audio.addEventListener('ended', onEnded);
     audio.addEventListener('error', () => setError(true));
+    const onError = () => setError(true);
+    audio.addEventListener('error', onError);
     return () => {
       audio.removeEventListener('loadedmetadata', onLoaded);
       audio.removeEventListener('timeupdate', onTime);
       audio.removeEventListener('ended', onEnded);
-      audio.removeEventListener('error', () => setError(true));
+      audio.removeEventListener('error', onError);
     };
   }, []);
 

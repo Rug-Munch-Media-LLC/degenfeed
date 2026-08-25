@@ -9,7 +9,6 @@
 
 import { ErrorBoundary } from '@degenfeed/ui';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useAuth } from '../../../components/AuthProvider';
 import { ConnectAccountPanel } from '../../../components/profile/ConnectAccountPanel';
 import { CustomLinksEditor } from '../../../components/profile/CustomLinksEditor';
 import { useToast } from '../../../components/Toast';
@@ -70,7 +69,6 @@ const DEFAULT_SETTINGS: CreatorSettings = {
 };
 
 export default function SettingsPage() {
-  const { primaryIdentity, linkedIdentities } = useAuth();
   const { showToast } = useToast();
   const [activeTab, setActiveTab] = useState<SettingsTab>('profile');
   const [settings, setSettings] = useState<CreatorSettings>(DEFAULT_SETTINGS);

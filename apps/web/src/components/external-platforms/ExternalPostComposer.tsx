@@ -128,6 +128,7 @@ export function ExternalPostComposer({
         setPlatforms(
           defs.map((def) => ({
             ...def,
+            platform: def.id,
             connected: accountMap.has(def.id),
             connectedAccount: accountMap.get(def.id)
               ? {

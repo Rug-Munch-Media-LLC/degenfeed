@@ -359,7 +359,7 @@ function TieredGateEditor({
         minBalance: 100,
         decimals: 18,
         label: `Tier ${tiers.length + 1}`,
-        color: colors[tiers.length % colors.length],
+        color: colors[tiers.length % colors.length] ?? '#8b5cf6',
         description: `${tiers.length + 1}000+ tokens`,
       },
     ]);

@@ -78,7 +78,7 @@ function generateMockActivity(): ActivityItem[] {
   const types: ActivityItem['type'][] = ['buy', 'sell', 'holder', 'alert'];
   return Array.from({ length: 20 }, (_, i) => {
     const type = types[Math.floor(Math.random() * types.length)] ?? 'alert';
-    const symbol = symbols[Math.floor(Math.random() * symbols.length)];
+    const symbol = symbols[Math.floor(Math.random() * symbols.length)] ?? 'DEGEN';
     const texts: Record<ActivityItem['type'], string[]> = {
       buy: [`Bought ${symbol}`, `Purchased more ${symbol}`, `Accumulated ${symbol}`],
       sell: [`Sold some ${symbol}`, `Took profit on ${symbol}`, `Reduced ${symbol} position`],
@@ -94,7 +94,7 @@ function generateMockActivity(): ActivityItem[] {
       id: `act-${i}`,
       type,
       symbol,
-      text: textList[Math.floor(Math.random() * textList.length)],
+      text: textList[Math.floor(Math.random() * textList.length)] ?? `Update on ${symbol}`,
       timestamp: Date.now() - Math.floor(Math.random() * 86400000),
     };
   }).sort((a, b) => b.timestamp - a.timestamp);

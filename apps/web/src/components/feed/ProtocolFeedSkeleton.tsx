@@ -12,14 +12,8 @@
  *  - Text protocols    → list of 3 PostCard-matching skeletons
  */
 
-import {
-  AspectRatio,
-  Avatar,
-  CardSkeleton,
-  Line,
-  ListSkeleton,
-} from '@/components/loading/PageSkeleton';
 import { PostCardSkeleton } from '@degenfeed/ui/server';
+import { CardSkeleton, Line } from '@/components/loading/PageSkeleton';
 
 /* ─── Protocol category sets (ids from @degenfeed/utils registry) ─── */
 
@@ -88,11 +82,22 @@ export function VideoGridSkeleton({
   title?: boolean;
 }) {
   return (
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3" role="status" aria-label="Loading videos">
+    <div
+      className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3"
+      role="status"
+      aria-label="Loading videos"
+    >
       {Array.from({ length: count }).map((_, i) => (
-        <div key={i} className="overflow-hidden rounded-xl border" style={{ borderColor: 'var(--color-glass-border)' }}>
+        <div
+          key={i}
+          className="overflow-hidden rounded-xl border"
+          style={{ borderColor: 'var(--color-glass-border)' }}
+        >
           {/* Dark 16:9 thumbnail with pulse */}
-          <div className="relative aspect-video w-full" style={{ backgroundColor: 'var(--color-bg-tertiary)' }}>
+          <div
+            className="relative aspect-video w-full"
+            style={{ backgroundColor: 'var(--color-bg-tertiary)' }}
+          >
             <div
               className="absolute inset-0 animate-pulse"
               style={{ backgroundColor: 'var(--color-muted)', opacity: 0.22 }}
@@ -192,7 +197,10 @@ export function AudioFeedSkeleton({ count = 3 }: { count?: number }) {
 
 export function ProtocolHeaderSkeleton() {
   return (
-    <div className="mb-6 overflow-hidden rounded-xl border" style={{ borderColor: 'var(--color-glass-border)' }}>
+    <div
+      className="mb-6 overflow-hidden rounded-xl border"
+      style={{ borderColor: 'var(--color-glass-border)' }}
+    >
       <div className="flex items-start gap-4 px-5 py-5 sm:px-6 sm:py-6">
         <div
           className="h-14 w-14 shrink-0 rounded-2xl animate-pulse sm:h-16 sm:w-16"
@@ -256,7 +264,10 @@ export function FeedTabsSkeleton() {
           />
         ))}
       </div>
-      <div className="h-8 w-20 animate-pulse rounded-lg" style={{ backgroundColor: 'var(--color-muted)', opacity: 0.2 }} />
+      <div
+        className="h-8 w-20 animate-pulse rounded-lg"
+        style={{ backgroundColor: 'var(--color-muted)', opacity: 0.2 }}
+      />
     </div>
   );
 }

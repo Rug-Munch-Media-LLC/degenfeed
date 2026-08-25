@@ -18,7 +18,6 @@
 import type { UnifiedPost } from '@degenfeed/types';
 
 /** Per-request timeout — a single protocol must never stall the preload. */
-const _REQUEST_TIMEOUT_MS = 1200;
 /** Hard overall budget for the whole preload (all protocols in parallel). */
 export const SSR_PRELOAD_BUDGET_MS = 1600;
 /** Posts per protocol embedded in SSR. 5 protocols × 3 = up to 15 posts. */
