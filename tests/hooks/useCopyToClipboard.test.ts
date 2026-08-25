@@ -26,8 +26,10 @@ describe('useCopyToClipboard', () => {
 
   it('should start with copied = false', async () => {
     // Mock navigator.clipboard
-    Object.assign(navigator, {
-      clipboard: { writeText: vi.fn().mockResolvedValue(undefined) },
+    const clipboardMock = { writeText: vi.fn().mockResolvedValue(undefined) };
+    Object.defineProperty(navigator, 'clipboard', {
+      value: clipboardMock,
+      configurable: true,
     });
 
     const { useCopyToClipboard } = await import('../../apps/web/src/hooks/useCopyToClipboard');
@@ -38,8 +40,10 @@ describe('useCopyToClipboard', () => {
   });
 
   it('should set copied to true after successful copy', async () => {
-    Object.assign(navigator, {
-      clipboard: { writeText: vi.fn().mockResolvedValue(undefined) },
+    const clipboardMock = { writeText: vi.fn().mockResolvedValue(undefined) };
+    Object.defineProperty(navigator, 'clipboard', {
+      value: clipboardMock,
+      configurable: true,
     });
 
     const { useCopyToClipboard } = await import('../../apps/web/src/hooks/useCopyToClipboard');
@@ -57,8 +61,10 @@ describe('useCopyToClipboard', () => {
   });
 
   it('should reset copied to false after 2 seconds', async () => {
-    Object.assign(navigator, {
-      clipboard: { writeText: vi.fn().mockResolvedValue(undefined) },
+    const clipboardMock = { writeText: vi.fn().mockResolvedValue(undefined) };
+    Object.defineProperty(navigator, 'clipboard', {
+      value: clipboardMock,
+      configurable: true,
     });
 
     const { useCopyToClipboard } = await import('../../apps/web/src/hooks/useCopyToClipboard');
@@ -82,8 +88,10 @@ describe('useCopyToClipboard', () => {
 
   it('should fall back to execCommand when clipboard API is unavailable', async () => {
     // Remove clipboard API
-    Object.assign(navigator, {
-      clipboard: undefined,
+    const clipboardMock = undefined;
+    Object.defineProperty(navigator, 'clipboard', {
+      value: clipboardMock,
+      configurable: true,
     });
 
     // Mock document.execCommand
@@ -104,8 +112,10 @@ describe('useCopyToClipboard', () => {
   });
 
   it('should clear previous timer when copying again', async () => {
-    Object.assign(navigator, {
-      clipboard: { writeText: vi.fn().mockResolvedValue(undefined) },
+    const clipboardMock = { writeText: vi.fn().mockResolvedValue(undefined) };
+    Object.defineProperty(navigator, 'clipboard', {
+      value: clipboardMock,
+      configurable: true,
     });
 
     const { useCopyToClipboard } = await import('../../apps/web/src/hooks/useCopyToClipboard');
@@ -132,8 +142,10 @@ describe('useCopyToClipboard', () => {
   });
 
   it('should copy the exact text provided', async () => {
-    Object.assign(navigator, {
-      clipboard: { writeText: vi.fn().mockResolvedValue(undefined) },
+    const clipboardMock = { writeText: vi.fn().mockResolvedValue(undefined) };
+    Object.defineProperty(navigator, 'clipboard', {
+      value: clipboardMock,
+      configurable: true,
     });
 
     const { useCopyToClipboard } = await import('../../apps/web/src/hooks/useCopyToClipboard');

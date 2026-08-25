@@ -10,13 +10,13 @@
  *
  * Pure functions tested directly. External APIs mocked via vi.mock.
  */
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 // ─── Mock providers ─────────────────────────────────────────────────────
 
 vi.mock('../../packages/livepeer-provider/src/index', () => ({
   LivepeerProvider: vi.fn().mockImplementation(() => ({
-    createStream: vi.fn().mockImplementation(async (opts: { name: string; record?: boolean }) => ({
+    createStream: vi.fn().mockImplementation(async (_opts: { name: string; record?: boolean }) => ({
       id: `lp_${Date.now()}`,
       rtmpUrl: 'rtmp://livepeer.studio/live/',
       streamKey: `key_${Math.random().toString(36).slice(2, 10)}`,
@@ -214,7 +214,9 @@ describe('Live Streaming V2 — Simulcast', () => {
       if (platform === 'owncast') {
         results.push({ platform, success: true });
       } else if (platform === 'peertube') {
-        const { PeerTubeLiveStream } = await import('../../packages/peertube-provider/src/livestream');
+        const { PeerTubeLiveStream } = await import(
+          '../../packages/peertube-provider/src/livestream'
+        );
         const pt = new PeerTubeLiveStream({ accessToken: 'mock-token' });
         const stream = await pt.createStream({
           channelName: 'TEST',
@@ -279,7 +281,9 @@ describe('Live Streaming V2 — Unified Chat Aggregation', () => {
       createMockChatMessage({ platform: 'peertube', message: 'Hi from PeerTube!', id: 'pt_1' }),
     ];
 
-    const unified = [...owncastMessages, ...peertubeMessages].sort((a, b) => a.timestamp - b.timestamp);
+    const unified = [...owncastMessages, ...peertubeMessages].sort(
+      (a, b) => a.timestamp - b.timestamp,
+    );
 
     expect(unified.length).toBe(3);
     expect(unified[0]?.platform).toBe('owncast');
@@ -349,17 +353,24 @@ describe('Live Streaming V2 — Bandwidth & Cost Optimization', () => {
       { timestamp: Date.now() + 120000, bitrateKbps: 4800, viewers: 20 },
     ];
 
-    const avgBitrate = bandwidthSamples.reduce((sum, s) => sum + s.bitrateKbps, 0) / bandwidthSamples.length;
-    const avgViewers = bandwidthSamples.reduce((sum, s) => sum + s.viewers, 0) / bandwidthSamples.length;
+    const avgBitrate =
+      bandwidthSamples.reduce((sum, s) => sum + s.bitrateKbps, 0) / bandwidthSamples.length;
+    const avgViewers =
+      bandwidthSamples.reduce((sum, s) => sum + s.viewers, 0) / bandwidthSamples.length;
 
     expect(avgBitrate).toBeCloseTo(4500, 0);
     expect(avgViewers).toBeCloseTo(15, 0);
   });
 
   it('estimates monthly bandwidth cost', () => {
-    const estimateBandwidthCost = (avgBitrateMbps: number, avgViewers: number, hoursPerMonth: number): number => {
-      const bytesPerSecond = avgBitrateMbps * 1024 * 1024 / 8; // MB/s
-      const totalBytesGB = (bytesPerSecond * hoursPerMonth * 3600 * avgViewers) / (1024 * 1024 * 1024);
+    const estimateBandwidthCost = (
+      avgBitrateMbps: number,
+      avgViewers: number,
+      hoursPerMonth: number,
+    ): number => {
+      const bytesPerSecond = (avgBitrateMbps * 1024 * 1024) / 8; // MB/s
+      const totalBytesGB =
+        (bytesPerSecond * hoursPerMonth * 3600 * avgViewers) / (1024 * 1024 * 1024);
       const costPerGB = 0.02; // CDN cost per GB
       return Math.round(totalBytesGB * costPerGB * 100) / 100;
     };
@@ -400,7 +411,7 @@ describe('Live Streaming V2 — Bandwidth & Cost Optimization', () => {
     expect(sortedByCost[0]?.name).toBe('p2p');
     expect(sortedByCost[sortedByCost.length - 1]?.name).toBe('livepeer');
 
-    const savings = backends[0]!.monthlyCost - backends[2]!.monthlyCost;
+    const savings = backends[0]?.monthlyCost - backends[2]?.monthlyCost;
     expect(savings).toBe(95); // Livepeer → Owncast
   });
 });
@@ -409,17 +420,26 @@ describe('Live Streaming V2 — Bandwidth & Cost Optimization', () => {
 
 describe('Live Streaming V2 — Stream Wizard', () => {
   const WIZARD_STEPS = ['setup', 'configure', 'preview', 'go-live', 'monitor'] as const;
-  type WizardStep = typeof WIZARD_STEPS[number];
+  type WizardStep = (typeof WIZARD_STEPS)[number];
 
   it('validates wizard step progression', () => {
-    const canProceed = (currentStep: WizardStep, config: { title: string; platform: string }): boolean => {
+    const canProceed = (
+      currentStep: WizardStep,
+      config: { title: string; platform: string },
+    ): boolean => {
       switch (currentStep) {
-        case 'setup': return true; // Always can start
-        case 'configure': return config.title.trim().length > 0 && config.platform.length > 0;
-        case 'preview': return true; // Preview always available after configure
-        case 'go-live': return true; // Always can go live after preview
-        case 'monitor': return false; // Terminal step
-        default: return false;
+        case 'setup':
+          return true; // Always can start
+        case 'configure':
+          return config.title.trim().length > 0 && config.platform.length > 0;
+        case 'preview':
+          return true; // Preview always available after configure
+        case 'go-live':
+          return true; // Always can go live after preview
+        case 'monitor':
+          return false; // Terminal step
+        default:
+          return false;
       }
     };
 
@@ -509,7 +529,11 @@ describe('Live Streaming V2 — IPFS VOD Archiving', () => {
   });
 
   it('checks recording readiness before archiving', () => {
-    const checkReadiness = (recording: { ready: boolean; duration: number; ipfsCid?: string }): boolean => {
+    const checkReadiness = (recording: {
+      ready: boolean;
+      duration: number;
+      ipfsCid?: string;
+    }): boolean => {
       return recording.ready && recording.duration > 0 && !!recording.ipfsCid;
     };
 
@@ -597,9 +621,7 @@ describe('Live Streaming V2 — Federation Instance Discovery', () => {
   });
 
   it('checks health of federated instances', async () => {
-    const { federatedHealthCheck } = await import(
-      '../../packages/peertube-provider/src/federated'
-    );
+    const { federatedHealthCheck } = await import('../../packages/peertube-provider/src/federated');
 
     const health = await federatedHealthCheck();
     expect(health.total).toBeGreaterThan(5);

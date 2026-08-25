@@ -25,8 +25,8 @@ vi.mock('../../workers/api/src/ws-channels', () => ({
 
 describe('Live Streaming — Helper Functions', () => {
   it('formats SSE data for viewer count', async () => {
-    const { formatViewerSSE } = await import('../../workers/api/src/feed/live-aggregator');
-    const result = formatViewerSSE('stream_abc', 42);
+    const { _formatViewerSSE } = await import('../../workers/api/src/feed/live-aggregator');
+    const result = _formatViewerSSE('stream_abc', 42);
     expect(result).toContain('streamId');
     expect(result).toContain('stream_abc');
     expect(result).toContain('42');
@@ -129,7 +129,7 @@ describe('Live Streaming — Aggregator', () => {
   });
 
   it('normalizes streams to UnifiedLiveStream format', async () => {
-    const { formatViewerSSE, generateLiveId } = await import(
+    const { _formatViewerSSE, generateLiveId } = await import(
       '../../workers/api/src/feed/live-aggregator'
     );
 
@@ -298,9 +298,9 @@ describe('Live Streaming — Chat Bridge', () => {
 
 describe('Live Streaming — Viewer Count', () => {
   it('SSE endpoint returns correct format', async () => {
-    const { formatViewerSSE } = await import('../../workers/api/src/feed/live-aggregator');
+    const { _formatViewerSSE } = await import('../../workers/api/src/feed/live-aggregator');
 
-    const data = formatViewerSSE('stream_xyz', 99);
+    const data = _formatViewerSSE('stream_xyz', 99);
     const parsed = JSON.parse(data.replace('data: ', '').replace('\n\n', ''));
     expect(parsed.streamId).toBe('stream_xyz');
     expect(parsed.viewerCount).toBe(99);

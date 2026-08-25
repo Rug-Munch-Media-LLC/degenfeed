@@ -16,8 +16,8 @@
 
 import { fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import type { FeedMixConfig, SavedMix } from '../../apps/web/src/components/FeedTuner';
-import { DEFAULT_WEIGHT, FeedTuner, PROTOCOLS } from '../../apps/web/src/components/FeedTuner';
+import type { FeedMixConfig, SavedMix } from '../FeedTuner';
+import { DEFAULT_WEIGHT, FeedTuner, PROTOCOLS } from '../FeedTuner';
 
 const defaultConfig: FeedMixConfig = {
   protocols: {},

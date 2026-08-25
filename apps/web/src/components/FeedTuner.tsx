@@ -155,11 +155,12 @@ export function FeedTuner(props: FeedTunerProps) {
   } = props;
 
   const [activeTab, setActiveTab] = useState<'mix' | 'topics' | 'presets'>('mix');
-  const [localWeights, setLocalWeights] = useState(weights);
+  // Defensive: callers may pass undefined weights (typed required, but crash-proof here)
+  const [localWeights, setLocalWeights] = useState<Record<string, number>>(weights ?? {});
   const [localConfig, setLocalConfig] = useState<FeedMixConfig>(feedMixConfig);
 
   useEffect(() => {
-    setLocalWeights(weights);
+    setLocalWeights(weights ?? {});
   }, [weights]);
   useEffect(() => {
     setLocalConfig(feedMixConfig);
@@ -207,6 +208,8 @@ export function FeedTuner(props: FeedTunerProps) {
   // ── Render ──
   return (
     <div className="fixed inset-0 z-[100] flex items-start justify-center overflow-y-auto pt-12 pb-8">
+      {/* biome-ignore lint/a11y/noStaticElementInteractions: backdrop dismiss layer; Esc handled in keydown effect */}
+      {/* biome-ignore lint/a11y/useKeyWithClickEvents: backdrop dismiss layer; Esc handled in keydown effect */}
       <div className="fixed inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
       <div
         className="relative z-10 w-full max-w-2xl mx-4 rounded-2xl border border-[var(--color-glass-border)] bg-[var(--color-card-bg)] shadow-2xl"

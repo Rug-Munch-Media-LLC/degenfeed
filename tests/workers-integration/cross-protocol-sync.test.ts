@@ -12,22 +12,27 @@
 
 import type { Protocol, UnifiedPost } from '@degenfeed/types';
 import { beforeEach, describe, expect, it } from 'vitest';
-
+import { aggregateEngagement } from '../../packages/cross-protocol-bridge/src/engagement-sync';
 import {
-  linkIdentity,
-  resolveByIdentity,
-  resolveByHandle,
-  resolveByWallet,
-  unlinkIdentity,
   getCrossProtocolDisplay,
   getLinkedProtocols,
+  linkIdentity,
+  resolveByHandle,
+  resolveByIdentity,
+  resolveByWallet,
+  unlinkIdentity,
 } from '../../packages/cross-protocol-bridge/src/identity-linking';
-import { aggregateEngagement } from '../../packages/cross-protocol-bridge/src/engagement-sync';
-import { extractHashtags, extractMentions, normalizePost } from '../../packages/cross-protocol-bridge/src/normalization';
+import {
+  extractHashtags,
+  extractMentions,
+  normalizePost,
+} from '../../packages/cross-protocol-bridge/src/normalization';
 
 // ─── Helper: create mock UnifiedPost ──────────────────────────────────────
 
-function createPost(overrides: Partial<UnifiedPost> & { protocol: Protocol; text: string }): UnifiedPost {
+function createPost(
+  overrides: Partial<UnifiedPost> & { protocol: Protocol; text: string },
+): UnifiedPost {
   return {
     id: overrides.id ?? `${overrides.protocol}:test-${Date.now()}`,
     protocol: overrides.protocol,
@@ -202,7 +207,13 @@ describe('Cross-Protocol Engagement Sync', () => {
   it('aggregates likes from multiple protocols using totalLikes', () => {
     const events: EngagementEvent[] = [
       { type: 'like', protocol: 'nostr', postId: 'post:1', userId: 'u1', timestamp: Date.now() },
-      { type: 'like', protocol: 'farcaster', postId: 'post:1', userId: 'u2', timestamp: Date.now() },
+      {
+        type: 'like',
+        protocol: 'farcaster',
+        postId: 'post:1',
+        userId: 'u2',
+        timestamp: Date.now(),
+      },
       { type: 'like', protocol: 'bluesky', postId: 'post:1', userId: 'u3', timestamp: Date.now() },
     ];
 
@@ -216,8 +227,20 @@ describe('Cross-Protocol Engagement Sync', () => {
 
   it('aggregates mixed engagement types (likes + reposts + comments)', () => {
     const events: EngagementEvent[] = [
-      { type: 'like', protocol: 'farcaster', postId: 'post:2', userId: 'u1', timestamp: Date.now() },
-      { type: 'like', protocol: 'farcaster', postId: 'post:2', userId: 'u2', timestamp: Date.now() },
+      {
+        type: 'like',
+        protocol: 'farcaster',
+        postId: 'post:2',
+        userId: 'u1',
+        timestamp: Date.now(),
+      },
+      {
+        type: 'like',
+        protocol: 'farcaster',
+        postId: 'post:2',
+        userId: 'u2',
+        timestamp: Date.now(),
+      },
       { type: 'repost', protocol: 'nostr', postId: 'post:2', userId: 'u3', timestamp: Date.now() },
       { type: 'reply', protocol: 'bluesky', postId: 'post:2', userId: 'u4', timestamp: Date.now() },
       { type: 'like', protocol: 'lens', postId: 'post:2', userId: 'u5', timestamp: Date.now() },
@@ -233,9 +256,27 @@ describe('Cross-Protocol Engagement Sync', () => {
 
   it('syncs engagement across protocols via syncEngagementAcrossProtocols', async () => {
     const events: EngagementEvent[] = [
-      { type: 'like', protocol: 'farcaster', postId: 'farcaster:abc', userId: 'u1', timestamp: Date.now() },
-      { type: 'like', protocol: 'bluesky', postId: 'bluesky:abc', userId: 'u1', timestamp: Date.now() },
-      { type: 'repost', protocol: 'nostr', postId: 'nostr:abc', userId: 'u2', timestamp: Date.now() },
+      {
+        type: 'like',
+        protocol: 'farcaster',
+        postId: 'farcaster:abc',
+        userId: 'u1',
+        timestamp: Date.now(),
+      },
+      {
+        type: 'like',
+        protocol: 'bluesky',
+        postId: 'bluesky:abc',
+        userId: 'u1',
+        timestamp: Date.now(),
+      },
+      {
+        type: 'repost',
+        protocol: 'nostr',
+        postId: 'nostr:abc',
+        userId: 'u2',
+        timestamp: Date.now(),
+      },
     ];
 
     const synced = await syncEngagementAcrossProtocols(events);

@@ -8,27 +8,45 @@
  *
  * Pure functions tested directly. External APIs mocked via vi.mock.
  */
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 // ─── Mock tip core ──────────────────────────────────────────────────────
 
 vi.mock('../../workers/api/src/routes/unified-tip-core', () => ({
   selectBestChain: vi.fn().mockImplementation((opts: { recipientChains: string[] }) => {
     if (opts.recipientChains.includes('lightning')) {
-      return [{ chain: 'lightning', rank: 1, route: { speed: 'instant', avgFeeUsd: 0.001 }, reason: 'Lowest fee' }];
+      return [
+        {
+          chain: 'lightning',
+          rank: 1,
+          route: { speed: 'instant', avgFeeUsd: 0.001 },
+          reason: 'Lowest fee',
+        },
+      ];
     }
-    return [{ chain: 'solana', rank: 1, route: { speed: 'fast', avgFeeUsd: 0.002 }, reason: 'Fast + cheap' }];
+    return [
+      {
+        chain: 'solana',
+        rank: 1,
+        route: { speed: 'fast', avgFeeUsd: 0.002 },
+        reason: 'Fast + cheap',
+      },
+    ];
   }),
-  recordUnifiedTip: vi.fn().mockImplementation(async (env: unknown, data: { toUserId: string; toLabel: string; amountUsd: number }) => {
-    return {
-      id: `utip:${Date.now().toString(36)}`,
-      amountUsd: data.amountUsd,
-      toLabel: data.toLabel,
-      toUserId: data.toUserId,
-      platform: 'degenfeed',
-      timestamp: Date.now(),
-    };
-  }),
+  recordUnifiedTip: vi
+    .fn()
+    .mockImplementation(
+      async (_env: unknown, data: { toUserId: string; toLabel: string; amountUsd: number }) => {
+        return {
+          id: `utip:${Date.now().toString(36)}`,
+          amountUsd: data.amountUsd,
+          toLabel: data.toLabel,
+          toUserId: data.toUserId,
+          platform: 'degenfeed',
+          timestamp: Date.now(),
+        };
+      },
+    ),
   sanitizeAmountUsd: vi.fn().mockImplementation((amount: unknown) => {
     const n = typeof amount === 'string' ? parseFloat(amount) : Number(amount);
     if (Number.isNaN(n) || n <= 0 || n > 10000) return null;
@@ -52,12 +70,18 @@ function createMockEnv() {
   return {
     CACHE: {
       get: vi.fn(async (key: string) => store.get(key) ?? null),
-      put: vi.fn(async (key: string, value: string) => { store.set(key, value); }),
-      delete: vi.fn(async (key: string) => { store.delete(key); }),
+      put: vi.fn(async (key: string, value: string) => {
+        store.set(key, value);
+      }),
+      delete: vi.fn(async (key: string) => {
+        store.delete(key);
+      }),
     },
     TIPS: {
       get: vi.fn(async (key: string) => store.get(key) ?? null),
-      put: vi.fn(async (key: string, value: string) => { store.set(key, value); }),
+      put: vi.fn(async (key: string, value: string) => {
+        store.set(key, value);
+      }),
     },
     _store: store,
   };
@@ -66,7 +90,7 @@ function createMockEnv() {
 function createMockNonMemberTip(overrides: Record<string, unknown> = {}) {
   return {
     id: `tip:${Date.now().toString(36)}`,
-    amountUsd: 5.00,
+    amountUsd: 5.0,
     fromEmail: 'tipper@example.com',
     fromName: 'Alice Tipper',
     toIdentity: 'external:alice@example.com',
@@ -100,11 +124,11 @@ describe('Growth System — Non-Member Tip Flow', () => {
     const tip = createMockNonMemberTip({
       toIdentity: 'external:bob@protonmail.com',
       toProtocol: 'email',
-      amountUsd: 10.00,
+      amountUsd: 10.0,
     });
 
     expect(tip.toIdentity).toContain('external:');
-    expect(tip.amountUsd).toBe(10.00);
+    expect(tip.amountUsd).toBe(10.0);
     expect(tip.claimed).toBe(false);
   });
 
@@ -149,15 +173,13 @@ describe('Growth System — Non-Member Tip Flow', () => {
 describe('Growth System — Tip Note Template Generation', () => {
   it('generates a thank-you note for received tip', () => {
     const generateTipNote = (fromName: string, amountUsd: number, message?: string) => {
-      const parts = [
-        `💸 **${fromName}** sent you **$${amountUsd.toFixed(2)}**`,
-      ];
+      const parts = [`💸 **${fromName}** sent you **$${amountUsd.toFixed(2)}**`];
       if (message) parts.push(`> "${message}"`);
       parts.push('\n— via DegenFeed');
       return parts.join('\n\n');
     };
 
-    const note = generateTipNote('Alice', 5.00, 'Great post!');
+    const note = generateTipNote('Alice', 5.0, 'Great post!');
     expect(note).toContain('Alice');
     expect(note).toContain('$5.00');
     expect(note).toContain('Great post!');
@@ -175,7 +197,7 @@ describe('Growth System — Tip Note Template Generation', () => {
       ].join('\n');
     };
 
-    const note = generateClaimNote(10.00, 'TIP-ABC123');
+    const note = generateClaimNote(10.0, 'TIP-ABC123');
     expect(note).toContain('$10.00');
     expect(note).toContain('/claim?code=TIP-ABC123');
     expect(note).toContain('DegenFeed');
@@ -223,9 +245,7 @@ describe('Growth System — Referral Codes', () => {
   });
 
   it('tracks referral conversions', () => {
-    const referrals = [
-      createMockReferral({ code: 'DEGEN-TEST-A1B2', totalConversions: 0 }),
-    ];
+    const referrals = [createMockReferral({ code: 'DEGEN-TEST-A1B2', totalConversions: 0 })];
 
     // Record a conversion
     const convert = (refCode: string, amountUsd: number) => {
@@ -294,7 +314,11 @@ describe('Growth System — Referral Rewards', () => {
   it('enforces maximum reward cap', () => {
     const rewardCap = { monthly: 500, lifetime: 5000 };
 
-    const checkCap = (currentMonthReward: number, currentLifetimeReward: number, newReward: number) => {
+    const checkCap = (
+      currentMonthReward: number,
+      currentLifetimeReward: number,
+      newReward: number,
+    ) => {
       if (currentMonthReward + newReward > rewardCap.monthly) {
         return { allowed: false, reason: 'Monthly cap reached' };
       }
@@ -321,8 +345,12 @@ describe('Growth System — Referral Rewards', () => {
       { amountUsd: 25, status: 'pending' },
     ];
 
-    const pendingTotal = payouts.filter((p) => p.status === 'pending').reduce((s, p) => s + p.amountUsd, 0);
-    const paidTotal = payouts.filter((p) => p.status === 'paid').reduce((s, p) => s + p.amountUsd, 0);
+    const pendingTotal = payouts
+      .filter((p) => p.status === 'pending')
+      .reduce((s, p) => s + p.amountUsd, 0);
+    const paidTotal = payouts
+      .filter((p) => p.status === 'paid')
+      .reduce((s, p) => s + p.amountUsd, 0);
 
     expect(pendingTotal).toBe(25);
     expect(paidTotal).toBe(10);
@@ -361,7 +389,10 @@ describe('Growth System — Branding Configuration', () => {
 
     expect(content.branding.showWatermark).toBe(true);
 
-    const withoutWatermark = { ...content, branding: { ...content.branding, showWatermark: false } };
+    const withoutWatermark = {
+      ...content,
+      branding: { ...content.branding, showWatermark: false },
+    };
     expect(withoutWatermark.branding.showWatermark).toBe(false);
   });
 
@@ -488,7 +519,9 @@ describe('Growth System — Onboarding from Tip Link', () => {
       };
     };
 
-    const result = parseTipLink('https://degenfeed.xyz/claim?code=TIP-ABC123&ref=REF-DEF456&amount=10');
+    const result = parseTipLink(
+      'https://degenfeed.xyz/claim?code=TIP-ABC123&ref=REF-DEF456&amount=10',
+    );
     expect(result.code).toBe('TIP-ABC123');
     expect(result.ref).toBe('REF-DEF456');
     expect(result.amount).toBe('10');
@@ -509,13 +542,13 @@ describe('Growth System — Onboarding from Tip Link', () => {
         success: true,
         userId: `user_${Date.now()}`,
         isNewUser: true,
-        welcomeBonus: 5.00, // $5 welcome bonus
+        welcomeBonus: 5.0, // $5 welcome bonus
       };
     };
 
     const result = createAccountFromClaim(claimData);
     expect(result.success).toBe(true);
-    expect(result.welcomeBonus).toBe(5.00);
+    expect(result.welcomeBonus).toBe(5.0);
   });
 
   it('attaches referral attribution from tip link', () => {
@@ -524,7 +557,9 @@ describe('Growth System — Onboarding from Tip Link', () => {
       return match ? match[1]! : null;
     };
 
-    expect(parseReferralFromLink('https://degenfeed.xyz/claim?code=TIP-ABC&ref=REF-DEF')).toBe('REF-DEF');
+    expect(parseReferralFromLink('https://degenfeed.xyz/claim?code=TIP-ABC&ref=REF-DEF')).toBe(
+      'REF-DEF',
+    );
     expect(parseReferralFromLink('https://degenfeed.xyz/claim?code=TIP-ABC')).toBeNull();
   });
 });
@@ -548,7 +583,7 @@ describe('Growth System — Protocol-Aware Note Formatting', () => {
   it('formats tip note for Farcaster (320-char limit)', () => {
     const generateFarcasterNote = (from: string, amount: string): string => {
       const text = `💸 ${from} sent you ${amount} on DegenFeed!`;
-      return text.length > 320 ? text.slice(0, 317) + '...' : text;
+      return text.length > 320 ? `${text.slice(0, 317)}...` : text;
     };
 
     const short = generateFarcasterNote('Alice', '$5.00');

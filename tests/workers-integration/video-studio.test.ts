@@ -7,7 +7,7 @@
  *
  * Pure functions tested directly. External APIs mocked via vi.mock.
  */
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 // ─── Mock providers ─────────────────────────────────────────────────────
 
@@ -49,7 +49,7 @@ vi.mock('../../packages/shorts-provider/src/index', () => ({
   fetchYouTubeShorts: vi.fn().mockResolvedValue([]),
   fetchTikTokShorts: vi.fn().mockResolvedValue([]),
   fetchInstagramReels: vi.fn().mockResolvedValue([]),
-  fetchShortsFeed: vi.fn().mockImplementation(async (opts = {}) => ({
+  fetchShortsFeed: vi.fn().mockImplementation(async (_opts = {}) => ({
     videos: [],
     sources: { peertube: 0, youtube: 0, tiktok: 0, instagram: 0, bluesky: 0 },
     cursor: null,
@@ -82,7 +82,7 @@ vi.mock('../../packages/monetization/src/TierManager', () => ({
 
 function createMockVideoItem(overrides: Record<string, unknown> = {}) {
   return {
-    id: 'vid_' + Math.random().toString(36).slice(2, 8),
+    id: `vid_${Math.random().toString(36).slice(2, 8)}`,
     title: 'Test Video',
     description: 'A test video for the studio',
     duration: 60,
@@ -98,7 +98,7 @@ function createMockVideoItem(overrides: Record<string, unknown> = {}) {
 
 function createMockPublishTarget(overrides: Record<string, unknown> = {}) {
   return {
-    id: 'target_' + Math.random().toString(36).slice(2, 8),
+    id: `target_${Math.random().toString(36).slice(2, 8)}`,
     platform: 'youtube' as const,
     label: 'YouTube',
     connected: true,
@@ -471,8 +471,7 @@ describe('Video Studio — Video Analytics', () => {
     ];
 
     const totalWatchTime = sessions.reduce((sum, s) => sum + s.duration, 0);
-    const completionRate =
-      sessions.filter((s) => s.completed).length / sessions.length;
+    const completionRate = sessions.filter((s) => s.completed).length / sessions.length;
 
     expect(totalWatchTime).toBe(360);
     expect(completionRate).toBeCloseTo(0.667, 2);
@@ -496,7 +495,8 @@ describe('Video Studio — Video Analytics', () => {
 
   it('computes engagement rate from views and likes', () => {
     const analytics = { views: 1000, likes: 50, comments: 10, shares: 5 };
-    const engagementRate = (analytics.likes + analytics.comments + analytics.shares) / analytics.views;
+    const engagementRate =
+      (analytics.likes + analytics.comments + analytics.shares) / analytics.views;
 
     expect(engagementRate).toBeCloseTo(0.065, 3);
   });
@@ -518,7 +518,12 @@ describe('Video Studio — Video Analytics', () => {
 
 describe('Video Studio — Content Library', () => {
   const libraryVideos = [
-    createMockVideoItem({ id: 'v1', title: 'Bitcoin Analysis', status: 'published', duration: 300 }),
+    createMockVideoItem({
+      id: 'v1',
+      title: 'Bitcoin Analysis',
+      status: 'published',
+      duration: 300,
+    }),
     createMockVideoItem({ id: 'v2', title: 'Ethereum Deep Dive', status: 'draft', duration: 600 }),
     createMockVideoItem({ id: 'v3', title: 'Solana Short', status: 'published', duration: 45 }),
     createMockVideoItem({ id: 'v4', title: 'DeFi Overview', status: 'scheduled', duration: 900 }),
@@ -541,8 +546,8 @@ describe('Video Studio — Content Library', () => {
 
   it('searches videos by title keyword', () => {
     const query = 'bitcoin';
-    const results = libraryVideos.filter(
-      (v) => v.title.toLowerCase().includes(query.toLowerCase()),
+    const results = libraryVideos.filter((v) =>
+      v.title.toLowerCase().includes(query.toLowerCase()),
     );
     expect(results.length).toBe(1);
     expect(results[0]?.title).toContain('Bitcoin');
@@ -619,7 +624,7 @@ describe('Video Studio — Publish Target Selection Validation', () => {
 
     const proAccessible = availablePlatforms.filter((p) => {
       const tierRank: Record<string, number> = { free: 0, creator: 1, pro: 2, enterprise: 3 };
-      return tierRank['pro'] >= tierRank[p.requiresTier];
+      return tierRank.pro >= tierRank[p.requiresTier];
     });
     expect(proAccessible.length).toBe(5); // pro: all
   });

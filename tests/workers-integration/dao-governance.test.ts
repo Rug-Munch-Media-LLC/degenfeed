@@ -307,7 +307,9 @@ describe('DAO Governance — Proposal Lifecycle', () => {
     expect(quorumThreshold).toBe(1);
     const meetsQuorum = 3 >= quorumThreshold;
     expect(meetsQuorum).toBe(true);
-    expect(1 <= 2).toBe(true); // for ≤ against → fail
+    const votesFor = 1;
+    const votesAgainst = 2;
+    expect(votesFor <= votesAgainst).toBe(true); // for ≤ against → fail
   });
 
   it('computes passed when quorum met and for > against', async () => {
@@ -317,7 +319,9 @@ describe('DAO Governance — Proposal Lifecycle', () => {
 
     // 5 votes: 3 for, 2 against → passes
     expect(5 >= quorumThreshold).toBe(true);
-    expect(3 > 2).toBe(true);
+    const votesFor = 3;
+    const votesAgainst = 2;
+    expect(votesFor > votesAgainst).toBe(true);
   });
 });
 

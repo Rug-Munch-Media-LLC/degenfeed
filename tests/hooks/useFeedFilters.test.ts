@@ -31,7 +31,9 @@ describe('useFeedFilters', () => {
   });
 
   it('should initialize with default filter values', async () => {
-    const loadPreferences = vi.mocked(require('../../apps/web/src/services/feed').loadPreferences);
+    const loadPreferences = vi.mocked(
+      (await import('../../apps/web/src/services/feed')).loadPreferences,
+    );
     loadPreferences.mockResolvedValue({ success: true, data: undefined });
 
     const { useFeedFilters } = await import('../../apps/web/src/hooks/feed/useFeedFilters');
@@ -55,7 +57,9 @@ describe('useFeedFilters', () => {
   });
 
   it('should load preferences from API on mount', async () => {
-    const loadPreferences = vi.mocked(require('../../apps/web/src/services/feed').loadPreferences);
+    const loadPreferences = vi.mocked(
+      (await import('../../apps/web/src/services/feed')).loadPreferences,
+    );
     loadPreferences.mockResolvedValue({
       success: true,
       data: {
@@ -88,7 +92,9 @@ describe('useFeedFilters', () => {
   });
 
   it('should use defaults when loadPreferences fails', async () => {
-    const loadPreferences = vi.mocked(require('../../apps/web/src/services/feed').loadPreferences);
+    const loadPreferences = vi.mocked(
+      (await import('../../apps/web/src/services/feed')).loadPreferences,
+    );
     loadPreferences.mockRejectedValue(new Error('API error'));
 
     const { useFeedFilters } = await import('../../apps/web/src/hooks/feed/useFeedFilters');
@@ -104,7 +110,9 @@ describe('useFeedFilters', () => {
   });
 
   it('should update a single filter key with updateFilter', async () => {
-    const loadPreferences = vi.mocked(require('../../apps/web/src/services/feed').loadPreferences);
+    const loadPreferences = vi.mocked(
+      (await import('../../apps/web/src/services/feed')).loadPreferences,
+    );
     loadPreferences.mockResolvedValue({ success: true, data: undefined });
 
     const { useFeedFilters } = await import('../../apps/web/src/hooks/feed/useFeedFilters');
@@ -124,7 +132,9 @@ describe('useFeedFilters', () => {
   });
 
   it('should reset all filters to defaults', async () => {
-    const loadPreferences = vi.mocked(require('../../apps/web/src/services/feed').loadPreferences);
+    const loadPreferences = vi.mocked(
+      (await import('../../apps/web/src/services/feed')).loadPreferences,
+    );
     loadPreferences.mockResolvedValue({
       success: true,
       data: { hideLowQuality: true, allowNonCrypto: true } as never,
@@ -153,9 +163,13 @@ describe('useFeedFilters', () => {
   });
 
   it('should save filter state via saveFilterState', async () => {
-    const loadPreferences = vi.mocked(require('../../apps/web/src/services/feed').loadPreferences);
+    const loadPreferences = vi.mocked(
+      (await import('../../apps/web/src/services/feed')).loadPreferences,
+    );
     loadPreferences.mockResolvedValue({ success: true, data: undefined });
-    const savePreferences = vi.mocked(require('../../apps/web/src/services/feed').savePreferences);
+    const savePreferences = vi.mocked(
+      (await import('../../apps/web/src/services/feed')).savePreferences,
+    );
 
     const { useFeedFilters } = await import('../../apps/web/src/hooks/feed/useFeedFilters');
     const { result } = renderHook(() => useFeedFilters());
@@ -173,7 +187,9 @@ describe('useFeedFilters', () => {
   });
 
   it('should switch active tab via setActiveTab', async () => {
-    const loadPreferences = vi.mocked(require('../../apps/web/src/services/feed').loadPreferences);
+    const loadPreferences = vi.mocked(
+      (await import('../../apps/web/src/services/feed')).loadPreferences,
+    );
     loadPreferences.mockResolvedValue({ success: true, data: undefined });
 
     const { useFeedFilters } = await import('../../apps/web/src/hooks/feed/useFeedFilters');
