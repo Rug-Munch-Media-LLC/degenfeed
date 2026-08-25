@@ -87,27 +87,10 @@ export default function CreateDAOPage() {
     }
   }, [step, form]);
 
-  const simulateDeploy = async () => {
-    update('deploying', true);
-    update('deployProgress', 0);
-    const stages = [
-      'Creating Snapshot space...',
-      'Deploying governance token...',
-      'Setting up treasury multi-sig...',
-      'Configuring voting parameters...',
-      'Deploying DAO contracts...',
-      'Verifying deployment...',
-    ];
-    for (let i = 0; i < stages.length; i++) {
-      await new Promise((r) => setTimeout(r, 1200));
-      update('deployProgress', ((i + 1) / stages.length) * 100);
-    }
-    update('deploying', false);
-    update('deployed', true);
-    update('deployedAddress', `0x${crypto.randomUUID().replace(/-/g, '').slice(0, 40)}`);
-    update('txHash', `0x${crypto.randomUUID().replace(/-/g, '')}`);
-    update('snapshotSpaceId', `${form.name.toLowerCase().replace(/\s+/g, '-')}.eth`);
-  };
+  // On-chain DAO deployment is not wired to a live factory contract yet.
+  // We DO NOT fabricate addresses/tx hashes — the UI states this plainly
+  // and preserves the configured proposal for when deployment ships.
+  const [deployUnavailable, setDeployUnavailable] = useState(false);
 
   const totalSteps = 4;
 
@@ -198,6 +181,16 @@ export default function CreateDAOPage() {
           )}
         </div>
 
+        {deployUnavailable && (
+          <div className="mt-4 rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-sm">
+            <p className="font-bold text-amber-400">On-chain deployment not yet available</p>
+            <p className="mt-1 text-[var(--color-muted)]">
+              DAO factory contracts are in final audit. Your configuration is saved locally —
+              nothing was deployed and no transaction was sent. Watch the changelog for launch.
+            </p>
+          </div>
+        )}
+
         <div className="hidden lg:block">
           <div className="sticky top-6">
             <DAOPreview state={previewState} sidebar />
@@ -227,11 +220,11 @@ export default function CreateDAOPage() {
           ) : (
             <button
               type="button"
-              onClick={simulateDeploy}
-              disabled={form.deploying || form.deployed}
+              onClick={() => setDeployUnavailable(true)}
+              disabled={form.deployed}
               className="rounded-xl bg-gradient-to-r from-[var(--color-accent)] to-[var(--color-accent-secondary)] px-6 py-2.5 text-xs font-bold text-black transition-all hover:from-[var(--color-accent)] hover:to-[var(--color-accent-secondary)] disabled:opacity-30 active:scale-[0.98]"
             >
-              {form.deploying ? 'Deploying...' : form.deployed ? 'Deployed ✓' : '🚀 Deploy DAO'}
+              {form.deployed ? 'Deployed ✓' : '🚀 Deploy DAO'}
             </button>
           )}
         </div>
