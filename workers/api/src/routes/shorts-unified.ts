@@ -34,14 +34,10 @@
  *   GET  /api/shorts/zora/creator  — Creator's Zora video NFTs
  */
 
-import type { ShortVideoSource } from '@degenfeed/shorts-provider';
-import type { UserInterestProfile } from '@degenfeed/shorts-provider/scorer';
-import { ShortsAggregator } from '../feed/shorts-aggregator';
-import { ShortsAggregatorV2 } from '../feed/shorts-aggregator-v2';
-import { ShortsAlgorithm, type UserShortsProfile, type WatchEvent } from '../feed/shorts-algorithm';
+import type { FeedSource } from '../feed/shorts-unified';
 import { FEED_SOURCE_LABELS, UnifiedShortsFeed } from '../feed/shorts-unified';
+import type { Chain } from '../lib/unified-shorts';
 import { type ShortProtocol, UnifiedShortsPipeline } from '../lib/unified-shorts';
-import { ZoraVideoIntegration } from '../lib/zora-video';
 import { jsonResponse, methodNotAllowed, noCacheJsonResponse } from '../response-helpers';
 import { requireSession } from '../session';
 import type { Env } from '../types';
@@ -96,9 +92,11 @@ export async function handleUnifiedPublish(request: Request, env: Env): Promise<
       protocols,
       mintOnZora: body.mintOnZora ?? false,
       creatorAddress: session.address,
-      creatorHandle: session.handle ?? session.address.slice(0, 10),
-      creatorAvatar: session.avatar,
-      creatorCoin: body.creatorCoin,
+      creatorHandle: session.displayName ?? session.address.slice(0, 10),
+      creatorAvatar: session.avatarUrl,
+      creatorCoin: body.creatorCoin as
+        | { symbol: string; address: string; chain: Chain }
+        | undefined,
       duration: body.duration ?? 30,
     });
 
@@ -159,9 +157,9 @@ export async function handleUnifiedFeed(request: Request, env: Env): Promise<Res
   const sourcesParam = url.searchParams.get('sources') || '';
   const filter = url.searchParams.get('filter') || 'all'; // 'all' | 'loops' | 'zora' | 'nostr' | 'bluesky' | 'lens' | etc.
   const sources = sourcesParam
-    ? (sourcesParam.split(',').filter(Boolean) as ReturnType<typeof getFeedSources>)
+    ? (sourcesParam.split(',').filter(Boolean) as FeedSource[])
     : filter !== 'all'
-      ? ([filter] as ReturnType<typeof getFeedSources>)
+      ? ([filter] as FeedSource[])
       : undefined;
   const sort = (url.searchParams.get('sort') || 'trending') as 'trending' | 'newest' | 'for-you';
   const limit = Math.min(Math.max(1, Number(url.searchParams.get('limit')) || 20), 50);
@@ -278,7 +276,7 @@ export async function handleUnifiedFollowing(request: Request, env: Env): Promis
     // Extract followed creators from user profile
     try {
       const profileKey = `profile:${session.address}`;
-      const profileRaw = await env.DEGENFEED?.get(profileKey);
+      const profileRaw = await env.CACHE?.get(profileKey);
       if (profileRaw) {
         const profile = JSON.parse(profileRaw) as { followedCreators?: string[] };
         if (profile.followedCreators) {
