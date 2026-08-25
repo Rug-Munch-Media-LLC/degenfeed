@@ -32,6 +32,7 @@ const defaultConfig: FeedMixConfig = {
 };
 
 const defaultProps = {
+  topicWeights: {},
   weights: { crypto: DEFAULT_WEIGHT, defi: DEFAULT_WEIGHT },
   onWeightsChange: vi.fn(),
   onApply: vi.fn(),
