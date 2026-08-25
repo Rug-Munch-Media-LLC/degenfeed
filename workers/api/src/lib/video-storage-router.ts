@@ -396,7 +396,7 @@ export async function storeVideo(
     format,
   });
 
-  log.info('[storage-router]', {
+  log('info', '[storage-router]', {
     contentId,
     backend: route.backend,
     reason: route.reason,
@@ -429,14 +429,18 @@ export async function storeVideo(
   // Upload to IPFS
   if (route.backend === 'ipfs' || route.mirrorToIPFS) {
     try {
-      const ipfsResult: IPFSUploadResult = await uploadBufferToIPFS(env, buffer, {
-        filename: contentId,
-        contentType: format ? `video/${format}` : 'video/mp4',
-      });
+      const ipfsResult: IPFSUploadResult = await uploadBufferToIPFS(
+        buffer,
+        contentId,
+        format ? `video/${format}` : 'video/mp4',
+        env,
+      );
       ipfsHash = ipfsResult.cid;
       primaryUrl = getIPFSGatewayUrl(ipfsResult.cid);
     } catch (err) {
-      log.warn('[storage-router] IPFS upload failed, falling back to R2', { error: String(err) });
+      log('warn', '[storage-router] IPFS upload failed, falling back to R2', {
+        error: String(err),
+      });
       // Fall through to R2
     }
   }
@@ -448,13 +452,16 @@ export async function storeVideo(
     (!primaryUrl && route.backend !== 'arweave')
   ) {
     try {
-      const r2Result: R2UploadResult = await uploadToR2(env, contentId, buffer, {
-        contentType: format ? `video/${format}` : 'video/mp4',
-        metadata: { duration: String(duration) },
-      });
-      primaryUrl = r2Result.url;
+      const r2Result: R2UploadResult = await uploadToR2(
+        contentId,
+        buffer,
+        format ? `video/${format}` : 'video/mp4',
+        env,
+        { duration: String(duration) },
+      );
+      primaryUrl = r2Result.cdnUrl;
     } catch (err) {
-      log.error('[storage-router] R2 upload failed', { error: String(err) });
+      log('error', '[storage-router] R2 upload failed', { error: String(err) });
       throw err;
     }
   }
@@ -465,15 +472,17 @@ export async function storeVideo(
       // Arweave upload would go here (via Irys or similar)
       // For now, fall back to IPFS
       if (!ipfsHash) {
-        const ipfsResult = await uploadBufferToIPFS(env, buffer, {
-          filename: contentId,
-          contentType: format ? `video/${format}` : 'video/mp4',
-        });
+        const ipfsResult = await uploadBufferToIPFS(
+          buffer,
+          contentId,
+          format ? `video/${format}` : 'video/mp4',
+          env,
+        );
         ipfsHash = ipfsResult.cid;
         primaryUrl = getIPFSGatewayUrl(ipfsResult.cid);
       }
     } catch (err) {
-      log.error('[storage-router] Arweave/IPFS upload failed', { error: String(err) });
+      log('error', '[storage-router] Arweave/IPFS upload failed', { error: String(err) });
       throw err;
     }
   }
@@ -502,6 +511,12 @@ export async function storeVideo(
 
 // ─── Creator Storage Usage ────────────────────────────────────────────
 
+interface UsageEntry {
+  bytes: number;
+  readable: string;
+  count: number;
+}
+
 export interface CreatorStorageUsage {
   totalBytes: number;
   totalReadable: string;
@@ -526,7 +541,7 @@ export async function getCreatorStorageUsage(
 
   try {
     let totalBytes = 0;
-    const byBackend: Record<string, { bytes: number; readable: string; count: number }> = {
+    const byBackend: { ipfs: UsageEntry; r2: UsageEntry; arweave: UsageEntry } = {
       ipfs: { ...zeroUsage },
       r2: { ...zeroUsage },
       arweave: { ...zeroUsage },
