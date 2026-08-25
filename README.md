@@ -351,3 +351,7 @@ Full documentation site at **[docs.degenfeed.xyz](https://docs.degenfeed.xyz)** 
 - **DMCA:** dmca@degenfeed.xyz
 - **Codeberg Mirror:** [codeberg.org/degenfeed/degenfeed-web](https://codeberg.org/degenfeed/degenfeed-web)
 - **GitHub Mirror:** [github.com/RugMunchMedia/degenfeed](https://github.com/rugmunchmedia/degenfeed)
+
+## FAQ
+
+See [docs/FAQ.md](docs/FAQ.md) for frequently asked questions.
