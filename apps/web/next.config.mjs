@@ -169,9 +169,9 @@ const nextConfig = {
   },
 
   // Note: Next.js 16 removed the `eslint` config option. Linting runs via
-  // `biome check` in CI. Type errors are pre-existing; they are validated
-  // separately with `tsc --noEmit` in CI (see apps/web/package.json).
-  typescript: { ignoreBuildErrors: true }, // TEMP: bypass to deploy — 1100+ pre-existing TS errors, fix in follow-up
+  // Type errors FAIL the build (quality gate). apps/web is tsc-clean as of
+  // 2026-08-25 quality push; keep it that way.
+  typescript: { ignoreBuildErrors: false },
 
   // ── API proxy rewrite: /api/* → self-hosted API ──
   // afterFiles (default) position: exact route handlers are checked first,

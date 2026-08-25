@@ -22,7 +22,7 @@
 // never blocks the page.
 //
 
-import type { UnifiedIdentity, UnifiedPost } from '@degenfeed/types';
+import type { EngagementAction, UnifiedIdentity, UnifiedPost } from '@degenfeed/types';
 import { ErrorBoundary, FeedList, ProtocolBadge } from '@degenfeed/ui';
 import {
   getExternalProfileUrl,
@@ -33,7 +33,7 @@ import {
 } from '@degenfeed/utils';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useAuth } from '../../components/AuthProvider';
 
 interface Props {
@@ -120,6 +120,15 @@ function formatHandle(protocol: string, handle: string): string {
 export function ProfilePageContent({ protocol, id }: Props) {
   const router = useRouter();
   const { engage } = useAuth();
+
+  // Adapt the auth engage signature (action, postId, protocol, opts) to the
+  // EngageHandler contract (action, postId, content?) used by FeedList.
+  const handleEngage = useCallback(
+    async (action: EngagementAction, postId: string, content?: string) => {
+      return engage(action, postId, protocol, { content });
+    },
+    [engage, protocol],
+  );
 
   const decodedId = useMemo(() => {
     try {
@@ -283,7 +292,7 @@ export function ProfilePageContent({ protocol, id }: Props) {
           protocolLabel={label}
           protocolColor={color}
           onPostClick={(postId) => router.push(`/post/${encodeURIComponent(postId)}`)}
-          onEngage={engage}
+          onEngage={handleEngage}
           onRetry={() => {
             setState('loading');
             void (async () => {

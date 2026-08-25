@@ -141,7 +141,7 @@ export default function SubscriptionGuard({ creator, children, fallback }: Subsc
           <p className="mb-4 text-sm text-[var(--color-muted)]">
             Subscribe to {creatorShort} for exclusive access
           </p>
-          <SubscribeButton creator={creator} variant="inline" />
+          <SubscribeButton creatorAddress={creator} creatorName={creatorShort} variant="inline" />
         </div>
       </div>
     </div>

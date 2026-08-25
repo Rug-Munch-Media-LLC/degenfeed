@@ -113,9 +113,10 @@ export function ConnectAccountPanel({ onConnected }: ConnectAccountPanelProps) {
       try {
         // 1. Verify the identity (external platforms client-side, protocols via API)
         let verified: VerifiedIdentity | null = null;
-        const isExternal = isExternalPlatform(meta.id);
+        const platformId = meta.id;
+        const isExternal = isExternalPlatform(platformId);
         if (isExternal) {
-          verified = verifyExternalIdentity(meta.id, input);
+          verified = verifyExternalIdentity(platformId, input);
         } else {
           try {
             const res = await fetch('/api/identity/verify', {

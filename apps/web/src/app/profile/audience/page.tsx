@@ -210,7 +210,7 @@ export default function AudiencePage() {
                   .sort(([, a], [, b]) => b - a)
                   .slice(0, 8)
                   .map(([instance, count]) => {
-                    const max = Math.max(...Object.values(data?.demographics.byInstance), 1);
+                    const max = Math.max(...Object.values(data?.demographics.byInstance ?? {}), 1);
                     return (
                       <div key={instance} className="flex items-center gap-2">
                         <span className="w-0 flex-1 truncate text-[11px] text-[var(--color-fg)]">

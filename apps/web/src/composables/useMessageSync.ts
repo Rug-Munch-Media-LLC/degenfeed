@@ -26,7 +26,7 @@ export interface SyncState {
 export interface SyncResult {
   newMessages: number;
   conflicts: number;
-  resolvedConflicts: Array<{ messageId: string; kept: string; discarded: string }>;
+  resolvedConflicts: Array<{ messageId: string; kept: string; discarded?: string }>;
 }
 
 /* ─── Constants ───────────────────────────────────────────────── */
