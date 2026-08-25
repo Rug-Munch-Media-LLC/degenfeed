@@ -16,7 +16,16 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'happy-dom',
-    include: ['src/**/*.{test,spec}.{ts,tsx}', '../../tests/**/*.{test,spec}.{ts,tsx}'],
+    // Explicit allowlist: web unit tests + shared harness dirs that test WEB code.
+    // e2e/perf/a11y/smoke live under Playwright; workers-integration has its own suite.
+    include: [
+      'src/**/*.{test,spec}.{ts,tsx}',
+      '../../tests/hooks/**/*.{test,spec}.{ts,tsx}',
+      '../../tests/integration/**/*.{test,spec}.{ts,tsx}',
+      '../../tests/components/**/*.{test,spec}.{ts,tsx}',
+      '../../tests/fuzz/**/*.{test,spec}.{ts,tsx}',
+      '../../tests/unit/**/*.{test,spec}.{ts,tsx}',
+    ],
     exclude: [
       'node_modules',
       'dist',

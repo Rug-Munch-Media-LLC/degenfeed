@@ -8,17 +8,26 @@ import { describe, expect, it } from 'vitest';
 // Replicates a simple sanitize function for testing
 function sanitizeDisplayName(input: string): string {
   if (typeof input !== 'string') return '';
-  return input
-    .replace(/[<>]/g, '')
-    .replace(/javascript:/gi, '')
-    .trim()
-    .slice(0, 50);
+  return (
+    input
+      .replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, '')
+      .replace(/<\/?\s*script[^>]*>/gi, '')
+      .replace(/[<>]/g, '')
+      // Strip inline event-handler attributes (onerror=, onload=, …) — inert as
+      // text but dangerous if ever re-embedded into markup.
+      .replace(/\bon\w+\s*=/gi, '')
+      .replace(/javascript:/gi, '')
+      .trim()
+      .slice(0, 50)
+  );
 }
 
 function validateEmail(input: string): boolean {
   if (typeof input !== 'string') return false;
   if (input.length > 254) return false;
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  // Domain labels: alnum, may contain inner hyphens, must not start/end with hyphen
+  const emailRegex =
+    /^[^\s@]+@([A-Za-z0-9]([A-Za-z0-9-]*[A-Za-z0-9])?)(\.[A-Za-z0-9]([A-Za-z0-9-]*[A-Za-z0-9])?)+$/;
   return emailRegex.test(input);
 }
 
@@ -35,7 +44,7 @@ function validateUrl(input: string): boolean {
 function truncateContent(input: string, maxLength: number): string {
   if (typeof input !== 'string') return '';
   if (input.length <= maxLength) return input;
-  return input.slice(0, maxLength) + '...';
+  return `${input.slice(0, maxLength)}...`;
 }
 
 describe('Input validation fuzz tests', () => {
@@ -68,7 +77,7 @@ describe('Input validation fuzz tests', () => {
     });
 
     it('should handle exactly 254 char email', () => {
-      const local = 'a'.repeat(250);
+      const local = 'a'.repeat(249);
       const email = `${local}@b.co`;
       expect(email.length).toBe(254);
       // This should pass if format is valid
@@ -132,7 +141,7 @@ describe('Input validation fuzz tests', () => {
       'user@',
       'user@.com',
       'user@exam ple.com',
-      'a'.repeat(255) + '@example.com',
+      `${'a'.repeat(255)}@example.com`,
       'user@-example.com',
     ];
 

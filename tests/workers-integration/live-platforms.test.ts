@@ -299,10 +299,10 @@ describe('Live Platforms — Live Aggregator', () => {
       }),
     );
 
-    const { aggregateAllStreams } = await import('../../workers/api/src/feed/live-aggregator');
+    const { _aggregateAllStreams } = await import('../../workers/api/src/feed/live-aggregator');
     const env = createMockEnv();
 
-    const streams = await aggregateAllStreams(env, true);
+    const streams = await _aggregateAllStreams(env, true);
     const owncastStreams = streams.filter((s: any) => s.source === 'owncast');
     expect(owncastStreams.length).toBeGreaterThanOrEqual(1);
     expect(owncastStreams[0]?.title).toBe('Live Now');
@@ -348,11 +348,11 @@ describe('Live Platforms — Live Aggregator', () => {
       }),
     );
 
-    const { aggregateAllStreams } = await import('../../workers/api/src/feed/live-aggregator');
+    const { _aggregateAllStreams } = await import('../../workers/api/src/feed/live-aggregator');
     const env = createMockEnv();
     env.PEERTUBE_INSTANCE_URL = 'https://peertube.example.com';
 
-    // We need to test directly since aggregateAllStreams calls all fetchers
+    // We need to test directly since _aggregateAllStreams calls all fetchers
     // Let's test the source health tracking
     const { getSourceHealth } = await import('../../workers/api/src/feed/live-aggregator');
 

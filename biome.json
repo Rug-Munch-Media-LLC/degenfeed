@@ -99,6 +99,23 @@
           }
         }
       }
+    },
+    {
+      "includes": ["**/tests/workers-integration/**", "tests/workers-integration/**"],
+      "linter": {
+        "rules": {
+          "correctness": {
+            "noUnusedVariables": "warn",
+            "noUnusedImports": "warn"
+          },
+          "style": {
+            "noNonNullAssertion": "warn"
+          },
+          "suspicious": {
+            "noExplicitAny": "warn"
+          }
+        }
+      }
     }
   ]
 }

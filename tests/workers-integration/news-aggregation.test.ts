@@ -237,7 +237,8 @@ function parseFeedXml(xml: string, maxItems = 20) {
   const itemRe = /<item([^>]*)>([\s\S]*?)<\/item>/gi;
   let m: RegExpExecArray | null;
 
-  while ((m = itemRe.exec(xml)) !== null && items.length < maxItems) {
+  m = itemRe.exec(xml);
+  while (m !== null && items.length < maxItems) {
     const itemXml = m[2] || '';
     const title = extractText('title', itemXml);
     const link = extractText('link', itemXml);
@@ -248,12 +249,14 @@ function parseFeedXml(xml: string, maxItems = 20) {
     if (title && link) {
       items.push({ title, link, description, pubDate, content });
     }
+    m = itemRe.exec(xml);
   }
 
   // Atom fallback
   if (items.length === 0 && xml.includes('<feed')) {
     const entryRe = /<entry([^>]*)>([\s\S]*?)<\/entry>/gi;
-    while ((m = entryRe.exec(xml)) !== null && items.length < maxItems) {
+    m = entryRe.exec(xml);
+    while (m !== null && items.length < maxItems) {
       const entryXml = m[2] || '';
       const title = extractText('title', entryXml);
       const linkMatch = entryXml.match(/<link[^>]+href\s*=\s*["']([^"']+)["']/i);
@@ -264,6 +267,7 @@ function parseFeedXml(xml: string, maxItems = 20) {
       if (title && link) {
         items.push({ title, link, description, pubDate, content });
       }
+      m = entryRe.exec(xml);
     }
   }
 

@@ -15,7 +15,6 @@ import { PLATFORM_FEES } from '../../packages/monetization/src';
 import {
   encodeTipData,
   encodeTipWithMessageData,
-  getTipChainConfig,
   TIP_CHAIN_CONFIG,
   TIP_CONTRACT_ABI,
 } from '../../packages/web3/src';
@@ -61,7 +60,7 @@ describe('Tip Fee Calculation', () => {
   });
 
   it('handles micro-tip fee calculation correctly', () => {
-    const tipAmount = 0.50; // $0.50
+    const tipAmount = 0.5; // $0.50
     const fee = tipAmount * PLATFORM_FEES.tippingFee;
     expect(fee).toBe(0.005);
     expect(tipAmount - fee).toBe(0.495);
@@ -80,9 +79,7 @@ describe('Tip Fee Calculation', () => {
 
 describe('Lightning Tip Flow', () => {
   it('selects Lightning as best chain for micro-tips (< $10)', async () => {
-    const { selectBestChain } = await import(
-      '../../workers/api/src/routes/unified-tip-core'
-    );
+    const { selectBestChain } = await import('../../workers/api/src/routes/unified-tip-core');
     const results = selectBestChain({
       senderChains: ['lightning', 'solana', 'base'],
       recipientChains: ['lightning', 'solana', 'base'],
@@ -95,9 +92,7 @@ describe('Lightning Tip Flow', () => {
   });
 
   it('falls back to Solana when Lightning is unavailable', async () => {
-    const { selectBestChain } = await import(
-      '../../workers/api/src/routes/unified-tip-core'
-    );
+    const { selectBestChain } = await import('../../workers/api/src/routes/unified-tip-core');
     const results = selectBestChain({
       senderChains: ['lightning', 'solana', 'base'],
       recipientChains: ['solana', 'base'],
@@ -108,9 +103,7 @@ describe('Lightning Tip Flow', () => {
   });
 
   it('CHAIN_ROUTES has lightning metadata', async () => {
-    const { CHAIN_ROUTES } = await import(
-      '../../workers/api/src/routes/unified-tip-core'
-    );
+    const { CHAIN_ROUTES } = await import('../../workers/api/src/routes/unified-tip-core');
     expect(CHAIN_ROUTES.lightning.currency).toBe('BTC');
     expect(CHAIN_ROUTES.lightning.speed).toBe('instant');
     expect(CHAIN_ROUTES.lightning.avgFeeUsd).toBe(0.001);
@@ -136,15 +129,11 @@ describe('EVM Tip — Chain Selection & Contract Data', () => {
     const message = 'gm degen!';
     const encoded = encodeTipWithMessageData(recipient, message);
     expect(encoded).toMatch(/^0xcf02c46b/);
-    expect(encoded.toLowerCase()).toContain(
-      Buffer.from(message).toString('hex'),
-    );
+    expect(encoded.toLowerCase()).toContain(Buffer.from(message).toString('hex'));
   });
 
   it('selects Base as best EVM chain for medium tips', async () => {
-    const { selectBestChain } = await import(
-      '../../workers/api/src/routes/unified-tip-core'
-    );
+    const { selectBestChain } = await import('../../workers/api/src/routes/unified-tip-core');
     const results = selectBestChain({
       senderChains: ['ethereum', 'base', 'polygon', 'arbitrum', 'optimism'],
       recipientChains: ['ethereum', 'base', 'polygon', 'arbitrum', 'optimism'],
@@ -155,9 +144,7 @@ describe('EVM Tip — Chain Selection & Contract Data', () => {
   });
 
   it('better ranks preferred chain for large tips', async () => {
-    const { selectBestChain } = await import(
-      '../../workers/api/src/routes/unified-tip-core'
-    );
+    const { selectBestChain } = await import('../../workers/api/src/routes/unified-tip-core');
     // Test with only EVM chains where fee differences are smaller
     const results = selectBestChain({
       senderChains: ['ethereum', 'base'],
@@ -198,9 +185,7 @@ describe('EVM Tip — Chain Selection & Contract Data', () => {
 
 describe('Tip Recording & Persistence', () => {
   it('records a unified tip and creates all ledger entries', async () => {
-    const { recordUnifiedTip } = await import(
-      '../../workers/api/src/routes/unified-tip-core'
-    );
+    const { recordUnifiedTip } = await import('../../workers/api/src/routes/unified-tip-core');
     const env = createMockEnv() as any;
 
     const activity = await recordUnifiedTip(env, {
@@ -224,23 +209,33 @@ describe('Tip Recording & Persistence', () => {
   });
 
   it('accumulates tip totals across multiple platforms for same recipient', async () => {
-    const { recordUnifiedTip } = await import(
-      '../../workers/api/src/routes/unified-tip-core'
-    );
+    const { recordUnifiedTip } = await import('../../workers/api/src/routes/unified-tip-core');
     const env = createMockEnv() as any;
 
     const recipient = '0xmulti_platform_recipient';
     await recordUnifiedTip(env, {
-      platform: 'degenfeed', entityId: 'p1', entityType: 'post',
-      amountUsd: 50, fromUserId: 'tipper1', toUserId: recipient,
+      platform: 'degenfeed',
+      entityId: 'p1',
+      entityType: 'post',
+      amountUsd: 50,
+      fromUserId: 'tipper1',
+      toUserId: recipient,
     });
     await recordUnifiedTip(env, {
-      platform: 'bluesky', entityId: 'b1', entityType: 'post',
-      amountUsd: 25, fromUserId: 'tipper2', toUserId: recipient,
+      platform: 'bluesky',
+      entityId: 'b1',
+      entityType: 'post',
+      amountUsd: 25,
+      fromUserId: 'tipper2',
+      toUserId: recipient,
     });
     await recordUnifiedTip(env, {
-      platform: 'mastodon', entityId: 'm1', entityType: 'post',
-      amountUsd: 10, fromUserId: 'tipper1', toUserId: recipient,
+      platform: 'mastodon',
+      entityId: 'm1',
+      entityType: 'post',
+      amountUsd: 10,
+      fromUserId: 'tipper1',
+      toUserId: recipient,
     });
 
     const kv = env.CACHE;
@@ -253,9 +248,7 @@ describe('Tip Recording & Persistence', () => {
   });
 
   it('sanitizes and validates tip amounts', async () => {
-    const { sanitizeAmountUsd } = await import(
-      '../../workers/api/src/routes/unified-tip-core'
-    );
+    const { sanitizeAmountUsd } = await import('../../workers/api/src/routes/unified-tip-core');
     expect(sanitizeAmountUsd(0)).toBeNull();
     expect(sanitizeAmountUsd(-5)).toBeNull();
     expect(sanitizeAmountUsd(10001)).toBeNull(); // over MAX_TIP_USD (10,000)
@@ -271,29 +264,35 @@ describe('Tip Recording & Persistence', () => {
 
 describe('Tip Notifications & Leaderboard', () => {
   it('generates tip received activity in correct order', async () => {
-    const { recordUnifiedTip } = await import(
-      '../../workers/api/src/routes/unified-tip-core'
-    );
+    const { recordUnifiedTip } = await import('../../workers/api/src/routes/unified-tip-core');
     // Use the leaderboard handler from unified-tip
-    const { handleUnifiedTipActivity } = await import(
-      '../../workers/api/src/routes/unified-tip'
-    );
+    const { handleUnifiedTipActivity } = await import('../../workers/api/src/routes/unified-tip');
     const env = createMockEnv() as any;
 
     await recordUnifiedTip(env, {
-      platform: 'degenfeed', entityId: 'a1', entityType: 'post',
-      amountUsd: 5, fromLabel: 'Alice', toLabel: 'Bob',
+      platform: 'degenfeed',
+      entityId: 'a1',
+      entityType: 'post',
+      amountUsd: 5,
+      fromLabel: 'Alice',
+      toLabel: 'Bob',
     });
     await recordUnifiedTip(env, {
-      platform: 'degenfeed', entityId: 'a2', entityType: 'post',
-      amountUsd: 10, fromLabel: 'Charlie', toLabel: 'Diana',
+      platform: 'degenfeed',
+      entityId: 'a2',
+      entityType: 'post',
+      amountUsd: 10,
+      fromLabel: 'Charlie',
+      toLabel: 'Diana',
     });
 
     const res = await handleUnifiedTipActivity(
       new Request('http://localhost/api/tip/unified/activity'),
       env,
     );
-    const body = await res.json() as { activity: Array<{ amountUsd: number; fromLabel: string }> };
+    const body = (await res.json()) as {
+      activity: Array<{ amountUsd: number; fromLabel: string }>;
+    };
     expect(body.activity.length).toBe(2);
     // Newest first
     expect(body.activity[0]?.fromLabel).toBe('Charlie');
@@ -301,32 +300,41 @@ describe('Tip Notifications & Leaderboard', () => {
   });
 
   it('builds leaderboard sorted by total USD received', async () => {
-    const { recordUnifiedTip } = await import(
-      '../../workers/api/src/routes/unified-tip-core'
-    );
+    const { recordUnifiedTip } = await import('../../workers/api/src/routes/unified-tip-core');
     const { handleUnifiedTipLeaderboard } = await import(
       '../../workers/api/src/routes/unified-tip'
     );
     const env = createMockEnv() as any;
 
     await recordUnifiedTip(env, {
-      platform: 'degenfeed', entityId: 'l1', entityType: 'post',
-      amountUsd: 100, toUserId: 'top_creator',
+      platform: 'degenfeed',
+      entityId: 'l1',
+      entityType: 'post',
+      amountUsd: 100,
+      toUserId: 'top_creator',
     });
     await recordUnifiedTip(env, {
-      platform: 'degenfeed', entityId: 'l2', entityType: 'post',
-      amountUsd: 50, toUserId: 'second_creator',
+      platform: 'degenfeed',
+      entityId: 'l2',
+      entityType: 'post',
+      amountUsd: 50,
+      toUserId: 'second_creator',
     });
     await recordUnifiedTip(env, {
-      platform: 'degenfeed', entityId: 'l3', entityType: 'post',
-      amountUsd: 200, toUserId: 'top_creator',
+      platform: 'degenfeed',
+      entityId: 'l3',
+      entityType: 'post',
+      amountUsd: 200,
+      toUserId: 'top_creator',
     });
 
     const res = await handleUnifiedTipLeaderboard(
       new Request('http://localhost/api/tip/unified/leaderboard?period=alltime'),
       env,
     );
-    const body = await res.json() as { entries: Array<{ userId: string; totalUsd: number; rank: number }> };
+    const body = (await res.json()) as {
+      entries: Array<{ userId: string; totalUsd: number; rank: number }>;
+    };
     expect(body.entries[0]?.userId).toBe('top_creator');
     expect(body.entries[0]?.totalUsd).toBe(300);
     expect(body.entries[0]?.rank).toBe(1);
@@ -340,32 +348,24 @@ describe('Tip Notifications & Leaderboard', () => {
 
 describe('Tip Edge Cases', () => {
   it('rejects zero amount tips', async () => {
-    const { sanitizeAmountUsd } = await import(
-      '../../workers/api/src/routes/unified-tip-core'
-    );
+    const { sanitizeAmountUsd } = await import('../../workers/api/src/routes/unified-tip-core');
     expect(sanitizeAmountUsd(0)).toBeNull();
   });
 
   it('rejects negative amount tips', async () => {
-    const { sanitizeAmountUsd } = await import(
-      '../../workers/api/src/routes/unified-tip-core'
-    );
+    const { sanitizeAmountUsd } = await import('../../workers/api/src/routes/unified-tip-core');
     expect(sanitizeAmountUsd(-1)).toBeNull();
   });
 
   it('rejects excessively large tips', async () => {
-    const { sanitizeAmountUsd } = await import(
-      '../../workers/api/src/routes/unified-tip-core'
-    );
+    const { sanitizeAmountUsd } = await import('../../workers/api/src/routes/unified-tip-core');
     // MAX_TIP_USD = 10,000
     expect(sanitizeAmountUsd(10001)).toBeNull();
     expect(sanitizeAmountUsd(50000)).toBeNull();
   });
 
   it('sanitizes entity IDs to prevent injection', async () => {
-    const { sanitizeEntityId } = await import(
-      '../../workers/api/src/routes/unified-tip-core'
-    );
+    const { sanitizeEntityId } = await import('../../workers/api/src/routes/unified-tip-core');
     expect(sanitizeEntityId('<script>alert("xss")</script>')).toBeNull();
     expect(sanitizeEntityId('')).toBeNull();
     expect(sanitizeEntityId(null)).toBeNull();
@@ -373,12 +373,12 @@ describe('Tip Edge Cases', () => {
   });
 
   it('handles empty fromUserId gracefully (uses anonymous)', async () => {
-    const { recordUnifiedTip } = await import(
-      '../../workers/api/src/routes/unified-tip-core'
-    );
+    const { recordUnifiedTip } = await import('../../workers/api/src/routes/unified-tip-core');
     const env = createMockEnv() as any;
     const result = await recordUnifiedTip(env, {
-      platform: 'degenfeed', entityId: 'no_sender', entityType: 'post',
+      platform: 'degenfeed',
+      entityId: 'no_sender',
+      entityType: 'post',
       amountUsd: 5,
       fromUserId: '',
       toUserId: 'recipient',

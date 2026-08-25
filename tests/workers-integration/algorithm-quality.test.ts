@@ -15,20 +15,24 @@
 
 import { describe, expect, it } from 'vitest';
 import {
-  scorePost,
-  scoreBreakdownV2,
-  rankDiverse,
-  rankV2,
-  recencyDecay,
+  buildQualityAuthorProfile,
+  computeQualityScore,
+  detectNiches,
+  keywordRelevance,
+} from '../../packages/feed-core/src';
+import {
+  computeTrendingTopics,
+  engagementVelocity,
+  extractHashtags,
+  extractTickers,
   freshnessBoost,
   normalizeEngagement,
+  rankDiverse,
+  recencyDecay,
+  scoreBreakdownV2,
+  scorePost,
   sourceWeight,
-  engagementVelocity,
-  computeTrendingTopics,
-  extractTickers,
-  extractHashtags,
 } from '../../packages/ranking/src';
-import { computeQualityScore, buildQualityAuthorProfile, detectNiches, keywordRelevance } from '../../packages/feed-core/src';
 import type { UnifiedPost } from '../../packages/types/src';
 
 // ─── Factory: build minimal UnifiedPost-like objects ────────────────────
@@ -294,7 +298,8 @@ describe('Algorithm Quality: Quality vs Spam', () => {
   });
 
   it('detectNiches correctly identifies topics', () => {
-    const cryptoText = 'Bitcoin mining difficulty adjusts upward as more miners join the network. Ethereum developers are working on the next upgrade.';
+    const cryptoText =
+      'Bitcoin mining difficulty adjusts upward as more miners join the network. Ethereum developers are working on the next upgrade.';
     const niches = detectNiches(cryptoText);
     expect(niches).toContain('bitcoin');
     expect(niches).toContain('ethereum');
@@ -316,14 +321,18 @@ describe('Algorithm Quality: Diversity & Anti-Clustering', () => {
       }),
     );
 
-    const ranked = rankDiverse(posts, {
-      viewer: null as any,
-      recentAuthors: new Map(),
-      sourceQuality: new Map(),
-      followed: new Set<string>(),
-      viewerNiches: new Set(['crypto']),
-      now: Date.now(),
-    }, { maxPerAuthor: 2 });
+    const ranked = rankDiverse(
+      posts,
+      {
+        viewer: null as any,
+        recentAuthors: new Map(),
+        sourceQuality: new Map(),
+        followed: new Set<string>(),
+        viewerNiches: new Set(['crypto']),
+        now: Date.now(),
+      },
+      { maxPerAuthor: 2 },
+    );
 
     const authorCount = new Map<string, number>();
     for (const p of ranked) {
@@ -396,18 +405,42 @@ describe('Algorithm Quality: Trending Topics', () => {
   it('computes trending topics from post niches and tickers', () => {
     const now = Date.now();
     const posts = [
-      makePost({ id: 'p1', protocol: 'nostr', text: '$BTC to the moon', niches: ['bitcoin'], createdAt: now - 60000 }),
-      makePost({ id: 'p2', protocol: 'farcaster', text: '$BTC and $ETH both looking good', niches: ['bitcoin', 'ethereum'], createdAt: now - 120000 }),
-      makePost({ id: 'p3', protocol: 'bluesky', text: '$SOL breaking out', niches: ['solana'], createdAt: now - 180000 }),
-      makePost({ id: 'p4', protocol: 'rss', text: 'Bitcoin ETF inflows record', niches: ['bitcoin', 'etf'], createdAt: now - 240000 }),
+      makePost({
+        id: 'p1',
+        protocol: 'nostr',
+        text: '$BTC to the moon',
+        niches: ['bitcoin'],
+        createdAt: now - 60000,
+      }),
+      makePost({
+        id: 'p2',
+        protocol: 'farcaster',
+        text: '$BTC and $ETH both looking good',
+        niches: ['bitcoin', 'ethereum'],
+        createdAt: now - 120000,
+      }),
+      makePost({
+        id: 'p3',
+        protocol: 'bluesky',
+        text: '$SOL breaking out',
+        niches: ['solana'],
+        createdAt: now - 180000,
+      }),
+      makePost({
+        id: 'p4',
+        protocol: 'rss',
+        text: 'Bitcoin ETF inflows record',
+        niches: ['bitcoin', 'etf'],
+        createdAt: now - 240000,
+      }),
     ];
 
     const topics = computeTrendingTopics(posts, now, 5, 3600000);
     expect(topics.length).toBeGreaterThan(0);
     // Bitcoin should be the top topic (appears in niches and tickers)
-    const bitcoin = topics.find(t => t.topic === 'bitcoin');
+    const bitcoin = topics.find((t) => t.topic === 'bitcoin');
     expect(bitcoin).toBeDefined();
-    expect(bitcoin!.count).toBeGreaterThanOrEqual(2);
+    expect(bitcoin?.count).toBeGreaterThanOrEqual(2);
   });
 });
 
@@ -427,10 +460,10 @@ describe('Algorithm Quality: Core Score Functions', () => {
 
   it('freshnessBoost applies correct multipliers based on age', () => {
     const now = Date.now();
-    expect(freshnessBoost(now, now)).toBe(2.0);              // <15 min → 2.0x
-    expect(freshnessBoost(now - 1800000, now)).toBe(1.5);    // 30 min → <1h → 1.5x
-    expect(freshnessBoost(now - 7000000, now)).toBe(1.2);   // 117 min → <2h → 1.2x
-    expect(freshnessBoost(now - 14400000, now)).toBe(1.0);   // >4h → >2h → 1.0x
+    expect(freshnessBoost(now, now)).toBe(2.0); // <15 min → 2.0x
+    expect(freshnessBoost(now - 1800000, now)).toBe(1.5); // 30 min → <1h → 1.5x
+    expect(freshnessBoost(now - 7000000, now)).toBe(1.2); // 117 min → <2h → 1.2x
+    expect(freshnessBoost(now - 14400000, now)).toBe(1.0); // >4h → >2h → 1.0x
   });
 
   it('normalizeEngagement increases with activity', () => {

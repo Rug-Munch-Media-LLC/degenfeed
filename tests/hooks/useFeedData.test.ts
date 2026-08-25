@@ -44,8 +44,10 @@ const defaultOptions = {
   loadedLimit: 50,
 };
 
-function mockSwrResponse(data: unknown, stale = false) {
-  const fetchWithSwr = vi.mocked(require('../../apps/web/src/lib/fetchWithCache').fetchWithSwr);
+async function mockSwrResponse(data: unknown, stale = false) {
+  const fetchWithSwr = vi.mocked(
+    (await import('../../apps/web/src/lib/fetchWithCache')).fetchWithSwr,
+  );
   fetchWithSwr.mockResolvedValue({ data, stale, fromCache: false });
 }
 
@@ -58,9 +60,11 @@ describe('useFeedData', () => {
     vi.restoreAllMocks();
   });
 
-  it('should start in loading state', () => {
+  it('should start in loading state', async () => {
     // Make fetchWithSwr never resolve
-    const fetchWithSwr = vi.mocked(require('../../apps/web/src/lib/fetchWithCache').fetchWithSwr);
+    const fetchWithSwr = vi.mocked(
+      (await import('../../apps/web/src/lib/fetchWithCache')).fetchWithSwr,
+    );
     fetchWithSwr.mockReturnValue(new Promise(() => {})); // Never resolves
 
     const { result } = renderHook(() => useFeedData(defaultOptions));
@@ -80,12 +84,16 @@ describe('useFeedData', () => {
       },
     ];
 
-    mockSwrResponse({
+    await mockSwrResponse({
       data: mockPosts,
       meta: { total: 2, perProtocol: { nostr: 1, farcaster: 1 } },
     });
 
     const { result } = renderHook(() => useFeedData(defaultOptions));
+
+    act(() => {
+      void result.current.fetchFeed();
+    });
 
     await waitFor(() => {
       expect(result.current.state).toBe('loaded');
@@ -98,9 +106,13 @@ describe('useFeedData', () => {
   });
 
   it('should set state to empty when no posts returned', async () => {
-    mockSwrResponse({ data: [], meta: {} });
+    await mockSwrResponse({ data: [], meta: {} });
 
     const { result } = renderHook(() => useFeedData(defaultOptions));
+
+    act(() => {
+      void result.current.fetchFeed();
+    });
 
     await waitFor(() => {
       expect(result.current.state).toBe('empty');
@@ -108,12 +120,18 @@ describe('useFeedData', () => {
   });
 
   it('should set error on fetch failure without cache fallback', async () => {
-    const fetchWithSwr = vi.mocked(require('../../apps/web/src/lib/fetchWithCache').fetchWithSwr);
+    const fetchWithSwr = vi.mocked(
+      (await import('../../apps/web/src/lib/fetchWithCache')).fetchWithSwr,
+    );
     fetchWithSwr.mockRejectedValue(new Error('Network error'));
-    const getCached = vi.mocked(require('../../apps/web/src/lib/fetchWithCache').getCached);
+    const getCached = vi.mocked((await import('../../apps/web/src/lib/fetchWithCache')).getCached);
     getCached.mockReturnValue(null);
 
     const { result } = renderHook(() => useFeedData(defaultOptions));
+
+    act(() => {
+      void result.current.fetchFeed();
+    });
 
     await waitFor(() => {
       expect(result.current.state).toBe('error');
@@ -126,12 +144,18 @@ describe('useFeedData', () => {
       { id: 'cached1', protocol: 'nostr', text: 'Cached post', author: { displayName: 'Cached' } },
     ];
 
-    const fetchWithSwr = vi.mocked(require('../../apps/web/src/lib/fetchWithCache').fetchWithSwr);
+    const fetchWithSwr = vi.mocked(
+      (await import('../../apps/web/src/lib/fetchWithCache')).fetchWithSwr,
+    );
     fetchWithSwr.mockRejectedValue(new Error('Network error'));
-    const getCached = vi.mocked(require('../../apps/web/src/lib/fetchWithCache').getCached);
+    const getCached = vi.mocked((await import('../../apps/web/src/lib/fetchWithCache')).getCached);
     getCached.mockReturnValue({ data: cachedPosts, meta: { total: 1 } });
 
     const { result } = renderHook(() => useFeedData(defaultOptions));
+
+    act(() => {
+      void result.current.fetchFeed();
+    });
 
     await waitFor(() => {
       expect(result.current.state).toBe('loaded');
@@ -151,7 +175,9 @@ describe('useFeedData', () => {
     ];
 
     let callCount = 0;
-    const fetchWithSwr = vi.mocked(require('../../apps/web/src/lib/fetchWithCache').fetchWithSwr);
+    const fetchWithSwr = vi.mocked(
+      (await import('../../apps/web/src/lib/fetchWithCache')).fetchWithSwr,
+    );
     fetchWithSwr.mockImplementation(() => {
       callCount++;
       const data = callCount === 1 ? firstBatch : secondBatch;
@@ -163,6 +189,10 @@ describe('useFeedData', () => {
     });
 
     const { result } = renderHook(() => useFeedData(defaultOptions));
+
+    act(() => {
+      void result.current.fetchFeed();
+    });
 
     // Wait for initial load
     await waitFor(() => {
@@ -181,9 +211,13 @@ describe('useFeedData', () => {
     const posts = [
       { id: 'post1', protocol: 'nostr', text: 'Test', author: { displayName: 'User' } },
     ];
-    mockSwrResponse({ data: posts, meta: {} });
+    await mockSwrResponse({ data: posts, meta: {} });
 
     const { result } = renderHook(() => useFeedData(defaultOptions));
+
+    act(() => {
+      void result.current.fetchFeed();
+    });
 
     await waitFor(() => {
       expect(result.current.state).toBe('loaded');
@@ -196,8 +230,10 @@ describe('useFeedData', () => {
     expect(result.current.newAvailable).toBe(false);
   });
 
-  it('should set custom error via setError', () => {
-    const fetchWithSwr = vi.mocked(require('../../apps/web/src/lib/fetchWithCache').fetchWithSwr);
+  it('should set custom error via setError', async () => {
+    const fetchWithSwr = vi.mocked(
+      (await import('../../apps/web/src/lib/fetchWithCache')).fetchWithSwr,
+    );
     fetchWithSwr.mockReturnValue(new Promise(() => {}));
 
     const { result } = renderHook(() => useFeedData(defaultOptions));
@@ -209,8 +245,10 @@ describe('useFeedData', () => {
     expect(result.current.error).toBe('Custom error message');
   });
 
-  it('should clear error on setError(undefined)', () => {
-    const fetchWithSwr = vi.mocked(require('../../apps/web/src/lib/fetchWithCache').fetchWithSwr);
+  it('should clear error on setError(undefined)', async () => {
+    const fetchWithSwr = vi.mocked(
+      (await import('../../apps/web/src/lib/fetchWithCache')).fetchWithSwr,
+    );
     fetchWithSwr.mockReturnValue(new Promise(() => {}));
 
     const { result } = renderHook(() => useFeedData(defaultOptions));

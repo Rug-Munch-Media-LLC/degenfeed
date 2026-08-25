@@ -401,7 +401,7 @@ describe('News Dedup — RSS GUID & OG Metadata', () => {
 
 describe('News Dedup — News Source Registry', () => {
   it('has categorized news sources with metadata', async () => {
-    const { NEWS_SOURCES, NEWS_SOURCE_COUNT } = await import(
+    const { NEWS_SOURCES, _NEWS_SOURCE_COUNT } = await import(
       '../../workers/api/src/feed/news-aggregator'
     );
 

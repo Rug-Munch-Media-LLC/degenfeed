@@ -8,12 +8,12 @@
  *
  * Pure functions tested directly. External APIs mocked via vi.mock.
  */
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 // ─── Mock crossposter ───────────────────────────────────────────────────
 
 vi.mock('../../bridge/src/crossposter', () => ({
-  crossPost: vi.fn().mockImplementation(async (post: unknown, config: { targets: string[] }) => {
+  crossPost: vi.fn().mockImplementation(async (_post: unknown, config: { targets: string[] }) => {
     return {
       success: true,
       results: config.targets.map((target) => ({
@@ -36,9 +36,15 @@ vi.mock('../../bridge/src/crossposter', () => ({
 vi.mock('../../packages/youtube-provider/src/index', () => ({
   fetchYouTubeFeed: vi.fn().mockResolvedValue([]),
   YouTubeProvider: vi.fn().mockImplementation(() => ({
-    authenticate: vi.fn().mockResolvedValue({ accessToken: 'mock-yt-token', expiresAt: Date.now() + 3600000 }),
-    uploadVideo: vi.fn().mockResolvedValue({ id: 'yt_video_123', url: 'https://youtube.com/watch?v=abc123' }),
-    scheduleVideo: vi.fn().mockResolvedValue({ id: 'yt_scheduled_456', scheduledAt: '2026-08-01T12:00:00Z' }),
+    authenticate: vi
+      .fn()
+      .mockResolvedValue({ accessToken: 'mock-yt-token', expiresAt: Date.now() + 3600000 }),
+    uploadVideo: vi
+      .fn()
+      .mockResolvedValue({ id: 'yt_video_123', url: 'https://youtube.com/watch?v=abc123' }),
+    scheduleVideo: vi
+      .fn()
+      .mockResolvedValue({ id: 'yt_scheduled_456', scheduledAt: '2026-08-01T12:00:00Z' }),
     startLiveStream: vi.fn().mockResolvedValue({
       id: 'yt_live_789',
       streamUrl: 'rtmp://a.rtmp.youtube.com/live2',
@@ -61,7 +67,8 @@ vi.mock('../../packages/monetization/src/TierManager', () => ({
     canAccess: vi.fn((tier: string, feature: string) => {
       if (feature === 'cross_platform_publishing') return tier === 'pro' || tier === 'enterprise';
       if (feature === 'analytics_dashboard') return tier !== 'free';
-      if (feature === 'scheduled_posts') return tier === 'creator' || tier === 'pro' || tier === 'enterprise';
+      if (feature === 'scheduled_posts')
+        return tier === 'creator' || tier === 'pro' || tier === 'enterprise';
       return true;
     }),
     getLimits: vi.fn(() => ({
@@ -84,13 +91,64 @@ interface ExternalPlatform {
 }
 
 const EXTERNAL_PLATFORMS: ExternalPlatform[] = [
-  { id: 'youtube', name: 'YouTube', type: 'video', authType: 'oauth2', requiresTier: 'free', requiresSetup: true, healthEndpoint: '/api/health' },
-  { id: 'peertube', name: 'PeerTube', type: 'video', authType: 'oauth2', requiresTier: 'free', requiresSetup: true },
-  { id: 'livepeer', name: 'Livepeer', type: 'live', authType: 'api_key', requiresTier: 'creator', requiresSetup: true },
-  { id: 'owncast', name: 'Owncast', type: 'live', authType: 'api_key', requiresTier: 'creator', requiresSetup: true },
-  { id: 'postiz', name: 'Postiz Bridge', type: 'social', authType: 'api_key', requiresTier: 'pro', requiresSetup: true, healthEndpoint: '/health' },
-  { id: 'ipfs', name: 'IPFS', type: 'storage', authType: 'none', requiresTier: 'free', requiresSetup: false },
-  { id: 'r2', name: 'Cloudflare R2', type: 'storage', authType: 'api_key', requiresTier: 'free', requiresSetup: true },
+  {
+    id: 'youtube',
+    name: 'YouTube',
+    type: 'video',
+    authType: 'oauth2',
+    requiresTier: 'free',
+    requiresSetup: true,
+    healthEndpoint: '/api/health',
+  },
+  {
+    id: 'peertube',
+    name: 'PeerTube',
+    type: 'video',
+    authType: 'oauth2',
+    requiresTier: 'free',
+    requiresSetup: true,
+  },
+  {
+    id: 'livepeer',
+    name: 'Livepeer',
+    type: 'live',
+    authType: 'api_key',
+    requiresTier: 'creator',
+    requiresSetup: true,
+  },
+  {
+    id: 'owncast',
+    name: 'Owncast',
+    type: 'live',
+    authType: 'api_key',
+    requiresTier: 'creator',
+    requiresSetup: true,
+  },
+  {
+    id: 'postiz',
+    name: 'Postiz Bridge',
+    type: 'social',
+    authType: 'api_key',
+    requiresTier: 'pro',
+    requiresSetup: true,
+    healthEndpoint: '/health',
+  },
+  {
+    id: 'ipfs',
+    name: 'IPFS',
+    type: 'storage',
+    authType: 'none',
+    requiresTier: 'free',
+    requiresSetup: false,
+  },
+  {
+    id: 'r2',
+    name: 'Cloudflare R2',
+    type: 'storage',
+    authType: 'api_key',
+    requiresTier: 'free',
+    requiresSetup: true,
+  },
 ];
 
 // ─── Helpers ────────────────────────────────────────────────────────────
@@ -107,7 +165,7 @@ function createMockCredentials(platform: string) {
 
 function createMockPost(overrides: Record<string, unknown> = {}) {
   return {
-    id: 'post_' + Math.random().toString(36).slice(2, 8),
+    id: `post_${Math.random().toString(36).slice(2, 8)}`,
     protocol: 'degenfeed' as const,
     author: {
       id: 'author_1',
@@ -142,10 +200,9 @@ function createMockPost(overrides: Record<string, unknown> = {}) {
 describe('External Platforms — Postiz Bridge Health', () => {
   it('checks Postiz bridge health endpoint', async () => {
     const mockFetch = vi.fn().mockResolvedValue(
-      new Response(
-        JSON.stringify({ status: 'ok', version: '1.2.3', uptime: 86400 }),
-        { status: 200 },
-      ),
+      new Response(JSON.stringify({ status: 'ok', version: '1.2.3', uptime: 86400 }), {
+        status: 200,
+      }),
     );
     vi.stubGlobal('fetch', mockFetch);
 
@@ -183,7 +240,8 @@ describe('External Platforms — Postiz Bridge Health', () => {
 
 describe('External Platforms — Connect YouTube', () => {
   it('initiates OAuth2 flow for platform connection', async () => {
-    const authUrl = 'https://accounts.google.com/o/oauth2/auth?client_id=xxx&redirect_uri=yyy&scope=zzz';
+    const authUrl =
+      'https://accounts.google.com/o/oauth2/auth?client_id=xxx&redirect_uri=yyy&scope=zzz';
     expect(authUrl).toContain('oauth2');
     expect(authUrl).toContain('client_id');
   });
@@ -267,7 +325,9 @@ describe('External Platforms — Post to YouTube', () => {
       nostr: (text: string) => `${text}\n\n— originally from degenfeed`,
       bluesky: (text: string) => `${text}\n\n[Originally from degenfeed]`,
       farcaster: (text: string) =>
-        text.length > 320 ? `${text.slice(0, 300)}...\n\n[Cross-posted from degenfeed]` : `${text}\n\n[Cross-posted from degenfeed]`,
+        text.length > 320
+          ? `${text.slice(0, 300)}...\n\n[Cross-posted from degenfeed]`
+          : `${text}\n\n[Cross-posted from degenfeed]`,
     };
 
     const originalText = 'Hello from DegenFeed!';
@@ -288,7 +348,7 @@ describe('External Platforms — Schedule Post', () => {
     const { YouTubeProvider } = await import('../../packages/youtube-provider/src/index');
 
     const mockYT = vi.mocked(new YouTubeProvider());
-    const scheduleSpy = vi.spyOn(mockYT, 'scheduleVideo').mockResolvedValue({
+    const _scheduleSpy = vi.spyOn(mockYT, 'scheduleVideo').mockResolvedValue({
       id: 'yt_scheduled_456',
       scheduledAt: '2026-08-01T12:00:00Z',
     });
@@ -333,7 +393,7 @@ describe('External Platforms — Go Live', () => {
     const { YouTubeProvider } = await import('../../packages/youtube-provider/src/index');
 
     const mockYT = vi.mocked(new YouTubeProvider());
-    const liveSpy = vi.spyOn(mockYT, 'startLiveStream').mockResolvedValue({
+    const _liveSpy = vi.spyOn(mockYT, 'startLiveStream').mockResolvedValue({
       id: 'yt_live_789',
       streamUrl: 'rtmp://a.rtmp.youtube.com/live2',
       streamKey: 'xxxx-xxxx-xxxx',
@@ -383,7 +443,7 @@ describe('External Platforms — Pull Analytics', () => {
     const { YouTubeProvider } = await import('../../packages/youtube-provider/src/index');
 
     const mockYT = vi.mocked(new YouTubeProvider());
-    const analyticsSpy = vi.spyOn(mockYT, 'getAnalytics').mockResolvedValue({
+    const _analyticsSpy = vi.spyOn(mockYT, 'getAnalytics').mockResolvedValue({
       views: 5000,
       watchTimeMinutes: 15000,
       likes: 200,
@@ -401,8 +461,8 @@ describe('External Platforms — Pull Analytics', () => {
     const raw = { views: 1500, likes: 75, comments: 12, shares: 8 };
     const formatted = {
       views: raw.views.toLocaleString(),
-      engagementRate: ((raw.likes + raw.comments + raw.shares) / raw.views * 100).toFixed(1) + '%',
-      likeRatio: (raw.likes / raw.views * 100).toFixed(1) + '%',
+      engagementRate: `${(((raw.likes + raw.comments + raw.shares) / raw.views) * 100).toFixed(1)}%`,
+      likeRatio: `${((raw.likes / raw.views) * 100).toFixed(1)}%`,
     };
 
     expect(formatted.views).toBe('1,500');
@@ -412,7 +472,7 @@ describe('External Platforms — Pull Analytics', () => {
 
   it('aggregates cross-platform analytics', () => {
     const platforms = [
-      { platform: 'youtube', views: 5000, revenue: 15.00 },
+      { platform: 'youtube', views: 5000, revenue: 15.0 },
       { platform: 'peertube', views: 800, revenue: 0 },
       { platform: 'ipfs', views: 1200, revenue: 0 },
     ];
@@ -421,7 +481,7 @@ describe('External Platforms — Pull Analytics', () => {
     const totalRevenue = platforms.reduce((sum, p) => sum + p.revenue, 0);
 
     expect(totalViews).toBe(7000);
-    expect(totalRevenue).toBe(15.00);
+    expect(totalRevenue).toBe(15.0);
   });
 
   it('requires creator tier or higher for analytics dashboard', async () => {
@@ -559,7 +619,8 @@ describe('External Platforms — Standalone Service Access', () => {
   it('validates standalone service requests have auth header', () => {
     const validateRequest = (headers: Record<string, string>) => {
       if (!headers.authorization) return { valid: false, error: 'Missing authorization' };
-      if (!headers.authorization.startsWith('Bearer ')) return { valid: false, error: 'Invalid auth format' };
+      if (!headers.authorization.startsWith('Bearer '))
+        return { valid: false, error: 'Invalid auth format' };
       return { valid: true };
     };
 

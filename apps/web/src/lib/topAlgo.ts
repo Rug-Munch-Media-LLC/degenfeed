@@ -380,8 +380,10 @@ function diversityConfig(controls: FeedControls, totalItems: number): DiversityC
     maxConsecutiveCategory: 3,
     maxConsecutiveCreator: 2,
     maxConsecutiveProtocol: pd >= 80 ? 1 : pd >= 60 ? 2 : pd >= 40 ? 3 : 6,
-    maxTotalCategory: 8,
-    maxTotalCreator: 4,
+    // Scale total caps with feed size so homogeneous feeds are interleaved,
+    // never silently truncated.
+    maxTotalCategory: Math.max(8, totalItems),
+    maxTotalCreator: Math.max(4, Math.ceil(totalItems / 2)),
     maxTotalProtocol: Math.max(6, totalItems),
     serendipityFraction: serendipityFraction(controls.algorithm),
     serendipityMinScore: 0.2,

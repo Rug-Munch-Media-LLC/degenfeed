@@ -161,10 +161,10 @@ describe('Tip Features — Unified Tip Recording', () => {
   });
 
   it('sanitizes entity IDs', async () => {
-    const { sanitizeEntityId, hasSuspiciousPayload } = await import(
+    const { sanitizeEntityId, _hasSuspiciousPayload } = await import(
       '../../workers/api/src/routes/unified-tip-core'
     );
-    // hasSuspiciousPayload is re-exported from sanitize module
+    // _hasSuspiciousPayload is re-exported from sanitize module
 
     expect(sanitizeEntityId('valid-post-id-123')).toBe('valid-post-id-123');
     expect(sanitizeEntityId('')).toBeNull();
@@ -202,7 +202,7 @@ describe('Tip Features — Unified Tip Recording', () => {
 
 describe('Tip Features — Native Protocol Tipping', () => {
   it('dispatches Nostr zap tip via NIP-57', async () => {
-    const { sendNativeTip, PROTOCOL_FEE_ESTIMATES } = await import(
+    const { _sendNativeTip, PROTOCOL_FEE_ESTIMATES } = await import(
       '../../workers/api/src/lib/native-tips'
     );
     const env = createMockEnv();
@@ -221,7 +221,7 @@ describe('Tip Features — Native Protocol Tipping', () => {
       }),
     }));
 
-    const result = await sendNativeTip(env, {
+    const result = await _sendNativeTip(env, {
       protocol: 'nostr',
       recipientId: 'npub1...',
       recipientName: 'NostrUser',
@@ -241,11 +241,11 @@ describe('Tip Features — Native Protocol Tipping', () => {
   });
 
   it('dispatches Farcaster tip via Frame action', async () => {
-    const { sendNativeTip } = await import('../../workers/api/src/lib/native-tips');
+    const { _sendNativeTip } = await import('../../workers/api/src/lib/native-tips');
     const env = createMockEnv();
 
     // Farcaster tip doesn't require env config for basic operation
-    const result = await sendNativeTip(env, {
+    const result = await _sendNativeTip(env, {
       protocol: 'farcaster',
       recipientId: '0xrecipient',
       recipientName: 'FarcasterUser',
@@ -261,7 +261,7 @@ describe('Tip Features — Native Protocol Tipping', () => {
   });
 
   it('provides protocol fee estimates for all protocols', async () => {
-    const { PROTOCOL_FEE_ESTIMATES, sendNativeTip } = await import(
+    const { PROTOCOL_FEE_ESTIMATES, _sendNativeTip } = await import(
       '../../workers/api/src/lib/native-tips'
     );
 
