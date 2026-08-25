@@ -1,3 +1,13 @@
+import { log } from '../logger';
+import type { Env } from '../types';
+import {
+  fetchWithTimeout,
+  guessCategory,
+  type ImageSource,
+  metaFor,
+  type UnifiedImage,
+} from './image-feed-types';
+
 /** 6. Lens — image publications via Lens API */
 export async function fetchLensImages(env: Env, limit: number): Promise<UnifiedImage[]> {
   const results: UnifiedImage[] = [];
@@ -53,7 +63,8 @@ export async function fetchLensImages(env: Env, limit: number): Promise<UnifiedI
         title: (meta_data?.title as string) ?? (meta_data?.content as string) ?? '',
         author: {
           id: `lens:${profile?.address as string}`,
-          displayName: (authorMeta?.name as string) ?? (username?.localName as string) ?? 'Lens Creator',
+          displayName:
+            (authorMeta?.name as string) ?? (username?.localName as string) ?? 'Lens Creator',
           handle: username?.localName as string,
           avatarUrl: (authorMeta?.picture as string) ?? '',
         },
@@ -163,7 +174,7 @@ export async function fetchRedditImages(_env: Env, limit: number): Promise<Unifi
               const preview = d.preview as Record<string, unknown> | undefined;
               const images = preview?.images as Array<Record<string, unknown>> | undefined;
               const source = images?.[0]?.source as Record<string, number> | undefined;
-              return source?.width ? source.width / source.height : 4 / 3;
+              return source?.width && source.height ? source.width / source.height : 4 / 3;
             })(),
             likes: (d.ups as number) ?? 0,
             shares: 0,

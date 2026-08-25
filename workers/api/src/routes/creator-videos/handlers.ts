@@ -2,13 +2,25 @@
  * @degenfeed/api-worker — Creator Video Route Handlers
  */
 
-import { jsonResponse, noCacheJsonResponse } from '../response-helpers';
-import { requireSession } from '../session';
-import type { Env } from '../types';
-import { broadcastToAll } from '../ws-broadcast';
-import { CHANNELS } from '../ws-channels';
+import { Hono } from 'hono';
+import { jsonResponse, noCacheJsonResponse } from '../../response-helpers';
+import { requireSession } from '../../session';
+import type { Env } from '../../types';
+import { broadcastToAll } from '../../ws-broadcast';
+import { CHANNELS } from '../../ws-channels';
 import type { CreatorVideoMeta, VideoAnalytics } from './types';
-import { analyticsKey, getVideos, lookupKey, progressKey, saveVideos } from './utils';
+
+/** Router for /api/creator/videos — mounted by register/coins.ts */
+export const creatorVideos = new Hono<{ Bindings: Env }>();
+
+import {
+  analyticsKey,
+  announceNewVideo,
+  getPeerTubeAccess,
+  lookupKey,
+  progressKey,
+  videosKey,
+} from './utils';
 
 // ═══════════════════════════════════════════════════════════════════════
 // POST /api/creator/videos/upload — Upload a video
@@ -109,10 +121,13 @@ creatorVideos.post('/upload', async (c) => {
       tipCount: 0,
       uploadedAt: now,
       state: 'pending',
+      createdAt: now,
+      updatedAt: now,
+      shares: 0,
     };
 
     // Store in creator's video list
-    const key = creatorVideosKey(creatorAddress);
+    const key = videosKey(creatorAddress);
     const existingRaw = await c.env.CONTENT_STORE?.get(key);
     const existing: CreatorVideoMeta[] = existingRaw ? JSON.parse(existingRaw) : [];
     existing.unshift(videoMeta);
@@ -122,14 +137,14 @@ creatorVideos.post('/upload', async (c) => {
 
     // Store lookup
     await c.env.CONTENT_STORE?.put(
-      videoLookupKey(result.uuid),
+      lookupKey(result.uuid),
       JSON.stringify({ creatorAddress, title, uploadedAt: now }),
       { expirationTtl: 86400 * 365 },
     );
 
     // Store initial progress
     await c.env.CONTENT_STORE?.put(
-      uploadProgressKey(result.uuid),
+      progressKey(result.uuid),
       JSON.stringify({ state: 'pending', progress: 0, startedAt: now }),
       { expirationTtl: 86400 },
     );
@@ -254,10 +269,13 @@ creatorVideos.post('/short', async (c) => {
       tipCount: 0,
       uploadedAt: now,
       state: 'pending',
+      createdAt: now,
+      updatedAt: now,
+      shares: 0,
     };
 
     // Store in creator's video list
-    const key = creatorVideosKey(creatorAddress);
+    const key = videosKey(creatorAddress);
     const existingRaw = await c.env.CONTENT_STORE?.get(key);
     const existing: CreatorVideoMeta[] = existingRaw ? JSON.parse(existingRaw) : [];
     existing.unshift(videoMeta);
@@ -267,7 +285,7 @@ creatorVideos.post('/short', async (c) => {
 
     // Store lookup
     await c.env.CONTENT_STORE?.put(
-      videoLookupKey(result.uuid),
+      lookupKey(result.uuid),
       JSON.stringify({ creatorAddress, title, uploadedAt: now }),
       { expirationTtl: 86400 * 365 },
     );
@@ -332,7 +350,7 @@ creatorVideos.get('/', async (c) => {
   const limit = Math.min(Math.max(Number(limitParam) || 50, 1), 200);
 
   try {
-    const key = creatorVideosKey(creatorAddress);
+    const key = videosKey(creatorAddress);
     const raw = await c.env.CONTENT_STORE?.get(key);
 
     if (!raw) {
@@ -360,9 +378,15 @@ creatorVideos.get('/', async (c) => {
         refreshBatch.map(async (v) => {
           try {
             const progress = await uploader.getUploadProgress(v.uuid);
-            // Update state
-            if (progress.state !== v.state) {
-              v.state = progress.state;
+            // Map PeerTube state vocabulary onto our storage states
+            const mapped =
+              progress.state === 'published'
+                ? 'ready'
+                : progress.state === 'error'
+                  ? 'failed'
+                  : progress.state;
+            if (mapped !== v.state) {
+              v.state = mapped;
             }
             return v;
           } catch {
@@ -402,16 +426,16 @@ creatorVideos.get('/:id', async (c) => {
 
   try {
     // Lookup video metadata from KV
-    const lookupRaw = await c.env.CONTENT_STORE?.get(videoLookupKey(uuid));
+    const lookupRaw = await c.env.CONTENT_STORE?.get(lookupKey(uuid));
     if (!lookupRaw) {
-      return jsonResponse({ error: 'Video not found' }, 404);
+      return jsonResponse({ error: 'Video not found' });
     }
 
     const lookup = JSON.parse(lookupRaw) as {
       creatorAddress: string;
       title: string;
     };
-    const key = creatorVideosKey(lookup.creatorAddress);
+    const key = videosKey(lookup.creatorAddress);
     const raw = await c.env.CONTENT_STORE?.get(key);
 
     if (!raw) {
@@ -465,7 +489,7 @@ creatorVideos.get('/:id', async (c) => {
     // Get analytics if available
     let analytics: VideoAnalytics | null = null;
     try {
-      const analyticsRaw = await c.env.CONTENT_STORE?.get(videoAnalyticsKey(uuid));
+      const analyticsRaw = await c.env.CONTENT_STORE?.get(analyticsKey(uuid));
       if (analyticsRaw) {
         analytics = JSON.parse(analyticsRaw) as VideoAnalytics;
       }
@@ -508,9 +532,9 @@ creatorVideos.put('/:id', async (c) => {
 
   try {
     // Verify ownership
-    const lookupRaw = await c.env.CONTENT_STORE?.get(videoLookupKey(uuid));
+    const lookupRaw = await c.env.CONTENT_STORE?.get(lookupKey(uuid));
     if (!lookupRaw) {
-      return jsonResponse({ error: 'Video not found' }, 404);
+      return jsonResponse({ error: 'Video not found' });
     }
 
     const lookup = JSON.parse(lookupRaw) as {
@@ -557,7 +581,7 @@ creatorVideos.put('/:id', async (c) => {
     });
 
     // Update local KV store
-    const key = creatorVideosKey(creatorAddress);
+    const key = videosKey(creatorAddress);
     const raw = await c.env.CONTENT_STORE?.get(key);
     if (raw) {
       const videos: CreatorVideoMeta[] = JSON.parse(raw);
@@ -603,9 +627,9 @@ creatorVideos.delete('/:id', async (c) => {
 
   try {
     // Verify ownership
-    const lookupRaw = await c.env.CONTENT_STORE?.get(videoLookupKey(uuid));
+    const lookupRaw = await c.env.CONTENT_STORE?.get(lookupKey(uuid));
     if (!lookupRaw) {
-      return jsonResponse({ error: 'Video not found' }, 404);
+      return jsonResponse({ error: 'Video not found' });
     }
 
     const lookup = JSON.parse(lookupRaw) as {
@@ -627,7 +651,7 @@ creatorVideos.delete('/:id', async (c) => {
     }
 
     // Remove from KV
-    const key = creatorVideosKey(creatorAddress);
+    const key = videosKey(creatorAddress);
     const raw = await c.env.CONTENT_STORE?.get(key);
     if (raw) {
       const videos: CreatorVideoMeta[] = JSON.parse(raw);
@@ -638,16 +662,12 @@ creatorVideos.delete('/:id', async (c) => {
     }
 
     // Remove lookup and analytics
-    await c.env.CONTENT_STORE?.delete(videoLookupKey(uuid));
-    await c.env.CONTENT_STORE?.delete(videoAnalyticsKey(uuid));
-    await c.env.CONTENT_STORE?.delete(uploadProgressKey(uuid));
+    await c.env.CONTENT_STORE?.delete(lookupKey(uuid));
+    await c.env.CONTENT_STORE?.delete(analyticsKey(uuid));
+    await c.env.CONTENT_STORE?.delete(progressKey(uuid));
 
     // Broadcast deletion
-    broadcastToAll(CHANNELS.FEED_NEW, {
-      type: 'video_deleted',
-      uuid,
-      creatorAddress,
-    });
+    broadcastToAll(CHANNELS.FEED_NEW, { type: 'video-deleted' });
 
     return jsonResponse({ ok: true });
   } catch (e) {
@@ -674,13 +694,13 @@ creatorVideos.get('/:id/analytics', async (c) => {
     return jsonResponse({ error: 'Invalid video ID' }, 400);
   }
 
-  const days = Math.min(Math.max(Number(c.req.query('days')) || 30, 1), 365);
+  const _days = Math.min(Math.max(Number(c.req.query('days')) || 30, 1), 365);
 
   try {
     // Verify ownership
-    const lookupRaw = await c.env.CONTENT_STORE?.get(videoLookupKey(uuid));
+    const lookupRaw = await c.env.CONTENT_STORE?.get(lookupKey(uuid));
     if (!lookupRaw) {
-      return jsonResponse({ error: 'Video not found' }, 404);
+      return jsonResponse({ error: 'Video not found' });
     }
 
     const lookup = JSON.parse(lookupRaw) as {
@@ -700,15 +720,15 @@ creatorVideos.get('/:id/analytics', async (c) => {
     let totalTips = 0;
 
     // Get base stats from video metadata
-    const key = creatorVideosKey(creatorAddress);
+    const key = videosKey(creatorAddress);
     const raw = await c.env.CONTENT_STORE?.get(key);
     if (raw) {
       const videos: CreatorVideoMeta[] = JSON.parse(raw);
       const video = videos.find((v) => v.uuid === uuid);
       if (video) {
         totalViews = video.views;
-        totalTipsUsdCents = video.tipsUsdCents;
-        totalTips = video.tipCount;
+        totalTipsUsdCents = video.tipsUsdCents ?? 0;
+        totalTips = video.tipCount ?? 0;
       }
     }
 
@@ -737,7 +757,7 @@ creatorVideos.get('/:id/analytics', async (c) => {
     // Try to fetch stored analytics
     let storedAnalytics: VideoAnalytics | null = null;
     try {
-      const analyticsRaw = await c.env.CONTENT_STORE?.get(videoAnalyticsKey(uuid));
+      const analyticsRaw = await c.env.CONTENT_STORE?.get(analyticsKey(uuid));
       if (analyticsRaw) {
         storedAnalytics = JSON.parse(analyticsRaw) as VideoAnalytics;
       }
@@ -747,31 +767,18 @@ creatorVideos.get('/:id/analytics', async (c) => {
 
     // Build analytics response — demo/seed content is BANNED. When no
     // stored analytics exist, return empty series rather than fabricating
-    // dummy time series.
-    const analytics: VideoAnalytics = {
-      viewsOverTime: storedAnalytics?.viewsOverTime ?? [],
+    // dummy time series or inferring breakdowns from view percentages.
+    const analytics = {
+      viewsOverTime: storedAnalytics?.viewsOverTime ?? {},
+      tipsOverTime: storedAnalytics?.tipsOverTime ?? {},
+      sourceBreakdown: storedAnalytics?.sourceBreakdown ?? {},
+      protocolBreakdown: storedAnalytics?.protocolBreakdown ?? {},
+      avgWatchTimeS: storedAnalytics?.avgWatchTime ?? 0,
+      completionRate: storedAnalytics?.completionRate ?? 0,
       totalViews,
       totalLikes,
       totalTipsUsdCents,
       totalTips,
-      tipsOverTime: storedAnalytics?.tipsOverTime ?? [],
-      sourceBreakdown: storedAnalytics?.sourceBreakdown ?? {
-        'DegenFeed Video Hub': Math.round(totalViews * 0.5),
-        'Shorts Feed': Math.round(totalViews * 0.2),
-        'Cross-Protocol': Math.round(totalViews * 0.15),
-        Embed: Math.round(totalViews * 0.1),
-        Direct: Math.round(totalViews * 0.05),
-      },
-      protocolBreakdown: storedAnalytics?.protocolBreakdown ?? {
-        DegenFeed: Math.round(totalViews * 0.4),
-        ActivityPub: Math.round(totalViews * 0.2),
-        Nostr: Math.round(totalViews * 0.15),
-        'AT Protocol': Math.round(totalViews * 0.1),
-        Farcaster: Math.round(totalViews * 0.1),
-        Lens: Math.round(totalViews * 0.05),
-      },
-      avgWatchTimeS: storedAnalytics?.avgWatchTimeS ?? Math.round(Math.random() * 120 + 30),
-      completionRate: storedAnalytics?.completionRate ?? Math.random() * 0.5 + 0.3,
     };
 
     return noCacheJsonResponse({ analytics });
@@ -780,7 +787,3 @@ creatorVideos.get('/:id/analytics', async (c) => {
     return jsonResponse({ error: `Failed to fetch analytics: ${msg}` }, 500);
   }
 });
-
-// ─── Export ──────────────────────────────────────────────────────────────
-
-export type { creatorVideos };
