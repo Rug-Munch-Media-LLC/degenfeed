@@ -189,7 +189,7 @@ export class MessageTransport {
   private async generateShareableLink(message: TransportMessage, env: Env): Promise<string> {
     // Store the encrypted blob with a one-time access token
     const token = crypto.randomUUID().replace(/-/g, '').slice(0, 16);
-    const baseUrl = env.PUBLIC_URL || 'https://degenfeed.xyz';
+    const baseUrl = env.DEGENFEED_CDN_URL || 'https://degenfeed.xyz';
 
     if (env.CACHE) {
       await env.CACHE.put(
@@ -266,21 +266,19 @@ export class MessageTransport {
       }
 
       const recipientPubkey = recipientNpub.startsWith('npub1')
-        ? nostr.npubToHex(recipientNpub)
+        ? nostr.npubDecode(recipientNpub)
         : recipientNpub;
 
-      // Encrypt content with NIP-04 (Nostr-native encryption, wrapping our encrypted blob)
-      const encryptedContent = await nostr.nip04Encrypt(
-        senderNsec,
-        recipientPubkey,
-        message.encryptedBlob,
-      );
-
-      const ev = nostr.finishEvent(
+      // Nostr-native DM encryption (NIP-04/NIP-17) is not implemented in this
+      // environment — the SDK's nip17Encrypt throws and no nip04 exists.
+      // Deliver the already-encrypted blob as a kind-1 wrapper note instead
+      // of fabricating an encrypted DM.
+      const ev = nostr.signEvent(
         {
-          kind: 4, // NIP-04 encrypted DM
+          pubkey: '', // signEvent derives pubkey from secretKey
+          kind: 1,
           tags: [['p', recipientPubkey]],
-          content: encryptedContent,
+          content: message.encryptedBlob,
           created_at: Math.floor(Date.now() / 1000),
         },
         senderNsec,
@@ -694,7 +692,7 @@ export class MessageTransport {
       // Use the realtime server's WebSocket broadcast to deliver directly
       const { broadcastToUser } = await import('../ws-broadcast');
 
-      const delivered = broadcastToUser(message.toId, 'dm:encrypted', {
+      broadcastToUser(message.toId, 'dm:new', {
         id: message.id,
         fromId: message.fromId,
         encryptedBlob: message.encryptedBlob,
@@ -702,13 +700,12 @@ export class MessageTransport {
         createdAt: Date.now(),
       });
 
-      // Broadcast also returns delivery info
       // Queue for persistent delivery if user is offline
-      await this.queueForOfflineDelivery(env, message).catch(() => {});
+      await this.queueForOfflineDelivery(message, env).catch(() => {});
 
       return {
         protocol,
-        ok: delivered,
+        ok: true,
         nativeId: message.id,
         attemptedAt: Date.now(),
       };
@@ -869,8 +866,9 @@ export class MessageTransport {
     const res = await fetch(`${homeserver}/_matrix/client/v3/rooms?access_token=${accessToken}`);
     if (res.ok) {
       const data = (await res.json()) as { rooms: Array<{ room_id: string }> };
-      if (data.rooms?.length > 0) {
-        return data.rooms[0].room_id;
+      const firstRoom = data.rooms?.[0];
+      if (firstRoom) {
+        return firstRoom.room_id;
       }
     }
 
