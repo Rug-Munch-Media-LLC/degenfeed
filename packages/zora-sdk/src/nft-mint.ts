@@ -36,7 +36,7 @@
  * });
  * ```
  */
-import { type Address, createPublicClient, createWalletClient, http } from 'viem';
+import { type Address, createWalletClient, http } from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
 import { base } from 'viem/chains';
 
@@ -146,17 +146,9 @@ export interface UploadMetadataResult {
 // Constants
 // ═════════════════════════════════════════════════════════════════════════
 
-import { RPC_FALLBACKS } from '@degenfeed/web3/rpc-router';
-
-const CHAIN_CONFIGS: Record<string, { chainId: number; rpc: string }> = {
-  base: { chainId: 8453, rpc: RPC_FALLBACKS.base[0] },
-  zora: { chainId: 7777777, rpc: RPC_FALLBACKS.zora[0] },
-  optimism: { chainId: 10, rpc: RPC_FALLBACKS.optimism[0] },
-  ethereum: { chainId: 1, rpc: RPC_FALLBACKS.ethereum[0] },
-};
-
 /** Zora Creator contract address on Base (ERC-1155 edition minter). */
-const ZORA_CREATOR_ADDRESS: Record<string, Address> = {
+type ZoraMintChain = 'base' | 'zora' | 'optimism' | 'ethereum';
+const ZORA_CREATOR_ADDRESS: Record<ZoraMintChain, Address> = {
   base: '0x7777777F279eba3d3Ad8F4E708e3a3E3cCbE3e3e',
   zora: '0x7777777F279eba3d3Ad8F4E708e3a3E3cCbE3e3e',
 };
@@ -172,16 +164,10 @@ const DEFAULT_ROYALTY_BPS = 500;
 // ═════════════════════════════════════════════════════════════════════════
 
 export class ZoraNFTMinter {
-  private publicClient: any;
   private walletClient: any;
   private account?: ReturnType<typeof privateKeyToAccount>;
 
   constructor(opts: { rpcUrl?: string; privateKey?: string } = {}) {
-    this.publicClient = createPublicClient({
-      chain: base,
-      transport: http(opts.rpcUrl || 'https://mainnet.base.org'),
-    });
-
     if (opts.privateKey) {
       this.account = privateKeyToAccount(opts.privateKey as `0x${string}`);
       this.walletClient = createWalletClient({
@@ -205,7 +191,6 @@ export class ZoraNFTMinter {
     }
 
     const chain = config.chain ?? 'base';
-    const chainConfig = CHAIN_CONFIGS[chain] ?? CHAIN_CONFIGS.base;
 
     // Validate
     if (!config.name?.trim()) throw new Error('Collection name is required');
@@ -265,16 +250,16 @@ export class ZoraNFTMinter {
     });
 
     const hash = await this.walletClient.sendTransaction({
-      to: ZORA_CREATOR_ADDRESS[chain],
+      to: ZORA_CREATOR_ADDRESS[chain] ?? ZORA_CREATOR_ADDRESS.base,
       data,
       chain: chain === 'base' ? base : undefined,
     });
 
     return {
-      collectionAddress: ZORA_CREATOR_ADDRESS[chain], // In production, derive from events
+      collectionAddress: ZORA_CREATOR_ADDRESS[chain] ?? ZORA_CREATOR_ADDRESS.base, // In production, derive from events
       txHash: hash,
       explorerUrl: `https://basescan.org/tx/${hash}`,
-      zoraUrl: `https://zora.co/collect/${chain}:${ZORA_CREATOR_ADDRESS[chain]}`,
+      zoraUrl: `https://zora.co/collect/${chain}:${ZORA_CREATOR_ADDRESS[chain] ?? ZORA_CREATOR_ADDRESS.base}`,
     };
   }
 
@@ -333,7 +318,7 @@ export class ZoraNFTMinter {
     const mintPriceWei = config.mintPriceWei ?? 0n;
     const protocolRewardAmount = mintPriceWei > 0n ? (mintPriceWei * 25n) / 1000n : 0n; // 2.5%
 
-    const { encodeFunctionData, parseEther } = await import('viem');
+    const { encodeFunctionData } = await import('viem');
 
     // Setup mint args for ERC-1155 edition
     const mintArgs = {
@@ -406,8 +391,6 @@ export class ZoraNFTMinter {
   }> {
     const deadline = config.deadline ?? BigInt(Math.floor(Date.now() / 1000) + 3600); // 1 hour
 
-    const { stringToHex, keccak256, encodePacked } = await import('viem');
-
     // EIP-712 typed data for gasless mint
     const typedData = {
       types: {
@@ -469,7 +452,6 @@ export class ZoraNFTMinter {
       });
 
       if (!res.ok) {
-        const body = await res.text().catch(() => '');
         return { success: false };
       }
 
@@ -541,7 +523,7 @@ export class ZoraNFTMinter {
    */
   async getNFTDetails(
     contractAddress: Address,
-    tokenId: string,
+    _tokenId: string,
     indexerUrl?: string,
   ): Promise<Record<string, unknown> | null> {
     const baseUrl = indexerUrl || 'http://127.0.0.1:8091';
@@ -564,7 +546,7 @@ export class ZoraNFTMinter {
    */
   async getProtocolRewardsBalance(creatorAddress: Address): Promise<bigint> {
     try {
-      const { createPublicClient, http: viemHttp, getContract } = await import('viem');
+      const { createPublicClient, http: viemHttp } = await import('viem');
       const pc = createPublicClient({ chain: base, transport: viemHttp() });
 
       const balance = await pc.readContract({

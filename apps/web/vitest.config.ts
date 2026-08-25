@@ -17,7 +17,15 @@ export default defineConfig({
     globals: true,
     environment: 'happy-dom',
     include: ['src/**/*.{test,spec}.{ts,tsx}', '../../tests/**/*.{test,spec}.{ts,tsx}'],
-    exclude: ['node_modules', 'dist', '.next', '.turbo'],
+    exclude: [
+      'node_modules',
+      'dist',
+      '.next',
+      '.turbo',
+      // Wrong-harness tests meant for Playwright / live-network runners
+      '../../tests/{e2e,perf,a11y,smoke}/**',
+      '../../tests/live/**',
+    ],
     setupFiles: ['../../tests/vitest.setup.ts'],
   },
 });

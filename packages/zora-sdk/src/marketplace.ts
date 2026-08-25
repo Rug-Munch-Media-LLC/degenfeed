@@ -21,7 +21,7 @@
  * const bid = await marketplace.placeBid({ ... });
  * ```
  */
-import { type Address, createPublicClient, createWalletClient, http } from 'viem';
+import { type Address, createWalletClient, http } from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
 import { base } from 'viem/chains';
 
@@ -198,16 +198,11 @@ const ZORA_MODULE_MANAGER = '0x0000000000a9d0e2e6b3c3e9e3e9e3e9e3e9e3e9';
 // ═════════════════════════════════════════════════════════════════════════
 
 export class ZoraMarketplace {
-  private publicClient: any;
   private walletClient: any;
   private account?: ReturnType<typeof privateKeyToAccount>;
   private indexerUrl: string;
 
   constructor(opts: { rpcUrl?: string; privateKey?: string; indexerUrl?: string } = {}) {
-    this.publicClient = createPublicClient({
-      chain: base,
-      transport: http(opts.rpcUrl || 'https://mainnet.base.org'),
-    });
     this.indexerUrl = opts.indexerUrl || ZORA_INDEXER_DEFAULT;
 
     if (opts.privateKey) {

@@ -1,5 +1,11 @@
 import { buildUnifiedPost } from '@degenfeed/feed-core';
-import type { Embed, MediaAttachment, Protocol, UnifiedIdentity, UnifiedPost } from '@degenfeed/types';
+import type {
+  Embed,
+  MediaAttachment,
+  Protocol,
+  UnifiedIdentity,
+  UnifiedPost,
+} from '@degenfeed/types';
 import { buildUrl, DEFAULT_USER_AGENT, fetchJson } from '../utils';
 export interface GtSAccount {
   id: string;
@@ -105,7 +111,7 @@ export function accountToIdentity(account: GtSAccount, instanceUrl: string): Uni
   const profileUrl =
     account.url && account.url.length > 0
       ? account.url
-      : `${instanceUrl.replace(/\/+$/, '')}/@${encodeURIComponent(localHandle)}`;
+      : `${instanceUrl.replace(/\/+$/, '')}/@${encodeURIComponent(localHandle ?? account.acct)}`;
   return {
     id: `mastodon:${account.id}@${hostname}`,
     primary: { protocol: 'mastodon', id: account.id },

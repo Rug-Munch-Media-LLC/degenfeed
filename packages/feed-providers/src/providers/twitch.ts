@@ -203,7 +203,10 @@ function bridgeItemToUnifiedPost(item: TwitchBridgeItem, fallbackChannel: string
   const lines = [`🔴 ${title}`, '', `Channel: ${channel}`];
   if (viewers > 0) lines.push(`Viewers: ${fmtCount(viewers)}`);
   if (categories.length > 0) lines.push(`Tags: ${categories.join(', ')}`);
-  const plain = content.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+  const plain = content
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
   if (plain) lines.push('', plain.slice(0, 400));
 
   const timestamp =
@@ -253,11 +256,7 @@ function streamToUnifiedPost(s: TwitchStream): UnifiedPost {
   return buildUnifiedPost({
     protocol: 'twitch',
     nativeId: `stream:${s.id ?? `${streamer}:${s.started_at ?? Date.now()}`}`,
-    author: streamerIdentity(
-      s.user_id ?? s.user_login ?? 'twitch',
-      s.user_login ?? null,
-      streamer,
-    ),
+    author: streamerIdentity(s.user_id ?? s.user_login ?? 'twitch', s.user_login ?? null, streamer),
     text: lines.join('\n'),
     embeds: [
       {
@@ -434,8 +433,8 @@ export class TwitchProvider implements FeedProvider {
           bridgeItems = await this.fetchViaBridge(timeoutMs);
           // Channel-tagged posts
           const itemPosts = bridgeItems.map((item, idx) => {
-            const cfg = this.channels[idx % this.channels.length];
-            return bridgeItemToUnifiedPost(item, cfg.channel);
+            const cfg = this.channels[idx % this.channels.length] ?? this.channels[0];
+            return bridgeItemToUnifiedPost(item, cfg?.channel ?? 'twitch');
           });
           posts.push(...itemPosts);
           console.log(`[twitch] RSS-Bridge returned ${bridgeItems.length} items`);
@@ -465,7 +464,7 @@ export class TwitchProvider implements FeedProvider {
         // Dedup by native id + URL
         const seen = new Set<string>();
         const deduped = posts.filter((p) => {
-          const key = (p.raw as { _channel?: string })?.id ?? p.id;
+          const key = (p.raw as { _channel?: string; id?: string | null })?.id ?? p.id;
           if (seen.has(key)) return false;
           seen.add(key);
           return true;
@@ -477,8 +476,9 @@ export class TwitchProvider implements FeedProvider {
           return CRYPTO_TECH_KEYWORDS.some((k) => haystack.includes(k));
         };
         const cryptoTech = deduped.filter(keyword);
-        const ordered = (cryptoTech.length >= 5 ? [...cryptoTech, ...deduped.filter((p) => !keyword(p))] : deduped)
-          .slice(0, 200);
+        const ordered = (
+          cryptoTech.length >= 5 ? [...cryptoTech, ...deduped.filter((p) => !keyword(p))] : deduped
+        ).slice(0, 200);
 
         return {
           posts: ordered,

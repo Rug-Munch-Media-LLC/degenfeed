@@ -59,7 +59,7 @@ export function lobstersStoryToPost(story: LobstersStory): UnifiedPost | null {
     followerCount: 0,
     followingCount: 0,
     links: [{ label: 'lobsters-user', url: `https://lobste.rs/u/${submitter}` }],
-    keys: { lobstersUser: submitter },
+    keys: { lobstersUsername: submitter },
   };
 
   const body = story.description_plain || story.description || '';
@@ -82,7 +82,9 @@ export function lobstersStoryToPost(story: LobstersStory): UnifiedPost | null {
     protocol: 'lobsters',
     author,
     text,
-    html: body ? `<p>${stripArticleHtml(body).slice(0, 1200).replace(/\n/g, '<br/>')}</p>` : undefined,
+    html: body
+      ? `<p>${stripArticleHtml(body).slice(0, 1200).replace(/\n/g, '<br/>')}</p>`
+      : undefined,
     embeds,
     contentType: 'link',
     createdAt: Number.isNaN(created) ? Date.now() : created,
@@ -144,7 +146,7 @@ function lobstersRssItemToPost(item: LobstersRssItem): UnifiedPost | null {
     followerCount: 0,
     followingCount: 0,
     links: [{ label: 'lobsters-user', url: `https://lobste.rs/u/${submitter}` }],
-    keys: { lobstersUser: submitter },
+    keys: { lobstersUsername: submitter },
   };
   const image = firstImage(item.images[0], item.description);
   const embeds: UnifiedPost['embeds'] = [];
@@ -158,7 +160,9 @@ function lobstersRssItemToPost(item: LobstersRssItem): UnifiedPost | null {
     protocol: 'lobsters',
     author,
     text: title,
-    html: item.description ? `<p>${stripArticleHtml(item.description).slice(0, 900)}</p>` : undefined,
+    html: item.description
+      ? `<p>${stripArticleHtml(item.description).slice(0, 900)}</p>`
+      : undefined,
     embeds,
     contentType: 'link',
     createdAt: Number.isNaN(publishedAt) ? Date.now() : publishedAt,

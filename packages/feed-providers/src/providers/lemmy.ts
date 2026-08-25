@@ -19,7 +19,7 @@ import {
   enrichPostNiches,
   subscriberTier,
 } from '@degenfeed/feed-core';
-import type { Protocol, UnifiedIdentity, UnifiedPost } from '@degenfeed/types';
+import type { MediaAttachment, Protocol, UnifiedIdentity, UnifiedPost } from '@degenfeed/types';
 import type { FeedProvider, FeedResult, FetchOptions, HealthResult, SchemaGuard } from '../types';
 import {
   buildUrl,

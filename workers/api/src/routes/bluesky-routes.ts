@@ -32,8 +32,8 @@
 
 import type { AtProtocolAppCategory } from '@degenfeed/bluesky-sdk/atproto-directory';
 import { buildAppDirectoryResponse, getAppByKey } from '@degenfeed/bluesky-sdk/atproto-directory';
-import type { DegenFeedType } from '@degenfeed/bluesky-sdk/atproto-feeds';
 import { generateDegenFeed } from '@degenfeed/bluesky-sdk/atproto-feeds';
+import type { CrossAppContent } from '@degenfeed/bluesky-sdk/atproto-firehose';
 import {
   discoverAppContent,
   discoverCrossAppContent,
@@ -44,7 +44,6 @@ import type { Hono } from 'hono';
 import {
   badRequest,
   created,
-  forbidden,
   jsonResponse,
   noCacheJsonResponse,
   notFound,
@@ -79,7 +78,7 @@ const USER_AGENT = 'DegenFeed/0.1 (+https://degenfeed.xyz)';
  * Returns:
  *   Account credentials + AT Protocol ecosystem info + app login URIs
  */
-export async function handleBlueskyRegister(request: Request, env: Env): Promise<Response> {
+export async function handleBlueskyRegister(request: Request, _env: Env): Promise<Response> {
   let body: {
     handle?: string;
     email?: string;
@@ -178,7 +177,7 @@ export async function handleBlueskyRegister(request: Request, env: Env): Promise
  *
  * Login to an existing Bluesky account on our PDS.
  */
-export async function handleBlueskyLogin(request: Request, env: Env): Promise<Response> {
+export async function handleBlueskyLogin(request: Request, _env: Env): Promise<Response> {
   let body: {
     identifier?: string;
     password?: string;
@@ -301,7 +300,7 @@ export async function handleBlueskyApps(request: Request, _env: Env): Promise<Re
 export async function handleAtprotoDiscover(request: Request, _env: Env): Promise<Response> {
   const params = new URL(request.url).searchParams;
   const limit = Math.min(parseInt(params.get('limit') || '50', 10) || 50, 100);
-  const sourceApps = params.get('source') ? params.get('source')!.split(',') : undefined;
+  const sourceApps = params.get('source') ? params.get('source')?.split(',') : undefined;
   const typesParam = params.get('type');
   const cursor = params.get('cursor') || undefined;
 
@@ -397,8 +396,9 @@ export async function handleBlueskyExport(request: Request, env: Env): Promise<R
     const migrationClient = new PdsMigrationClient(PDS_URL, USER_AGENT);
     const exportResult = await migrationClient.exportRepo(did, sourcePds);
 
-    // Return CAR file as download
-    return new Response(exportResult.carData, {
+    // Return CAR file as download - convert Uint8Array to Blob for Response body
+    const carBlob = new Blob([exportResult.carData], { type: 'application/vnd.ipld.car' });
+    return new Response(carBlob, {
       status: 200,
       headers: {
         'content-type': 'application/vnd.ipld.car',
@@ -951,7 +951,7 @@ export function registerBlueskyRoutes(app: Hono<{ Bindings: Env }>): void {
  */
 function extractBearerToken(request: Request): string | null {
   const auth = request.headers.get('authorization');
-  if (!auth || !auth.startsWith('Bearer ')) return null;
+  if (!auth?.startsWith('Bearer ')) return null;
   return auth.slice(7);
 }
 

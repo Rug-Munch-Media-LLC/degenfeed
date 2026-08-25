@@ -398,7 +398,8 @@ export function parseThreadsBridgeAtom(xml: string): ThreadsBridgeEntry[] {
     const block = m[1] ?? '';
     const title = extractAtomTag(block, 'title');
     const link = extractAtomAttr(block, 'link', 'href') || extractAtomTag(block, 'id');
-    const published = extractAtomTag(block, 'published') || extractAtomTag(block, 'updated');
+    const updated = extractAtomTag(block, 'updated');
+    const published = extractAtomTag(block, 'published') || updated;
     const summary = extractAtomTag(block, 'summary');
     const content = extractAtomTag(block, 'content');
     const authorName = extractAtomTag(block, 'name');
@@ -535,7 +536,9 @@ async function fetchThreadsViaRssBridge(
           });
           if (!res.ok) return [] as UnifiedPost[];
           const xml = await res.text();
-          return parseThreadsBridgeAtom(xml).map((entry) => threadsBridgeEntryToPost(entry, handle));
+          return parseThreadsBridgeAtom(xml).map((entry) =>
+            threadsBridgeEntryToPost(entry, handle),
+          );
         } catch {
           return [] as UnifiedPost[];
         }

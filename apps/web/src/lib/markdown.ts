@@ -29,7 +29,7 @@ export function renderMarkdown(md: string): string {
   // Links [label](url) — only http/https allowed
   html = html.replace(/\[([^\]\n]+)\]\(([^)\s]+)\)/g, (_m, label: string, url: string) => {
     const trimmed = url.trim();
-    if (!isValidHttpUrl(trimmed)) return `[${label}](${url})`;
+    if (!isValidHttpUrl(trimmed)) return `[${label}]`;
     return `<a href="${trimmed}" target="_blank" rel="noopener noreferrer nofollow">${label}</a>`;
   });
 

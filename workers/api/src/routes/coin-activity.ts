@@ -70,7 +70,6 @@ const ACTIVITY_ICONS: Record<ActivityType, string> = {
   tip_creator: '💬',
 };
 
-// @ts-expect-error TS6133 unused
 const _ACTIVITY_LABELS: Record<ActivityType, string> = {
   buy: 'bought',
   sell: 'sold',

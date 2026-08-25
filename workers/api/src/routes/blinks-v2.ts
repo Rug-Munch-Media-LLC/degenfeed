@@ -23,23 +23,22 @@ import {
   SystemProgram,
   Transaction,
 } from '@solana/web3.js';
-import type { Env } from '../types';
-import { jsonResponse } from '../response-helpers';
-import { methodNotAllowed } from '../response-helpers';
+import { jsonResponse, methodNotAllowed } from '../response-helpers';
 import {
   hasSuspiciousPayload,
   isValidAmount,
   isValidSolanaAddress,
   sanitizeString,
 } from '../sanitize';
-import { recordUnifiedTip, type TipEntityType, type TipPlatform } from './unified-tip-core';
+import type { Env } from '../types';
+import { recordUnifiedTip } from './unified-tip-core';
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
 const MAX_TIP_SOL = 100;
 const MIN_TIP_SOL = 0.000001;
 const DEFAULT_BLINK_RPC = 'https://api.mainnet-beta.solana.com';
-const BLINKS_TTL_SECONDS = 60 * 60 * 24 * 7; // 1 week for blink metadata
+const _BLINKS_TTL_SECONDS = 60 * 60 * 24 * 7; // 1 week for blink metadata
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -99,29 +98,6 @@ export interface BlinkConfirmation {
 
 // ─── Types of blink request ─────────────────────────────────────────────────
 
-interface BlinkParams {
-  /** Recipient Solana address or DegenFeed handle */
-  recipient?: string;
-  /** Amount in SOL */
-  amount?: string;
-  /** Optional creator name for metadata */
-  creatorName?: string;
-  /** Optional creator avatar */
-  creatorAvatar?: string;
-  /** Optional creator bio */
-  creatorBio?: string;
-  /** Optional entity type: post, video, comment, track, etc. */
-  entityType?: string;
-  /** Optional entity label */
-  entityLabel?: string;
-  /** Optional entity ID for tracking */
-  entityId?: string;
-  /** Platform the content originated from */
-  platform?: string;
-  /** Fixed amount blink (no user input) */
-  fixed?: string;
-}
-
 // ─── Main Handler ───────────────────────────────────────────────────────────
 
 export async function handleBlinkV2(request: Request, env: Env): Promise<Response> {
@@ -157,7 +133,7 @@ export async function handleBlinkV2(request: Request, env: Env): Promise<Respons
 
 // ─── GET: Build Blink Action Metadata ──────────────────────────────────────
 
-function buildBlinkV2Action(url: URL, env: Env): BlinkActionMetadata {
+function buildBlinkV2Action(url: URL, _env: Env): BlinkActionMetadata {
   const origin = `${url.protocol}//${url.host}`;
   const recipient = sanitizeString(url.searchParams.get('recipient'), 128);
   const creatorName = sanitizeString(url.searchParams.get('creatorName'), 256);
@@ -229,7 +205,8 @@ function buildBlinkV2Action(url: URL, env: Env): BlinkActionMetadata {
     const cleanHref = `${baseHref}?recipient={recipient}&amount={amount}${
       creatorName ? `&creatorName=${encodeURIComponent(creatorName)}` : ''
     }`;
-    action.links!.actions[0]!.href = cleanHref;
+    const firstAction = action.links?.actions[0];
+    if (firstAction) firstAction.href = cleanHref;
   }
 
   return action;
@@ -499,11 +476,25 @@ async function handleBlinkConfirm(request: Request, env: Env): Promise<Response>
     }
 
     // If we have a transfer instruction, extract the amount
-    if (!amountSol && txResult.transaction?.message?.instructions) {
-      for (const ix of txResult.transaction.message.instructions) {
-        if (ix.programId?.toBase58() === '11111111111111111111111111111111') {
-          // System program transfer — decode lamports
-          // For simplicity, use the stored amount
+    if (!amountSol && txResult.transaction?.message) {
+      const message = txResult.transaction.message;
+      // Handle VersionedMessage (v0) - need to get compiledInstructions
+      if ('compiledInstructions' in message && message.compiledInstructions) {
+        for (const ix of message.compiledInstructions) {
+          const programIdIndex = ix.programIdIndex;
+          const accountKeys = message.staticAccountKeys || message.accountKeys;
+          const programId = accountKeys[programIdIndex]?.toBase58();
+          if (programId === '11111111111111111111111111111111') {
+            // System program transfer — decode lamports
+            // For simplicity, use the stored amount
+          }
+        }
+      } else if ('instructions' in message && message.instructions) {
+        // Legacy Message format
+        for (const ix of message.instructions) {
+          if (ix.programId?.toBase58() === '11111111111111111111111111111111') {
+            // System program transfer
+          }
         }
       }
     }
@@ -613,12 +604,14 @@ async function lookupEntityInfo(
       const tipData = JSON.parse(tipRaw) as Record<string, unknown>;
       const tips = tipData.tips as Array<Record<string, unknown>> | undefined;
       if (tips && tips.length > 0) {
-        const tip = tips[0] as Record<string, unknown> | undefined;
-        return {
-          recipientAddress: (tip.toUserId as string) ?? entityId,
-          creatorName: tip.toLabel as string,
-          entityLabel: tip.entityLabel as string,
-        };
+        const tip = tips[0];
+        if (tip) {
+          return {
+            recipientAddress: (tip.toUserId as string) ?? entityId,
+            creatorName: tip.toLabel as string,
+            entityLabel: tip.entityLabel as string,
+          };
+        }
       }
     }
 
@@ -676,7 +669,7 @@ async function resolveBlinkRecipient(input: string, env: Env): Promise<string | 
 
 let _cachedSolPrice: { price: number; at: number } | null = null;
 
-async function fetchSolPrice(env: Env): Promise<number> {
+async function fetchSolPrice(_env: Env): Promise<number> {
   // Cache for 60s
   if (_cachedSolPrice && Date.now() - _cachedSolPrice.at < 60_000) {
     return _cachedSolPrice.price;

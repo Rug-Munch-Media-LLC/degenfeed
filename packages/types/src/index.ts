@@ -198,6 +198,10 @@ export interface UnifiedIdentity {
     openseaSlug?: string;
     /** Lobste.rs username */
     lobstersUsername?: string;
+    /** Nostr group (NIP-29) public key / group ID */
+    nostrGroupId?: string;
+    /** Threads @handle */
+    threadsHandle?: string;
     /** Snapshot space ID */
     snapshotSpace?: string;
     /** Tally governance ID */

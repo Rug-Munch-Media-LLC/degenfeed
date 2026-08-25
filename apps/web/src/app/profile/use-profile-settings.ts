@@ -7,7 +7,7 @@
  */
 
 import { useEffect, useState } from 'react';
-import type { CreatorSettings } from '../app/profile/types';
+import type { CreatorSettings } from './types';
 
 export interface ProfileCustomization {
   bio: string;

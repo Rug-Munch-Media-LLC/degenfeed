@@ -3,7 +3,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 // Mock @degenfeed/nostr-sdk for nostr bridge tests
 vi.mock('@degenfeed/nostr-sdk', () => ({
   getPublicKey: vi.fn(() => 'pubkey-abc'),
-  signEvent: vi.fn((e: unknown) => ({ ...e, id: 'signed-event-id', sig: 'sig-abc' })),
+  signEvent: vi.fn((e: Record<string, unknown>) => ({
+    ...e,
+    id: 'signed-event-id',
+    sig: 'sig-abc',
+  })),
   RelayPool: vi.fn(() => ({
     publish: vi.fn(),
     disconnectAll: vi.fn(),
@@ -487,7 +491,11 @@ describe('twitchBridge', () => {
     // Re-mock deps after reset
     vi.mock('@degenfeed/nostr-sdk', () => ({
       getPublicKey: vi.fn(() => 'pubkey-abc'),
-      signEvent: vi.fn((e: unknown) => ({ ...e, id: 'signed-event-id', sig: 'sig-abc' })),
+      signEvent: vi.fn((e: Record<string, unknown>) => ({
+        ...e,
+        id: 'signed-event-id',
+        sig: 'sig-abc',
+      })),
       RelayPool: vi.fn(() => ({ publish: vi.fn(), disconnectAll: vi.fn() })),
     }));
     vi.mock('@degenfeed/peertube-provider', () => ({
@@ -657,7 +665,11 @@ describe('youTubeBridge', () => {
     vi.resetModules();
     vi.mock('@degenfeed/nostr-sdk', () => ({
       getPublicKey: vi.fn(() => 'pubkey-abc'),
-      signEvent: vi.fn((e: unknown) => ({ ...e, id: 'signed-event-id', sig: 'sig-abc' })),
+      signEvent: vi.fn((e: Record<string, unknown>) => ({
+        ...e,
+        id: 'signed-event-id',
+        sig: 'sig-abc',
+      })),
       RelayPool: vi.fn(() => ({ publish: vi.fn(), disconnectAll: vi.fn() })),
     }));
     vi.mock('@degenfeed/peertube-provider', () => ({

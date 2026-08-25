@@ -140,7 +140,7 @@ function groupMetadataToPost(event: NostrGroupEvent): UnifiedPost | null {
     text,
     html: meta.about ? `<p>${meta.about.slice(0, 900)}</p>` : undefined,
     embeds,
-    contentType: 'community',
+    contentType: 'text',
     createdAt: event.created_at * 1000,
     metrics: { likes: 0, reposts: 0, replies: 0, quotes: 0 },
     engagement: {
@@ -150,10 +150,10 @@ function groupMetadataToPost(event: NostrGroupEvent): UnifiedPost | null {
       raw: { likes: 0, reposts: 0, replies: 0, quotes: 0 },
     },
     image: meta.picture,
-    media: meta.picture,
+    media: meta.picture ? [{ url: meta.picture, type: 'image', alt: meta.name }] : undefined,
     raw: { source: 'nostr-nip29-metadata', groupId, event },
     niches: [...new Set(detectNiches(`${meta.name} ${meta.about}`))],
-  } as UnifiedPost;
+  } satisfies UnifiedPost;
 }
 
 /** Build a UnifiedPost from a NIP-29 group note (kind 39001). */

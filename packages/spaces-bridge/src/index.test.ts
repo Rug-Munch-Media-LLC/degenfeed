@@ -1,10 +1,13 @@
-import type { Mock } from 'vitest';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 // Mock all external deps before imports
 vi.mock('@degenfeed/nostr-sdk', () => ({
   getPublicKey: vi.fn(() => 'pubkey-abc'),
-  signEvent: vi.fn((e: unknown) => ({ ...e, id: 'signed-event-id', sig: 'sig-abc' })),
+  signEvent: vi.fn((e: Record<string, unknown>) => ({
+    ...e,
+    id: 'signed-event-id',
+    sig: 'sig-abc',
+  })),
   RelayPool: vi.fn(() => ({
     publish: vi.fn(),
     disconnectAll: vi.fn(),
@@ -49,12 +52,11 @@ import {
   getSpaceById,
   updateSpace,
 } from './index';
-import { checkAllGates } from './premium';
-import type { CreateSpaceOptions, SpaceGating, SpaceItem } from './types';
+import type { CreateSpaceOptions, SpaceGating, SpaceItem, SpacePlatform } from './types';
 
 // ─── Fixtures ──────────────────────────────────────────────────────────────
 
-function makePlatformData(platform: string, nativeId: string) {
+function makePlatformData(platform: SpacePlatform, nativeId: string) {
   return { platform, nativeId, url: `https://example.com/${nativeId}` };
 }
 
@@ -169,8 +171,8 @@ describe('createSpace()', () => {
     expect(result.platformResults.length).toBeGreaterThanOrEqual(1);
     const nostrResult = result.platformResults.find((r) => r.platform === 'nostr');
     expect(nostrResult).toBeDefined();
-    expect(nostrResult!.nativeId).toBeTruthy();
-    expect(nostrResult!.error).toBeUndefined();
+    expect(nostrResult?.nativeId).toBeTruthy();
+    expect(nostrResult?.error).toBeUndefined();
   });
 
   it('should create a space on multiple platforms', async () => {

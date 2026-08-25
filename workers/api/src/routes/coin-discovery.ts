@@ -25,7 +25,7 @@ export const coinDiscovery = new Hono<{ Bindings: Env }>();
 
 const COIN_PREFIX = 'coin:';
 const SYMBOL_INDEX_PREFIX = 'coin:symbol:';
-const PROTOCOL_COIN_INDEX = 'coin:protocol:';
+const _PROTOCOL_COIN_INDEX = 'coin:protocol:';
 const VALID_PROTOCOLS = new Set([
   'farcaster',
   'nostr',
@@ -298,7 +298,7 @@ async function getAllProtocolCoins(limit: number, env: Env): Promise<ProtocolCoi
 
   // Build views for each coin showing their primary protocol
   const views = allCoins
-    .sort((a, b) => b.volume24h - a.volume24h)
+    .sort((a, b) => (b.volume24h ?? 0) - (a.volume24h ?? 0))
     .slice(0, limit)
     .map((c) => buildProtocolView(c, c.originProtocol));
 
@@ -403,7 +403,7 @@ function buildProtocolView(coin: RawCoinRecord, protocol: string): ProtocolCoinV
   };
 }
 
-function getProtocolBuyLink(protocol: string, symbol: string, address: string): string {
+function getProtocolBuyLink(protocol: string, symbol: string, _address: string): string {
   switch (protocol) {
     case 'farcaster':
       return `https://app.degenfeed.xyz/coins/${symbol}/farcaster`;

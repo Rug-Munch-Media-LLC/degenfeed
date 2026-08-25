@@ -76,11 +76,7 @@ export class KeyVerificationManager {
   /**
    * Generate a key fingerprint for a user on a specific protocol.
    */
-  async generateFingerprint(
-    env: Env,
-    userId: string,
-    protocol: string,
-  ): Promise<KeyFingerprint> {
+  async generateFingerprint(env: Env, userId: string, protocol: string): Promise<KeyFingerprint> {
     // Generate a unique fingerprint from userId + protocol + random salt
     const salt = crypto.getRandomValues(new Uint8Array(16));
     const input = new TextEncoder().encode(`${userId}:${protocol}:${Date.now()}`);
@@ -102,8 +98,11 @@ export class KeyVerificationManager {
     // Short code: first 40 bits as base64url
     const shortBytes = hashArray.slice(0, 5);
     const shortCode = btoa(String.fromCharCode(...shortBytes))
-      .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
-      .slice(0, 6).toUpperCase();
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_')
+      .replace(/=+$/, '')
+      .slice(0, 6)
+      .toUpperCase();
 
     const kf: KeyFingerprint = {
       userId,
@@ -130,11 +129,7 @@ export class KeyVerificationManager {
   /**
    * Get a user's key fingerprint.
    */
-  async getFingerprint(
-    env: Env,
-    userId: string,
-    protocol: string,
-  ): Promise<KeyFingerprint | null> {
+  async getFingerprint(env: Env, userId: string, protocol: string): Promise<KeyFingerprint | null> {
     const kv = env.CACHE ?? env.CONTENT_LIBRARY;
     if (!kv) return null;
 
@@ -191,11 +186,9 @@ export class KeyVerificationManager {
     const kv = env.CACHE ?? env.CONTENT_LIBRARY;
     if (kv) {
       // Store verification record
-      await kv.put(
-        `${VERIFICATION_PREFIX}${verificationId}`,
-        JSON.stringify(request),
-        { expirationTtl: 86400 * 365 },
-      );
+      await kv.put(`${VERIFICATION_PREFIX}${verificationId}`, JSON.stringify(request), {
+        expirationTtl: 86400 * 365,
+      });
 
       // If verified, mark both users as verified for this protocol
       if (matched) {
@@ -204,12 +197,12 @@ export class KeyVerificationManager {
           const raw = await kv.get(verifiedKey);
           const verified: Record<string, string[]> = raw ? JSON.parse(raw) : {};
           if (!verified[verifierId]) verified[verifierId] = [];
-          if (!verified[verifierId]!.includes(targetId)) {
-            verified[verifierId]!.push(targetId);
+          if (!verified[verifierId]?.includes(targetId)) {
+            verified[verifierId]?.push(targetId);
           }
           if (!verified[targetId]) verified[targetId] = [];
-          if (!verified[targetId]!.includes(verifierId)) {
-            verified[targetId]!.push(verifierId);
+          if (!verified[targetId]?.includes(verifierId)) {
+            verified[targetId]?.push(verifierId);
           }
           await kv.put(verifiedKey, JSON.stringify(verified), {
             expirationTtl: 86400 * 365,
@@ -231,8 +224,8 @@ export class KeyVerificationManager {
     fp2: string,
   ): Promise<{ numeric: string; shortCode: string }> {
     const encoder = new TextEncoder();
-    const sorted = [fp1, fp2].sort();
-    const combined = encoder.encode(sorted[0] + sorted[1]);
+    const [a = '', b = ''] = [fp1, fp2].sort();
+    const combined = encoder.encode(a + b);
     const hashBuffer = await crypto.subtle.digest('SHA-256', combined);
     const hashArray = Array.from(new Uint8Array(hashBuffer));
     const hex = hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
@@ -245,8 +238,11 @@ export class KeyVerificationManager {
 
     const shortBytes = hashArray.slice(0, 5);
     const shortCode = btoa(String.fromCharCode(...shortBytes))
-      .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
-      .slice(0, 6).toUpperCase();
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_')
+      .replace(/=+$/, '')
+      .slice(0, 6)
+      .toUpperCase();
 
     return {
       numeric: numericGroups.join(' '),
@@ -257,12 +253,7 @@ export class KeyVerificationManager {
   /**
    * Check if two users have verified each other's keys.
    */
-  async isVerified(
-    env: Env,
-    userId: string,
-    peerId: string,
-    protocol: string,
-  ): Promise<boolean> {
+  async isVerified(env: Env, userId: string, peerId: string, protocol: string): Promise<boolean> {
     const kv = env.CACHE ?? env.CONTENT_LIBRARY;
     if (!kv) return false;
 
@@ -280,11 +271,7 @@ export class KeyVerificationManager {
   /**
    * Get a list of verified peers for a user.
    */
-  async getVerifiedPeers(
-    env: Env,
-    userId: string,
-    protocol: string,
-  ): Promise<string[]> {
+  async getVerifiedPeers(env: Env, userId: string, protocol: string): Promise<string[]> {
     const kv = env.CACHE ?? env.CONTENT_LIBRARY;
     if (!kv) return [];
 

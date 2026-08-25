@@ -21,6 +21,54 @@
 
 import type { Env } from '@degenfeed/types';
 
+// ─── Local WebSocket Broadcast Types (replaces fragile relative import) ──────
+// [REVIEW] These interfaces mirror workers/api/src/ws-broadcast.ts and ws-channels.ts
+// Keep in sync if those change. A proper package export would be better.
+
+export type ChannelName =
+  | 'feed:new'
+  | 'feed:update'
+  | 'feed:freshness'
+  | 'notifications:new'
+  | 'notifications:markAllRead'
+  | 'notifications:read'
+  | 'dm:new'
+  | 'dm:typing'
+  | 'space:update'
+  | 'tip:received'
+  | 'tip:global'
+  | 'stream:chat'
+  | 'feed:new-post'
+  | 'feed:trending-update'
+  | 'feed:engagement-update'
+  | 'feed:protocol-status'
+  | 'call:incoming'
+  | 'call:state'
+  | `user:${string}`
+  | `subscribe:feed:${'for-you' | 'home' | 'trending'}`
+  | `subscribe:protocol:${string}`;
+
+interface WSBroadcastInterface {
+  broadcastToAll: (channel: string, data: unknown) => void;
+  broadcastToUser: (userId: string, channel: string, data: unknown) => void;
+}
+
+// ─── WS broadcast (local fire-and-forget; mirrors workers/api ws-broadcast) ──
+const WS_BROADCAST_URL = 'https://realtime.degenfeed.xyz/broadcast';
+
+function wsSend(payload: { channel: string; data: unknown; userId?: string }): void {
+  void fetch(WS_BROADCAST_URL, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(payload),
+  }).catch(() => {
+    // realtime worker may not be reachable — silently ignore
+  });
+}
+
+const broadcastToAll: WSBroadcastInterface['broadcastToAll'] = (channel, data) =>
+  wsSend({ channel, data });
+
 // ─── Types ─────────────────────────────────────────────────────────────────
 
 export type DeliveryStatus = 'sending' | 'sent' | 'delivered' | 'read' | 'failed';
@@ -59,7 +107,16 @@ export interface MessageAction {
   messageId: string;
   conversationId: string;
   userId: string;
-  action: 'reply' | 'forward' | 'edit' | 'delete-for-me' | 'delete-for-everyone' | 'pin' | 'star' | 'unpin' | 'unstar';
+  action:
+    | 'reply'
+    | 'forward'
+    | 'edit'
+    | 'delete-for-me'
+    | 'delete-for-everyone'
+    | 'pin'
+    | 'star'
+    | 'unpin'
+    | 'unstar';
   data?: string;
   timestamp: number;
 }
@@ -150,11 +207,9 @@ export class ChatFeaturesManager {
 
     const kv = env.CACHE ?? env.CONTENT_LIBRARY;
     if (kv) {
-      await kv.put(
-        `${READ_PREFIX}${conversationId}:${userId}`,
-        JSON.stringify(receipt),
-        { expirationTtl: 86400 * 90 },
-      );
+      await kv.put(`${READ_PREFIX}${conversationId}:${userId}`, JSON.stringify(receipt), {
+        expirationTtl: 86400 * 90,
+      });
     }
 
     // Broadcast read receipt to conversation participants
@@ -166,11 +221,7 @@ export class ChatFeaturesManager {
   /**
    * Get the last read receipt for a user in a conversation.
    */
-  async getLastRead(
-    env: Env,
-    conversationId: string,
-    userId: string,
-  ): Promise<ReadReceipt | null> {
+  async getLastRead(env: Env, conversationId: string, userId: string): Promise<ReadReceipt | null> {
     const kv = env.CACHE ?? env.CONTENT_LIBRARY;
     if (!kv) return null;
 
@@ -185,11 +236,8 @@ export class ChatFeaturesManager {
   /**
    * Get all read receipts for a conversation.
    */
-  async getAllReadReceipts(
-    env: Env,
-    conversationId: string,
-  ): Promise<ReadReceipt[]> {
-    const kv = env.CACHE ?? env.CONTENT_LIBRARY;
+  async getAllReadReceipts(_env: Env, _conversationId: string): Promise<ReadReceipt[]> {
+    const kv = _env.CACHE ?? _env.CONTENT_LIBRARY;
     if (!kv) return [];
 
     // Note: In production with KV, this would use list() with prefix
@@ -235,11 +283,7 @@ export class ChatFeaturesManager {
   /**
    * Check if a user is typing in a conversation.
    */
-  async isTyping(
-    env: Env,
-    conversationId: string,
-    userId: string,
-  ): Promise<boolean> {
+  async isTyping(env: Env, conversationId: string, userId: string): Promise<boolean> {
     const kv = env.CACHE ?? env.CONTENT_LIBRARY;
     if (!kv) return false;
 
@@ -248,7 +292,7 @@ export class ChatFeaturesManager {
       if (!raw) return false;
 
       const state = JSON.parse(raw) as TypingState;
-      return state.isTyping && (Date.now() - state.startedAt) < TYPING_EXPIRY_MS;
+      return state.isTyping && Date.now() - state.startedAt < TYPING_EXPIRY_MS;
     } catch {
       return false;
     }
@@ -362,11 +406,11 @@ export class ChatFeaturesManager {
    * Get all reactions for a message.
    */
   async getReactions(
-    env: Env,
-    conversationId: string,
-    messageId: string,
+    _env: Env,
+    _conversationId: string,
+    _messageId: string,
   ): Promise<Record<string, string[]>> {
-    const kv = env.CACHE ?? env.CONTENT_LIBRARY;
+    const kv = _env.CACHE ?? _env.CONTENT_LIBRARY;
     if (!kv) return {};
 
     // Note: In production, iterate over known emojis
@@ -398,11 +442,9 @@ export class ChatFeaturesManager {
 
     const kv = env.CACHE ?? env.CONTENT_LIBRARY;
     if (kv) {
-      await kv.put(
-        `${FORWARD_PREFIX}${messageId}`,
-        JSON.stringify(action),
-        { expirationTtl: 86400 * 365 },
-      );
+      await kv.put(`${FORWARD_PREFIX}${messageId}`, JSON.stringify(action), {
+        expirationTtl: 86400 * 365,
+      });
     }
 
     return action;
@@ -434,11 +476,9 @@ export class ChatFeaturesManager {
 
     const kv = env.CACHE ?? env.CONTENT_LIBRARY;
     if (kv) {
-      await kv.put(
-        `${FORWARD_PREFIX}${messageId}`,
-        JSON.stringify(action),
-        { expirationTtl: 86400 * 365 },
-      );
+      await kv.put(`${FORWARD_PREFIX}${messageId}`, JSON.stringify(action), {
+        expirationTtl: 86400 * 365,
+      });
     }
 
     return action;
@@ -470,7 +510,7 @@ export class ChatFeaturesManager {
     }
 
     if (msg.senderId !== userId) {
-      throw new Error('Cannot edit someone else\'s message');
+      throw new Error("Cannot edit someone else's message");
     }
 
     const action: MessageAction = {
@@ -531,11 +571,17 @@ export class ChatFeaturesManager {
         expirationTtl: 86400,
       });
 
-      await this.broadcastToConversation(env, conversationId, 'chat:message-deleted', {
-        messageId,
+      await this.broadcastToConversation(
+        env,
         conversationId,
-        deletedBy: userId,
-      }, userId);
+        'chat:message-deleted',
+        {
+          messageId,
+          conversationId,
+          deletedBy: userId,
+        },
+        userId,
+      );
     } else {
       // Delete for me — store in user's deleted list
       const deletedKey = `chat:deleted:${userId}:${conversationId}`;
@@ -597,11 +643,7 @@ export class ChatFeaturesManager {
   /**
    * Unpin a message.
    */
-  async unpinMessage(
-    env: Env,
-    conversationId: string,
-    messageId: string,
-  ): Promise<void> {
+  async unpinMessage(env: Env, conversationId: string, messageId: string): Promise<void> {
     const kv = env.CACHE ?? env.CONTENT_LIBRARY;
     if (!kv) return;
 
@@ -622,10 +664,7 @@ export class ChatFeaturesManager {
   /**
    * Get pinned messages for a conversation.
    */
-  async getPinnedMessages(
-    env: Env,
-    conversationId: string,
-  ): Promise<PinnedMessage[]> {
+  async getPinnedMessages(env: Env, conversationId: string): Promise<PinnedMessage[]> {
     const kv = env.CACHE ?? env.CONTENT_LIBRARY;
     if (!kv) return [];
 
@@ -701,10 +740,7 @@ export class ChatFeaturesManager {
   /**
    * Get starred messages for a user.
    */
-  async getStarredMessages(
-    env: Env,
-    userId: string,
-  ): Promise<StarredMessage[]> {
+  async getStarredMessages(env: Env, userId: string): Promise<StarredMessage[]> {
     const kv = env.CACHE ?? env.CONTENT_LIBRARY;
     if (!kv) return [];
 
@@ -824,11 +860,7 @@ export class ChatFeaturesManager {
   /**
    * Create an encrypted backup of chat conversations.
    */
-  async createBackup(
-    env: Env,
-    userId: string,
-    conversationIds: string[],
-  ): Promise<ChatBackup> {
+  async createBackup(env: Env, userId: string, conversationIds: string[]): Promise<ChatBackup> {
     const backupId = crypto.randomUUID();
 
     const backup: ChatBackup = {
@@ -900,17 +932,14 @@ export class ChatFeaturesManager {
    * Broadcast an event to all participants in a conversation (except sender).
    */
   private async broadcastToConversation(
-    env: Env,
-    conversationId: string,
+    _env: Env,
+    _conversationId: string,
     channel: string,
     data: unknown,
-    excludeUserId?: string,
+    _excludeUserId?: string,
   ): Promise<void> {
     try {
-      const { broadcastToAll } = await import(
-        /* @vite-ignore */ '../../workers/api/src/ws-broadcast'
-      ).catch(() => ({ broadcastToAll: () => {} }));
-      broadcastToAll(channel, data);
+      await broadcastToAll(channel, data);
     } catch {
       // Broadcasting is best-effort
     }

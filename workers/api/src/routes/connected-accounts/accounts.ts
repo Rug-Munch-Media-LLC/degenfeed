@@ -5,8 +5,23 @@
 import { jsonResponse } from '../../response-helpers';
 import { requireSession } from '../../session';
 import type { Env } from '../../types';
-import { type ConnectedAccount, PLATFORM_ICONS } from './types';
+import { PLATFORM_ICONS } from './types';
 import { connectedAccountKey, removePlatformFromIndex } from './utils';
+
+// Local type that matches the actual stored data structure
+interface StoredConnectedAccount {
+  platform: string;
+  username: string;
+  accessToken?: string;
+  refreshToken?: string;
+  expiresAt?: number;
+  avatarUrl?: string;
+  displayName?: string;
+  connectedAt: number;
+  platformUserId?: string;
+  metadata?: Record<string, string>;
+  label?: string;
+}
 
 /**
  * GET /api/accounts/connected — List all connected accounts.
@@ -40,13 +55,13 @@ export async function handleListConnectedAccounts(request: Request, env: Env): P
     try {
       const raw = await env.CACHE?.get(connectedAccountKey(wallet, platform));
       if (!raw) continue;
-      const acct = JSON.parse(raw) as ConnectedAccount;
+      const acct = JSON.parse(raw) as StoredConnectedAccount;
       accounts.push({
         platform: acct.platform,
-        label: acct.label,
+        label: acct.label ?? acct.displayName ?? acct.username ?? platform,
         icon: PLATFORM_ICONS[acct.platform] || '🔗',
-        connectedAt: acct.connectedAt,
-        platformUserId: acct.platformUserId,
+        connectedAt: new Date(acct.connectedAt).toISOString(),
+        platformUserId: acct.platformUserId ?? acct.username,
         metadata: acct.metadata,
         expiresAt: acct.expiresAt,
       });
@@ -95,13 +110,13 @@ export async function handleAccountStatus(
   try {
     const raw = await env.CACHE?.get(connectedAccountKey(wallet, platform));
     if (!raw) return jsonResponse({ connected: false, platform });
-    const acct = JSON.parse(raw) as ConnectedAccount;
+    const acct = JSON.parse(raw) as StoredConnectedAccount;
     return jsonResponse({
       connected: true,
       platform,
-      label: acct.label,
-      platformUserId: acct.platformUserId,
-      connectedAt: acct.connectedAt,
+      label: acct.label ?? acct.displayName ?? acct.username ?? platform,
+      platformUserId: acct.platformUserId ?? acct.username,
+      connectedAt: new Date(acct.connectedAt).toISOString(),
       expiresAt: acct.expiresAt,
       metadata: acct.metadata,
     });
@@ -129,12 +144,13 @@ export async function handleSubstackEmailSetup(request: Request, env: Env): Prom
     return jsonResponse({ error: 'Email address required' }, 400);
   }
 
-  const account: ConnectedAccount = {
+  const account: StoredConnectedAccount = {
     platform: 'substack',
+    username: body.email,
     label: body.publicationName || body.email,
     accessToken: '', // No API token for Substack
     platformUserId: body.email,
-    connectedAt: new Date().toISOString(),
+    connectedAt: Date.now(),
     metadata: { email: body.email, publicationName: body.publicationName || '' },
   };
 
@@ -157,11 +173,11 @@ export async function getConnectedAccount(
   wallet: string,
   platform: string,
   env: Env,
-): Promise<ConnectedAccount | null> {
+): Promise<StoredConnectedAccount | null> {
   try {
     const raw = await env.CACHE?.get(connectedAccountKey(wallet, platform));
     if (!raw) return null;
-    return JSON.parse(raw) as ConnectedAccount;
+    return JSON.parse(raw) as StoredConnectedAccount;
   } catch {
     return null;
   }

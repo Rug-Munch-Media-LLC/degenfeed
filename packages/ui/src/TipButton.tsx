@@ -14,7 +14,7 @@
  *   SOL, USDC, ETH, BTC (Lightning zaps), Blinks (Solana Actions), x402.
  */
 
-import { CURRENCY_META, getDefaultCurrency } from '@degenfeed/utils';
+import { getCurrencyMeta, getDefaultCurrency } from '@degenfeed/utils';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 // ─── Types ────────────────────────────────────────────────────────────────
@@ -135,7 +135,7 @@ export function TipButton({
     getDefaultCurrency(connectedProtocols, protocol) ||
     'eth';
 
-  const currencyMeta = CURRENCY_META[effectiveCurrency] ?? CURRENCY_META.eth;
+  const currencyMeta = getCurrencyMeta(effectiveCurrency);
 
   // Fetch currency options for this protocol + detect author tips on open.
   useEffect(() => {
@@ -318,7 +318,7 @@ export function TipButton({
               </p>
               <div className="flex flex-wrap gap-1">
                 {(currencies ?? []).map((opt) => {
-                  const meta = CURRENCY_META[opt.currency] ?? CURRENCY_META.eth;
+                  const meta = getCurrencyMeta(opt.currency);
                   return (
                     <button
                       key={opt.currency}

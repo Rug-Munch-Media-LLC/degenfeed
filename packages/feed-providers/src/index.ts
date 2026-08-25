@@ -60,13 +60,6 @@ export {
   type KickProviderOptions,
 } from './providers/kick';
 export {
-  LOBSTERS_JSON_URL,
-  LOBSTERS_RSS_URL,
-  LobstersProvider,
-  lobstersRssToPosts,
-  lobstersStoryToPost,
-} from './providers/lobsters';
-export {
   type DiscoverCommunitiesOptions,
   discoverCommunities,
   type FederatedCommunity,
@@ -75,6 +68,13 @@ export {
   LemmyProvider,
 } from './providers/lemmy';
 export { CURATED_LENS_HANDLES, LENS_API_URL, LensProvider } from './providers/lens';
+export {
+  LOBSTERS_JSON_URL,
+  LOBSTERS_RSS_URL,
+  LobstersProvider,
+  lobstersRssToPosts,
+  lobstersStoryToPost,
+} from './providers/lobsters';
 export {
   DEFAULT_GTS_INSTANCE,
   type FediverseInstance,
@@ -184,8 +184,6 @@ export {
   TildesProvider,
 } from './providers/tildes';
 export {
-  isTwitchClip,
-  isTwitchGame,
   isTwitchStream,
   TWITCH_API_URL,
   TwitchProvider,

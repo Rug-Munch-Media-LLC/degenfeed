@@ -287,8 +287,12 @@ export class ProtocolBridges {
     message: ProtocolMessage,
     env: Env,
   ): Promise<{ ok: boolean; nativeId?: string; error?: string }> {
-    const matrixUrl = env.MATRIX_INSTANCE_URL || 'http://localhost:8448';
-    const accessToken = env.MATRIX_ACCESS_TOKEN;
+    const matrixUrl =
+      typeof env.MATRIX_INSTANCE_URL === 'string' && env.MATRIX_INSTANCE_URL.length > 0
+        ? env.MATRIX_INSTANCE_URL
+        : 'http://localhost:8448';
+    const accessToken =
+      typeof env.MATRIX_ACCESS_TOKEN === 'string' ? env.MATRIX_ACCESS_TOKEN : undefined;
 
     if (!accessToken) return { ok: false, error: 'Matrix access token not configured' };
 
@@ -376,7 +380,7 @@ export class ProtocolBridges {
 
       const result = await publishNip17(nip17Message, {
         relays: ['wss://relay.damus.io', 'wss://nos.lol', 'wss://relay.primal.net'],
-        privateKey: env.NOSTR_NSEC,
+        privateKey: typeof env.NOSTR_NSEC === 'string' ? env.NOSTR_NSEC : '',
       });
 
       return { ok: true, nativeId: result.id };
@@ -399,7 +403,7 @@ export class ProtocolBridges {
         method: 'POST',
         headers: {
           'content-type': 'application/json',
-          'x-access-token': env.LENS_ACCESS_TOKEN || '',
+          'x-access-token': typeof env.LENS_ACCESS_TOKEN === 'string' ? env.LENS_ACCESS_TOKEN : '',
         },
         body: JSON.stringify({
           profileId: message.fromId,
@@ -506,7 +510,7 @@ export class ProtocolBridges {
   ): Promise<{ ok: boolean; nativeId?: string; error?: string }> {
     try {
       // Use Neynar API for Farcaster protocol
-      const apiKey = env.NEYNAR_API_KEY;
+      const apiKey = typeof env.NEYNAR_API_KEY === 'string' ? env.NEYNAR_API_KEY : undefined;
       if (!apiKey) return { ok: false, error: 'Neynar API key not configured' };
 
       const res = await fetch('https://api.neynar.com/v2/farcaster/cast', {
@@ -761,7 +765,10 @@ export class ProtocolBridges {
         // Nostr NIP-17 — gift wrap + seal
         try {
           const { nip17Encrypt } = await import('@degenfeed/nostr-sdk');
-          return await nip17Encrypt(plaintext, env.NOSTR_NSEC || '');
+          return await nip17Encrypt(
+            plaintext,
+            typeof env.NOSTR_NSEC === 'string' ? env.NOSTR_NSEC : '',
+          );
         } catch {
           return plaintext; // Fallback to plaintext
         }

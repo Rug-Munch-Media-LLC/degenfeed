@@ -88,7 +88,13 @@ export interface PaymentRecord {
 // ─── Hook ──────────────────────────────────────────────────────────────────
 
 export function useMembership() {
-  const { session, isAuthenticated } = useAuth();
+  const { walletAddress, primaryIdentity, signedInProtocols } = useAuth();
+  // Derived auth surface (AuthContextValue no longer exposes session/isAuthenticated)
+  const isAuthenticated =
+    Boolean(walletAddress) ||
+    Boolean(primaryIdentity) ||
+    Object.values(signedInProtocols).some(Boolean);
+  const session = walletAddress ? { address: walletAddress } : undefined;
   const [status, setStatus] = useState<MembershipStatus>({
     tier: 'free',
     tierInfo: {} as TierInfo,
