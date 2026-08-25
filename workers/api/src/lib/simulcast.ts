@@ -20,8 +20,10 @@
  *   - Bandwidth-aware scheduling
  */
 
-import type { Env } from '../types';
 import { log } from '../logger';
+import { methodNotAllowed } from '../response-helpers';
+import type { Env } from '../types';
+import type { LiveStream } from './stream-store';
 
 // ─── Types ──────────────────────────────────────────────────────────────
 
@@ -457,7 +459,12 @@ export class SimulcastEngine {
         try {
           const { NostrLiveBridge } = await import('./nostr-live-bridge');
           const bridge = new NostrLiveBridge(this.env);
-          await bridge.endStream(session.sourceStreamId);
+          await bridge.endStream(session.sourceStreamId, {
+            id: session.sourceStreamId,
+            title: session.title,
+            creator: session.creatorId,
+            description: '',
+          } as LiveStream);
         } catch {
           // Non-critical
         }
