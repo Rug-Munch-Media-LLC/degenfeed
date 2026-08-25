@@ -1,11 +1,11 @@
 # OpenSSF Scorecard — automated security assessment
 # Scores 0-10 across 18 checks (branch protection, signed releases, token permissions, etc.)
-# Runs weekly (Monday 6AM UTC) and on push to main
+# NOTE: publish_results is false — result publishing requires GitHub OIDC which
+# Forgejo does not provide. Weekly schedule + manual dispatch only (not on push:
+# failures here are informational and would gate every commit).
 name: OpenSSF Scorecard
 
 on:
-  push:
-    branches: [main]
   schedule:
     - cron: '0 6 * * 1'  # Every Monday at 6 AM UTC
   workflow_dispatch:
@@ -30,7 +30,7 @@ jobs:
         with:
           results_file: scorecard-results.json
           results_format: json
-          publish_results: true
+          publish_results: false
 
       - name: Upload scorecard artifact
         uses: actions/upload-artifact@v3
