@@ -1,7 +1,7 @@
 # DegenFeed Web — Product Charter
 
 **Product:** DegenFeed Web Client  
-**Repo:** git.rugmunch.io/RugMunchMedia/degenfeed-web  
+**Repo:** git.rugmunch.io/RugMunchMedia/degenfeed  
 **Status:** Live in production
 
 ## Problem

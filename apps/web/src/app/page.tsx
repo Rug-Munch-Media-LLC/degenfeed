@@ -310,9 +310,9 @@ const FEATURES: Feature[] = [
 /* ─── FOOTER LINKS (static) ─────────────────────────────────────────── */
 
 const SOURCE_LINKS = [
-  { label: 'Forgejo', href: 'https://git.rugmunch.io/RugMunchMedia/degenfeed-web' },
-  { label: 'GitLab', href: 'https://gitlab.com/cryptorugmuncher/degenfeed-web' },
-  { label: 'Codeberg', href: 'https://codeberg.org/cryptorugmunch/degenfeed-web' },
+  { label: 'Forgejo', href: 'https://git.rugmunch.io/RugMunchMedia/degenfeed' },
+  { label: 'GitLab', href: 'https://gitlab.com/cryptorugmuncher/degenfeed' },
+  { label: 'Codeberg', href: 'https://codeberg.org/cryptorugmunch/degenfeed' },
   { label: 'Radicle', href: 'https://app.radicle.network/rad:git:z3VcKdsb7Wt4EU8oUnz5NsLWjwCyt' },
 ];
 

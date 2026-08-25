@@ -1,7 +1,7 @@
 <!--
 SPDX-License-Identifier: MIT
 Copyright (c) 2026 Rug Munch Media LLC
-Part of DegenFeed Web — https://git.rugmunch.io/RugMunchMedia/degenfeed-web
+Part of DegenFeed Web — https://git.rugmunch.io/RugMunchMedia/degenfeed
 -->
 
 # Contributing to DegenFeed Web
@@ -16,8 +16,8 @@ This page exists as a symlink target for the VitePress documentation site.
 ## Quick Start
 
 ```bash
-git clone https://git.rugmunch.io/RugMunchMedia/degenfeed-web
-cd degenfeed-web
+git clone https://git.rugmunch.io/RugMunchMedia/degenfeed
+cd degenfeed
 pnpm install
 pnpm dev              # Run all workspaces in dev mode
 pnpm lint typecheck   # Verify code quality

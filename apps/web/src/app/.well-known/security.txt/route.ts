@@ -10,7 +10,7 @@ export function GET() {
       'Canonical: https://app.degenfeed.xyz/.well-known/security.txt',
       'Expires: 2027-07-08T00:00:00Z',
       '',
-      '# Security policy: https://git.rugmunch.io/RugMunchMedia/degenfeed-web/raw/branch/main/SECURITY.md',
+      '# Security policy: https://git.rugmunch.io/RugMunchMedia/degenfeed/raw/branch/main/SECURITY.md',
       '# PGP key available on request to security@degenfeed.xyz',
     ].join('\n'),
     {

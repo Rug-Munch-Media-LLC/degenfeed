@@ -1349,4 +1349,4 @@ To migrate:
 
 ---
 
-*Questions? Join our [Developer Community](https://app.degenfeed.xyz/c/developers). Report issues on [Forgejo](https://git.rugmunch.io/RugMunchMedia/degenfeed-web).*
+*Questions? Join our [Developer Community](https://app.degenfeed.xyz/c/developers). Report issues on [Forgejo](https://git.rugmunch.io/RugMunchMedia/degenfeed).*

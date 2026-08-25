@@ -7,7 +7,7 @@ your creator coin, your data. We provide the software — you own everything.
 
 ```bash
 # One-line deploy
-bash <(curl -sSL https://raw.githubusercontent.com/RugMunchMedia/degenfeed-web/main/deploy/deploy.sh)
+bash <(curl -sSL https://raw.githubusercontent.com/RugMunchMedia/degenfeed/main/deploy/deploy.sh)
 ```
 
 Or if you already have the repo:
@@ -84,7 +84,7 @@ Everything else is automatic.
 | Service | Image | Purpose | Port |
 |---------|-------|---------|------|
 | `nginx` | `nginx:1.27-alpine` | Reverse proxy, TLS, routing | 80/443 |
-| `degenfeed` | `ghcr.io/rugmunchmedia/degenfeed-web` | Main Next.js app | 3000 |
+| `degenfeed` | `ghcr.io/rugmunchmedia/degenfeed` | Main Next.js app | 3000 |
 | `ghost` | `ghost:5-alpine` | Blogging platform | 2368 |
 | `gotosocial` | `superseriousbusiness/gotosocial` | ActivityPub/fediverse | 8080 |
 | `redis` | `redis:7-alpine` | Caching + job queues | 6379 |
@@ -142,13 +142,13 @@ Everything else is automatic.
 #### Interactive installer
 
 ```bash
-bash <(curl -sSL https://raw.githubusercontent.com/RugMunchMedia/degenfeed-web/main/deploy/deploy.sh)
+bash <(curl -sSL https://raw.githubusercontent.com/RugMunchMedia/degenfeed/main/deploy/deploy.sh)
 ```
 
 #### Automated (non-interactive)
 
 ```bash
-bash <(curl -sSL https://raw.githubusercontent.com/RugMunchMedia/degenfeed-web/main/deploy/deploy.sh) \
+bash <(curl -sSL https://raw.githubusercontent.com/RugMunchMedia/degenfeed/main/deploy/deploy.sh) \
   --domain alice.xyz \
   --wallet 0xYourWalletAddress \
   --email admin@alice.xyz
@@ -167,8 +167,8 @@ mkdir -p ~/degenfeed/{data/{nginx,degenfeed,redis,ghost,gotosocial},articles}
 cd ~/degenfeed
 
 # 3. Get compose files
-curl -O https://raw.githubusercontent.com/RugMunchMedia/degenfeed-web/main/deploy/docker-compose.prod.yml
-curl -o nginx.conf https://raw.githubusercontent.com/RugMunchMedia/degenfeed-web/main/deploy/nginx.conf
+curl -O https://raw.githubusercontent.com/RugMunchMedia/degenfeed/main/deploy/docker-compose.prod.yml
+curl -o nginx.conf https://raw.githubusercontent.com/RugMunchMedia/degenfeed/main/deploy/nginx.conf
 
 # 4. Create .env
 cat > .env << 'EOF'
@@ -221,7 +221,7 @@ Railway supports one-click deploy from a GitHub repo.
 
 **Manual setup:**
 
-1. Fork the repo: `https://github.com/RugMunchMedia/degenfeed-web`
+1. Fork the repo: `https://github.com/RugMunchMedia/degenfeed`
 2. Go to [Railway Dashboard](https://railway.app/dashboard) → New Project
 3. Select "Deploy from GitHub repo" → choose your fork
 4. Add environment variables:
@@ -251,7 +251,7 @@ Vercel deploys the Next.js frontend only (no Ghost, no GoToSocial).
 
 **One-click:**
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/RugMunchMedia/degenfeed-web)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/RugMunchMedia/degenfeed)
 
 **Manual setup:**
 
@@ -292,7 +292,7 @@ via a web UI. Perfect for non-technical users.
 
 1. In Coolify dashboard → Resources → Instant Deploy
 2. Search for "DegenFeed" or paste the template URL:
-   `https://raw.githubusercontent.com/RugMunchMedia/degenfeed-web/main/deploy/coolify-template.json`
+   `https://raw.githubusercontent.com/RugMunchMedia/degenfeed/main/deploy/coolify-template.json`
 
 **Manual setup:**
 
@@ -524,7 +524,7 @@ cd ~/degenfeed
 echo 'IMAGE_TAG=v0.2.0' >> .env
 
 # Or update compose file directly
-sed -i 's/image: ghcr.io\/rugmunchmedia\/degenfeed-web:.*/image: ghcr.io\/rugmunchmedia\/degenfeed-web:v0.2.0/' docker-compose.yml
+sed -i 's/image: ghcr.io\/rugmunchmedia\/degenfeed:.*/image: ghcr.io\/rugmunchmedia\/degenfeed:v0.2.0/' docker-compose.yml
 
 # Pull and restart
 docker compose pull && docker compose up -d
@@ -532,7 +532,7 @@ docker compose pull && docker compose up -d
 
 ### Breaking Changes
 
-Before updating, check the [changelog](https://github.com/RugMunchMedia/degenfeed-web/blob/main/CHANGELOG.md)
+Before updating, check the [changelog](https://github.com/RugMunchMedia/degenfeed/blob/main/CHANGELOG.md)
 for breaking changes. Major versions may require migration steps.
 
 ### Rollback
@@ -540,7 +540,7 @@ for breaking changes. Major versions may require migration steps.
 ```bash
 # Revert to previous version
 docker compose down
-sed -i 's/image: ghcr.io\/rugmunchmedia\/degenfeed-web:.*/image: ghcr.io\/rugmunchmedia\/degenfeed-web:v0.1.0/' docker-compose.yml
+sed -i 's/image: ghcr.io\/rugmunchmedia\/degenfeed:.*/image: ghcr.io\/rugmunchmedia\/degenfeed:v0.1.0/' docker-compose.yml
 docker compose up -d
 ```
 
@@ -707,7 +707,7 @@ rm -rf data/
 | Channel | Purpose |
 |---------|---------|
 | [Discord](https://discord.gg/degenfeed) | Community support |
-| [GitHub Issues](https://github.com/RugMunchMedia/degenfeed-web/issues) | Bug reports |
+| [GitHub Issues](https://github.com/RugMunchMedia/degenfeed/issues) | Bug reports |
 | [Email](mailto:selfhost@degenfeed.xyz) | Enterprise support |
 
 ---

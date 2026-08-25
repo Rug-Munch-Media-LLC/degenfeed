@@ -34,7 +34,7 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: 'pnpm --filter degenfeed-web dev',
+    command: 'pnpm --filter degenfeed dev',
     port: 3000,
     reuseExistingServer: !process.env.CI,
     timeout: 120000,

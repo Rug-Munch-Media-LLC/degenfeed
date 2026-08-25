@@ -6,7 +6,7 @@ Welcome to the DegenFeed documentation hub. This index links every document in t
 
 **Live app:** [app.degenfeed.xyz](https://app.degenfeed.xyz)  
 **Docs site:** [docs.degenfeed.xyz](https://docs.degenfeed.xyz)  
-**Source:** [git.rugmunch.io/RugMunchMedia/degenfeed-web](https://git.rugmunch.io/RugMunchMedia/degenfeed-web)  
+**Source:** [git.rugmunch.io/RugMunchMedia/degenfeed](https://git.rugmunch.io/RugMunchMedia/degenfeed)  
 **License:** AGPL-3.0
 
 ---

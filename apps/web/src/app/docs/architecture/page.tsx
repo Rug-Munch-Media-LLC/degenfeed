@@ -314,7 +314,7 @@ export default function ArchitecturePage() {
 
       <CodeBlock lang="bash">{`# Build and deploy frontend
 pnpm build
-npx wrangler pages deploy apps/web --project-name degenfeed-web
+npx wrangler pages deploy apps/web --project-name degenfeed
 
 # Deploy API worker
 npx wrangler deploy workers/api/src/index.ts --name degenfeed-api

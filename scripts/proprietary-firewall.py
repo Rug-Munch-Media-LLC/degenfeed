@@ -2,7 +2,7 @@
 """
 Pre-commit firewall — blocks proprietary info from public repos.
 Runs before every commit in rmi-backend, rmi-frontend, pryscraper,
-walletpress, degenfeed-web, rugmunchbot.
+walletpress, degenfeed, rugmunchbot.
 
 WHAT IT BLOCKS:
 - References to private repos (standards, fleet-infra, fleet-template, rmi-security-framework)
@@ -15,7 +15,10 @@ WHAT IT BLOCKS:
 - Private API keys and tokens (gopass references)
 """
 
-import subprocess, sys, re, os
+import os
+import re
+import subprocess
+import sys
 
 BLOCKED_PATTERNS = [
     # Private repo names
@@ -61,22 +64,32 @@ def check_file(filepath):
             for lineno, line in enumerate(f, 1):
                 for pattern, rule in BLOCKED_PATTERNS:
                     if re.search(pattern, line, re.IGNORECASE):
-                        findings.append(f"  {filepath}:{lineno} [{rule}] {line.strip()[:80]}")
-    except Exception:
+                        findings.append(
+                            f"  {filepath}:{lineno} [{rule}] {line.strip()[:80]}"
+                        )
+    except OSError:
         pass
     return findings
 
 
 def main():
     # Get staged files
-    result = subprocess.run(["git", "diff", "--cached", "--name-only"], capture_output=True, text=True)
+    result = subprocess.run(
+        ["git", "diff", "--cached", "--name-only"],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
     staged = result.stdout.strip().split("\n")
     staged = [f for f in staged if f and os.path.exists(f)]
 
     all_findings = []
     for f in staged:
         # Skip binary files
-        if any(f.endswith(ext) for ext in [".png", ".jpg", ".gif", ".woff", ".ttf", ".ico", ".svg"]):
+        if any(
+            f.endswith(ext)
+            for ext in [".png", ".jpg", ".gif", ".woff", ".ttf", ".ico", ".svg"]
+        ):
             continue
         all_findings.extend(check_file(f))
 
@@ -85,7 +98,9 @@ def main():
         for f in all_findings:
             print(f)
         print(f"\n{len(all_findings)} violation(s) found. Commit blocked.")
-        print("This content belongs in private repos (standards, fleet-infra) — not public.")
+        print(
+            "This content belongs in private repos (standards, fleet-infra) — not public."
+        )
         sys.exit(1)
 
     print("🛡️  Firewall: CLEAN — no proprietary content detected.")

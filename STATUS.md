@@ -3,7 +3,7 @@
 > Last updated: 2026-07-27
 
 ## Summary
-Round 31 — Honest audit and launch readiness assessment. The degenfeed-web monorepo (38 packages, 190+ API routes) is build-verified and feature-rich, but the custom frontend has never been deployed as the primary user-facing application. This session focused on infrastructure hardening: CSP security headers, rate limiting, URL scam scanning against rmi-backend, theme system, ghost-bridge cross-publish fixes, methodology leak detection pre-commit hook, Playwright E2E regression tests, and demo-data warnings. Next: fix routing and cold-start issues, then target invite-only beta.
+Round 31 — Honest audit and launch readiness assessment. The degenfeed monorepo (38 packages, 190+ API routes) is build-verified and feature-rich, but the custom frontend has never been deployed as the primary user-facing application. This session focused on infrastructure hardening: CSP security headers, rate limiting, URL scam scanning against rmi-backend, theme system, ghost-bridge cross-publish fixes, methodology leak detection pre-commit hook, Playwright E2E regression tests, and demo-data warnings. Next: fix routing and cold-start issues, then target invite-only beta.
 
 ## What IS Deployed
 - **social.degenfeed.xyz** — GoToSocial + Elk Mastodon client (production, serving users)
@@ -99,7 +99,7 @@ Round 31 — Honest audit and launch readiness assessment. The degenfeed-web mon
 
 ### Why not 81/100?
 The previous score of 81/100 assumed the custom frontend was live and operational. In reality:
-- The primary user-facing frontend is **Elk (Mastodon client)** at social.degenfeed.xyz, not the degenfeed-web app
+- The primary user-facing frontend is **Elk (Mastodon client)** at social.degenfeed.xyz, not the degenfeed app
 - `apps/web` has never been deployed to `app.degenfeed.xyz`
 - Cold-start and routing issues block production deployment
 - 8 typecheck failures and 48 console.log statements need cleanup

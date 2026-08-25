@@ -9,8 +9,8 @@
  * - Comprehensive post analytics dashboard
  * - Content recycling & evergreen
  *
- * @see /path/to/degenfeed-web/workers/api/src/routes/premium-publish/
- * @see /path/to/degenfeed-web/workers/api/src/routes/post-analytics.ts
+ * @see /path/to/degenfeed/workers/api/src/routes/premium-publish/
+ * @see /path/to/degenfeed/workers/api/src/routes/post-analytics.ts
  */
 
 import type { Hono } from 'hono';

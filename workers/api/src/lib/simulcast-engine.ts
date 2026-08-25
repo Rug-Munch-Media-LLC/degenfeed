@@ -15,8 +15,8 @@
  *                                     → Native (Farcaster, Nostr, Bluesky,
  *                                        Mastodon, PeerTube, Owncast AP)
  *
- * @see /path/to/degenfeed-web/workers/api/src/lib/postiz-bridge.ts
- * @see /path/to/degenfeed-web/workers/api/src/feed/live-aggregator.ts
+ * @see /path/to/degenfeed/workers/api/src/lib/postiz-bridge.ts
+ * @see /path/to/degenfeed/workers/api/src/feed/live-aggregator.ts
  */
 
 import type { Env } from '../types';

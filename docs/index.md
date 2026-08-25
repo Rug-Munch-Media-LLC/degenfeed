@@ -17,7 +17,7 @@ hero:
       link: /API_REFERENCE
     - theme: alt
       text: View Source
-      link: https://git.rugmunch.io/RugMunchMedia/degenfeed-web
+      link: https://git.rugmunch.io/RugMunchMedia/degenfeed
 
 features:
   - icon: 🌐

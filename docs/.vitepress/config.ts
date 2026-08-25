@@ -65,7 +65,7 @@ export default defineConfig({
       ],
     },
 
-    socialLinks: [{ icon: 'github', link: 'https://git.rugmunch.io/RugMunchMedia/degenfeed-web' }],
+    socialLinks: [{ icon: 'github', link: 'https://git.rugmunch.io/RugMunchMedia/degenfeed' }],
 
     search: {
       provider: 'local',
@@ -77,7 +77,7 @@ export default defineConfig({
     },
 
     editLink: {
-      pattern: 'https://git.rugmunch.io/RugMunchMedia/degenfeed-web/_edit/main/docs/:path',
+      pattern: 'https://git.rugmunch.io/RugMunchMedia/degenfeed/_edit/main/docs/:path',
       text: 'Edit this page on Forgejo',
     },
   },

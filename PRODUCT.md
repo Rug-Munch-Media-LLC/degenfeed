@@ -1,7 +1,7 @@
 # DegenFeed Web — Product Charter
 
 **Product:** DegenFeed Web Client  
-**Repo:** git.rugmunch.io/RugMunchMedia/degenfeed-web  
+**Repo:** git.rugmunch.io/RugMunchMedia/degenfeed  
 **Status:** Pre-launch — invite-only beta target  
 **Last Updated:** 2026-07-27
 
@@ -49,14 +49,14 @@ Crypto-native users consume content across Nostr, Farcaster, Lens, Bluesky, Mast
 - **Cloudflare Workers** — `workers/api` deployed as `degenfeed-api` edge worker
 
 ### What IS built but NOT yet deployed as primary frontend
-- **degenfeed-web monorepo** — 38 packages, 190+ API routes, spanning protocol SDKs, feed-core, ranking, identity, bridge, and UI
+- **degenfeed monorepo** — 38 packages, 190+ API routes, spanning protocol SDKs, feed-core, ranking, identity, bridge, and UI
 - **`apps/web`** — Next.js 16 application with full protocol integration, unified feed, composer, tipping, profile pages, coin discovery, news aggregation, notifications, and settings
 - **`workers/api`** — 190+ edge API routes for feeds, publishing, search, auth, bridge, administration, and health
 - **Build verification** — monorepo builds successfully with `turbo build`; 58 Playwright E2E tests pass
 - **Security middleware** — CSP nonce-based headers, rate limiting (5 tiers), token-bucket auth, session verification, URL scam scanning against rmi-backend
 
 ### Current state
-- **Pre-launch** — the custom degenfeed-web frontend is not deployed as the primary user-facing application
+- **Pre-launch** — the custom degenfeed frontend is not deployed as the primary user-facing application
 - **Routing fixes in progress** — cold-start issues with Cloudflare Pages + Next.js on-demand routing; `/home/[section]` per-protocol pages need stable routing before launch
 - **Cold-start latency** — worker cold starts take 3-8s on first request after idle, affecting UX
 - **Typecheck not green** — 8 package typecheck failures across the monorepo

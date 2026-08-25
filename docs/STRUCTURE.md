@@ -2,14 +2,14 @@
 
 > **Last updated:** 2026-07-24
 > **Version:** 0.1.0
-> **Repository:** `git.rugmunch.io:RugMunchMedia/degenfeed-web`
+> **Repository:** `git.rugmunch.io:RugMunchMedia/degenfeed`
 
 ---
 
 ## 1. Project Map
 
 ```
-degenfeed-web/
+degenfeed/
 ├── apps/
 │   └── web/                          # Next.js 16 frontend application
 │       ├── src/

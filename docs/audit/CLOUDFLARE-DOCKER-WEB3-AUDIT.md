@@ -10,7 +10,7 @@
 ### 2.1 Cloudflare Pages — Wrangler Config
 **File:** `apps/web/wrangler.toml`
 ```toml
-name = "degenfeed-web"
+name = "degenfeed"
 compatibility_date = "2026-07-01"
 compatibility_flags = ["nodejs_compat"]
 pages_build_output_dir = ".vercel/output/static"
@@ -80,11 +80,11 @@ pages_build_output_dir = ".vercel/output/static"
 | castopod-db | ⚠️ | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ |
 | castopod* | ⚠️ | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ |
 | owncast | ⚠️ | ✅ | ❌ | ✅ | ✅ | ✅ | ✅ |
-| **degenfeed-web** | ✅ (uid 1001) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| **degenfeed** | ✅ (uid 1001) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 
 *Security applied in `docker-compose.security.yml` overlay — not in base compose.
 
-### 4.2 ✅ degenfeed-web — Fully Hardened (Gold Standard)
+### 4.2 ✅ degenfeed — Fully Hardened (Gold Standard)
 ```yaml
 cap_drop:
   - ALL

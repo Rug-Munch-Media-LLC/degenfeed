@@ -206,6 +206,6 @@ docker stats
 
 ## Getting Help
 
-- Open an issue on [Forgejo](https://git.rugmunch.io/RugMunchMedia/degenfeed-web)
+- Open an issue on [Forgejo](https://git.rugmunch.io/RugMunchMedia/degenfeed)
 - Join our community chat
 - Check the [DegenFeed docs](https://app.degenfeed.xyz/docs)

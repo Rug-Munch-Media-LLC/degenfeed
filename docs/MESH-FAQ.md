@@ -187,9 +187,9 @@ Post once, reach everywhere. Earn tips in ETH, SOL, USDC, or Lightning. No platf
 
 **Yes.** Every line of code is open source under AGPL-3.0:
 
-- **DegenFeed web app:** [git.rugmunch.io/RugMunchMedia/degenfeed-web](https://git.rugmunch.io/RugMunchMedia/degenfeed-web)
-- **Bridge infrastructure:** Part of the degenfeed-web monorepo
-- **Mirrors:** [GitHub](https://github.com/RugMunchMedia/degenfeed) | [Codeberg](https://codeberg.org/degenfeed/degenfeed-web)
+- **DegenFeed web app:** [git.rugmunch.io/RugMunchMedia/degenfeed](https://git.rugmunch.io/RugMunchMedia/degenfeed)
+- **Bridge infrastructure:** Part of the degenfeed monorepo
+- **Mirrors:** [GitHub](https://github.com/RugMunchMedia/degenfeed) | [Codeberg](https://codeberg.org/degenfeed/degenfeed)
 - **License:** GNU Affero General Public License v3.0
 
 You can inspect, fork, self-host, and contribute. The infrastructure that *runs* the mesh (GoToSocial, PeerTube, etc.) is itself open-source software — we just operate it.

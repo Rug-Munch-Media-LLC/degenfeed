@@ -1,6 +1,6 @@
 # ── Makefile (TypeScript / pnpm / Turborepo) ───────────────────
 # Source of truth: standards/templates/Makefile.typescript.template
-# Customized for degenfeed-web monorepo.
+# Customized for degenfeed monorepo.
 
 .PHONY: help install precommit dev build lint format check typecheck test test-watch test-cov test-e2e test-a11y security links knip dead-code spellcheck ci audit rollback clean
 
@@ -52,10 +52,10 @@ test-cov: ## Run tests with coverage
 	pnpm exec vitest run --coverage
 
 test-e2e: ## Playwright E2E tests
-	pnpm --filter degenfeed-web test:e2e
+	pnpm --filter degenfeed test:e2e
 
 test-a11y: ## Axe-core a11y audit
-	pnpm --filter degenfeed-web test:e2e --project=axe-a11y
+	pnpm --filter degenfeed test:e2e --project=axe-a11y
 
 security: ## Security audit with gitleaks
 	gitleaks detect --source . --no-banner

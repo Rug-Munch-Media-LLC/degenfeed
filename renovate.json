@@ -1,6 +1,6 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "description": "degenfeed-web — extends RugMunch shared preset with npm-only and Web3-specific rules",
+  "description": "degenfeed — extends RugMunch shared preset with npm-only and Web3-specific rules",
   "extends": ["local>RugMunchMedia/standards:renovate-presets/rugmunch.json"],
   "enabledManagers": ["npm"],
   "prHourlyLimit": 5,

@@ -121,7 +121,7 @@ The crypto-native / AI-native / open-source builder who:
 ### 3.2 Repo layout
 
 ```
-degenfeed-web/                       # monorepo: pnpm workspaces
+degenfeed/                       # monorepo: pnpm workspaces
 ├── apps/
 │   └── web/                         # Next.js 14 app
 │       ├── app/                     # routes
@@ -570,8 +570,8 @@ We can run this for ten years on the cost of one dinner.
 | Akkoma server | `/path/to/degenfeed-akkoma/` | **Stop, archive, delete.** |
 | Akkoma DB | `degenfeed-akkoma-db` volume | **Backup then drop.** |
 | Soapbox frontend | `degenfeed-soapbox-frontend` | **Stop, delete.** |
-| Web3 bridge backend | `degenfeed-web3-bridge` container + repo `/path/to/degenfeed-web3-bridge/` | **Stop, archive, keep code for reference, do not deploy.** |
-| Web3 bridge frontend | `degenfeed-web3-frontend` | **Stop, delete.** |
+| Web3 bridge backend | `degenfeed3-bridge` container + repo `/path/to/degenfeed3-bridge/` | **Stop, archive, keep code for reference, do not deploy.** |
+| Web3 bridge frontend | `degenfeed3-frontend` | **Stop, delete.** |
 | Mastodon legacy data | `/path/to/degenfeed-akkoma/migration-archive/mastodon-deprecated/` | **Keep tarball cold storage.** |
 | `degenfeed.xyz` DNS | Cloudflare | **Keep domain.** Point to new Pages site. |
 | Cloudflare Tunnel | Active for degenfeed.xyz | **Repoint to Pages.** |
@@ -616,7 +616,7 @@ docker volume rm degenfeed-akkoma_postgres_data degenfeed-akkoma_redis_data
 
 echo "Archiving for cold storage..."
 mv /path/to/degenfeed-akkoma /path/to/backups/degenfeed-v1-final/akkoma-deploy
-mv /path/to/degenfeed-web3-bridge /path/to/backups/degenfeed-v1-final/web3-bridge-source
+mv /path/to/degenfeed3-bridge /path/to/backups/degenfeed-v1-final/web3-bridge-source
 
 echo "Removing nginx vhost..."
 rm -f /etc/nginx/sites-enabled/degenfeed.xyz
@@ -765,8 +765,8 @@ echo "v1 is dead. Long live v2."
 
 ```bash
 ssh [INTERNAL]
-mkdir -p /path/to/degenfeed-web
-cd /path/to/degenfeed-web
+mkdir -p /path/to/degenfeed
+cd /path/to/degenfeed
 git init
 pnpm init
 # set up workspace
@@ -777,7 +777,7 @@ packages:
 EOF
 # install turbo
 pnpm add -Dw turbo
-git remote add origin https://git.rugmunch.io/RugMunchMedia/degenfeed-web.git
+git remote add origin https://git.rugmunch.io/RugMunchMedia/degenfeed.git
 git push -u origin main
 ```
 
@@ -857,6 +857,6 @@ The moat is not the technology. The moat is the **design quality**, the **curati
 2. **Pick the domain question.** `degenfeed.xyz` vs new.
 3. **Set the nuke date.** Aim for 7 days from today. Gives time for the announcement to propagate.
 4. **Post the announcement on the existing instance** with the new direction.
-5. **I scaffold `degenfeed-web`** on [HOST-1] and start Week 1.
+5. **I scaffold `degenfeed`** on [HOST-1] and start Week 1.
 
 Let's go.

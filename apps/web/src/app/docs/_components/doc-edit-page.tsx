@@ -2,8 +2,7 @@
 
 import { usePathname } from 'next/navigation';
 
-const GITHUB_BASE =
-  'https://git.rugmunch.io/RugMunchMedia/degenfeed-web/tree/main/apps/web/src/app';
+const GITHUB_BASE = 'https://git.rugmunch.io/RugMunchMedia/degenfeed/tree/main/apps/web/src/app';
 
 export function EditPage() {
   const pathname = usePathname();

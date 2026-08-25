@@ -358,7 +358,7 @@ A federated longform engine would be DegenFeed's **moat** — the one capability
 | **Codebase quality** | 48K+ stars, TypeScript, monorepo, comprehensive tests, active daily dev from 850+ contributors |
 | **Docker deployment** | Official images, `ghost install` CLI, MySQL backend, easy to containerize |
 | **MIT license** | Permissive — no copyleft restrictions on our fork |
-| **TypeScript stack** | Matches our existing `degenfeed-web` monorepo — same language, same tooling |
+| **TypeScript stack** | Matches our existing `degenfeed` monorepo — same language, same tooling |
 | **Webhook system** | Events for `post.published`, `post.deleted`, `post.edited` — triggers for our bridge engine |
 
 ### 3.2 Ghost Architecture (What We Fork)
@@ -416,7 +416,7 @@ Ghost Monorepo (simplified)
 │                    DegenFeed Platform                            │
 │                                                                  │
 │  ┌────────────────────────────────────────────────────────────┐  │
-│  │              degenfeed-web (Next.js 15)                    │  │
+│  │              degenfeed (Next.js 15)                    │  │
 │  │  ┌─────────┐ ┌──────────┐ ┌──────────┐ ┌──────────────┐   │  │
 │  │  │ Feed    │ │Composer  │ │ Article  │ │ Creator      │   │  │
 │  │  │ Reader  │ │(short +  │ │ Reader   │ │ Dashboard    │   │  │

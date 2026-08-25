@@ -135,7 +135,7 @@ export default function DevelopersPage() {
               Generate an API key
             </Link>
             <a
-              href="https://git.rugmunch.io/RugMunchMedia/degenfeed-web"
+              href="https://git.rugmunch.io/RugMunchMedia/degenfeed"
               target="_blank"
               className="rounded-lg border border-white/10 px-5 py-2.5 text-sm font-medium text-[var(--color-muted)] transition-all hover:border-white/20 hover:text-[var(--color-muted)]"
               rel="noopener"
@@ -224,21 +224,21 @@ export default function DevelopersPage() {
         </p>
         <div className="mt-4 grid gap-4 sm:grid-cols-3">
           <Card
-            href="https://git.rugmunch.io/RugMunchMedia/degenfeed-web"
+            href="https://git.rugmunch.io/RugMunchMedia/degenfeed"
             external
             title="DegenFeed CLI"
             desc="Command-line feed reader. Browse Nostr, Farcaster, and more from your terminal."
             badge="Go"
           />
           <Card
-            href="https://git.rugmunch.io/RugMunchMedia/degenfeed-web"
+            href="https://git.rugmunch.io/RugMunchMedia/degenfeed"
             external
             title="Feed Widget"
             desc="Embeddable web component. Add a live DegenFeed widget to any website."
             badge="Web Component"
           />
           <Card
-            href="https://git.rugmunch.io/RugMunchMedia/degenfeed-web"
+            href="https://git.rugmunch.io/RugMunchMedia/degenfeed"
             external
             title="Discord Bot"
             desc="Post trending DegenFeed content to your Discord server via webhooks."
@@ -395,7 +395,7 @@ export default function DevelopersPage() {
             desc="Discussion, support, and show-and-tell in the DegenFeed developer community."
           />
           <Card
-            href="https://git.rugmunch.io/RugMunchMedia/degenfeed-web"
+            href="https://git.rugmunch.io/RugMunchMedia/degenfeed"
             external
             title="GitHub Issues"
             desc="Report bugs, request features, or contribute to the open-source codebase."
@@ -418,7 +418,7 @@ export default function DevelopersPage() {
           </Link>{' '}
           ·{' '}
           <a
-            href="https://git.rugmunch.io/RugMunchMedia/degenfeed-web"
+            href="https://git.rugmunch.io/RugMunchMedia/degenfeed"
             target="_blank"
             rel="noopener noreferrer"
             className="text-degen-400 underline"

@@ -1,7 +1,7 @@
 # DegenFeed — The Web3 Social Universe
 
-[![CI](https://github.com/RugMunchMedia/degenfeed-web/actions/workflows/ci.yml/badge.svg)](https://github.com/RugMunchMedia/degenfeed-web/actions/workflows/ci.yml)
-[![Deploy](https://github.com/RugMunchMedia/degenfeed-web/actions/workflows/deploy.yml/badge.svg)](https://github.com/RugMunchMedia/degenfeed-web/actions/workflows/deploy.yml)
+[![CI](https://github.com/RugMunchMedia/degenfeed/actions/workflows/ci.yml/badge.svg)](https://github.com/RugMunchMedia/degenfeed/actions/workflows/ci.yml)
+[![Deploy](https://github.com/RugMunchMedia/degenfeed/actions/workflows/deploy.yml/badge.svg)](https://github.com/RugMunchMedia/degenfeed/actions/workflows/deploy.yml)
 [![Playwright E2E](https://img.shields.io/badge/E2E-Playwright-45ba4b?logo=playwright)](https://playwright.dev)
 [![Biome](https://img.shields.io/badge/linted%20with-Biome-60a5fa?logo=biome)](https://biomejs.dev)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178c6?logo=typescript)](https://www.typescriptlang.org)
@@ -349,7 +349,7 @@ Full documentation site at **[docs.degenfeed.xyz](https://docs.degenfeed.xyz)** 
 - **General:** admin@rugmunch.io
 - **Legal:** legal@rugmunch.io
 - **DMCA:** dmca@degenfeed.xyz
-- **Codeberg Mirror:** [codeberg.org/degenfeed/degenfeed-web](https://codeberg.org/degenfeed/degenfeed-web)
+- **Codeberg Mirror:** [codeberg.org/degenfeed/degenfeed](https://codeberg.org/degenfeed/degenfeed)
 - **GitHub Mirror:** [github.com/RugMunchMedia/degenfeed](https://github.com/rugmunchmedia/degenfeed)
 
 ## FAQ

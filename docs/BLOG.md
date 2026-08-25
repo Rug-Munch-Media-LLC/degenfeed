@@ -146,7 +146,7 @@ We're fighting for:
 
 - **App:** [app.degenfeed.xyz](https://app.degenfeed.xyz)
 - **Docs:** [docs.degenfeed.xyz](https://docs.degenfeed.xyz)
-- **Source:** [git.rugmunch.io/RugMunchMedia/degenfeed-web](https://git.rugmunch.io/RugMunchMedia/degenfeed-web)
+- **Source:** [git.rugmunch.io/RugMunchMedia/degenfeed](https://git.rugmunch.io/RugMunchMedia/degenfeed)
 - **Email:** admin@rugmunch.io
 
 DegenFeed is open source (AGPL-3.0), self-funded, and built by Rug Munch Media LLC. Contributions welcome.

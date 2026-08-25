@@ -4,7 +4,7 @@
 #
 # Automated rollback for DegenFeed Cloudflare deployments.
 # Rolls back both the Cloudflare Worker (degenfeed-api) and
-# Cloudflare Pages (degenfeed-web) to their previous deployments,
+# Cloudflare Pages (degenfeed) to their previous deployments,
 # then runs a health check against the environment.
 #
 # Usage:
@@ -23,7 +23,7 @@ set -euo pipefail
 
 WORKER_DIR="$(cd "$(dirname "$0")/../../workers/api" && pwd)"
 TOML="$WORKER_DIR/wrangler.toml"
-PAGES_PROJECT="degenfeed-web"
+PAGES_PROJECT="degenfeed"
 
 DRY_RUN=false
 ENV="production"
@@ -43,7 +43,7 @@ while [[ $# -gt 0 ]]; do
     --help|-h)
       echo "Usage: $0 [--dry-run] [--env production|preview]"
       echo
-      echo "Rolls back the degenfeed-api Worker and degenfeed-web Pages"
+      echo "Rolls back the degenfeed-api Worker and degenfeed Pages"
       echo "to their previous deployments, then runs a health check."
       echo
       echo "  --dry-run    Preview what would be rolled back without executing."
@@ -69,6 +69,7 @@ echo
 if [[ -z "${CLOUDFLARE_API_TOKEN:-}" && -z "${CLOUDFLARE_API_KEY:-}" ]]; then
   if command -v gopass >/dev/null 2>&1; then
     if gopass show CLOUDFLARE_API_KEY_PATH >/dev/null 2>&1; then
+      # shellcheck disable=SC2155
       export CLOUDFLARE_API_KEY="$(gopass show -o CLOUDFLARE_API_KEY_PATH)"
     fi
   fi
@@ -84,6 +85,7 @@ fi
 
 if [[ -z "${CLOUDFLARE_ACCOUNT_ID:-}" ]]; then
   if command -v gopass >/dev/null 2>&1 && gopass show CLOUDFLARE_ACCOUNT_ID_PATH >/dev/null 2>&1; then
+    # shellcheck disable=SC2155
     export CLOUDFLARE_ACCOUNT_ID="$(gopass show -o CLOUDFLARE_ACCOUNT_ID_PATH)"
   fi
 fi
@@ -139,6 +141,7 @@ if $DRY_RUN; then
   echo
   if command -v wrangler >/dev/null 2>&1; then
     yellow "  current versions:"
+    # shellcheck disable=SC2086
     wrangler versions list --config "$TOML" $WORKER_ENV_FLAG 2>/dev/null | head -8 || true
   fi
 else
@@ -146,6 +149,7 @@ else
     red "  ✗ wrangler not found. Install it with: npm install -g wrangler"
     exit 1
   fi
+  # shellcheck disable=SC2086
   wrangler rollback $WORKER_ENV_FLAG --config "$TOML"
   green "  ✓ worker rolled back"
 fi
@@ -172,7 +176,6 @@ else
   else
     current_id=$(echo "$branch_filtered" | jq -r '.[0].id')
     previous_id=$(echo "$branch_filtered" | jq -r '.[1].id')
-    current_created=$(echo "$branch_filtered" | jq -r '.[0].created_on[:19]' | tr 'T' ' ')
     previous_created=$(echo "$branch_filtered" | jq -r '.[1].created_on[:19]' | tr 'T' ' ')
 
     echo
@@ -251,10 +254,10 @@ echo
 hr; bold "Rollback complete ($ENV)"; hr
 $DRY_RUN && yellow "  DRY-RUN — no changes were made"
 green "  Worker: degenfeed-api ($ENV)"
-green "  Pages: degenfeed-web ($ENV)"
+green "  Pages: degenfeed ($ENV)"
 green "  Health: $HEALTH_URL"
 echo
 blue "If issues persist after rollback, investigate via:"
 echo "  wrangler tail --config workers/api/wrangler.toml $WORKER_ENV_FLAG"
-echo "  wrangler pages deployment list --project-name degenfeed-web"
+echo "  wrangler pages deployment list --project-name degenfeed"
 hr

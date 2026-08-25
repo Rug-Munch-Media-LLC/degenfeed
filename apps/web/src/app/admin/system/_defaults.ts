@@ -207,7 +207,7 @@ export const DEFAULT_VERSIONS: ServiceVersion[] = [
     category: 'core',
   },
   {
-    name: 'degenfeed-web',
+    name: 'degenfeed',
     version: '0.1.0',
     latestVersion: '0.1.0',
     status: 'up_to_date',

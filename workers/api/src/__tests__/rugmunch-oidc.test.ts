@@ -12,7 +12,7 @@ const mockCache = {
   }),
 } as unknown as KVNamespace;
 
-const CLIENT_ID = 'degenfeed-web';
+const CLIENT_ID = 'degenfeed';
 const CLIENT_SECRET = 'test-oidc-client-secret-0123456789abcdef';
 const AUTH_SECRET = 'test-auth-secret-0123456789abcdef0123456789abcdef';
 const ISSUER = 'https://rugmunch.io';
@@ -56,7 +56,7 @@ function makeFetchMock(opts: {
   tokenStatus?: number;
   discoveryStatus?: number;
 }) {
-  return vi.fn(async (input: string | URL | Request, init?: RequestInit) => {
+  return vi.fn(async (input: string | URL | Request) => {
     const url = String(input);
     if (url.includes('/.well-known/openid-configuration')) {
       return new Response(
@@ -190,7 +190,9 @@ describe('RugMunch OIDC — callback', () => {
       env,
     );
     expect(res2.status).toBe(302);
-    expect(decodeURIComponent(res2.headers.get('location') ?? '')).toContain('Invalid or expired state');
+    expect(decodeURIComponent(res2.headers.get('location') ?? '')).toContain(
+      'Invalid or expired state',
+    );
   });
 
   it('exchanges the code, verifies the id_token and creates a session cookie', async () => {
@@ -263,7 +265,9 @@ describe('RugMunch OIDC — callback', () => {
       env,
     );
     expect(res.status).toBe(302);
-    expect(decodeURIComponent(res.headers.get('location') ?? '')).toContain('id_token verification failed');
+    expect(decodeURIComponent(res.headers.get('location') ?? '')).toContain(
+      'id_token verification failed',
+    );
     expect(res.headers.get('set-cookie')).toBeNull();
   });
 
@@ -287,7 +291,9 @@ describe('RugMunch OIDC — callback', () => {
       env,
     );
     expect(res.status).toBe(302);
-    expect(decodeURIComponent(res.headers.get('location') ?? '')).toContain('id_token verification failed');
+    expect(decodeURIComponent(res.headers.get('location') ?? '')).toContain(
+      'id_token verification failed',
+    );
   });
 
   it('rejects an expired id_token', async () => {
@@ -310,7 +316,9 @@ describe('RugMunch OIDC — callback', () => {
       env,
     );
     expect(res.status).toBe(302);
-    expect(decodeURIComponent(res.headers.get('location') ?? '')).toContain('id_token verification failed');
+    expect(decodeURIComponent(res.headers.get('location') ?? '')).toContain(
+      'id_token verification failed',
+    );
   });
 
   it('handles provider-side OAuth errors', async () => {

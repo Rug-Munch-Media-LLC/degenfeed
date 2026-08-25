@@ -2,7 +2,7 @@
 # Uses @cloudflare/next-on-pages to build Next.js for the edge.
 # Build output goes to .vercel/output/static (next-on-pages default).
 
-name = "degenfeed-web"
+name = "degenfeed"
 compatibility_date = "2026-07-01"
 compatibility_flags = ["nodejs_compat"]
 pages_build_output_dir = ".vercel/output/static"

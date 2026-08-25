@@ -2,7 +2,7 @@
 
 > **Last Updated:** 2026-07-25  
 > **Node:** 22.23.1 | **pnpm:** 11.17.0 | **Package Manager:** pnpm@11.7.0  
-> **Repository:** `/path/to/degenfeed-web`
+> **Repository:** `/path/to/degenfeed`
 
 ## Node.js Dependencies
 
@@ -62,9 +62,9 @@
 
 | Image | Tag | Status | Notes |
 |-------|-----|--------|-------|
-| `degenfeed-web:latest` | local build | ✅ Built from `apps/web/Dockerfile` | Node 22 Alpine |
+| `degenfeed:latest` | local build | ✅ Built from `apps/web/Dockerfile` | Node 22 Alpine |
 | `degenfeed/self-host:latest` | local build | ✅ Built from `scripts/self-host/Dockerfile` | Self-hosted variant |
-| `ghcr.io/rugmunchmedia/degenfeed-web` | `${IMAGE_TAG:-latest}` | ✅ Published to GHCR | Prod deployments |
+| `ghcr.io/rugmunchmedia/degenfeed` | `${IMAGE_TAG:-latest}` | ✅ Published to GHCR | Prod deployments |
 
 ### Infrastructure Images (Pinned)
 

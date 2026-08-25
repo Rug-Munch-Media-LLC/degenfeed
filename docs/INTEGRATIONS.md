@@ -888,4 +888,4 @@ Bridge reliability is managed by `workers/api/src/lib/bridge-reliability.ts`:
 
 ---
 
-*Questions? Join our [Developer Community](https://app.degenfeed.xyz/c/developers). Report issues on [Forgejo](https://git.rugmunch.io/RugMunchMedia/degenfeed-web).*
+*Questions? Join our [Developer Community](https://app.degenfeed.xyz/c/developers). Report issues on [Forgejo](https://git.rugmunch.io/RugMunchMedia/degenfeed).*
