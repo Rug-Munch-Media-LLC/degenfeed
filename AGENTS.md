@@ -15,7 +15,7 @@ Next.js 15 multi-protocol social aggregator — monorepo with 39 packages. Aggre
 ## Monorepo Architecture
 
 ```
-degenfeed-web/
+degenfeed/
 ├── apps/web/               # Next.js 15 App Router web client (app.degenfeed.xyz)
 ├── workers/api/            # Cloudflare Worker edge API (degenfeed-api)
 ├── bridge/                 # Local bridge server (crossposter, event-bridge, search-indexer)
@@ -69,7 +69,7 @@ degenfeed-web/
 `frontend` · language=TypeScript 5 + Next.js 15 (App Router) + React 19
 
 ## Where It Lives
-- Source: `https://git.rugmunch.io/RugMunchMedia/degenfeed-web`
+- Source: `https://git.rugmunch.io/RugMunchMedia/degenfeed`
 - Landing page: `https://degenfeed.xyz` (Cloudflare Worker, `workers/api/src/routes/landing.ts`)
 - Web client: `https://app.degenfeed.xyz` (Cloudflare Pages, `apps/web/`)
 - Edge API: `https://degenfeed.xyz/api/*` and `https://app.degenfeed.xyz/api/*` (Cloudflare Worker `degenfeed-api`, `workers/api/`)
