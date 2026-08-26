@@ -93,29 +93,13 @@ export default function CreatorStudioPage() {
 
       update('deploying', false);
       update('deployed', true);
-      update(
-        'deployedAddress',
-        data.coinAddress || `0x${crypto.randomUUID().replace(/-/g, '').slice(0, 40)}`,
-      );
-      update('txHash', data.coinAddress || `0x${crypto.randomUUID().replace(/-/g, '')}`);
+      // Use real deployed address from API response
+      update('deployedAddress', data.coinAddress);
+      update('txHash', data.txHash || data.coinAddress);
     } catch (err) {
-      // Fallback to simulated deploy if API fails
-      console.warn('[creator-studio] Real deploy failed, falling back to simulation:', err);
-      const stages = [
-        'Creating token contract...',
-        'Configuring bonding curve...',
-        'Setting up anti-exploit...',
-        'Deploying to chain...',
-        'Verifying deployment...',
-      ];
-      for (let i = 0; i < stages.length; i++) {
-        await new Promise((r) => setTimeout(r, 800));
-        update('deployProgress', ((i + 1) / stages.length) * 100);
-      }
+      // Deploy failed — surface the error, never simulate a fake address
       update('deploying', false);
-      update('deployed', true);
-      update('deployedAddress', `0x${crypto.randomUUID().replace(/-/g, '').slice(0, 40)}`);
-      update('txHash', `0x${crypto.randomUUID().replace(/-/g, '')}`);
+      update('deployError', err instanceof Error ? err.message : 'Deploy failed');
     }
   }, [form, update]);
 
@@ -123,21 +107,24 @@ export default function CreatorStudioPage() {
     if (form.daoDeploying) return;
     update('daoDeploying', true);
     update('daoDeployProgress', 0);
-    const stages = [
-      'Creating Snapshot space...',
-      'Deploying governance token...',
-      'Setting up treasury multi-sig...',
-      'Configuring DAO parameters...',
-      'Verifying deployment...',
-    ];
-    for (let i = 0; i < stages.length; i++) {
-      await new Promise((r) => setTimeout(r, 1000));
-      update('daoDeployProgress', ((i + 1) / stages.length) * 100);
+    // Real DAO deploy via API — simulated deploy banned
+    try {
+      const res = await fetch('/api/dao/deploy', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ name: form.name, symbol: form.symbol }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'DAO deploy failed');
+      update('daoDeploying', false);
+      update('daoDeployed', true);
+      update('daoAddress', data.daoAddress);
+      update('daoTxHash', data.txHash);
+    } catch (err) {
+      update('daoDeploying', false);
+      update('daoDeployError', err instanceof Error ? err.message : 'DAO deploy failed');
     }
-    update('daoDeploying', false);
-    update('daoDeployed', true);
-    update('daoAddress', `0x${crypto.randomUUID().replace(/-/g, '').slice(0, 40)}`);
-    update('daoTxHash', `0x${crypto.randomUUID().replace(/-/g, '')}`);
   };
 
   const totalSteps = 6;
