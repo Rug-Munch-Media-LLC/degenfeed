@@ -102,6 +102,8 @@ export interface TierLimits {
   scheduledPosts: number;
   /** Evergreen (pinned/permanent) posts allowed per period */
   evergreenPosts: number;
+  /** Queued (scheduled-for-later) posts allowed */
+  queuedPosts: number;
 }
 
 export const TIER_LIMITS: Record<string, TierLimits> = {
@@ -113,6 +115,7 @@ export const TIER_LIMITS: Record<string, TierLimits> = {
     communities: 999,
     scheduledPosts: 9999,
     evergreenPosts: 25,
+    queuedPosts: 100,
   },
   platinum: {
     protocols: 999,
@@ -120,6 +123,7 @@ export const TIER_LIMITS: Record<string, TierLimits> = {
     communities: 999,
     scheduledPosts: 999,
     evergreenPosts: 100,
+    queuedPosts: 500,
   },
   enterprise: {
     protocols: 999,
@@ -127,6 +131,7 @@ export const TIER_LIMITS: Record<string, TierLimits> = {
     communities: 999,
     scheduledPosts: 99999,
     evergreenPosts: 999,
+    queuedPosts: 9999,
   },
 };
 
