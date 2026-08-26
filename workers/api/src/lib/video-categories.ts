@@ -230,6 +230,14 @@ export class VideoCategorizer {
       .map(([category, score]) => ({ category, score }));
 
     const primary = sorted[0];
+    if (!primary) {
+      return {
+        primaryCategory: 'tech',
+        subCategory: undefined,
+        confidence: 0,
+        suggestedCategories: [],
+      };
+    }
     const totalScore = sorted.reduce((sum, s) => sum + s.score, 0);
 
     // Find best sub-category
@@ -237,7 +245,7 @@ export class VideoCategorizer {
     let bestSubScore = 0;
     for (const [key, score] of subScores) {
       const [cat, sub] = key.split(':');
-      if (cat === primary.category && score > bestSubScore) {
+      if (cat === primary.category && sub && score > bestSubScore) {
         bestSub = sub;
         bestSubScore = score;
       }
