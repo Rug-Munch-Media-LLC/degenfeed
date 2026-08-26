@@ -933,11 +933,11 @@ export default function CoinDetailPage() {
 
   const handleTrade = useCallback(() => {
     if (!isConnected) {
-      alert('Please connect your wallet first');
+      console.warn('Please connect your wallet first');
       return;
     }
     if (!tradeAmount || Number(tradeAmount) <= 0) {
-      alert('Enter an amount');
+      console.warn('Enter an amount');
       return;
     }
     setShowConfirm(true);

@@ -433,8 +433,8 @@ export default function CoinStatsPage() {
     bondingCount: 0,
   };
 
-  // Memoized mock price data for market overview chart
-  const mockPriceData = useMemo(() => generateMockPriceData(), []);
+  // Real price data only — mock data banned
+  const mockPriceData: number[] = [];
 
   // Volume bar chart data (top 10 by volume)
   const volumeBarData = useMemo(() => {
