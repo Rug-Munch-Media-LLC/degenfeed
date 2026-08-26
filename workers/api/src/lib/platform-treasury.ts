@@ -10,8 +10,8 @@
  *   5. Revenue transparency endpoint (via creator-dashboard.ts)
  */
 
-import type { Env } from '../types';
 import { log } from '../logger';
+import type { Env } from '../types';
 
 // ─── Constants ──────────────────────────────────────────────────────────
 
@@ -171,6 +171,7 @@ async function updateDailyAggregate(env: Env, date: string, event: FeeEvent): Pr
         uniqueTraders: 1,
       };
 
+  if (!env.CACHE) return;
   await env.CACHE.put(key, JSON.stringify(updated), {
     expirationTtl: 365 * 86400, // 1 year
   });
@@ -178,6 +179,7 @@ async function updateDailyAggregate(env: Env, date: string, event: FeeEvent): Pr
 
 async function getDailyAggregate(env: Env, date: string): Promise<DailyAggregate | null> {
   const key = `${KV_PREFIX.dailyAggregate}${date}`;
+  if (!env.CACHE) return null;
   try {
     const raw = await env.CACHE.get(key);
     return raw ? (JSON.parse(raw) as DailyAggregate) : null;
@@ -190,6 +192,7 @@ async function getDailyAggregate(env: Env, date: string): Promise<DailyAggregate
 
 async function updateGlobalAggregate(env: Env, event: FeeEvent): Promise<void> {
   const key = KV_PREFIX.revenueAggregate;
+  if (!env.CACHE) return;
   try {
     const raw = await env.CACHE.get(key);
     const existing = raw
@@ -218,7 +221,7 @@ async function updateGlobalAggregate(env: Env, event: FeeEvent): Promise<void> {
       totalTrades: (existing?.totalTrades ?? 0) + 1,
       activeCoins: (existing?.activeCoins ?? 0) + 1,
       dailyVolume: String(
-        ((Number.parseInt(existing?.dailyVolume ?? '0', 10)) || 0) +
+        (Number.parseInt(existing?.dailyVolume ?? '0', 10) || 0) +
           Number.parseInt(event.tradeValue, 10),
       ),
       feeDistribution: {

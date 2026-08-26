@@ -343,8 +343,8 @@ async function discoverFromEns(wallet: string, _env: Env): Promise<DiscoveredIde
       }
 
       // Nostr (NIP-05)
-      if (data.records.org_nostr || data.records['org.nostr']) {
-        const nip05 = data.records.org_nostr || data.records['org.nostr'];
+      const nip05 = data.records.org_nostr || data.records['org.nostr'];
+      if (nip05) {
         results.push({
           protocol: 'nostr',
           identity: { nip05 },
@@ -355,8 +355,8 @@ async function discoverFromEns(wallet: string, _env: Env): Promise<DiscoveredIde
       }
 
       // Bluesky
-      if (data.records.vnd_bluesky || data.records['vnd.bluesky']) {
-        const bsky = data.records.vnd_bluesky || data.records['vnd.bluesky'];
+      const bsky = data.records.vnd_bluesky || data.records['vnd.bluesky'];
+      if (bsky) {
         results.push({
           protocol: 'bluesky',
           identity: { did: bsky },
@@ -858,7 +858,8 @@ async function discoverCrossReference(
       // ENS names often double as NIP-05 identifiers
       const nip05 = `${wallet.slice(2, 10)}@ens.xyz`;
       try {
-        const { resolveNip05 } = await import('@degenfeed/nostr-sdk').catch(() => null);
+        const nostrSdk = await import('@degenfeed/nostr-sdk').catch(() => null);
+        const { resolveNip05 } = nostrSdk ?? {};
         if (resolveNip05) {
           const result = await resolveNip05(nip05);
           if (result?.pubkey) {
@@ -1032,7 +1033,7 @@ function mapToCrossProtocolIdentity(
       const npub = (disc.identity.npub as string) || (disc.identity.pubkey as string) || '';
       const nip05 = disc.identity.nip05 as string | undefined;
       return {
-        npub: npub || `npub1${(disc.identity.pubkey || '').slice(0, 8)}...`,
+        npub: npub || `npub1${String(disc.identity.pubkey || '').slice(0, 8)}...`,
         relays: DEFAULT_RELAYS,
         verified: disc.confidence === 'verified',
         ...(nip05 ? { nip05 } : {}),
