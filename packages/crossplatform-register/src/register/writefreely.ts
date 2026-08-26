@@ -105,13 +105,10 @@ export async function registerWriteFreely(
       accessToken = tokenData.data?.access_token ?? tokenData.access_token ?? '';
     }
 
-    // Encrypt the access token using the caller-supplied seal function before KV storage.
-    // The raw token is never stored in plaintext — only the AES-256-GCM sealed blob.
-    const accessTokenToStore = opts.sealSecret ? await opts.sealSecret(accessToken) : accessToken;
     const accountInfo: Record<string, string> = {
       username: desiredUsername,
       instance: instanceUrl,
-      _sealedAccessToken: accessTokenToStore,
+      accessToken,
       profileUrl: `${instanceUrl}/${desiredUsername}`,
     };
 
@@ -122,11 +119,7 @@ export async function registerWriteFreely(
       platform: 'writefreely',
       status: 'created',
       username: `${desiredUsername}@blog.degenfeed.xyz`,
-      accountInfo: {
-        username: desiredUsername,
-        instance: instanceUrl,
-        profileUrl: `${instanceUrl}/${desiredUsername}`,
-      },
+      accountInfo,
     };
   } catch (err) {
     return {

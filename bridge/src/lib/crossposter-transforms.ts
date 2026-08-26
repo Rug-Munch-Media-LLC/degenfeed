@@ -58,14 +58,11 @@ export const TRANSFORMS: Record<string, TransformFunction> = {
     }> = [];
 
     // Parse text for URLs, @mentions, and #hashtags with correct byte offsets
-    const byteView = encoder.encode(text);
-    const byteLength = byteView.byteLength;
-    const textForRegex = text; // Use string for regex matching
+    const textForRegex = text;
 
     // Pattern 1: URLs
     const urlRegex = /https?:\/\/[^\s<>"']+(?:\/[^\s<>"']*)?/g;
-    let match: RegExpExecArray | null;
-    while ((match = urlRegex.exec(textForRegex)) !== null) {
+    for (const match of textForRegex.matchAll(urlRegex)) {
       const url = match[0];
       const byteStart = encoder.encode(textForRegex.slice(0, match.index)).byteLength;
       const byteEnd = byteStart + encoder.encode(url).byteLength;
@@ -77,17 +74,15 @@ export const TRANSFORMS: Record<string, TransformFunction> = {
 
     // Pattern 2: @mentions (e.g., @user, @user@domain)
     const mentionRegex = /@([a-zA-Z0-9_.-]+(?:@[a-zA-Z0-9_.-]+)*)/g;
-    while ((match = mentionRegex.exec(textForRegex)) !== null) {
+    for (const match of textForRegex.matchAll(mentionRegex)) {
       const mention = match[0];
       const byteStart = encoder.encode(textForRegex.slice(0, match.index)).byteLength;
       const byteEnd = byteStart + encoder.encode(mention).byteLength;
-      // For mention facets, we set a tag-like feature since we may not know the DID
       facets.push({
         index: { byteStart, byteEnd },
         features: [
           {
             $type: 'app.bsky.richtext.facet#mention',
-            // If mention contains @domain, use it as a handle reference
             did: mention.includes('@') ? `at://${mention.slice(1)}` : undefined,
           },
         ],
@@ -96,7 +91,7 @@ export const TRANSFORMS: Record<string, TransformFunction> = {
 
     // Pattern 3: #hashtags
     const hashtagRegex = /#([a-zA-Z0-9_\u0080-\uFFFF-]+)/g;
-    while ((match = hashtagRegex.exec(textForRegex)) !== null) {
+    for (const match of textForRegex.matchAll(hashtagRegex)) {
       const tag = match[0];
       const tagName = match[1];
       const byteStart = encoder.encode(textForRegex.slice(0, match.index)).byteLength;

@@ -88,6 +88,8 @@ binding = "FARCASTER_COINS"
 id = "5add91e310144a6d83a791a507453ebd"
 preview_id = "98af1bd284164ecd95a5f9f244d20098"
 
+# LENS_COINS — removed 2026-08-06 (dead binding, namespace deleted from Cloudflare)
+
 [[kv_namespaces]]
 binding = "XCHAIN_REGISTRY"
 id = "8c624401302c46ec83dde2d45a9f854c"
@@ -109,6 +111,11 @@ id = "ab47c4c4222f4529b36c62bd801750ef"
 preview_id = "4e693a3fa9da4deba435f217c3d275ca"
 
 # ──────────────── Routes ────────────────────────────────
+routes = [
+  { pattern = "degenfeed.xyz/api/*", zone_id = "116a9676c3358def6796910ccb96f1fc" },
+  { pattern = "app.degenfeed.xyz/api/*", zone_id = "116a9676c3358def6796910ccb96f1fc" },
+  { pattern = "rugmunch.io/links", zone_id = "116a9676c3358def6796910ccb96f1fc" }
+]
 
 # Secrets — set with:
 #   wrangler secret put AUTH_SECRET
@@ -136,7 +143,6 @@ preview_id = "4e693a3fa9da4deba435f217c3d275ca"
 #   wrangler secret put TWITTER_CLIENT_SECRET
 #   wrangler secret put VAPID_PRIVATE_KEY
 #   wrangler secret put POSTIZ_API_KEY
-#   wrangler secret put NEWS_WARMUP_SECRET   (required by GET /api/news/warmup + */5 cron news warmup)
 # Generate AUTH_SECRET with:  openssl rand -hex 32
 # GTS_CLIENT_SECRET is from your GotoSocial app config.
 # PUSH_API_KEY — scoped key for POST /api/push/send (push notification sending)
@@ -152,7 +158,7 @@ GTS_CLIENT_ID = "01X3AAWH39P71TXZVKMEGAKMVC" # gitleaks:allow
 GTS_INSTANCE_URL = "https://social.degenfeed.xyz"
 GTS_API_BASE = "https://social.degenfeed.xyz"
 GTS_REDIRECT_URI = "https://app.degenfeed.xyz/auth/callback"
-RELAY_URLS = "ws://127.0.0.1:8085,wss://nos.lol,wss://purplepag.es,wss://relay.damus.io"
+RELAY_URLS = "wss://relay.damus.io,wss://relay.primal.net"
 FARCASTER_HUB_URL = "https://hub.farcaster.standardcrypto.vc:2281"
 LENS_API_URL = "https://api.lens.xyz/graphql"
 BSKY_PUBLIC_URL = "https://public.api.bsky.app"
@@ -163,12 +169,8 @@ THREADS_PDS_URL = "https://public.threads.net"
 THREADS_APP_ID = ""
 # Farcaster Warpcast OAuth — for /api/auth/warpcast/* routes
 FARCASTER_CLIENT_ID = ""
-# Reddit OAuth — for /api/auth/reddit/callback route AND the Reddit feed
-# provider (client-credentials OAuth for ~100 QPM instead of being blocked
-# from datacenter IPs). ID is non-secret; SECRET must be set via:
-#   wrangler secret put REDDIT_CLIENT_SECRET
+# Reddit OAuth — for /api/auth/reddit/callback route
 REDDIT_CLIENT_ID = ""
-REDDIT_CLIENT_SECRET = ""
 # Comma-separated admin wallet addresses for moderation/admin API access.
 # Set via wrangler secret in production; example value here for preview/dev.
 # ADMIN_WALLETS = "0x1e3ac01d0fdb976179790bdd02823196a92705c9"
@@ -180,7 +182,7 @@ RATE_WINDOW_MS = "5000"
 RATE_MAX_REQ = "60"
 RATE_LIMIT_DISABLED = "false"
 # Error tracking via GlitchTip (MIT, self-hosted Sentry-compatible)
-# Deploy GlitchTip on [HOST-1] first, then set DSN via:
+# Deploy GlitchTip on Talos first, then set DSN via:
 #   wrangler secret put GLITCHTIP_DSN
 # The SDK is the same @sentry/cloudflare — just point at glitchtip.rugmunch.io
 # The worker reads this at runtime via env.SENTRY_DSN.
@@ -188,34 +190,15 @@ SENTRY_DSN = ""
 # Self-hosted Redlib instance for Reddit feed proxying
 REDLIB_URL = "https://redlib.degenfeed.xyz"
 # Self-hosted RSS-Bridge instance for proxied RSS feed fetching
-# FlareSolverr (Cloudflare bypass) — public URL via bridge tunnel; the worker
-# runs at the edge so localhost is unreachable (127.0.0.1:8191 was never valid
-# for production — the service listens on 8192 on Talos).
-FLARESOLVERR_URL = "https://flaresolverr.degenfeed.xyz"
+FLARESOLVERR_URL = "http://localhost:8191"
 RMI_BACKEND_URL = "http://localhost:8000"
-# ── rmi-backend queue API (replaces KV list()-based queue processing) ──
-# USE_RMI_QUEUE_API: "true" (default) uses the rmi-backend queue API
-# (GET/POST /v1/queue/*) for scheduled/sync/offline/premium/bridgy queue
-# processing instead of KV list() scans, which burn the KV list operations
-# quota. Set to "false" to fall back to the legacy KV-backed behavior.
-USE_RMI_QUEUE_API = "true"
-# How often the scheduled post executor may run, in minutes. The cron trigger
-# still fires every minute; the executor self-throttles to this interval.
-SCHEDULED_EXECUTOR_INTERVAL_MINUTES = "5"
-# API key for the rmi-backend queue API. Placeholder only — the real key is
-# managed by the secrets pipeline ("wrangler secret put RMI_API_KEY").
-RMI_API_KEY = "${RMI_API_KEY}"
 RSS_BRIDGE_URL = "https://rss-bridge.degenfeed.xyz"
 # Bridge service URL for protocol feed fetching
 BRIDGE_INTERNAL_URL = "https://bridge.degenfeed.xyz"
-# Bridge API key — set via "wrangler secret put BRIDGE_API_KEY" in production
-# BRIDGE_API_KEY = "your-32-byte-hex-key"
 # Feature flags — comma-separated list of flags that should default to enabled
 FEATURE_FLAGS_DEFAULT = "reply-composer,dark-mode-only,farcaster-frames"
 # Postiz cross-posting API — for scheduled social media publishing
-# Public URL: schedule.degenfeed.xyz routes /api/ to the Postiz backend.
-# NOTE: workers cannot reach 127.0.0.1:3105 — must use the public host.
-POSTIZ_BASE_URL = "https://schedule.degenfeed.xyz/api"
+POSTIZ_BASE_URL = "http://127.0.0.1:3105"
 POSTIZ_API_KEY = "${POSTIZ_API_KEY}"
 POSTIZ_INTEGRATIONS = ""
 
@@ -223,20 +206,6 @@ POSTIZ_INTEGRATIONS = ""
 PEERTUBE_INSTANCE_URL = "https://video.degenfeed.xyz"
 PEERTUBE_CLIENT_ID = ""
 PEERTUBE_CLIENT_SECRET = ""
-
-# Restreamer (datarhei) — multi-platform RTMP push orchestration.
-# The worker triggers Restreamer through the bridge service (bridge.degenfeed.xyz)
-# which runs on the same host as Restreamer (127.0.0.1:8088). RESTREAMER_URL is
-# used for direct access in local dev only.
-RESTREAMER_URL = "http://127.0.0.1:8088"
-RS_ADMIN_USER = ""
-RS_ADMIN_PASSWORD = ""
-# Bridge API key for authenticated worker→bridge calls.
-# Set in production via "wrangler secret put BRIDGE_API_KEY" (no plaintext var,
-# otherwise the secret binding conflicts with the toml-declared var).
-
-# Owncast instance for live streaming
-OWNCAST_INSTANCE_URL = "https://owncast.degenfeed.xyz"
 
 # Telegram bot for OAuth + livestream notifications
 TELEGRAM_BOT_NAME = ""
@@ -257,9 +226,7 @@ LEMMY_INSTANCE_URL = "https://community.degenfeed.xyz"
 PIXELFED_INSTANCE_URL = "https://pixelfed.social"
 
 # Creator coin contracts
-# ZoraFactory (coins) — canonical address, same on all chains incl. Base:
-# https://docs.zora.co/coins/contracts/factory  [REVIEW]
-ZORA_WRAPPER_FACTORY = "0x777777751622c0d3258f214F9DF38E35BF45baF3"
+ZORA_WRAPPER_FACTORY = "0x0000000000000000000000000000000000000000"
 
 # Cross-chain bridge (Wormhole)
 WORMHOLE_BRIDGE = ""
@@ -269,21 +236,9 @@ ALLOW_DEV_OAUTH = "false"
 
 # Bluesky AT Protocol posting — DID for identity
 BSKY_DID = ""
-# Set as wrangler secrets for Bluesky write/DM/live access
-BSKY_ACCESS_TOKEN = ""
 
 # YouTube Data API v3 key
 YOUTUBE_API_KEY = ""
-
-# ── Audio / Video Streaming feed providers ─────────────────────────
-# Twitch Helix API — TWITCH_CLIENT_ID is non-secret (safe in vars).
-# TWITCH_ACCESS_TOKEN (OAuth client-credentials token) and
-# TWITCH_CLIENT_SECRET are secrets — set via:
-#   wrangler secret put TWITCH_ACCESS_TOKEN
-#   wrangler secret put TWITCH_CLIENT_SECRET
-TWITCH_CLIENT_ID = ""
-TWITCH_ACCESS_TOKEN = ""
-TWITCH_CLIENT_SECRET = ""
 
 # Solana — RPC URL for wallet verification, Blinks, and billing
 SOLANA_RPC_URL = "https://api.mainnet-beta.solana.com"
@@ -308,12 +263,20 @@ BSKY_SOCIAL_URL = "https://bsky.social"
 # Per-environment overrides. Preview deploys (PR builds) use --env preview.
 [env.preview]
 name = "degenfeed-api-preview"
+routes = [
+  { pattern = "preview.degenfeed.xyz/api/*", zone_id = "116a9676c3358def6796910ccb96f1fc" },
+  { pattern = "preview.degenfeed.xyz/*", zone_id = "116a9676c3358def6796910ccb96f1fc" }
+]
 [env.preview.vars]
 ALLOWED_ORIGINS = "https://preview.degenfeed.xyz,https://app.preview.degenfeed.xyz,http://localhost:3000"
 RATE_MAX_REQ = "600"
 
 [env.canary]
 name = "degenfeed-api-canary"
+routes = [
+  { pattern = "canary.degenfeed.xyz/api/*", zone_id = "116a9676c3358def6796910ccb96f1fc" },
+  { pattern = "canary.degenfeed.xyz/*", zone_id = "116a9676c3358def6796910ccb96f1fc" }
+]
 [env.canary.vars]
 ALLOWED_ORIGINS = "https://canary.degenfeed.xyz,http://localhost:3000"
 
@@ -326,10 +289,9 @@ ALLOWED_ORIGINS = "https://canary.degenfeed.xyz,http://localhost:3000"
 
 # Cron triggers — scheduled Worker invocations.
 # Every minute:   scheduled post executor
-# Every 5 min:    feed cache warmup + news aggregation warmup (GET /api/news/warmup)
 # Every 30 min:   trending scraper
 # Daily 14:00:    daily digest + trending refresh
 # Sunday 12:00:   weekly source discovery + health maintenance
 # Remove the [triggers] block to disable; ideal cost is ~zero.
 [triggers]
-crons = ["* * * * *", "*/5 * * * *", "*/30 * * * *", "0 14 * * *", "0 12 * * 7"]
+crons = ["* * * * *", "*/5 * * * *", "*/30 * * * *", "0 14 * * *", "0 12 * * 0"]
