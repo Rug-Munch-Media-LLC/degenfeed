@@ -10,7 +10,7 @@
  */
 
 import type { VideoPlatform } from '../../lib/creator-resolver';
-import type { UnifiedVideo } from '../video-aggregator';
+import type { UnifiedVideo } from '../video-aggregator-types';
 
 const ODYSEE_API = 'https://api.lbry.com';
 const ODYSEE_WEB = 'https://odysee.com';

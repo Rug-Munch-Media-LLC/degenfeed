@@ -14,7 +14,7 @@
  */
 
 import type { VideoPlatform } from '../../lib/creator-resolver';
-import type { UnifiedVideo } from '../video-aggregator';
+import type { UnifiedVideo } from '../video-aggregator-types';
 
 const PLATFORM_IPFS: VideoPlatform = 'ipfs';
 const PLATFORM_ARWEAVE: VideoPlatform = 'arweave';
@@ -38,14 +38,17 @@ const ARWEAVE_GATEWAYS = ['https://arweave.net/', 'https://gateway.arweave.xyz/'
 // ─── Resolve IPFS CID to gateway URL ───────────────────────────────────
 
 export function resolveIPFSUrl(cid: string): string {
-  const gateway = IPFS_GATEWAYS[Math.floor(Math.random() * IPFS_GATEWAYS.length)]!;
+  const gateway =
+    IPFS_GATEWAYS[Math.floor(Math.random() * IPFS_GATEWAYS.length)] ??
+    'https://ipfs.degenfeed.xyz/ipfs/';
   return `${gateway}${cid}`;
 }
 
 // ─── Resolve Arweave TX to gateway URL ─────────────────────────────────
 
 export function resolveArweaveUrl(txId: string): string {
-  const gateway = ARWEAVE_GATEWAYS[Math.floor(Math.random() * ARWEAVE_GATEWAYS.length)]!;
+  const gateway =
+    ARWEAVE_GATEWAYS[Math.floor(Math.random() * ARWEAVE_GATEWAYS.length)] ?? 'https://arweave.net/';
   return `${gateway}${txId}`;
 }
 
@@ -147,7 +150,7 @@ export async function fetchIPFSVideoList(
   try {
     // Use public IPFS DAG walking via HTTP gateways
     // This is a best-effort discovery — we look at known CIDs
-    const knownContentCIDs = [
+    const knownContentCIDs: string[] = [
       // These are placeholder CIDs for public video content on IPFS
       // Real implementation would index from web3.storage API or Pinata
     ];
@@ -187,11 +190,12 @@ export async function fetchIPFSVideoList(
           viewCount: 0,
           likeCount: 0,
           publishedAt: meta.createdAt ?? new Date().toISOString(),
+          publishedMs: meta.createdAt ? new Date(meta.createdAt).getTime() : Date.now(),
+          qualityScore: 70,
           category: 'ipfs-video',
           tags: ['ipfs', 'decentralized'],
           isLive: false,
           isShort: (meta.duration ?? 0) < 60,
-          embedUrl: resolveIPFSUrl(videoCid),
         });
       } catch {
         // skip individual failures
@@ -281,6 +285,8 @@ export async function fetchArweaveVideoList(
         publishedAt: edge.node.block?.timestamp
           ? new Date(edge.node.block.timestamp * 1000).toISOString()
           : new Date().toISOString(),
+        publishedMs: edge.node.block?.timestamp ? edge.node.block.timestamp * 1000 : Date.now(),
+        qualityScore: 70,
         category: 'arweave-video',
         tags: ['arweave', 'permanent'],
         isLive: false,

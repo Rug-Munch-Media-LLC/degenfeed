@@ -79,7 +79,12 @@ export type VideoPlatform =
   | 'bitchute'
   | 'dailymotion'
   | 'vimeo'
-  | 'lbry';
+  | 'lbry'
+  | 'ipfs'
+  | 'arweave'
+  | 'nostr'
+  | 'bluesky'
+  | 'kick';
 
 export interface PlatformPresence {
   platform: VideoPlatform;

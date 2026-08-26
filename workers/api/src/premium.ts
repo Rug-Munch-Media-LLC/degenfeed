@@ -95,15 +95,48 @@ export const FEATURE_TIER_REQUIREMENTS: Record<string, PremiumTier> = {
 };
 
 /** Tier limits for countable resources. 999 = unlimited. */
-export const TIER_LIMITS: Record<
-  string,
-  { protocols: number; creatorCoins: number; communities: number; scheduledPosts: number }
-> = {
-  basic: { protocols: 3, creatorCoins: 0, communities: 0, scheduledPosts: 10 },
-  pro: { protocols: 10, creatorCoins: 0, communities: 3, scheduledPosts: 100 },
-  creator: { protocols: 999, creatorCoins: 50, communities: 999, scheduledPosts: 9999 },
-  platinum: { protocols: 999, creatorCoins: 999, communities: 999, scheduledPosts: 999 },
-  enterprise: { protocols: 999, creatorCoins: 999, communities: 999, scheduledPosts: 99999 },
+export interface TierLimits {
+  protocols: number;
+  creatorCoins: number;
+  communities: number;
+  scheduledPosts: number;
+  /** Evergreen (pinned/permanent) posts allowed per period */
+  evergreenPosts: number;
+}
+
+export const TIER_LIMITS: Record<string, TierLimits> = {
+  basic: { protocols: 3, creatorCoins: 0, communities: 0, scheduledPosts: 10, evergreenPosts: 0 },
+  pro: { protocols: 10, creatorCoins: 0, communities: 3, scheduledPosts: 100, evergreenPosts: 3 },
+  creator: {
+    protocols: 999,
+    creatorCoins: 50,
+    communities: 999,
+    scheduledPosts: 9999,
+    evergreenPosts: 25,
+  },
+  platinum: {
+    protocols: 999,
+    creatorCoins: 999,
+    communities: 999,
+    scheduledPosts: 999,
+    evergreenPosts: 100,
+  },
+  enterprise: {
+    protocols: 999,
+    creatorCoins: 999,
+    communities: 999,
+    scheduledPosts: 99999,
+    evergreenPosts: 999,
+  },
+};
+
+/** Fallback limits when a tier is unknown */
+export const DEFAULT_TIER_LIMITS: TierLimits = TIER_LIMITS.basic ?? {
+  protocols: 3,
+  creatorCoins: 0,
+  communities: 0,
+  scheduledPosts: 10,
+  evergreenPosts: 0,
 };
 
 /** One-time fee per additional creator coin on Pro tier (USD). Covers gas + platform costs. */

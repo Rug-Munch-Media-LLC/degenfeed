@@ -10,7 +10,7 @@
  */
 
 import type { VideoPlatform } from '../../lib/creator-resolver';
-import type { UnifiedVideo } from '../video-aggregator';
+import type { UnifiedVideo } from '../video-aggregator-types';
 
 const PLATFORM: VideoPlatform = 'nostr';
 const PLATFORM_LABEL = 'Nostr Video';
@@ -37,15 +37,6 @@ interface NostrEvent {
   tags: string[][];
   content: string;
   sig: string;
-}
-
-interface NostrProfile {
-  pubkey: string;
-  name?: string;
-  display_name?: string;
-  picture?: string;
-  nip05?: string;
-  about?: string;
 }
 
 // ─── Fetch NIP-71 video events from relays ─────────────────────────────

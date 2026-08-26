@@ -11,7 +11,7 @@
  */
 
 import type { VideoPlatform } from '../../lib/creator-resolver';
-import type { UnifiedVideo } from '../video-aggregator';
+import type { UnifiedVideo } from '../video-aggregator-types';
 
 const PLATFORM: VideoPlatform = 'vimeo';
 const PLATFORM_LABEL = 'Vimeo';

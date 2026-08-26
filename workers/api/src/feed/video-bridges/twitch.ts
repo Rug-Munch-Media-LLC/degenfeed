@@ -10,7 +10,7 @@
  */
 
 import type { VideoPlatform } from '../../lib/creator-resolver';
-import type { UnifiedVideo } from '../video-aggregator';
+import type { UnifiedVideo } from '../video-aggregator-types';
 
 const PLATFORM: VideoPlatform = 'twitch';
 const PLATFORM_LABEL = 'Twitch';
