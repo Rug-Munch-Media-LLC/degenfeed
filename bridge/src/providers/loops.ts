@@ -23,7 +23,7 @@ import type { SchemaGuard, UnifiedPost } from '../server/types';
 
 const $fetch = globalThis.fetch;
 
-const LOOPS_BASE = process.env.LOOPS_BASE_URL || 'http://127.0.0.1:8136';
+const LOOPS_BASE = process.env.LOOPS_BASE_URL || 'https://loops.degenfeed.xyz';
 const LOOPS_TOKEN = process.env.LOOPS_ACCESS_TOKEN || '';
 
 /**
@@ -198,7 +198,7 @@ export function formatCount(count: number): string {
 
 export function loopsVideoToPost(
   video: LoopsVideo,
-  sourceLabel = 'Loops via @degenfeed',
+  _sourceLabel = 'Loops via @degenfeed',
 ): UnifiedPost {
   const account = video.account;
   const authorName = account?.name || account?.username || 'Loops';
@@ -306,10 +306,7 @@ export async function fetchLoopsPosts(limit = 20): Promise<UnifiedPost[]> {
   }
 
   // Fetch the local instance first, then any remote instances as fallback.
-  const instances = [
-    { base: LOOPS_BASE, label: 'local' },
-    ...LOOPS_REMOTE_INSTANCES,
-  ];
+  const instances = [{ base: LOOPS_BASE, label: 'local' }, ...LOOPS_REMOTE_INSTANCES];
 
   const allPosts: UnifiedPost[] = [];
   for (const instance of instances) {
@@ -338,11 +335,7 @@ export async function fetchLoopsPosts(limit = 20): Promise<UnifiedPost[]> {
 }
 
 /** Fetch and map a single Loops instance's public web feed. */
-async function fetchLoopsFeed(
-  base: string,
-  label: string,
-  limit: number,
-): Promise<UnifiedPost[]> {
+async function fetchLoopsFeed(base: string, label: string, limit: number): Promise<UnifiedPost[]> {
   try {
     const headers: Record<string, string> = {
       'User-Agent': 'DegenFeed-Bridge/0.1',

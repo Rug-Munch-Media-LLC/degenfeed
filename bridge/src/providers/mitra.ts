@@ -15,7 +15,12 @@ import type { SchemaGuard, UnifiedPost } from '../server/types';
 
 const _$fetch = globalThis.fetch;
 
-const MITRA_INSTANCES = ['http://127.0.0.1:8100', 'https://public.mitra.social'];
+// Dead local instance (127.0.0.1:8100) caused rejection storms that starved
+// the bridge event loop — instances are env-configurable now.
+const MITRA_INSTANCES = (process.env.MITRA_INSTANCES || 'https://public.mitra.social')
+  .split(',')
+  .map((x) => x.trim())
+  .filter(Boolean);
 
 interface MitraStatus {
   id: string;
