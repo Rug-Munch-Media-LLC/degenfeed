@@ -15,7 +15,12 @@ import type { SchemaGuard, UnifiedPost } from '../server/types';
 
 const _$fetch = globalThis.fetch;
 
-const TAKAHE_INSTANCES = ['http://127.0.0.1:8101', 'https://takahe.social'];
+// Dead local instance (127.0.0.1:8101) caused an unhandled-rejection storm that
+// starved the bridge event loop — instances are env-configurable now.
+const TAKAHE_INSTANCES = (process.env.TAKAHE_INSTANCES || 'https://takahe.social')
+  .split(',')
+  .map((x) => x.trim())
+  .filter(Boolean);
 
 interface TakaheStatus {
   id: string;

@@ -1,0 +1,243 @@
+# DegenFeed GoToSocial + Elk Frontend — social.degenfeed.xyz
+# ═══════════════════════════════════════════════════════════════════════════
+#
+# Elk (Vue Mastodon client) serves the web UI at /
+# GoToSocial serves the Mastodon API at /api/, /oauth/, etc.
+#
+# ⚠️ CRITICAL for Federation: ALL proxy blocks to GTS MUST set
+#   X-Forwarded-Proto. Without it, WebFinger / ActivityPub responses
+#   return http:// URLs, which causes every fediverse instance to
+#   reject federation.
+#   See: https://codeberg.org/superseriousbusiness/gotosocial/src/branch/main/docs/getting_started/reverse_proxy/nginx
+#
+# Deploy:
+#   ln -sf /srv/degenfeed/nginx/social.degenfeed.xyz.conf \
+#          /etc/nginx/sites-available/social.degenfeed.xyz
+#   ln -sf /etc/nginx/sites-available/social.degenfeed.xyz \
+#          /etc/nginx/sites-enabled/
+#   nginx -t && systemctl reload nginx
+#
+# ═══════════════════════════════════════════════════════════════════════════
+
+upstream degenfeed_gotosocial {
+    server 127.0.0.1:8082 max_fails=3 fail_timeout=10s;
+    keepalive 32;
+}
+
+upstream degenfeed_elk {
+    server 127.0.0.1:3001 max_fails=3 fail_timeout=10s;
+    keepalive 32;
+}
+
+# ─── Common proxy settings ───────────────────────────────────────────────
+map $http_upgrade $gts_connection_upgrade {
+    default  "upgrade";
+    ""       "";
+}
+
+server {
+    listen 80;
+    listen [::]:80;
+    listen 443 ssl;
+    listen [::]:443 ssl;
+    http2 on;
+    server_name social.degenfeed.xyz;
+
+    # ─── SSL — Cloudflare Origin CA ─────────────────────────────────────
+    ssl_certificate     /etc/ssl/certs/degenfeed-origin-ca.pem;
+    ssl_certificate_key /etc/ssl/private/degenfeed-origin.key;
+    ssl_protocols       TLSv1.2 TLSv1.3;
+    ssl_ciphers         HIGH:!aNULL:!MD5;
+
+
+    # ─── Security Headers ───────────────────────────────────────────────
+    include /srv/degenfeed/nginx/security-headers.conf;
+
+    # ─── Max upload size (GTS recommends 40M for media) ─────────────────
+    client_max_body_size 40M;
+
+    # ═══════════════════════════════════════════════════════════════════
+    # ELK FRONTEND — Web UI (Vue Mastodon Client)
+    # ═══════════════════════════════════════════════════════════════════
+
+    # DegenFeed blue logo — serve from host to bypass Elk's stale build-manifest
+    # Content-Length (original 2984B vs patched 2684B) which truncates /logo.svg
+    # to an empty body through the Cloudflare HTTP/2 tunnel.
+    location = /logo.svg {
+        alias /srv/degenfeed/elk/public/logo.svg;
+        default_type image/svg+xml;
+        add_header Cache-Control "public, max-age=3600";
+        add_header X-DegenFeed-Logo "blue" always;
+    }
+
+    location / {
+        # Elk serves the web UI directly (theme is patched at source — blue #1d9bf0)
+        proxy_pass http://degenfeed_elk;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_read_timeout 30s;
+        proxy_buffering on;
+        proxy_buffer_size 16k;
+        proxy_buffers 16 16k;
+        proxy_busy_buffers_size 32k;
+    }
+
+    # ═══════════════════════════════════════════════════════════════════
+    # GTS API BACKEND — Mastodon API, OAuth, Federation
+    # ═══════════════════════════════════════════════════════════════════
+    #
+    # All paths below proxy to GTS on :8082 so Elk can call the API
+    # and remote fediverse instances can reach ActivityPub endpoints.
+    # ═══════════════════════════════════════════════════════════════════
+
+    # ─── Mastodon API (used by Elk frontend + federation) ─────────────
+    location /api/ {
+        limit_req zone=gts_fed burst=20 nodelay;
+        proxy_pass http://degenfeed_gotosocial;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection $gts_connection_upgrade;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_read_timeout 30s;
+    }
+
+    # ─── OAuth & Auth endpoints (used by Elk for login flow) ─────────
+    location /oauth/ {
+        limit_req zone=gts_fed burst=20 nodelay;
+        proxy_pass http://degenfeed_gotosocial;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection $gts_connection_upgrade;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_read_timeout 30s;
+    }
+
+    location /auth/ {
+        limit_req zone=gts_fed burst=20 nodelay;
+        proxy_pass http://degenfeed_gotosocial;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection $gts_connection_upgrade;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_read_timeout 30s;
+    }
+
+    # ─── ActivityPub federation inbox ─────────────────────────────────
+    location /inbox {
+        limit_req zone=gts_fed burst=10 nodelay;
+        proxy_pass http://degenfeed_gotosocial;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection $gts_connection_upgrade;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_read_timeout 60s;
+        proxy_buffering off;
+    }
+
+    # ─── ActivityPub federation outbox ────────────────────────────────
+    location /outbox {
+        limit_req zone=gts_fed burst=10 nodelay;
+        proxy_pass http://degenfeed_gotosocial;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection $gts_connection_upgrade;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_read_timeout 60s;
+        proxy_buffering off;
+    }
+
+    # ─── ActivityPub user endpoints (profiles, followers, following) ──
+    location /users/ {
+        limit_req zone=gts_fed burst=20 nodelay;
+        proxy_pass http://degenfeed_gotosocial;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection $gts_connection_upgrade;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_read_timeout 30s;
+    }
+
+    # ─── WebFinger (/.well-known/webfinger) + NodeInfo ────────────────
+    location /.well-known/ {
+        limit_req zone=gts_fed burst=20 nodelay;
+        proxy_pass http://degenfeed_gotosocial;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection $gts_connection_upgrade;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_read_timeout 30s;
+    }
+
+    # ─── NodeInfo endpoint ────────────────────────────────────────────
+    location /nodeinfo/ {
+        limit_req zone=gts_fed burst=20 nodelay;
+        proxy_pass http://degenfeed_gotosocial;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection $gts_connection_upgrade;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_read_timeout 30s;
+    }
+
+    # ─── ActivityPub profile pages (@username) ────────────────────────
+    location ~ ^/@[a-zA-Z0-9_]+$ {
+        limit_req zone=gts_fed burst=20 nodelay;
+        proxy_pass http://degenfeed_gotosocial;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection $gts_connection_upgrade;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_read_timeout 30s;
+    }
+
+    # ─── ActivityPub collections (followers, following, outbox, inbox) ─
+    location ~ ^/users/[a-zA-Z0-9_]+/(followers|following|outbox|inbox|collections?|statuses?)$ {
+        limit_req zone=gts_fed burst=20 nodelay;
+        proxy_pass http://degenfeed_gotosocial;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection $gts_connection_upgrade;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_read_timeout 30s;
+    }
+}
+
+# Elk theme override removed 2026-08-04: the green (#00ff41) CSS variables were
+# patched to DegenFeed blue (#1d9bf0) at the source — the mounted index.html in
+# /srv/degenfeed/elk/public. A global (http-level) sub_filter would have applied
+# to every vhost and the '0,255,65' rule risked corrupting unrelated responses.

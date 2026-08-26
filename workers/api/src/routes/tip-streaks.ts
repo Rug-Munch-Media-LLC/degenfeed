@@ -51,6 +51,8 @@ export interface RevenueGoal {
   period: string; // YYYY-MM
   /** Goal label */
   label: string;
+  /** Last update timestamp */
+  updatedAt?: number;
   /** Whether the goal is active */
   active: boolean;
 }
@@ -222,7 +224,7 @@ export async function updateTipStreak(env: Env, userId: string): Promise<TipStre
 export async function getTipStreak(env: Env, userId: string): Promise<TipStreakRecord> {
   const key = streakKey(userId);
   return (
-    kvGetJson<TipStreakRecord>(env, key) ?? {
+    (await kvGetJson<TipStreakRecord>(env, key)) ?? {
       currentStreak: 0,
       longestStreak: 0,
       lastTipDate: '',

@@ -8,7 +8,8 @@ import { aggregateProfile } from '../../lib/profile-sync';
 import { jsonResponse, noCacheJsonResponse } from '../../response-helpers';
 import type { Env } from '../../types';
 
-interface AggregatedProfile {
+export interface AggregatedProfile {
+  wallet?: string;
   badges: string[];
   verificationLevel: number;
   protocols: Record<string, unknown>;
