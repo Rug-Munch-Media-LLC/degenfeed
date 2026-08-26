@@ -5,7 +5,7 @@
  * Handles error recovery — individual fetch failures never break the feed.
  */
 
-import type { UnifiedVideo } from '../video-aggregator';
+import type { UnifiedVideo } from '../video-aggregator-types';
 
 const LENS_API = 'https://api.lens.xyz/graphql';
 

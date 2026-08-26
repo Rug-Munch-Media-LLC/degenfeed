@@ -6,7 +6,7 @@
  * No silent failures — individual errors are caught, never break the feed.
  */
 
-import type { UnifiedVideo } from '../video-aggregator';
+import type { UnifiedVideo } from '../video-aggregator-types';
 
 export async function fetchBlueskyChannelVideos(
   _did: string,

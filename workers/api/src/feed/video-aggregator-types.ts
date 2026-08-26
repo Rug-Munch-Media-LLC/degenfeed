@@ -10,6 +10,8 @@ export interface UnifiedVideo {
   description: string;
   thumbnail: string;
   url: string;
+  /** Embeddable player URL (if distinct from url) */
+  embedUrl?: string;
   duration: number;
   platform: VideoPlatform;
   platformLabel: string;

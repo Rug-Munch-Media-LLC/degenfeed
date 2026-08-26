@@ -9,7 +9,7 @@
  */
 
 import type { VideoPlatform } from '../../lib/creator-resolver';
-import type { UnifiedVideo } from '../video-aggregator';
+import type { UnifiedVideo } from '../video-aggregator-types';
 
 const PLATFORM: VideoPlatform = 'farcaster';
 const PLATFORM_LABEL = 'Farcaster Video';

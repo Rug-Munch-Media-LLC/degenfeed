@@ -8,7 +8,7 @@
  */
 
 import type { VideoPlatform } from '../../lib/creator-resolver';
-import type { UnifiedVideo } from '../video-aggregator';
+import type { UnifiedVideo } from '../video-aggregator-types';
 
 const PLATFORM: VideoPlatform = 'livetube';
 const PLATFORM_LABEL = 'LiveTube';
@@ -17,17 +17,6 @@ const PLATFORM_COLOR = '#FF4500';
 const LIVETUBE_API_BASE = 'https://api.livetube.com/v2';
 
 // ─── Types ─────────────────────────────────────────────────────────────
-
-interface LiveTubeChannel {
-  id: string;
-  username: string;
-  displayName: string;
-  avatar?: string;
-  bio?: string;
-  followersCount: number;
-  isLive: boolean;
-  livestream?: LiveTubeStream;
-}
 
 interface LiveTubeStream {
   id: string;
