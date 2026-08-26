@@ -300,16 +300,16 @@ async function fetchChannelVideos(
       signal: AbortSignal.timeout(15000),
     });
     if (!res.ok) {
-      console.log(`[youtube] ${channel.name}: HTTP ${res.status}`);
+      // console.log(`[youtube] ${channel.name}: HTTP ${res.status}`);
       return [];
     }
     const xml = await res.text();
     if (!xml || xml.length < 200 || xml.includes('Error 404')) return [];
     return parseYouTubeFeed(xml, channel.channelId, channel.name).slice(0, limit);
   } catch (err) {
-    console.log(
-      `[youtube] ${channel.name}: fetch error: ${err instanceof Error ? err.message : String(err)}`,
-    );
+    //     console.log(
+    //       `[youtube] ${channel.name}: fetch error: ${err instanceof Error ? err.message : String(err)}`,
+    //     );
     return [];
   }
 }

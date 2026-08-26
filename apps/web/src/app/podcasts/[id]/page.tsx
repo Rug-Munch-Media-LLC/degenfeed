@@ -305,7 +305,7 @@ export default function PodcastDetailPage() {
       await navigator.share({ title: podcast?.title, url }).catch(() => {});
     } else {
       await navigator.clipboard.writeText(url);
-      alert('Link copied!');
+      // alert('Link copied!');
     }
   };
 

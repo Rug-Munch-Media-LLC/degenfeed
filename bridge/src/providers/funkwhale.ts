@@ -144,7 +144,7 @@ async function fetchFromInstance(instance: string, limit: number): Promise<Unifi
       };
     });
   } catch (err) {
-    console.log(`[bridge] Funkwhale error (${instance}): ${(err as Error).message}`);
+    // console.log(`[bridge] Funkwhale error (${instance}): ${(err as Error).message}`);
     return [];
   }
 }
@@ -181,7 +181,7 @@ export async function fetchFunkwhalePosts(limit = 20): Promise<UnifiedPost[]> {
     }
   }
 
-  console.log(`[bridge] Funkwhale: ${deduped.length} tracks`);
+  // console.log(`[bridge] Funkwhale: ${deduped.length} tracks`);
   return deduped;
 }
 

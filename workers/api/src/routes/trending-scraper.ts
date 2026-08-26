@@ -128,7 +128,7 @@ export async function scrapeTrendingContent(env: Env): Promise<TrendingData> {
     nostr.items.length +
     bluesky.items.length;
 
-  console.log(`[trending-scraper] scraped ${totalItems} items across 5 platforms in ${elapsed}ms`);
+  // console.log(`[trending-scraper] scraped ${totalItems} items across 5 platforms in ${elapsed}ms`);
 
   return trending;
 }

@@ -95,18 +95,18 @@ export async function logError(
   };
 
   // Always log to console (structured JSON for Cloudflare logging)
-  console.log(
-    JSON.stringify({
-      l: 'error',
-      code,
-      m: message,
-      route: ctx.route,
-      method: ctx.method,
-      status: ctx.statusCode ?? 500,
-      t: record.timestamp,
-      userId: ctx.userId,
-    }),
-  );
+  //   console.log(
+  //     JSON.stringify({
+  //       l: 'error',
+  //       code,
+  //       m: message,
+  //       route: ctx.route,
+  //       method: ctx.method,
+  //       status: ctx.statusCode ?? 500,
+  //       t: record.timestamp,
+  //       userId: ctx.userId,
+  //     }),
+  //   );
 
   // Persist to KV (fire-and-forget — never block a response on logging)
   if (env.CACHE) {

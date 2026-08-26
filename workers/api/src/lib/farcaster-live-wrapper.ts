@@ -273,9 +273,9 @@ export async function detectFarcasterLives(env: Env): Promise<FarcasterLiveDetec
     }
 
     // Log detection results
-    console.log(
-      `[farcaster-live-wrapper] Detected ${lives.size} Farcaster live streams in ${Date.now() - startTime}ms`,
-    );
+    //     console.log(
+    //       `[farcaster-live-wrapper] Detected ${lives.size} Farcaster live streams in ${Date.now() - startTime}ms`,
+    //     );
   } catch (err) {
     console.error('[farcaster-live-wrapper] Live detection failed:', err);
   }
@@ -819,9 +819,9 @@ export async function pollFarcasterLives(env: Env): Promise<{
   }
 
   const rechecked = await getActiveFarcasterLives(env);
-  console.log(
-    `[farcaster-live-wrapper] Poll: started=${started} stopped=${stopped} active=${rechecked.length} in ${Date.now() - start}ms`,
-  );
+  //   console.log(
+  //     `[farcaster-live-wrapper] Poll: started=${started} stopped=${stopped} active=${rechecked.length} in ${Date.now() - start}ms`,
+  //   );
 
   return { started, stopped, active: rechecked.length };
 }

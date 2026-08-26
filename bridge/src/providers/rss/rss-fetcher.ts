@@ -228,7 +228,7 @@ async function fetchSingleFeed(feed: FeedSource, limit: number): Promise<Unified
     });
 
     if (!res.ok) {
-      console.log(`[rss] ${feed.label}: HTTP ${res.status}`);
+      // console.log(`[rss] ${feed.label}: HTTP ${res.status}`);
       return [];
     }
 
@@ -343,7 +343,7 @@ async function fetchSingleFeed(feed: FeedSource, limit: number): Promise<Unified
       };
     });
   } catch (err) {
-    console.log(`[rss] ${feed.label}: error — ${err instanceof Error ? err.message : 'unknown'}`);
+    // console.log(`[rss] ${feed.label}: error — ${err instanceof Error ? err.message : 'unknown'}`);
     return [];
   }
 }

@@ -29,7 +29,7 @@ export async function fetchEpicyonPosts(limit = 20): Promise<UnifiedPost[]> {
     const { fetchEpicyonPosts: adapterFetch } = await getAdapter();
     return adapterFetch(limit);
   } catch (err) {
-    console.log(`[bridge] Epicyon error: ${(err as Error).message}`);
+    // console.log(`[bridge] Epicyon error: ${(err as Error).message}`);
     return [];
   }
 }

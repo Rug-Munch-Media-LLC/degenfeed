@@ -150,7 +150,7 @@ async function fetchHotFeed(limit: number): Promise<UnifiedPost[]> {
     if (!data.HotFeedPage) return [];
     return data.HotFeedPage.filter((p) => !p.IsHidden).map(desoPostToPost);
   } catch (err) {
-    console.log(`[bridge] DeSo hot feed error: ${(err as Error).message}`);
+    // console.log(`[bridge] DeSo hot feed error: ${(err as Error).message}`);
     return [];
   }
 }
@@ -172,7 +172,7 @@ async function fetchGlobalFeed(limit: number): Promise<UnifiedPost[]> {
     if (!data.Posts) return [];
     return data.Posts.filter((p) => !p.IsHidden).map(desoPostToPost);
   } catch (err) {
-    console.log(`[bridge] DeSo global feed error: ${(err as Error).message}`);
+    // console.log(`[bridge] DeSo global feed error: ${(err as Error).message}`);
     return [];
   }
 }
@@ -205,7 +205,7 @@ export async function fetchDeSoPosts(limit = 20): Promise<UnifiedPost[]> {
     }
   }
 
-  console.log(`[bridge] DeSo: ${deduped.length} posts`);
+  // console.log(`[bridge] DeSo: ${deduped.length} posts`);
   return deduped;
 }
 

@@ -147,7 +147,7 @@ async function fetchActiveRooms(limit: number): Promise<UnifiedPost[]> {
     if (!Array.isArray(rooms)) return [];
     return rooms.slice(0, limit).map(huddleRoomToPost);
   } catch (err) {
-    console.log(`[bridge] Huddle01 API error: ${(err as Error).message}`);
+    // console.log(`[bridge] Huddle01 API error: ${(err as Error).message}`);
     return [];
   }
 }
@@ -166,7 +166,7 @@ export const schema: SchemaGuard = {
 
 export async function fetchHuddle01Posts(limit = 20): Promise<UnifiedPost[]> {
   const posts = await fetchActiveRooms(limit);
-  console.log(`[bridge] Huddle01: ${posts.length} rooms`);
+  // console.log(`[bridge] Huddle01: ${posts.length} rooms`);
   return posts;
 }
 

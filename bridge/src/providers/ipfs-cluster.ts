@@ -26,7 +26,7 @@ export async function fetchIpfsClusterPosts(limit = 20): Promise<UnifiedPost[]> 
     const { fetchIpfsClusterPosts: adapterFetch } = await getAdapter();
     return adapterFetch(limit);
   } catch (err) {
-    console.log(`[bridge] IPFS Cluster error: ${(err as Error).message}`);
+    // console.log(`[bridge] IPFS Cluster error: ${(err as Error).message}`);
     return [];
   }
 }

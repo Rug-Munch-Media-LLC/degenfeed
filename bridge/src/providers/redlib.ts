@@ -386,9 +386,9 @@ async function fetchFromRedditOAuth(subreddit: string, limit: number): Promise<U
     const res = await getRedditOAuth().apiFetch(path, { timeout: 8000 });
     if (!res?.ok) {
       if (res?.status === 429) {
-        console.log(`[bridge] Reddit OAuth: rate limited on r/${subreddit}`);
+        // console.log(`[bridge] Reddit OAuth: rate limited on r/${subreddit}`);
       } else if (res?.status === 403) {
-        console.log(`[bridge] Reddit OAuth: forbidden on r/${subreddit} (private?)`);
+        // console.log(`[bridge] Reddit OAuth: forbidden on r/${subreddit} (private?)`);
       }
       return [];
     }
@@ -462,7 +462,7 @@ async function fetchFromRedditJson(subreddit: string, limit: number): Promise<Un
     });
     if (!res.ok) {
       if (res.status === 429) {
-        console.log(`[bridge] Reddit JSON: rate limited on r/${subreddit}`);
+        // console.log(`[bridge] Reddit JSON: rate limited on r/${subreddit}`);
       }
       return [];
     }
@@ -550,7 +550,7 @@ export async function fetchRedditPosts(limit = 20): Promise<UnifiedPost[]> {
     // Reddit unauthenticated limit: ~60 requests/10 min per IP. Keep our own
     // in-process budget far below that so bursts don't trip Reddit's CDN.
     if (!checkRateLimit('reddit', { maxRequests: 20, windowMs: 600_000 })) {
-      console.log('[reddit] Rate limited, skipping fetch');
+      // console.log('[reddit] Rate limited, skipping fetch');
       return [];
     }
 
@@ -626,17 +626,17 @@ export async function fetchRedditPosts(limit = 20): Promise<UnifiedPost[]> {
     } else {
       const lastGood = getLastGoodPosts();
       if (lastGood) {
-        console.log(
-          `[reddit] ${sub}: fetch returned empty — serving ${lastGood.length} last-good posts`,
-        );
+        //         console.log(
+        //           `[reddit] ${sub}: fetch returned empty — serving ${lastGood.length} last-good posts`,
+        //         );
         return lastGood.slice(0, limit);
       }
     }
 
     const authMode = getRedditOAuth().isConfigured ? 'oauth' : 'unauthenticated';
-    console.log(
-      `[bridge] Reddit: ${deduped.length} posts from r/${sub} [${authMode}] (rss: ${rssCount}, oauth: ${oauthCount}, json: ${jsonCount}, redlib: ${redlibCount})`,
-    );
+    //     console.log(
+    //       `[bridge] Reddit: ${deduped.length} posts from r/${sub} [${authMode}] (rss: ${rssCount}, oauth: ${oauthCount}, json: ${jsonCount}, redlib: ${redlibCount})`,
+    //     );
     return deduped;
   })();
 

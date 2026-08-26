@@ -256,7 +256,7 @@ async function fetchFromRoom(source: MatrixSource, limit: number): Promise<Unifi
       .slice(0, limit)
       .map((e) => eventToPost(e, source));
   } catch (err) {
-    console.log(`[bridge] Matrix fetch error (${source.roomId}): ${(err as Error).message}`);
+    // console.log(`[bridge] Matrix fetch error (${source.roomId}): ${(err as Error).message}`);
     return [];
   }
 }
@@ -293,7 +293,7 @@ export async function fetchMatrixPosts(limit = 20): Promise<UnifiedPost[]> {
     }
   }
 
-  console.log(`[bridge] Matrix: ${deduped.length} messages`);
+  // console.log(`[bridge] Matrix: ${deduped.length} messages`);
   return deduped;
 }
 

@@ -210,7 +210,7 @@ async function fetchFromNode(baseUrl: string, limit: number): Promise<UnifiedPos
       .slice(0, limit)
       .map((p) => aetherPostToPost(p, baseUrl));
   } catch (err) {
-    console.log(`[bridge] Aether node error (${baseUrl}): ${(err as Error).message}`);
+    // console.log(`[bridge] Aether node error (${baseUrl}): ${(err as Error).message}`);
     return [];
   }
 }
@@ -276,7 +276,7 @@ export async function fetchAetherPosts(limit = 20): Promise<UnifiedPost[]> {
     }
   }
 
-  console.log(`[bridge] Aether: ${deduped.length} posts from ${sources.length} sources`);
+  // console.log(`[bridge] Aether: ${deduped.length} posts from ${sources.length} sources`);
   return deduped;
 }
 

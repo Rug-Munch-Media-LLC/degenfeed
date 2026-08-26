@@ -317,9 +317,9 @@ export async function fetchFaircampPosts(limit = 20): Promise<UnifiedPost[]> {
     }
   }
 
-  console.log(
-    `[bridge] Faircamp: ${deduped.length} posts from ${FAIRCAMP_INSTANCES.length} instances`,
-  );
+  //   console.log(
+  //     `[bridge] Faircamp: ${deduped.length} posts from ${FAIRCAMP_INSTANCES.length} instances`,
+  //   );
   return deduped;
 }
 

@@ -212,7 +212,7 @@ export default function CreatorPodcastPage() {
       setShowCreatePodcast(false);
       setNewPodcast({ title: '', description: '', category: 'crypto' });
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to create podcast');
+      // alert(err instanceof Error ? err.message : 'Failed to create podcast');
     }
   };
 
@@ -246,7 +246,7 @@ export default function CreatorPodcastPage() {
         status: 'draft',
       });
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to add episode');
+      // alert(err instanceof Error ? err.message : 'Failed to add episode');
     }
   };
 
@@ -264,7 +264,7 @@ export default function CreatorPodcastPage() {
       if (!res.ok) throw new Error('Failed to delete episode');
       setEpisodes((prev) => prev.filter((ep) => ep.id !== episodeId));
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to delete episode');
+      // alert(err instanceof Error ? err.message : 'Failed to delete episode');
     }
   };
 
@@ -284,7 +284,7 @@ export default function CreatorPodcastPage() {
         ),
       );
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Failed to publish episode');
+      // alert(err instanceof Error ? err.message : 'Failed to publish episode');
     }
   };
 

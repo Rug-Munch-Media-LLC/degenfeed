@@ -282,7 +282,7 @@ async function fetchTrendingCollections(limit: number): Promise<UnifiedPost[]> {
       } as UnifiedPost;
     });
   } catch (err) {
-    console.log(`[bridge] OpenSea trending collections error: ${(err as Error).message}`);
+    // console.log(`[bridge] OpenSea trending collections error: ${(err as Error).message}`);
     return [];
   }
 }
@@ -300,7 +300,7 @@ async function fetchRecentEvents(limit: number): Promise<UnifiedPost[]> {
     const events = data.asset_events || [];
     return events.map(openseaEventToPost).filter((p): p is UnifiedPost => p !== null);
   } catch (err) {
-    console.log(`[bridge] OpenSea events error: ${(err as Error).message}`);
+    // console.log(`[bridge] OpenSea events error: ${(err as Error).message}`);
     return [];
   }
 }
@@ -321,7 +321,7 @@ export const schema = {
 
 export async function fetchOpenSeaPosts(limit = 20): Promise<UnifiedPost[]> {
   if (!OPENSEA_API_KEY) {
-    console.log('[bridge] OpenSea: No API key configured, returning empty');
+    // console.log('[bridge] OpenSea: No API key configured, returning empty');
     return [];
   }
 
@@ -344,7 +344,7 @@ export async function fetchOpenSeaPosts(limit = 20): Promise<UnifiedPost[]> {
     }
   }
 
-  console.log(`[bridge] OpenSea: ${deduped.length} posts`);
+  // console.log(`[bridge] OpenSea: ${deduped.length} posts`);
   return deduped;
 }
 

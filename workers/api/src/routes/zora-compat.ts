@@ -575,7 +575,7 @@ zoraCompat.post('/webhook', async (c) => {
     }
     default:
       // Log for later processing
-      console.log(`[zora-compat] Webhook event: ${body.event} for ${body.address}`);
+      // console.log(`[zora-compat] Webhook event: ${body.event} for ${body.address}`);
   }
 
   return jsonResponse({

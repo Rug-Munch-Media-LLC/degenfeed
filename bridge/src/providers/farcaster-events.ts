@@ -249,7 +249,7 @@ export async function fetchFarcasterEvents(limit = 20): Promise<UnifiedEvent[]> 
     }
   }
 
-  console.log(`[farcaster-events] ${unified.length} event frames`);
+  // console.log(`[farcaster-events] ${unified.length} event frames`);
   return unified;
 }
 

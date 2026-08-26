@@ -226,7 +226,7 @@ async function registerCrossChain(opts: {
   originChainId: number;
   token: string;
 }): Promise<void> {
-  console.log('[lens-coin] Registered cross-chain:', opts);
+  // console.log('[lens-coin] Registered cross-chain:', opts);
 }
 
 async function wrapForZora(opts: {
@@ -235,7 +235,7 @@ async function wrapForZora(opts: {
   tokenAddress: string;
   metadata: { name: string; description: string; image: string };
 }): Promise<void> {
-  console.log('[lens-coin] Wrapped for Zora:', opts.metadata.name);
+  // console.log('[lens-coin] Wrapped for Zora:', opts.metadata.name);
 }
 
 async function announceToLens(_profileId: string, _text: string): Promise<string | null> {

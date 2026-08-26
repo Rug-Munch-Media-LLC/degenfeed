@@ -225,7 +225,7 @@ function messageToPost(msg: TelegramMessage, source: TelegramSource): UnifiedPos
 async function fetchFromChannel(source: TelegramSource, limit: number): Promise<UnifiedPost[]> {
   const token = getBotToken();
   if (!token) {
-    console.log('[bridge] Telegram: no TELEGRAM_BOT_TOKEN configured');
+    // console.log('[bridge] Telegram: no TELEGRAM_BOT_TOKEN configured');
     return [];
   }
 
@@ -254,7 +254,7 @@ async function fetchFromChannel(source: TelegramSource, limit: number): Promise<
 
     return messages.map((m) => messageToPost(m, source));
   } catch (err) {
-    console.log(`[bridge] Telegram fetch error (${source.chatId}): ${(err as Error).message}`);
+    // console.log(`[bridge] Telegram fetch error (${source.chatId}): ${(err as Error).message}`);
     return [];
   }
 }
@@ -292,7 +292,7 @@ export async function fetchTelegramPosts(limit = 20): Promise<UnifiedPost[]> {
     }
   }
 
-  console.log(`[bridge] Telegram: ${deduped.length} messages`);
+  // console.log(`[bridge] Telegram: ${deduped.length} messages`);
   return deduped;
 }
 

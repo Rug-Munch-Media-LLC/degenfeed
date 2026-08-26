@@ -202,9 +202,9 @@ async function fetchRoomMessages(room: RoomConfig, limit: number): Promise<Unifi
       .filter((p: UnifiedPost | null): p is UnifiedPost => p !== null)
       .slice(0, limit);
   } catch (err) {
-    console.log(
-      `[bridge] Session room error (${room.room}@${room.instance}): ${(err as Error).message}`,
-    );
+    //     console.log(
+    //       `[bridge] Session room error (${room.room}@${room.instance}): ${(err as Error).message}`,
+    //     );
     return [];
   }
 }
@@ -299,7 +299,7 @@ export async function fetchSessionPosts(limit = 20): Promise<UnifiedPost[]> {
     }
   }
 
-  console.log(`[bridge] Session: ${deduped.length} posts from ${CURATED_ROOMS.length} rooms`);
+  // console.log(`[bridge] Session: ${deduped.length} posts from ${CURATED_ROOMS.length} rooms`);
   return deduped;
 }
 

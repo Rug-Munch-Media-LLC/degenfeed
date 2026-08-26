@@ -221,10 +221,10 @@ export async function deployCoin(input: DeployCoinInput, env: Env): Promise<Depl
       // Non-critical
     }
 
-    console.log(
-      `[coin-deployer] Deployed ${input.name} ($${input.symbol}) on ${input.chain} ` +
-        `at ${result.coinAddress} | tx: ${result.txHash}`,
-    );
+    //     console.log(
+    //       `[coin-deployer] Deployed ${input.name} ($${input.symbol}) on ${input.chain} ` +
+    //         `at ${result.coinAddress} | tx: ${result.txHash}`,
+    //     );
 
     return result;
   } catch (err) {
@@ -302,17 +302,17 @@ async function deployToBase(input: DeployCoinInput, env: Env): Promise<DeployCoi
   // Testnet deployments need far less ETH for gas
   const deployValue = isTestnet ? parseEther('0.001') : parseEther('0.05');
 
-  console.log(
-    `[coin-deployer] Deploying to ${isTestnet ? 'Base Sepolia' : 'Base'} via factory ${factoryAddress}...`,
-    JSON.stringify({
-      name: input.name,
-      symbol: input.symbol,
-      chain: input.chain,
-      creatorAllocationBps: creatorAllocationBps.toString(),
-      creatorFeeBps: creatorFeeBps.toString(),
-      platformFeeBps: platformFeeBps.toString(),
-    }),
-  );
+  //   console.log(
+  //     `[coin-deployer] Deploying to ${isTestnet ? 'Base Sepolia' : 'Base'} via factory ${factoryAddress}...`,
+  //     JSON.stringify({
+  //       name: input.name,
+  //       symbol: input.symbol,
+  //       chain: input.chain,
+  //       creatorAllocationBps: creatorAllocationBps.toString(),
+  //       creatorFeeBps: creatorFeeBps.toString(),
+  //       platformFeeBps: platformFeeBps.toString(),
+  //     }),
+  //   );
 
   // Use the Zora protocol factory ABI for deployment
   const factoryAbi = [
@@ -340,7 +340,7 @@ async function deployToBase(input: DeployCoinInput, env: Env): Promise<DeployCoi
   ] as const;
 
   // Step 1: Simulate the transaction first
-  console.log('[coin-deployer] Simulating deployment transaction...');
+  // console.log('[coin-deployer] Simulating deployment transaction...');
   const { request: call } = await publicClient.simulateContract({
     address: factoryAddress,
     abi: factoryAbi,
@@ -364,11 +364,11 @@ async function deployToBase(input: DeployCoinInput, env: Env): Promise<DeployCoi
   });
 
   // Step 2: Send the transaction
-  console.log('[coin-deployer] Sending deployment transaction...');
+  // console.log('[coin-deployer] Sending deployment transaction...');
   const hash = await walletClient.writeContract(call);
 
   // Step 3: Wait for confirmation
-  console.log(`[coin-deployer] Waiting for confirmation: tx ${hash}...`);
+  // console.log(`[coin-deployer] Waiting for confirmation: tx ${hash}...`);
   const receipt = await publicClient.waitForTransactionReceipt({
     hash,
     timeout: 120_000, // 2 minute timeout
@@ -394,7 +394,7 @@ async function deployToBase(input: DeployCoinInput, env: Env): Promise<DeployCoi
   }
 
   const explorerBaseUrl = isTestnet ? 'https://sepolia.basescan.org' : 'https://basescan.org';
-  console.log(`[coin-deployer] ✅ Deployed at ${coinAddress} (tx: ${hash})`);
+  // console.log(`[coin-deployer] ✅ Deployed at ${coinAddress} (tx: ${hash})`);
 
   return {
     txHash: hash,
@@ -456,14 +456,14 @@ async function deployToSolana(input: DeployCoinInput, env: Env): Promise<DeployC
 
   const client = new CreatorCoinSolanaClient(provider);
 
-  console.log(
-    `[coin-deployer] Deploying to Solana...`,
-    JSON.stringify({
-      name: input.name,
-      symbol: input.symbol,
-      creator: keypair.publicKey.toBase58(),
-    }),
-  );
+  //   console.log(
+  //     `[coin-deployer] Deploying to Solana...`,
+  //     JSON.stringify({
+  //       name: input.name,
+  //       symbol: input.symbol,
+  //       creator: keypair.publicKey.toBase58(),
+  //     }),
+  //   );
 
   try {
     const sig = await client.deployCoin({

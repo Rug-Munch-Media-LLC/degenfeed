@@ -155,7 +155,7 @@ async function fetchFromOrbisApi(limit: number): Promise<UnifiedPost[]> {
     if (!Array.isArray(posts)) return [];
     return posts.slice(0, limit).map(orbisPostToUnified);
   } catch (err) {
-    console.log(`[bridge] Orbis API error: ${(err as Error).message}`);
+    // console.log(`[bridge] Orbis API error: ${(err as Error).message}`);
     return [];
   }
 }
@@ -173,7 +173,7 @@ export const schema: SchemaGuard = {
 
 export async function fetchOrbisPosts(limit = 20): Promise<UnifiedPost[]> {
   const posts = await fetchFromOrbisApi(limit);
-  console.log(`[bridge] Orbis: ${posts.length} posts`);
+  // console.log(`[bridge] Orbis: ${posts.length} posts`);
   return posts;
 }
 

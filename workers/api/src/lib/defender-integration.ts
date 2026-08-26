@@ -169,7 +169,7 @@ exports.handler = async function (event) {
     relayer,
   );
 
-  console.log('Checking for executable proposals...');
+  // console.log('Checking for executable proposals...');
 
   // Query ProposalCreated events to find proposals
   // In production, scan from a stored block number
@@ -185,13 +185,13 @@ exports.handler = async function (event) {
     const state = await governor.state(proposalId);
 
     if (state === GOVERNOR_STATES.Succeeded) {
-      console.log('Executing proposal:', proposalId.toString());
+      // console.log('Executing proposal:', proposalId.toString());
       try {
         const tx = await governor.execute(proposalId, {
           gasLimit: 500000,
         });
         await tx.wait();
-        console.log('Executed proposal:', proposalId.toString(), 'tx:', tx.hash);
+        // console.log('Executed proposal:', proposalId.toString(), 'tx:', tx.hash);
         executed++;
       } catch (err) {
         console.error('Failed to execute proposal:', proposalId.toString(), err.message);
@@ -199,7 +199,7 @@ exports.handler = async function (event) {
     }
   }
 
-  console.log('Done. Executed proposals:', executed);
+  // console.log('Done. Executed proposals:', executed);
   return { executed, checkedFromBlock: fromBlock };
 };
 `;
@@ -226,12 +226,12 @@ export function generateSuspiciousProposalMonitorCode(params: {
 exports.handler = async function (event) {
   const { transaction, matchedAddresses, type } = event;
   
-  console.log('Proposal event detected:', {
-    txHash: transaction.hash,
-    from: transaction.from,
-    to: transaction.to,
-    type,
-  });
+  //   console.log('Proposal event detected:', {
+  //     txHash: transaction.hash,
+  //     from: transaction.from,
+  //     to: transaction.to,
+  //     type,
+  //   });
 
   // Check for suspicious patterns
   const warnings = [];

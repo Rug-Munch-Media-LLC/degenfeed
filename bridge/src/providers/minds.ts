@@ -349,7 +349,7 @@ async function fetchNewsfeed(limit: number): Promise<UnifiedPost[]> {
       .slice(0, limit);
     return posts.map(mindsPostToPost);
   } catch (err) {
-    console.log(`[bridge] Minds newsfeed error: ${(err as Error).message}`);
+    // console.log(`[bridge] Minds newsfeed error: ${(err as Error).message}`);
     return [];
   }
 }
@@ -436,9 +436,9 @@ export async function fetchMindsPosts(limit = 20): Promise<UnifiedPost[]> {
     }
   }
 
-  console.log(
-    `[bridge] Minds: ${deduped.length} posts (newsfeed: ${newsfeed.length}, trending: ${trending.length}, tags: ${tagFeeds.length} feeds)`,
-  );
+  //   console.log(
+  //     `[bridge] Minds: ${deduped.length} posts (newsfeed: ${newsfeed.length}, trending: ${trending.length}, tags: ${tagFeeds.length} feeds)`,
+  //   );
   // Only cache non-empty results so a bad window is retried next cycle.
   if (deduped.length > 0) {
     mindsCache = { posts: deduped, expiresAt: Date.now() + MINDS_CACHE_TTL_MS };

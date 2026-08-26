@@ -177,7 +177,7 @@ async function callSteemAPI(node: string, method: string, params: unknown[]): Pr
     if (data.error || !data.result) return [];
     return data.result;
   } catch (err) {
-    console.log(`[bridge] Steem RPC error (${node}): ${(err as Error).message}`);
+    // console.log(`[bridge] Steem RPC error (${node}): ${(err as Error).message}`);
     return [];
   }
 }
@@ -227,7 +227,7 @@ export async function fetchSteemPosts(limit = 20): Promise<UnifiedPost[]> {
     }
   }
 
-  console.log(`[bridge] Steem: ${deduped.length} posts`);
+  // console.log(`[bridge] Steem: ${deduped.length} posts`);
   return deduped;
 }
 

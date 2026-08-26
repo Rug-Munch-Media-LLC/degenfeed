@@ -411,7 +411,7 @@ export async function fetchZoraPosts(limit = 20): Promise<UnifiedPost[]> {
     }
   }
 
-  console.log(`[bridge] Zora Indexer: ${deduped.length} posts (${mints.length} mints)`);
+  // console.log(`[bridge] Zora Indexer: ${deduped.length} posts (${mints.length} mints)`);
   return deduped;
 }
 

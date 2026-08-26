@@ -45,7 +45,7 @@ async function getClientAsync(): Promise<Meilisearch | null> {
       apiKey: MEILI_KEY,
       timeout: 30000, // 30s timeout per request to prevent hung requests
     });
-    console.log(`[indexer] Meilisearch client created, host=${MEILI_URL}`);
+    // console.log(`[indexer] Meilisearch client created, host=${MEILI_URL}`);
     return client;
   } catch (e) {
     console.error('[indexer] Failed to create Meilisearch client:', (e as Error).message);
@@ -118,7 +118,7 @@ async function ensureIndex(): Promise<void> {
     const exists = indexes.results?.some((i: { uid: string }) => i.uid === INDEX_NAME);
 
     if (!exists) {
-      console.log('[indexer] Creating Meilisearch index:', INDEX_NAME);
+      // console.log('[indexer] Creating Meilisearch index:', INDEX_NAME);
       await meili.createIndex(INDEX_NAME, { primaryKey: 'id' });
     }
 
@@ -173,7 +173,7 @@ async function ensureIndex(): Promise<void> {
       index.updateRankingRules(['words', 'typo', 'proximity', 'attribute', 'sort', 'exactness']),
     );
 
-    console.log('[indexer] Index configured successfully');
+    // console.log('[indexer] Index configured successfully');
   } catch (err) {
     console.error('[indexer] Error configuring index:', err);
     throw err;
@@ -327,7 +327,7 @@ async function fetchAllProviderDocuments(): Promise<SearchDocument[]> {
         return [];
       }
       const docs = await fetchAllFromProvider(p.name, fn, p.limit);
-      console.log(`[indexer] ${p.name}: ${docs.length} documents`);
+      // console.log(`[indexer] ${p.name}: ${docs.length} documents`);
       return docs;
     } catch (err) {
       const msg = (err as Error).message;
@@ -342,7 +342,7 @@ async function fetchAllProviderDocuments(): Promise<SearchDocument[]> {
     (async () => {
       try {
         const docs = await fetchNewsletterDocuments(100);
-        console.log(`[indexer] newsletters: ${docs.length} documents`);
+        // console.log(`[indexer] newsletters: ${docs.length} documents`);
         return docs;
       } catch (err) {
         errors.push(`newsletter: ${(err as Error).message}`);
@@ -372,7 +372,7 @@ async function fullIndex(): Promise<{ count: number; errors: number }> {
   if (!meili) return { count: 0, errors: 1 };
   const start = Date.now();
 
-  console.log('[indexer] Starting full index...');
+  // console.log('[indexer] Starting full index...');
 
   const documents = await fetchAllProviderDocuments();
 
@@ -402,7 +402,7 @@ async function fullIndex(): Promise<{ count: number; errors: number }> {
   }
 
   const elapsed = ((Date.now() - start) / 1000).toFixed(1);
-  console.log(`[indexer] Full index: ${indexed} documents in ${elapsed}s (${errors} errors)`);
+  // console.log(`[indexer] Full index: ${indexed} documents in ${elapsed}s (${errors} errors)`);
 
   indexCount = indexed;
   indexErrors = errors;
@@ -419,21 +419,21 @@ async function incrementalIndex(): Promise<{ count: number; errors: number }> {
   if (!meili) return { count: 0, errors: 1 };
   const start = Date.now();
 
-  console.log('[indexer] Starting incremental index...');
+  // console.log('[indexer] Starting incremental index...');
 
   const documents = await fetchAllProviderDocuments();
 
   const newDocs = documents.filter((doc) => !indexedIds.has(doc.id));
 
   if (newDocs.length === 0) {
-    console.log('[indexer] No new documents to index');
+    // console.log('[indexer] No new documents to index');
     lastIndexTime = Date.now();
     return { count: 0, errors: 0 };
   }
 
-  console.log(
-    `[indexer] ${newDocs.length} new documents to index (${documents.length} total fetched)`,
-  );
+  //   console.log(
+  //     `[indexer] ${newDocs.length} new documents to index (${documents.length} total fetched)`,
+  //   );
 
   const batchSize = 1000;
   let indexed = 0;
@@ -456,7 +456,7 @@ async function incrementalIndex(): Promise<{ count: number; errors: number }> {
   }
 
   const elapsed = ((Date.now() - start) / 1000).toFixed(1);
-  console.log(`[indexer] Incremental index: ${indexed} docs in ${elapsed}s`);
+  // console.log(`[indexer] Incremental index: ${indexed} docs in ${elapsed}s`);
 
   indexCount += indexed;
   indexErrors += errors;
@@ -508,11 +508,11 @@ let intervalHandle: ReturnType<typeof setInterval> | null = null;
 
 export async function startIndexer(): Promise<void> {
   if (isRunning) {
-    console.log('[indexer] Already running, skipping start');
+    // console.log('[indexer] Already running, skipping start');
     return;
   }
 
-  console.log('[indexer] Starting indexer...');
+  // console.log('[indexer] Starting indexer...');
 
   try {
     await ensureIndex();
@@ -533,16 +533,16 @@ export async function startIndexer(): Promise<void> {
   const INTERVAL_MS = 5 * 60 * 1000;
   intervalHandle = setInterval(async () => {
     if (isRunning) {
-      console.log('[indexer] Previous index still running, skipping cycle');
+      // console.log('[indexer] Previous index still running, skipping cycle');
       return;
     }
 
     isRunning = true;
     try {
       const result = await incrementalIndex();
-      console.log(
-        `[indexer] Cycle complete. ${result.count} new docs indexed. Next in ${INTERVAL_MS / 1000}s.`,
-      );
+      //       console.log(
+      //         `[indexer] Cycle complete. ${result.count} new docs indexed. Next in ${INTERVAL_MS / 1000}s.`,
+      //       );
     } catch (err) {
       console.error('[indexer] Incremental index failed:', err);
     } finally {
@@ -550,7 +550,7 @@ export async function startIndexer(): Promise<void> {
     }
   }, INTERVAL_MS);
 
-  console.log(`[indexer] Auto-indexer running every ${INTERVAL_MS / 1000}s`);
+  // console.log(`[indexer] Auto-indexer running every ${INTERVAL_MS / 1000}s`);
 }
 
 export function stopIndexer(): void {
@@ -558,7 +558,7 @@ export function stopIndexer(): void {
     clearInterval(intervalHandle);
     intervalHandle = null;
   }
-  console.log('[indexer] Stopped');
+  // console.log('[indexer] Stopped');
 }
 
 export async function reindex(): Promise<{ count: number; errors: number; elapsed: number }> {

@@ -206,7 +206,7 @@ async function fetchFromDTubeAPI(limit: number): Promise<UnifiedPost[]> {
       };
     });
   } catch (err) {
-    console.log(`[bridge] DTube API error: ${(err as Error).message}`);
+    // console.log(`[bridge] DTube API error: ${(err as Error).message}`);
     return [];
   }
 }
@@ -315,7 +315,7 @@ async function fetchHiveDTubePosts(limit: number): Promise<UnifiedPost[]> {
         };
       });
   } catch (err) {
-    console.log(`[bridge] DTube Hive fetch error: ${(err as Error).message}`);
+    // console.log(`[bridge] DTube Hive fetch error: ${(err as Error).message}`);
     return [];
   }
 }
@@ -350,9 +350,9 @@ export async function fetchDTubePosts(limit = 20): Promise<UnifiedPost[]> {
     }
   }
 
-  console.log(
-    `[bridge] DTube: ${deduped.length} posts (API: ${apiPosts.length}, Hive: ${hivePosts.length})`,
-  );
+  //   console.log(
+  //     `[bridge] DTube: ${deduped.length} posts (API: ${apiPosts.length}, Hive: ${hivePosts.length})`,
+  //   );
   return deduped;
 }
 

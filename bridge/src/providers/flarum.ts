@@ -139,7 +139,7 @@ export async function fetchFlarumPosts(limit = 20): Promise<UnifiedPost[]> {
     }
   }
 
-  console.log(`[bridge] Flarum: ${deduped.length} discussions`);
+  // console.log(`[bridge] Flarum: ${deduped.length} discussions`);
   return deduped;
 }
 

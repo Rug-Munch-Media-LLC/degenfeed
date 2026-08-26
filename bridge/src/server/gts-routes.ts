@@ -166,9 +166,9 @@ async function handleFullRegister(
       ['mastodon'],
     )
       .then(({ results, summary }) => {
-        console.log(
-          `[gts-routes] Post-registration provisioning for ${username}: ${summary.ok} ok, ${summary.failed} failed, ${summary.skipped} skipped`,
-        );
+        //         console.log(
+        //           `[gts-routes] Post-registration provisioning for ${username}: ${summary.ok} ok, ${summary.failed} failed, ${summary.skipped} skipped`,
+        //         );
         if (summary.failed > 0) {
           const failedList = results.filter((r) => !r.ok).map((r) => `${r.protocol}: ${r.error}`);
           console.warn(`[gts-routes] Provisioning failures for ${username}:`, failedList);
@@ -272,9 +272,9 @@ async function handleGtsRegister(
       ['mastodon'],
     )
       .then(({ results, summary }) => {
-        console.log(
-          `[gts-routes] Post-register provisioning for ${username}: ${summary.ok} ok, ${summary.failed} failed, ${summary.skipped} skipped`,
-        );
+        //         console.log(
+        //           `[gts-routes] Post-register provisioning for ${username}: ${summary.ok} ok, ${summary.failed} failed, ${summary.skipped} skipped`,
+        //         );
       })
       .catch((err: unknown) => {
         console.error(

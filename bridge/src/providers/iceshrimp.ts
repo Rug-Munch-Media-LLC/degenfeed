@@ -25,7 +25,7 @@ export async function fetchIceshrimpPosts(limit = 20): Promise<UnifiedPost[]> {
     const { fetchIceshrimpPosts: adapterFetch } = await getAdapter();
     return adapterFetch(limit);
   } catch (err) {
-    console.log(`[bridge] Iceshrimp error: ${(err as Error).message}`);
+    // console.log(`[bridge] Iceshrimp error: ${(err as Error).message}`);
     return [];
   }
 }

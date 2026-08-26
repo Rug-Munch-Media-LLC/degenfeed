@@ -158,7 +158,7 @@ export async function uploadMedia(
       return { ok: false, error: 'Media upload returned no ID' };
     }
 
-    console.log(`[pixelfed-write] ✓ Uploaded media ${data.id}: ${data.url}`);
+    // console.log(`[pixelfed-write] ✓ Uploaded media ${data.id}: ${data.url}`);
     return { ok: true, mediaId: data.id };
   } catch (err) {
     return { ok: false, error: (err as Error).message };
@@ -203,7 +203,7 @@ export async function postToPixelfed(
   });
 
   if (result.ok && result.data) {
-    console.log(`[pixelfed-write] ✓ Posted: ${result.data.url}`);
+    // console.log(`[pixelfed-write] ✓ Posted: ${result.data.url}`);
     return { ok: true, status: result.data };
   }
 
@@ -243,7 +243,7 @@ export async function publishUnifiedPost(post: UnifiedPost): Promise<PixelfedPub
       // Download the image
       const imgRes = await fetch(embed.url, { signal: AbortSignal.timeout(10000) });
       if (!imgRes.ok) {
-        console.log(`[pixelfed-write] ✗ Failed to fetch image ${embed.url}: HTTP ${imgRes.status}`);
+        // console.log(`[pixelfed-write] ✗ Failed to fetch image ${embed.url}: HTTP ${imgRes.status}`);
         continue;
       }
 
@@ -260,10 +260,10 @@ export async function publishUnifiedPost(post: UnifiedPost): Promise<PixelfedPub
       if (uploadResult.ok && uploadResult.mediaId) {
         uploadedIds.push(uploadResult.mediaId);
       } else {
-        console.log(`[pixelfed-write] ✗ Media upload failed: ${uploadResult.error}`);
+        // console.log(`[pixelfed-write] ✗ Media upload failed: ${uploadResult.error}`);
       }
     } catch (err) {
-      console.log(`[pixelfed-write] ✗ Image fetch/upload failed: ${(err as Error).message}`);
+      // console.log(`[pixelfed-write] ✗ Image fetch/upload failed: ${(err as Error).message}`);
     }
   }
 

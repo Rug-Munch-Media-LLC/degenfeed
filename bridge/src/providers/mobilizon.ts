@@ -243,7 +243,7 @@ async function fetchFromInstance(source: MobilizonSource, limit: number): Promis
       .slice(0, limit)
       .map((e: MobilizonEvent) => eventToPost(e, source));
   } catch (err) {
-    console.log(`[bridge] Mobilizon GraphQL error (${source.instance}): ${(err as Error).message}`);
+    // console.log(`[bridge] Mobilizon GraphQL error (${source.instance}): ${(err as Error).message}`);
     return [];
   }
 }
@@ -280,7 +280,7 @@ export async function fetchMobilizonPosts(limit = 20): Promise<UnifiedPost[]> {
     }
   }
 
-  console.log(`[bridge] Mobilizon: ${deduped.length} events`);
+  // console.log(`[bridge] Mobilizon: ${deduped.length} events`);
   return deduped;
 }
 

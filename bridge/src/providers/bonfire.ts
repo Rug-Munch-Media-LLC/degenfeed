@@ -147,7 +147,7 @@ async function fetchFromInstance(instance: string, limit: number): Promise<Unifi
 
     return statuses.slice(0, limit).map((s) => bonfireStatusToPost(s, instance));
   } catch (err) {
-    console.log(`[bridge] Bonfire error (${instance}): ${(err as Error).message}`);
+    // console.log(`[bridge] Bonfire error (${instance}): ${(err as Error).message}`);
     return [];
   }
 }
@@ -184,7 +184,7 @@ export async function fetchBonfirePosts(limit = 20): Promise<UnifiedPost[]> {
     }
   }
 
-  console.log(`[bridge] Bonfire: ${deduped.length} posts`);
+  // console.log(`[bridge] Bonfire: ${deduped.length} posts`);
   return deduped;
 }
 

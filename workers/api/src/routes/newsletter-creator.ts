@@ -86,7 +86,7 @@ function createEngine(env: Env): EmailEngine | null {
     kv,
     enableTracking: true,
     log: (level, msg, data) => {
-      console.log(JSON.stringify({ l: level, m: `[EmailEngine] ${msg}`, d: data, t: Date.now() }));
+      // console.log(JSON.stringify({ l: level, m: `[EmailEngine] ${msg}`, d: data, t: Date.now() }));
     },
   });
 }

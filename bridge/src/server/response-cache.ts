@@ -264,19 +264,19 @@ export class FeedResponseCache {
   private reportMemory(): void {
     const mem = process.memoryUsage();
     const stats = this.getStats();
-    console.log(
-      `[response-cache] rss=${Math.round(mem.rss / 1024 / 1024)}MB ` +
-      `heap=${Math.round(mem.heapUsed / 1024 / 1024)}/${Math.round(mem.heapTotal / 1024 / 1024)}MB ` +
-      `entries=${stats.size}/${stats.maxSize} ` +
-      `hits=${stats.hits} misses=${stats.misses} stale=${stats.staleHits} evictions=${stats.evictions}`,
-    );
+    //     console.log(
+    //       `[response-cache] rss=${Math.round(mem.rss / 1024 / 1024)}MB ` +
+    //       `heap=${Math.round(mem.heapUsed / 1024 / 1024)}/${Math.round(mem.heapTotal / 1024 / 1024)}MB ` +
+    //       `entries=${stats.size}/${stats.maxSize} ` +
+    //       `hits=${stats.hits} misses=${stats.misses} stale=${stats.staleHits} evictions=${stats.evictions}`,
+    //     );
 
     // If heap usage exceeds 1.5GB, suggest a forced GC
     if (mem.heapUsed > 1.5 * 1024 * 1024 * 1024) {
       console.warn('[response-cache] Heap usage >1.5GB, suggesting GC');
       if (typeof global.gc === 'function') {
         global.gc();
-        console.log('[response-cache] Forced global.gc() completed');
+        // console.log('[response-cache] Forced global.gc() completed');
       }
     }
   }

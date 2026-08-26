@@ -693,7 +693,7 @@ export async function fetchRssBridgePosts(limit = 20): Promise<UnifiedPost[]> {
     }
   }
 
-  console.log(`[bridge] RSS-Bridge: ${deduped.length} posts (${all.length} raw)`);
+  // console.log(`[bridge] RSS-Bridge: ${deduped.length} posts (${all.length} raw)`);
   return deduped;
 }
 

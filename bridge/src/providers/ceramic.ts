@@ -162,7 +162,7 @@ export async function fetchCeramicPosts(limit = 20): Promise<UnifiedPost[]> {
   );
   const all: UnifiedPost[] = [];
   for (const r of results) if (r.status === 'fulfilled') all.push(...r.value);
-  console.log(`[bridge] Ceramic: ${all.length} node statuses`);
+  // console.log(`[bridge] Ceramic: ${all.length} node statuses`);
   return all.slice(0, limit);
 }
 

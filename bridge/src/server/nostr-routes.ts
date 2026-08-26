@@ -218,7 +218,7 @@ async function handleRegister(
 
     // Publish their NIP-05 to the well-known URL syncer (async, non-blocking)
     // The actual well-known endpoint reads from this in-memory store
-    console.log(`[nostr] Registered user: ${username} (${npubBech32.slice(0, 16)}…)`);
+    // console.log(`[nostr] Registered user: ${username} (${npubBech32.slice(0, 16)}…)`);
 
     return jsonOk(res, {
       ok: true,

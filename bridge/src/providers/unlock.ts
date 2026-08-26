@@ -231,7 +231,7 @@ async function graphQLQuery<T>(
     if (!res.ok) return {};
     return (await res.json()) as GraphQLResponse<T>;
   } catch (err) {
-    console.log(`[bridge] Unlock subgraph error: ${(err as Error).message}`);
+    // console.log(`[bridge] Unlock subgraph error: ${(err as Error).message}`);
     return {};
   }
 }
@@ -336,7 +336,7 @@ export async function fetchUnlockPosts(limit = 20): Promise<UnifiedPost[]> {
     }
   }
 
-  console.log(`[bridge] Unlock Protocol: ${deduped.length} posts`);
+  // console.log(`[bridge] Unlock Protocol: ${deduped.length} posts`);
   return deduped;
 }
 

@@ -98,15 +98,6 @@ export async function processStreamPayout(
   //   3. OR queue for weekly batch payout via creator-rewards
   try {
     // Log the payout for now — actual crypto transfer would happen here
-    console.log('[live-gifts-cron] Processing payout:', {
-      streamId,
-      creatorId: state.creatorId,
-      totalSats,
-      totalUsd,
-      creatorEarnsUsd,
-      platformFeeUsd,
-      wallet: creatorWallet || 'not provided',
-    });
 
     // Record platform fee contribution
     try {
@@ -122,11 +113,7 @@ export async function processStreamPayout(
     payout.txHash = `payout:${streamId}:${Date.now()}`;
     await kvPutJson(env, payoutKey, payout);
 
-    console.log('[live-gifts-cron] Payout completed:', {
-      streamId,
-      totalSats,
-      txHash: payout.txHash,
-    });
+
   } catch (err) {
     payout.status = 'failed';
     payout.error = err instanceof Error ? err.message : String(err);

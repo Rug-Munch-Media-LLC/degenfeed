@@ -162,7 +162,7 @@ async function fetchTrending(limit: number): Promise<UnifiedPost[]> {
     if (!Array.isArray(threads)) return [];
     return threads.slice(0, limit).map(arenaThreadToPost);
   } catch (err) {
-    console.log(`[bridge] Arena trending error: ${(err as Error).message}`);
+    // console.log(`[bridge] Arena trending error: ${(err as Error).message}`);
     return [];
   }
 }
@@ -182,7 +182,7 @@ async function fetchFromAgentAPI(limit: number): Promise<UnifiedPost[]> {
     if (!Array.isArray(threads)) return [];
     return threads.slice(0, limit).map(arenaThreadToPost);
   } catch (err) {
-    console.log(`[bridge] Arena agent API error: ${(err as Error).message}`);
+    // console.log(`[bridge] Arena agent API error: ${(err as Error).message}`);
     return [];
   }
 }
@@ -240,7 +240,7 @@ export async function fetchArenaPosts(limit = 20): Promise<UnifiedPost[]> {
     }
   }
 
-  console.log(`[bridge] Arena: ${deduped.length} posts`);
+  // console.log(`[bridge] Arena: ${deduped.length} posts`);
   return deduped;
 }
 

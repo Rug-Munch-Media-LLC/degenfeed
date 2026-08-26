@@ -148,7 +148,7 @@ export function TelegramProvider({ children }: { children: ReactNode }) {
       }
       // Fallback for standalone
       if (typeof window !== 'undefined') {
-        alert(text);
+        // alert(text);
       }
     },
     [miniAppApi],

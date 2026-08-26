@@ -198,14 +198,14 @@ export default function StorageUsage() {
   }, []);
 
   const handleSaveVideo = useCallback(async (_contentId: string) => {
-    console.log('Save video:', _contentId);
+    // console.log('Save video:', _contentId);
   }, []);
 
   const handleOptimize = useCallback(async () => {
     setOptimizing(true);
     try {
       await new Promise((resolve) => setTimeout(resolve, 1500));
-      console.log('Storage optimization complete');
+      // console.log('Storage optimization complete');
     } catch (e) {
       console.error('Optimization failed:', e);
     } finally {

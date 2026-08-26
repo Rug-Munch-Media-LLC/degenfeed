@@ -86,7 +86,7 @@ async function graphQLQuery(query: string): Promise<CCGraphQLResponse> {
     if (!res.ok) return {};
     return (await res.json()) as CCGraphQLResponse;
   } catch (err) {
-    console.log(`[bridge] CyberConnect GraphQL error: ${(err as Error).message}`);
+    // console.log(`[bridge] CyberConnect GraphQL error: ${(err as Error).message}`);
     return {};
   }
 }
@@ -174,7 +174,7 @@ export async function fetchCyberConnectPosts(limit = 20): Promise<UnifiedPost[]>
     if (r.status === 'fulfilled') all.push(...r.value);
   }
 
-  console.log(`[bridge] CyberConnect: ${all.length} profiles`);
+  // console.log(`[bridge] CyberConnect: ${all.length} profiles`);
   return all.slice(0, limit);
 }
 

@@ -532,7 +532,7 @@ export async function fetchNostrPosts(limit = 20): Promise<UnifiedPost[]> {
   // feed cache + warm-up tasks never starve the working relay set, low enough
   // to stay polite. (Each call fans out to ~2 WS requests per relay.)
   if (!checkRateLimit('nostr', { maxRequests: 45, windowMs: 60_000 })) {
-    console.log('[nostr] Rate limited, skipping fetch');
+    // console.log('[nostr] Rate limited, skipping fetch');
     return [];
   }
   const perRelay = Math.max(6, Math.ceil(limit / RELAYS.length));
@@ -672,9 +672,9 @@ export async function fetchNostrPosts(limit = 20): Promise<UnifiedPost[]> {
     return eventToPost(ev, RELAYS[0].url, profile);
   });
 
-  console.log(
-    `[bridge] Nostr: ${posts.length} posts from ${RELAYS.length} relays (${allEvents.length} raw events)`,
-  );
+  //   console.log(
+  //     `[bridge] Nostr: ${posts.length} posts from ${RELAYS.length} relays (${allEvents.length} raw events)`,
+  //   );
   return posts;
 }
 

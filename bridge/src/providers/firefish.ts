@@ -26,7 +26,7 @@ export async function fetchFirefishPosts(limit = 20): Promise<UnifiedPost[]> {
     const { fetchFirefishPosts: adapterFetch } = await getAdapter();
     return adapterFetch(limit);
   } catch (err) {
-    console.log(`[bridge] Firefish error: ${(err as Error).message}`);
+    // console.log(`[bridge] Firefish error: ${(err as Error).message}`);
     return [];
   }
 }

@@ -93,12 +93,12 @@ export function ProtocolStatusSection({ walletAddress, isOwnProfile }: Props) {
             data?: { error?: string };
             error?: string;
           };
-          alert(
-            `Failed to create account: ${errJson.data?.error || errJson.error || `HTTP ${res.status}`}`,
-          );
+          //           alert(
+          //             `Failed to create account: ${errJson.data?.error || errJson.error || `HTTP ${res.status}`}`,
+          //           );
         }
       } catch (err) {
-        alert(`Error: ${err instanceof Error ? err.message : 'Unknown'}`);
+        // alert(`Error: ${err instanceof Error ? err.message : 'Unknown'}`);
       } finally {
         setCreating(null);
       }

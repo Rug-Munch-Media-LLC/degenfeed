@@ -145,7 +145,7 @@ export async function handleBlueskyRoute(
   if (!path.startsWith('/api/bluesky')) return false;
 
   const route = path.replace('/api/bluesky', '') || '/';
-  console.log(`[bluesky] ${method} ${route}`);
+  // console.log(`[bluesky] ${method} ${route}`);
 
   try {
     // ── PUBLIC ROUTES (no auth required) ────────────────────────

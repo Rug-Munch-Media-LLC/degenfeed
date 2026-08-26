@@ -44,7 +44,7 @@ export async function handleCron(env: Env): Promise<Response> {
   const posts = await gatherDigestPosts(env, digestProtocols, digestNiche.split(','));
 
   if (posts.length === 0) {
-    console.log('[cron] no posts for digest, skipping');
+    // console.log('[cron] no posts for digest, skipping');
     return new Response('OK — no posts', { status: 200 });
   }
 
@@ -98,15 +98,15 @@ export async function handleCron(env: Env): Promise<Response> {
       }),
     );
     const errors = results.filter((r) => r.status === 'rejected').length;
-    console.log(
-      `[cron] digest sent to ${sent}/${subscribers.length} subscribers (${errors} errors) in ${Date.now() - start}ms`,
-    );
+    //     console.log(
+    //       `[cron] digest sent to ${sent}/${subscribers.length} subscribers (${errors} errors) in ${Date.now() - start}ms`,
+    //     );
   } else {
     // No Postmark yet — log runbook output for manual review.
-    console.log(
-      `[cron] digest built (${posts.length} posts, ${subscribers.length} subscribers). No Postmark token configured — email NOT sent.`,
-    );
-    console.log(`[cron] sample: ${html.slice(0, 200).replace(/\n/g, ' ')}...`);
+    //     console.log(
+    //       `[cron] digest built (${posts.length} posts, ${subscribers.length} subscribers). No Postmark token configured — email NOT sent.`,
+    //     );
+    // console.log(`[cron] sample: ${html.slice(0, 200).replace(/\n/g, ' ')}...`);
   }
 
   return new Response(

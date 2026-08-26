@@ -242,7 +242,7 @@ export class NewsletterEngine {
 
     // Fallback: log instead of send
     if (!['sendgrid', 'mailgun'].includes(this.config.emailProvider)) {
-      console.log(`[NewsletterEngine] Would send email to ${to.length} recipients: ${subject}`);
+      // console.log(`[NewsletterEngine] Would send email to ${to.length} recipients: ${subject}`);
       sent = to.length;
     }
 
@@ -356,9 +356,9 @@ export class NewsletterEngine {
     const protocols: Protocol[] = ['nostr', 'farcaster', 'bluesky', 'lens', 'mastodon'];
     const _summary = post.excerpt || post.html.replace(/<[^>]+>/g, '').slice(0, 280);
 
-    console.log(
-      `[NewsletterEngine] Announcing "${post.title}" to protocols: ${protocols.join(', ')}`,
-    );
+    //     console.log(
+    //       `[NewsletterEngine] Announcing "${post.title}" to protocols: ${protocols.join(', ')}`,
+    //     );
 
     try {
       await this.bridge.crossPublish(post.id, protocols as any);

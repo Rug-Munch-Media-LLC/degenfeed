@@ -520,9 +520,9 @@ export async function handleLiveShortEnded(env: Env, sessionId: string): Promise
     });
 
     record.recordingPublishedAsShort = true;
-    console.log(
-      `[live-shorts] Recording published as short: ${publishResult.success ? 'ok' : 'failed'}`,
-    );
+    //     console.log(
+    //       `[live-shorts] Recording published as short: ${publishResult.success ? 'ok' : 'failed'}`,
+    //     );
   } catch (err) {
     console.error('[live-shorts] Failed to publish recording as short:', err);
   }
@@ -543,7 +543,7 @@ export async function handleLiveShortEnded(env: Env, sessionId: string): Promise
         chain: 'base',
       });
       record.nftMinted = mintResult.ok;
-      console.log(`[live-shorts] NFT minted: ${record.nftMinted ? 'yes' : 'no'}`);
+      // console.log(`[live-shorts] NFT minted: ${record.nftMinted ? 'yes' : 'no'}`);
     } catch (err) {
       console.error('[live-shorts] Failed to mint NFT:', err);
     }

@@ -323,7 +323,7 @@ async function fetchTrending(limit: number, tag: string = ''): Promise<UnifiedPo
     if (!Array.isArray(posts)) return [];
     return posts.slice(0, limit).map(hivePostToPost);
   } catch (err) {
-    console.log(`[bridge] Hive trending error: ${(err as Error).message}`);
+    // console.log(`[bridge] Hive trending error: ${(err as Error).message}`);
     return [];
   }
 }
@@ -404,9 +404,9 @@ export async function fetchHivePosts(limit = 20): Promise<UnifiedPost[]> {
     }
   }
 
-  console.log(
-    `[bridge] Hive: ${deduped.length} posts (trending: ${trendingAll.length}, hot: ${hotAll.length}, new: ${newPosts.length}, tags: ${tagPosts.length} posts)`,
-  );
+  //   console.log(
+  //     `[bridge] Hive: ${deduped.length} posts (trending: ${trendingAll.length}, hot: ${hotAll.length}, new: ${newPosts.length}, tags: ${tagPosts.length} posts)`,
+  //   );
   return deduped;
 }
 

@@ -196,7 +196,7 @@ async function fetchPostList(limit: number): Promise<UnifiedPost[]> {
       signal: AbortSignal.timeout(6000),
     });
     if (!res.ok) {
-      console.log(`[bridge] PieFed post/list HTTP ${res.status}`);
+      // console.log(`[bridge] PieFed post/list HTTP ${res.status}`);
       return [];
     }
     const data = (await res.json()) as PieFedPostListResponse;
@@ -206,7 +206,7 @@ async function fetchPostList(limit: number): Promise<UnifiedPost[]> {
       .filter((p): p is UnifiedPost => p !== null)
       .slice(0, limit);
   } catch (err) {
-    console.log(`[bridge] PieFed post/list error: ${(err as Error).message}`);
+    // console.log(`[bridge] PieFed post/list error: ${(err as Error).message}`);
     return [];
   }
 }
@@ -245,7 +245,7 @@ async function fetchCommunityPosts(limit: number): Promise<UnifiedPost[]> {
     }
     return all.slice(0, limit);
   } catch (err) {
-    console.log(`[bridge] PieFed community/list error: ${(err as Error).message}`);
+    // console.log(`[bridge] PieFed community/list error: ${(err as Error).message}`);
     return [];
   }
 }
@@ -263,7 +263,7 @@ export const schema: SchemaGuard = {
 
 export async function fetchPieFedPosts(limit = 20): Promise<UnifiedPost[]> {
   if (!checkRateLimit('piefed', { maxRequests: 30, windowMs: 60_000 })) {
-    console.log('[piefed] Rate limited, skipping fetch');
+    // console.log('[piefed] Rate limited, skipping fetch');
     return [];
   }
   const all: UnifiedPost[] = [];
@@ -285,7 +285,7 @@ export async function fetchPieFedPosts(limit = 20): Promise<UnifiedPost[]> {
     }
   }
 
-  console.log(`[bridge] PieFed: ${deduped.length} posts`);
+  // console.log(`[bridge] PieFed: ${deduped.length} posts`);
   return deduped;
 }
 

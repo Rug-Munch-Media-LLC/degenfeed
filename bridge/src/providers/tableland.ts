@@ -101,7 +101,7 @@ async function fetchNodeHealth(nodeUrl: string): Promise<UnifiedPost[]> {
       },
     ];
   } catch (err) {
-    console.log(`[bridge] Tableland health error (${nodeUrl}): ${(err as Error).message}`);
+    // console.log(`[bridge] Tableland health error (${nodeUrl}): ${(err as Error).message}`);
     return [];
   }
 }
@@ -178,7 +178,7 @@ export async function fetchTablelandPosts(limit = 20): Promise<UnifiedPost[]> {
   const queryResults = await fetchQueryResults(TABLELAND_NODE);
   all.push(...queryResults);
 
-  console.log(`[bridge] Tableland: ${all.length} items`);
+  // console.log(`[bridge] Tableland: ${all.length} items`);
   return all.slice(0, limit);
 }
 

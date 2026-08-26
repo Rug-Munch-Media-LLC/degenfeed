@@ -26,7 +26,7 @@ export async function fetchGhostPosts(limit = 20): Promise<UnifiedPost[]> {
     const { fetchGhostPosts: adapterFetch } = await getAdapter();
     return adapterFetch(limit);
   } catch (err) {
-    console.log(`[bridge] Ghost error: ${(err as Error).message}`);
+    // console.log(`[bridge] Ghost error: ${(err as Error).message}`);
     return [];
   }
 }

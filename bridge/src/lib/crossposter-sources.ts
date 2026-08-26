@@ -12,7 +12,7 @@ export async function fetchLatestGtsPost(): Promise<UnifiedPost | null> {
   const clientSecret = process.env.GTS_CLIENT_SECRET || '';
 
   if (!clientId || !clientSecret) {
-    console.log('[crossposter] GTS: no credentials');
+    // console.log('[crossposter] GTS: no credentials');
     return null;
   }
 
@@ -30,7 +30,7 @@ export async function fetchLatestGtsPost(): Promise<UnifiedPost | null> {
     });
 
     if (!tokenRes.ok) {
-      console.log('[crossposter] GTS token failed');
+      // console.log('[crossposter] GTS token failed');
       return null;
     }
 
@@ -86,7 +86,7 @@ export async function fetchLatestGtsPost(): Promise<UnifiedPost | null> {
       niches: [],
     };
   } catch (err) {
-    console.log('[crossposter] GTS fetch error:', (err as Error).message);
+    // console.log('[crossposter] GTS fetch error:', (err as Error).message);
     return null;
   }
 }
@@ -98,7 +98,7 @@ export async function fetchLatestPixelfedPost(): Promise<UnifiedPost | null> {
   const token = process.env.PIXELFED_ACCESS_TOKEN || '';
 
   if (!token) {
-    console.log('[crossposter] Pixelfed: missing PIXELFED_ACCESS_TOKEN');
+    // console.log('[crossposter] Pixelfed: missing PIXELFED_ACCESS_TOKEN');
     return null;
   }
 
@@ -152,7 +152,7 @@ export async function fetchLatestPixelfedPost(): Promise<UnifiedPost | null> {
       niches: [],
     };
   } catch (err) {
-    console.log('[crossposter] Pixelfed fetch error:', (err as Error).message);
+    // console.log('[crossposter] Pixelfed fetch error:', (err as Error).message);
     return null;
   }
 }

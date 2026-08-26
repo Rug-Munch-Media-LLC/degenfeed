@@ -340,7 +340,7 @@ export async function fetchGabPosts(limit = 20): Promise<UnifiedPost[]> {
     deduped.push(p);
   }
 
-  console.log(`[bridge] Gab: ${deduped.length} posts from ${apiPosts.length} api + bridge`);
+  // console.log(`[bridge] Gab: ${deduped.length} posts from ${apiPosts.length} api + bridge`);
   return deduped;
 }
 

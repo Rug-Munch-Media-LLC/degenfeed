@@ -184,7 +184,7 @@ async function graphQLQuery<T>(
     if (!res.ok) return {};
     return (await res.json()) as GraphQLResponse<T>;
   } catch (err) {
-    console.log(`[bridge] Juicebox subgraph error: ${(err as Error).message}`);
+    // console.log(`[bridge] Juicebox subgraph error: ${(err as Error).message}`);
     return {};
   }
 }
@@ -335,7 +335,7 @@ export async function fetchJuiceboxPosts(limit = 20): Promise<UnifiedPost[]> {
     }
   }
 
-  console.log(`[bridge] Juicebox: ${deduped.length} posts`);
+  // console.log(`[bridge] Juicebox: ${deduped.length} posts`);
   return deduped;
 }
 

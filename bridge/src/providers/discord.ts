@@ -250,7 +250,7 @@ function messageToPost(msg: DiscordMessage, source: DiscordSource): UnifiedPost 
 async function fetchFromChannel(source: DiscordSource, limit: number): Promise<UnifiedPost[]> {
   const token = getBotToken();
   if (!token) {
-    console.log('[bridge] Discord: no DISCORD_BOT_TOKEN configured');
+    // console.log('[bridge] Discord: no DISCORD_BOT_TOKEN configured');
     return [];
   }
 
@@ -265,7 +265,7 @@ async function fetchFromChannel(source: DiscordSource, limit: number): Promise<U
     });
     if (!res.ok) {
       if (res.status === 429) {
-        console.log(`[bridge] Discord rate limited on ${source.channelId}`);
+        // console.log(`[bridge] Discord rate limited on ${source.channelId}`);
       }
       return [];
     }
@@ -278,7 +278,7 @@ async function fetchFromChannel(source: DiscordSource, limit: number): Promise<U
       .slice(0, limit)
       .map((m) => messageToPost(m, source));
   } catch (err) {
-    console.log(`[bridge] Discord fetch error (${source.channelId}): ${(err as Error).message}`);
+    // console.log(`[bridge] Discord fetch error (${source.channelId}): ${(err as Error).message}`);
     return [];
   }
 }
@@ -316,7 +316,7 @@ export async function fetchDiscordPosts(limit = 20): Promise<UnifiedPost[]> {
     }
   }
 
-  console.log(`[bridge] Discord: ${deduped.length} messages`);
+  // console.log(`[bridge] Discord: ${deduped.length} messages`);
   return deduped;
 }
 

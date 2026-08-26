@@ -188,7 +188,7 @@ async function processViaQueueApi(
   }
 
   if (executed > 0 || failed > 0) {
-    console.log(`[scheduled-executor] Done: ${executed} executed, ${failed} failed`);
+    // console.log(`[scheduled-executor] Done: ${executed} executed, ${failed} failed`);
   }
 
   return { executed, failed };
@@ -282,7 +282,7 @@ async function processViaKv(
   }
 
   if (executed > 0 || failed > 0) {
-    console.log(`[scheduled-executor] Done: ${executed} executed, ${failed} failed`);
+    // console.log(`[scheduled-executor] Done: ${executed} executed, ${failed} failed`);
   }
 
   return { executed, failed };

@@ -406,9 +406,9 @@ export async function fetchParagraphPosts(limit = 20): Promise<UnifiedPost[]> {
     }
   }
 
-  console.log(
-    `[bridge] Paragraph: ${deduped.length} posts (recent: ${recent.length}, trending: ${trending.length}, explore: ${explore.length}, publications: ${pubFeeds.length})`,
-  );
+  //   console.log(
+  //     `[bridge] Paragraph: ${deduped.length} posts (recent: ${recent.length}, trending: ${trending.length}, explore: ${explore.length}, publications: ${pubFeeds.length})`,
+  //   );
   return deduped;
 }
 

@@ -216,7 +216,7 @@ async function graphQLQuery<T>(
     if (!res.ok) return {};
     return (await res.json()) as GraphQLResponse<T>;
   } catch (err) {
-    console.log(`[bridge] Snapshot GraphQL error: ${(err as Error).message}`);
+    // console.log(`[bridge] Snapshot GraphQL error: ${(err as Error).message}`);
     return {};
   }
 }
@@ -386,7 +386,7 @@ export async function fetchSnapshotPosts(limit = 20): Promise<UnifiedPost[]> {
     }
   }
 
-  console.log(`[bridge] Snapshot: ${deduped.length} posts`);
+  // console.log(`[bridge] Snapshot: ${deduped.length} posts`);
   return deduped;
 }
 

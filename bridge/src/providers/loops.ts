@@ -301,7 +301,7 @@ export async function fetchLoopsPosts(limit = 20): Promise<UnifiedPost[]> {
 
   // Rate limit: 30 requests/minute (Loops applies throttle:api to this route).
   if (!checkRateLimit('loops', { maxRequests: 30, windowMs: 60_000 })) {
-    console.log('[loops] Rate limited, skipping fetch');
+    // console.log('[loops] Rate limited, skipping fetch');
     return [];
   }
 
@@ -313,7 +313,7 @@ export async function fetchLoopsPosts(limit = 20): Promise<UnifiedPost[]> {
     if (allPosts.length >= limit) break;
     const posts = await fetchLoopsFeed(instance.base, instance.label, limit - allPosts.length);
     if (posts.length > 0) {
-      console.log(`[loops] ${instance.label}: ${posts.length} posts`);
+      // console.log(`[loops] ${instance.label}: ${posts.length} posts`);
       allPosts.push(...posts);
     }
   }
@@ -328,7 +328,7 @@ export async function fetchLoopsPosts(limit = 20): Promise<UnifiedPost[]> {
     if (deduped.length >= limit) break;
   }
 
-  console.log(`[bridge] Loops: ${deduped.length} posts (${instances.length} instances)`);
+  // console.log(`[bridge] Loops: ${deduped.length} posts (${instances.length} instances)`);
   // Only cache non-empty results so an empty window is retried next cycle.
   if (deduped.length > 0) setCachedPosts(deduped);
   return deduped;
@@ -349,13 +349,13 @@ async function fetchLoopsFeed(base: string, label: string, limit: number): Promi
     });
 
     if (!res.ok) {
-      console.log(`[loops] ${label}: HTTP ${res.status}`);
+      // console.log(`[loops] ${label}: HTTP ${res.status}`);
       return [];
     }
 
     const raw: unknown = await res.json();
     if (!isValidLoopsResponse(raw)) {
-      console.log(`[loops] ${label}: Unexpected response shape — refusing to map`);
+      // console.log(`[loops] ${label}: Unexpected response shape — refusing to map`);
       return [];
     }
 
@@ -364,7 +364,7 @@ async function fetchLoopsFeed(base: string, label: string, limit: number): Promi
       .filter((v) => v?.id)
       .map(loopsVideoToPost);
   } catch (err) {
-    console.log(`[loops] ${label}: error - ${(err as Error).message}`);
+    // console.log(`[loops] ${label}: error - ${(err as Error).message}`);
     return [];
   }
 }
