@@ -9,6 +9,7 @@
 import { jsonResponse, methodNotAllowed, noCacheJsonResponse } from '../../response-helpers';
 import type { Env } from '../../types';
 import { broadcastToAll, broadcastToUser } from '../../ws-broadcast';
+import { CHANNELS } from '../../ws-channels';
 import type { SpaceChatMessage } from './types';
 import {
   generateId,
@@ -78,7 +79,7 @@ export async function handleSpaceChatSend(
     await pushChatMessage(env, spaceId, message);
 
     // Broadcast to all clients
-    broadcastToAll('space:chat', { spaceId, message });
+    broadcastToAll(CHANNELS.SPACE_CHAT, { spaceId, message });
     return jsonResponse({ message, ok: true });
   } catch (e) {
     return jsonResponse({ error: String(e) }, 500);
@@ -333,8 +334,8 @@ export async function handleSpaceChatTip(
     };
     await pushChatMessage(env, spaceId, tipMessage);
 
-    broadcastToAll('space:chat', { spaceId, message: tipMessage });
-    broadcastToUser(body.recipientId, 'space:tip', {
+    broadcastToAll(CHANNELS.SPACE_CHAT, { spaceId, message: tipMessage });
+    broadcastToUser(body.recipientId, CHANNELS.SPACE_TIP, {
       spaceId,
       amount: body.amount,
       currency: body.currency || 'SOL',
