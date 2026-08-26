@@ -25,10 +25,10 @@
  */
 
 import { identityKey } from '@degenfeed/utils';
-import type { Env } from '../types';
-import { jsonResponse } from '../response-helpers';
 import { sendTipNotification } from '../lib/tip-notifications';
+import { jsonResponse } from '../response-helpers';
 import { hasSuspiciousPayload, isValidAmount, sanitizeString, validateBodySize } from '../sanitize';
+import type { Env } from '../types';
 import { recordUnifiedTip, type TipEntityType, type TipPlatform } from './unified-tip-core';
 
 // ─── Shared Types ─────────────────────────────────────────────────────────
@@ -562,7 +562,7 @@ function createProtocolTipHandler(protocolKey: string) {
         body.currency ?? body.method,
         new Set(config.supportedCurrencies),
       );
-      const method = sanitizeString(body.method ?? body.currency, 32);
+      const _method = sanitizeString(body.method ?? body.currency, 32);
       const from = sanitizeString(body.from, 128);
       const fromLabel = sanitizeString(body.fromLabel, 64);
       const toLabel = sanitizeString(body.toLabel, 64);
@@ -620,6 +620,7 @@ function createProtocolTipHandler(protocolKey: string) {
 function createProtocolTipStatsHandler(protocolKey: string) {
   const config = PROTOCOL_CONFIGS[protocolKey];
   return async (request: Request, env: Env): Promise<Response> => {
+    if (!config) return jsonResponse({ error: 'Unknown protocol' }, 404);
     const url = new URL(request.url);
     const entityId = sanitizeEntityId(url.searchParams.get('entityId'));
 
@@ -653,6 +654,7 @@ function createProtocolTipStatsHandler(protocolKey: string) {
 function createProtocolLeaderboardHandler(protocolKey: string) {
   const config = PROTOCOL_CONFIGS[protocolKey];
   return async (request: Request, env: Env): Promise<Response> => {
+    if (!config) return jsonResponse({ error: 'Unknown protocol' }, 404);
     const url = new URL(request.url);
     const limit = Math.min(Math.max(Number(url.searchParams.get('limit')) || 25, 1), 100);
 
