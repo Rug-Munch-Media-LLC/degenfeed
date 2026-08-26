@@ -352,7 +352,7 @@ export async function handleRugmunchCallback(request: Request, env: Env): Promis
     const authSecret = env.AUTH_SECRET;
     if (!authSecret) return fail('Auth secret not configured');
 
-    const { setCookie } = await createSession(`rmi:${payload.sub}`, 'rmi', authSecret);
+    const { setCookie } = await createSession(`rmi:${payload.sub}`, 'ethereum', authSecret);
 
     const headers = new Headers({
       location: dev ? 'http://localhost:3000/home' : homeUrl,

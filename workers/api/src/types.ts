@@ -472,6 +472,10 @@ export interface Env {
   ZORA_VIDEO_CONTRACT?: string;
   /** CDN base URL for short video content */
   DEGENFEED_CDN_URL?: string;
+  /** RMI platform OIDC SSO (base URL of the RMI auth server) */
+  RUGMUNCH_OIDC_BASE_URL?: string;
+  RUGMUNCH_OIDC_CLIENT_ID?: string;
+  RUGMUNCH_OIDC_CLIENT_SECRET?: string;
   /** Legacy S3-compatible object storage (used for Backblaze B2 via its S3 API) */
   S3_ENDPOINT?: string;
   S3_ACCESS_KEY_ID?: string;
