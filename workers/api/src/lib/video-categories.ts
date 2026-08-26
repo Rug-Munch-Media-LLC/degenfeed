@@ -12,7 +12,7 @@
 // ─── Video Categories ─────────────────────────────────────────────────────
 
 export const VIDEO_CATEGORIES = [
-  { id: 'all', label: 'All', icon: '🌐' },
+  { id: 'all', label: 'All', icon: '🌐', color: '#6B7280' },
   { id: 'gaming', label: 'Gaming', icon: '🎮', color: '#9146FF' },
   { id: 'music', label: 'Music', icon: '🎵', color: '#FF4081' },
   { id: 'crypto', label: 'Crypto & Web3', icon: '🪙', color: '#0052FF' },

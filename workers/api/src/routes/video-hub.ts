@@ -187,7 +187,7 @@ function parseSort(raw: string | null): SortMode {
   return 'trending';
 }
 
-function formatDuration(seconds: number): string {
+function _formatDuration(seconds: number): string {
   if (seconds <= 0) return '';
   const h = Math.floor(seconds / 3600);
   const m = Math.floor((seconds % 3600) / 60);
@@ -197,7 +197,7 @@ function formatDuration(seconds: number): string {
   return `0:${String(s).padStart(2, '0')}`;
 }
 
-function timeAgo(ms: number): string {
+function _timeAgo(ms: number): string {
   const seconds = Math.floor((Date.now() - ms) / 1000);
   if (seconds < 60) return `${seconds}s ago`;
   const minutes = Math.floor(seconds / 60);
@@ -464,11 +464,13 @@ videoHub.get('/recommended', async (c) => {
       const otherCats = VIDEO_CATEGORIES.filter((c) => c.id !== 'all' && !userCatSet.has(c.id));
       if (otherCats.length > 0) {
         const discoveryCat = otherCats[page % otherCats.length];
-        const discovery = generateMockVideos(discoveryCount, {
-          category: discoveryCat.id as VideoCategoryId,
-          page: page + 1,
-        });
-        videos.push(...discovery);
+        if (discoveryCat) {
+          const discovery = generateMockVideos(discoveryCount, {
+            category: discoveryCat.id as VideoCategoryId,
+            page: page + 1,
+          });
+          videos.push(...discovery);
+        }
       }
     }
 
@@ -566,7 +568,9 @@ videoHub.post('/preferences', async (c) => {
 
     // Validate categories
     const validIds = new Set(VIDEO_CATEGORIES.map((cat) => cat.id));
-    const valid = categories.filter((id) => validIds.has(id));
+    const valid = categories.filter((id): id is VideoCategoryId =>
+      validIds.has(id as VideoCategoryId),
+    );
 
     await categorizer.setUserCategories(session.address, valid, c.env);
 

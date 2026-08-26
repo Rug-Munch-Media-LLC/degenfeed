@@ -13,9 +13,9 @@
  * All data is derived from the unified tipping ledger (KV).
  */
 
-import type { Env } from '../types';
 import { jsonResponse } from '../response-helpers';
 import { sanitizeString } from '../sanitize';
+import type { Env } from '../types';
 import {
   ACTIVITY_KEY,
   type ActivityItem,
@@ -24,7 +24,6 @@ import {
   leaderboardKey,
   type PlatformBreakdown,
   type TipPeriod,
-  type TipPlatform,
   type UserReceivedRecord,
   type UserSentRecord,
   userReceivedKey,
@@ -122,7 +121,7 @@ export interface CreatorAnalyticsV2 {
 export async function handleTipAnalyticsV2(request: Request, env: Env): Promise<Response> {
   const url = new URL(request.url);
   const userId = sanitizeString(url.searchParams.get('userId'), 128);
-  const periodRaw = sanitizeString(url.searchParams.get('period'), 16) || 'alltime';
+  const _periodRaw = sanitizeString(url.searchParams.get('period'), 16) || 'alltime';
 
   if (!userId) {
     return jsonResponse({ error: 'userId is required' }, 400);
@@ -166,7 +165,7 @@ export async function handleTipAnalyticsV2(request: Request, env: Env): Promise<
     // ─── Engagement metrics ─────────────────────────────────────
 
     const totalSenders = sentRaw?.count ?? 0;
-    const uniqueSenders = sentRaw?.recent
+    const _uniqueSenders = sentRaw?.recent
       ? new Set(sentRaw.recent.map((a) => a.toUserId).filter(Boolean)).size
       : 0;
     const repeatTippers = topTippers.filter((t) => t.count > 1).length;
@@ -299,7 +298,7 @@ function buildPeriodBreakdown(
 
 function buildOverview(
   received: UserReceivedRecord,
-  periods: CreatorAnalyticsV2['byPeriod'],
+  _periods: CreatorAnalyticsV2['byPeriod'],
 ): CreatorAnalyticsV2['overview'] {
   const tips = received.recent ?? [];
   const amounts = tips
@@ -312,8 +311,8 @@ function buildOverview(
     totalTips: received.count,
     uniqueTippers: received.tippers?.length ?? 0,
     avgTipAmount: received.count > 0 ? round2(received.totalUsd / received.count) : 0,
-    medianTipAmount: amounts.length > 0 ? round2(amounts[Math.floor(amounts.length / 2)]) : 0,
-    largestTip: amounts.length > 0 ? round2(amounts[amounts.length - 1]) : 0,
+    medianTipAmount: amounts.length > 0 ? round2(amounts[Math.floor(amounts.length / 2)] ?? 0) : 0,
+    largestTip: amounts.length > 0 ? round2(amounts[amounts.length - 1] ?? 0) : 0,
     firstTipAt: tips.length > 0 ? (tips[tips.length - 1]?.at ?? null) : null,
     lastTipAt: tips.length > 0 ? (tips[0]?.at ?? null) : null,
   };
@@ -364,9 +363,10 @@ function buildChainBreakdown(recent: ActivityItem[]): CreatorAnalyticsV2['byChai
       chain = 'lightning';
     }
 
-    if (!breakdown[chain]) breakdown[chain] = { totalUsd: 0, count: 0 };
-    breakdown[chain].totalUsd += activity.amountUsd;
-    breakdown[chain].count += 1;
+    const entry = breakdown[chain] ?? { totalUsd: 0, count: 0 };
+    entry.totalUsd += activity.amountUsd;
+    entry.count += 1;
+    breakdown[chain] = entry;
   }
 
   const result: CreatorAnalyticsV2['byChain'] = {};
@@ -647,7 +647,7 @@ export async function handleTipLeaderboardV2(request: Request, env: Env): Promis
 
 // ─── GET /api/tip/analytics/v2/summary — Quick summary for dashboard ──────
 
-export async function handleTipAnalyticsSummary(request: Request, env: Env): Promise<Response> {
+export async function handleTipAnalyticsSummary(_request: Request, env: Env): Promise<Response> {
   const globalSent = await kvGetJson<{ totalUsd: number; count: number }>(
     env,
     'tip:global:summary',
@@ -675,7 +675,7 @@ export async function handleTipAnalyticsSummary(request: Request, env: Env): Pro
       tips: last7d.length,
       volumeUsd: round2(last7d.reduce((s, a) => s + a.amountUsd, 0)),
     },
-    activeProtocols: [...activeProtocols].length,
+    activeProtocols: activeProtocols.size,
     avgTipAmount:
       last7d.length > 0 ? round2(last7d.reduce((s, a) => s + a.amountUsd, 0) / last7d.length) : 0,
   });
