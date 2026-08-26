@@ -1,3 +1,4 @@
+import type { Protocol } from '@degenfeed/types';
 import { checkPublishRateLimit } from '../lib/community-store';
 import { kvGetJson } from '../lib/kv-json';
 import { requirePremiumTier } from '../premium';

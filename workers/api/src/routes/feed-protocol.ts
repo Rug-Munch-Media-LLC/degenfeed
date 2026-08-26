@@ -12,7 +12,8 @@
  *   GET /api/feed/protocol/:protocol/videos   — Video/image content only
  */
 
-import type { UnifiedPost } from '@degenfeed/types';
+import type { UserAlgorithmPreferences } from '@degenfeed/feed-core';
+import type { Protocol, UnifiedPost } from '@degenfeed/types';
 import {
   applyCurationPipeline,
   applyUserFilters,
@@ -44,8 +45,8 @@ type ExecCtx = { waitUntil: (p: Promise<unknown>) => void };
 /**
  * Validate that a protocol string is known to the system.
  */
-function isValidProtocol(p: string): boolean {
-  const known = new Set(DEFAULT_PROTOCOLS);
+function isValidProtocol(p: string): p is Protocol {
+  const known = new Set<string>(DEFAULT_PROTOCOLS);
   // Extended list of all supported protocols
   const extended = [
     'nostr',
@@ -106,7 +107,7 @@ function isValidProtocol(p: string): boolean {
     'google',
     'ponder',
   ];
-  known.add(...extended);
+  for (const e of extended) known.add(e);
   return known.has(p);
 }
 
@@ -180,7 +181,7 @@ function protocolLabel(protocol: string): string {
  */
 async function fetchProtocolFeed(
   env: Env,
-  protocol: string,
+  protocol: Protocol,
   _sort: string,
   limit: number,
   notices: string[],
@@ -215,7 +216,7 @@ async function generateProtocolFeed(
   request: Request,
   env: Env,
   execCtx: ExecCtx | undefined,
-  protocol: string,
+  protocol: Protocol,
   sort: string,
 ): Promise<Response> {
   const feedStartTime = Date.now();
@@ -328,9 +329,6 @@ async function generateProtocolFeed(
       sorted = mediaPosts.sort((a, b) => b.createdAt - a.createdAt);
       break;
     }
-
-    case 'top':
-    case 'scored':
     default: {
       // 'top' and 'scored' — full scoring pipeline ranking
       const mergedPrefs = mergePreferences(
@@ -354,7 +352,7 @@ async function generateProtocolFeed(
       }
 
       const { ranked } = await scoreAndRank(env, relevant, {
-        prefs: mergedPrefs,
+        prefs: mergedPrefs as UserAlgorithmPreferences,
         followed: userCtx.followed,
         sort: 'scored',
         diverse: params.get('diverse') !== 'false',
@@ -364,6 +362,7 @@ async function generateProtocolFeed(
         hideLowQuality: false,
         showOriginalContent: false,
         minEngagement: 0,
+        hideLowQualityThreshold: 0,
         maxPerNiche: 5,
         interleaveProtocols: false,
       });
