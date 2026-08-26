@@ -94,7 +94,10 @@ export interface GroupCall {
   /** SFU stream token (if using Livepeer) */
   sfuStreamToken: string | null;
   /** Mesh: WebRTC signalling state (SDP offers/answers) */
-  meshSignalling: Record<string, any>;
+  meshSignalling: Record<
+    string,
+    Partial<Record<string, { signal: Record<string, unknown>; timestamp: number }>>
+  >;
   /** Call settings */
   settings: CallSettings;
   /** Number of participants muted by host */
@@ -162,7 +165,11 @@ async function createSfuRoom(env: Env, callId: string): Promise<LivepeerRoom> {
       });
 
       if (res.ok) {
-        const data = (await res.json()) as any;
+        const data = (await res.json()) as {
+          id: string;
+          streamKey: string;
+          playbackId: string;
+        };
         return {
           id: data.id,
           streamToken: data.streamKey,
@@ -704,15 +711,17 @@ export async function storeMeshSignal(
   callId: string,
   fromUserId: string,
   toUserId: string,
-  signal: any,
+  signal: Record<string, unknown>,
 ): Promise<GroupCall | null> {
   const call = await getGroupCall(env, callId);
   if (!call) return null;
 
-  if (!call.meshSignalling[fromUserId]) {
-    call.meshSignalling[fromUserId] = {};
+  let fromSignals = call.meshSignalling[fromUserId];
+  if (!fromSignals) {
+    fromSignals = {};
+    call.meshSignalling[fromUserId] = fromSignals;
   }
-  call.meshSignalling[fromUserId][toUserId] = {
+  fromSignals[toUserId] = {
     signal,
     timestamp: Date.now(),
   };
@@ -728,16 +737,21 @@ export async function consumeMeshSignals(
   env: Env,
   callId: string,
   userId: string,
-): Promise<Array<{ fromUserId: string; signal: any }>> {
+): Promise<Array<{ fromUserId: string; signal: Record<string, unknown> }>> {
   const call = await getGroupCall(env, callId);
   if (!call) return [];
 
-  const signals: Array<{ fromUserId: string; signal: any }> = [];
+  const signals: Array<{ fromUserId: string; signal: Record<string, unknown> }> = [];
 
   for (const [fromId, targets] of Object.entries(call.meshSignalling)) {
-    if (targets[userId]) {
-      signals.push({ fromUserId: fromId, signal: targets[userId].signal });
-      delete targets[userId];
+    if (!targets || typeof targets !== 'object') continue;
+    const userSignals = targets as Record<
+      string,
+      { signal: Record<string, unknown>; timestamp: number }
+    >;
+    if (userSignals[userId]) {
+      signals.push({ fromUserId: fromId, signal: userSignals[userId].signal });
+      delete userSignals[userId];
     }
   }
 
@@ -877,7 +891,8 @@ function toBase64Url(buffer: ArrayBuffer | Uint8Array): string {
   const bytes = buffer instanceof Uint8Array ? buffer : new Uint8Array(buffer);
   let binary = '';
   for (let i = 0; i < bytes.length; i++) {
-    binary += String.fromCharCode(bytes[i]!);
+    const byte = bytes[i];
+    if (byte !== undefined) binary += String.fromCharCode(byte);
   }
   return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }

@@ -2,7 +2,7 @@
  * @degenfeed/api-worker — Unified Profile Types
  */
 
-import type { AggregatedProfile } from '../../lib/profile-sync';
+import type { AggregatedProfile } from './badges';
 
 export interface ProfileSearchResult {
   wallet?: string;

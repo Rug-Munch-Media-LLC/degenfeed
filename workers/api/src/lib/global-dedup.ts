@@ -189,8 +189,8 @@ function levenshteinDistance(a: string, b: string): number {
   if (bn === 0) return an;
   if (an < bn) return levenshteinDistance(b, a);
 
-  const prev: number[] = new Array(bn + 1);
-  const curr: number[] = new Array(bn + 1);
+  const prev: number[] = Array.from({ length: bn + 1 }, () => 0);
+  const curr: number[] = Array.from({ length: bn + 1 }, () => 0);
   for (let j = 0; j <= bn; j++) {
     prev[j] = j;
     curr[j] = 0;
@@ -430,7 +430,9 @@ function extractQuotedUrls(text: string): string[] {
 
   // Check for markdown blockquotes (> url)
   const mdBlockquoteRe = /^>\s*(https?:\/\/\S+)/gm;
+  // biome-ignore lint/suspicious/noImplicitAnyLet: regex exec result typed by loop
   let m;
+  // biome-ignore lint/suspicious/noAssignInExpressions: standard exec-loop pattern
   while ((m = mdBlockquoteRe.exec(text)) !== null) {
     if (m[1]) urls.push(m[1]);
   }
@@ -658,6 +660,7 @@ export class GlobalDedupRegistry {
     // Check recent entries by this author within the time window
     const recentEntries = await this.getRecentByAuthor(authorId, windowStart, windowEnd);
     if (recentEntries.length > 0) {
+      // biome-ignore lint/style/noNonNullAssertion: length checked above
       const entry = recentEntries[0]!;
       // Get cluster info for copyCount and protocols
       let copyCount = 1;

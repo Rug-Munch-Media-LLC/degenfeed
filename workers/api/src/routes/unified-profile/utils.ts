@@ -5,7 +5,7 @@
 /**
  * Filter aggregated profile to only include requested fields.
  */
-import type { AggregatedProfile } from '../../lib/profile-sync';
+import type { AggregatedProfile } from './badges';
 
 export function filterAggregatedProfile(
   profile: AggregatedProfile,

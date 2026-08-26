@@ -193,7 +193,8 @@ app.use('*', async (c, next) => {
 // ─── Middleware: OPTIONS preflight ───────────────────────────
 app.use('*', async (c, next) => {
   if (c.req.method === 'OPTIONS') {
-    return new Response(null, { status: 204 });
+    c.res = new Response(null, { status: 204 });
+    return;
   }
   await next();
 });
@@ -302,7 +303,8 @@ app.use('*', async (c, next) => {
 
   const rl = await tieredRateLimit(c.env, ip, c.req.path, isAuthenticated, c.req.method);
   if (!rl.allowed) {
-    return rateLimitResponse(rl.retryAfter);
+    c.res = rateLimitResponse(rl.retryAfter);
+    return;
   }
 
   await next();
@@ -331,7 +333,8 @@ app.use('/api/admin/*', async (c, next) => {
     await requireAdminFromSession(c.req.raw, c.env);
   } catch (err) {
     const { handleError } = await import('./lib/errors');
-    return handleError(err, c.env, { route: c.req.path, method: c.req.method });
+    c.res = handleError(err, c.env, { route: c.req.path, method: c.req.method });
+    return;
   }
   await next();
 });
@@ -613,7 +616,8 @@ app.options('/api/image-proxy', async (_c) => {
 app.all('/*', async (c, next) => {
   const path = c.req.path;
   if (path in STATIC_REDIRECTS) {
-    return Response.redirect(STATIC_REDIRECTS[path] as string, 301);
+    c.res = Response.redirect(STATIC_REDIRECTS[path] as string, 301);
+    return;
   }
   await next();
 });

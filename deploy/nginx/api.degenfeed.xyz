@@ -1,0 +1,43 @@
+# ═══════════════════════════════════════════════════════════════════════════
+# api.degenfeed.xyz — DegenFeed API (degenfeed-api container :3101)
+# Created 2026-08-26: vhost was MISSING entirely — api hostname fell through
+# to the default server, causing Cloudflare 520 on every request.
+# ═══════════════════════════════════════════════════════════════════════════
+
+server {
+    listen 80;
+    listen [::]:80;
+    server_name api.degenfeed.xyz;
+    return 301 https://$host$request_uri;
+}
+
+server {
+    listen 443 ssl;
+    listen [::]:443 ssl;
+    http2 on;
+    server_name api.degenfeed.xyz;
+
+    ssl_certificate /etc/ssl/certs/degenfeed-origin-ca.pem;
+    ssl_certificate_key /etc/ssl/private/degenfeed-origin.key;
+    ssl_protocols TLSv1.2 TLSv1.3;
+
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+    add_header Strict-Transport-Security "max-age=63072000; includeSubDomains; preload" always;
+
+    # CORS handled by the API itself (ALLOWED_ORIGINS in wrangler/env)
+
+    location / {
+        proxy_pass http://127.0.0.1:3101;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto https;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_read_timeout 60s;
+        proxy_connect_timeout 15s;
+        proxy_buffering off;
+    }
+}

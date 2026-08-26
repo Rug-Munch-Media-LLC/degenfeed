@@ -14,7 +14,7 @@ import {
 } from '../../lib/profile-sync';
 import { jsonResponse } from '../../response-helpers';
 import { requireSession } from '../../session';
-import type { Env } from '../types';
+import type { Env } from '../../types';
 
 export async function handleSyncProfile(
   request: Request,
@@ -29,7 +29,7 @@ export async function handleSyncProfile(
     const result = await syncProfile(wallet, {}, env);
     return jsonResponse({
       data: {
-        syncedProtocols: result.map(r => r.protocol),
+        syncedProtocols: result.map((r) => r.protocol),
         results: result,
       },
     });
@@ -68,8 +68,8 @@ export async function handleUpdateProfile(
     );
   try {
     const result = await pushProfile(wallet, body as Record<string, unknown>, env);
-    const succeeded = result.filter(p => p.ok).length;
-    const failed = result.filter(p => !p.ok).length;
+    const succeeded = result.filter((p) => p.ok).length;
+    const failed = result.filter((p) => !p.ok).length;
     return jsonResponse({
       data: {
         results: result,
