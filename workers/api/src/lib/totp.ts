@@ -134,20 +134,20 @@ export async function generateTOTP(secret: string, counter: number): Promise<str
   const hmac = await hmacSha1(key, new Uint8Array(counterBuf));
 
   // Step 4: Dynamic truncation (RFC 4226 §5.3)
-  const offset = hmac[hmac.length - 1] & OFFSET_MASK;
-  if (
-    hmac[offset] === undefined ||
-    hmac[offset + 1] === undefined ||
-    hmac[offset + 2] === undefined ||
-    hmac[offset + 3] === undefined
-  ) {
+  const lastByte = hmac[hmac.length - 1];
+  if (lastByte === undefined) {
+    throw new Error('TOTP: empty HMAC output');
+  }
+  const offset = lastByte & OFFSET_MASK;
+  const b0 = hmac[offset];
+  const b1 = hmac[offset + 1];
+  const b2 = hmac[offset + 2];
+  const b3 = hmac[offset + 3];
+  if (b0 === undefined || b1 === undefined || b2 === undefined || b3 === undefined) {
     throw new Error('TOTP: offset out of bounds');
   }
   const binaryCode =
-    ((hmac[offset] & DYNAMIC_TRUNCATION_MASK) << 24) |
-    ((hmac[offset + 1] & 0xff) << 16) |
-    ((hmac[offset + 2] & 0xff) << 8) |
-    (hmac[offset + 3] & 0xff);
+    ((b0 & DYNAMIC_TRUNCATION_MASK) << 24) | ((b1 & 0xff) << 16) | ((b2 & 0xff) << 8) | (b3 & 0xff);
 
   const otp = binaryCode % 10 ** OTP_DIGITS;
   return otp.toString().padStart(OTP_DIGITS, '0');
