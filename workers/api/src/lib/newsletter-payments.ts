@@ -20,9 +20,9 @@
  *   nlp:discount:{newsletterId}       → DiscountConfig
  */
 
-import type { Env } from '../types';
 import { log } from '../logger';
 import type { SubscriptionTier } from '../routes/newsletter-subscriptions';
+import type { Env } from '../types';
 
 // ─── Types ─────────────────────────────────────────────────────────────
 
@@ -315,7 +315,7 @@ export function selectPaymentMethod(
 
   // For small amounts (< $1), use native token on any available chain
   if (amountCents < 100 && intersection.length > 0) {
-    const chain = intersection[0];
+    const chain = intersection[0] ?? 'base';
     const method: PaymentMethod = chain === 'solana' ? 'solana' : 'evm';
     return { method, chain, token: chain === 'solana' ? 'SOL' : 'ETH' };
   }
@@ -324,7 +324,7 @@ export function selectPaymentMethod(
   if (intersection.length > 0) {
     return {
       method: intersection.includes('solana') ? 'solana' : 'evm',
-      chain: intersection.includes('base') ? 'base' : intersection[0],
+      chain: intersection.includes('base') ? 'base' : (intersection[0] ?? 'base'),
       token: 'USDC',
     };
   }
@@ -827,8 +827,9 @@ export async function processAllWeeklyPayouts(env: Env): Promise<{
     for (const key of list.keys) {
       // Key format: nlp:payout:queue:{wallet}:{weekId}
       const parts = key.name.split(':');
-      if (parts.length >= 4) {
-        creatorWallets.add(parts[3]);
+      const walletPart = parts[3];
+      if (parts.length >= 4 && walletPart) {
+        creatorWallets.add(walletPart);
       }
     }
 
