@@ -19,7 +19,7 @@ import {
 import { jsonResponse } from '../response-helpers';
 import type { Env } from '../types';
 
-const QUALITY_DASHBOARD_PREFIX = '/api/admin/feed-quality';
+const _QUALITY_DASHBOARD_PREFIX = '/api/admin/feed-quality';
 
 export const qualityDashboardRoutes = new Hono<{ Bindings: Env }>();
 
@@ -46,11 +46,11 @@ qualityDashboardRoutes.get('/dashboard', async (c) => {
     try {
       const posts = JSON.parse(postsParam) as Record<string, unknown>[];
       const metrics = buildQualityDashboard(
-        posts as unknown as import('./post').UnifiedPost[],
+        posts as unknown as import('@degenfeed/types').UnifiedPost[],
         Date.now(),
       );
       return jsonResponse(metrics);
-    } catch (err) {
+    } catch {
       return jsonResponse({ error: 'Invalid posts payload' }, 400);
     }
   }
@@ -89,7 +89,7 @@ qualityDashboardRoutes.post('/snapshot', async (c) => {
       ok: true,
       metrics,
     });
-  } catch (err) {
+  } catch {
     return jsonResponse({ error: 'Failed to process snapshot' }, 500);
   }
 });
@@ -116,7 +116,7 @@ qualityDashboardRoutes.get('/history', async (c) => {
 // ─── Auth Helper ───────────────────────────────────────────────────────
 
 async function authenticateAdmin(c: {
-  req: { header: (name: string) => string | null };
+  req: { header: (name: string) => string | null | undefined };
   env: Env;
 }): Promise<{ authorized: boolean }> {
   // Check for admin session cookie
