@@ -333,7 +333,7 @@ async function notifyRmiBackend(
   try {
     const headers: Record<string, string> = { 'Content-Type': 'application/json' };
     if (env.RMI_API_KEY) {
-      headers['Authorization'] = `Bearer ${env.RMI_API_KEY}`;
+      headers.Authorization = `Bearer ${env.RMI_API_KEY}`;
     }
     await fetch(`${rmiUrl}/api/v1/wallet/verify-signature`, {
       method: 'POST',
@@ -373,7 +373,7 @@ async function triggerPostLoginDiscovery(walletAddress: string, env: Env): Promi
       }
     }
 
-    const { discoverIdentities } = await import('./lib/identity-discovery');
+    const { discoverIdentities } = await import('../lib/identity-discovery');
     await discoverIdentities(wallet, env, { forceRefresh: false });
 
     log('info', 'Post-login identity discovery completed', {
