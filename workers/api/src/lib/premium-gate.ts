@@ -15,9 +15,9 @@
  *   Enterprise:              Custom
  */
 
-import type { Env } from '../types';
+import { DEFAULT_TIER_LIMITS, type PremiumTier, requirePremiumTier, TIER_LIMITS } from '../premium';
 import { jsonResponse } from '../response-helpers';
-import { type PremiumTier, requirePremiumTier, TIER_LIMITS } from '../premium';
+import type { Env } from '../types';
 import { createPostizSchedule, getSchedulingEngine, shouldUsePostiz } from './postiz-bridge';
 
 // ─── Types ────────────────────────────────────────────────────────────────
@@ -131,11 +131,11 @@ export async function checkResourceLimit(
   const address = walletAddress.toLowerCase();
   const status = await checkPremiumStatusInternal(address, env);
   const tier: string = status?.tier ?? 'basic';
-  const limits = TIER_LIMITS[tier] ?? TIER_LIMITS.basic;
+  const limits = TIER_LIMITS[tier] ?? DEFAULT_TIER_LIMITS;
   const usage = await getPremiumUsage(address, env);
 
   const current = usage[resource] ?? 0;
-  const limit = limits[resource] ?? 0;
+  const limit = (limits as unknown as Record<string, number | undefined>)[resource] ?? 0;
   const remaining = limit - current;
 
   return {
