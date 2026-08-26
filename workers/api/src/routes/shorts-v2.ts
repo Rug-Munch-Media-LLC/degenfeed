@@ -36,9 +36,11 @@
 
 import { ShortsAggregatorV2 } from '../feed/shorts-aggregator-v2';
 import { ShortsAlgorithm, type UserShortsProfile, type WatchEvent } from '../feed/shorts-algorithm';
+import { kvGetJson } from '../lib/kv-json';
 import { jsonResponse, methodNotAllowed, noCacheJsonResponse } from '../response-helpers';
 import { requireSession } from '../session';
 import type { Env } from '../types';
+import { parseSeenIds } from './shorts-core';
 
 // ─── V2 Helpers ───────────────────────────────────────────────────────────
 

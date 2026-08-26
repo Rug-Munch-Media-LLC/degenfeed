@@ -37,7 +37,6 @@
 import type { ShortVideoSource } from '@degenfeed/shorts-provider';
 import type { UserInterestProfile } from '@degenfeed/shorts-provider/scorer';
 import { ShortsAggregator } from '../feed/shorts-aggregator';
-import { FEED_SOURCE_LABELS, UnifiedShortsFeed } from '../feed/shorts-unified';
 import { type ShortProtocol, UnifiedShortsPipeline } from '../lib/unified-shorts';
 import { jsonResponse, methodNotAllowed, noCacheJsonResponse } from '../response-helpers';
 import { requireSession } from '../session';
@@ -80,7 +79,7 @@ function parseParams(url: URL, request: Request): RequestParams {
   return { limit, cursor, topics, seenIds };
 }
 
-function parseSeenIds(request: Request): Set<string> {
+export function parseSeenIds(request: Request): Set<string> {
   const seen = new Set<string>();
   const header = request.headers.get('x-shorts-seen');
   if (header) {

@@ -9,6 +9,8 @@ export const CHANNELS = {
   DM_NEW: 'dm:new',
   DM_TYPING: 'dm:typing',
   SPACE_UPDATE: 'space:update',
+  SPACE_CHAT: 'space:chat',
+  SPACE_TIP: 'space:tip',
   TIP_RECEIVED: 'tip:received',
   /** Global tip feed (for live overlays, leaderboards) */
   TIP_GLOBAL: 'tip:global',
