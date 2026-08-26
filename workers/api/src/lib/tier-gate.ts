@@ -10,16 +10,17 @@
  */
 
 import type { Context, Next } from 'hono';
-import type { Env } from '../types';
-import { jsonResponse } from '../response-helpers';
 import {
   checkPremiumStatus,
+  DEFAULT_TIER_LIMITS,
   FEATURE_TIER_REQUIREMENTS,
   hasTierAccess,
   type PremiumTier,
   TIER_LIMITS,
 } from '../premium';
+import { jsonResponse } from '../response-helpers';
 import { requireSession } from '../session';
+import type { Env } from '../types';
 
 // ─── KV key patterns for usage tracking ────────────────────────────────────
 
@@ -163,7 +164,7 @@ export function hasMembershipFeature(userTier: string, featureKey: string): bool
  * Returns 402 Payment Required when the user's tier is insufficient.
  */
 export function requireTier(minTier: PremiumTier) {
-  return async (c: Context<{ Bindings: Env }>, next: Next) => {
+  return async (c: Context<{ Bindings: Env }>, next: Next): Promise<Response | undefined> => {
     const session = await requireSession(c.req.raw, c.env);
     if (session instanceof Response) return session;
 
@@ -197,7 +198,7 @@ export function requireTier(minTier: PremiumTier) {
  * Returns 402 Payment Required when the user's tier cannot access this feature.
  */
 export function requireFeature(feature: string) {
-  return async (c: Context<{ Bindings: Env }>, next: Next) => {
+  return async (c: Context<{ Bindings: Env }>, next: Next): Promise<Response | undefined> => {
     const session = await requireSession(c.req.raw, c.env);
     if (session instanceof Response) return session;
 
@@ -256,10 +257,7 @@ export async function checkTierLimit(
 ): Promise<LimitCheckResult> {
   const status = await checkPremiumStatus(walletAddress, env);
   const userTier = status?.tier || 'basic';
-  const limits =
-    (TIER_LIMITS[userTier] as
-      | { protocols: number; creatorCoins: number; communities: number; scheduledPosts: number }
-      | undefined) ?? TIER_LIMITS.basic;
+  const limits = TIER_LIMITS[userTier] ?? DEFAULT_TIER_LIMITS;
   const limit = limits[limitType] ?? 0;
   const usage = await getCurrentUsage(env, walletAddress);
 

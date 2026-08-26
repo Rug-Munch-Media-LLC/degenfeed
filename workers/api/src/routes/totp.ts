@@ -49,13 +49,15 @@ const totp = new Hono<{ Bindings: Env }>();
  * Extract and validate the JSON body, returning a parsed object
  * or an error Response.
  */
-async function parseBody<T>(c: { req: { raw: Request } }): Promise<{ data?: T; error?: Response }> {
+async function parseBody<T>(c: {
+  req: { raw: Request; json: <J>() => Promise<J> };
+}): Promise<{ data?: T; error?: Response }> {
   const sizeCheck = validateBodySize(c.req.raw, 4096);
   if (!sizeCheck.ok) {
     return { error: jsonResponse({ error: sizeCheck.error }, 413) };
   }
   try {
-    const data = (await c.req.json()) as T;
+    const data = (await c.req.json<T>()) as T;
     return { data };
   } catch {
     return { error: jsonResponse({ error: 'Invalid JSON body' }, 400) };
