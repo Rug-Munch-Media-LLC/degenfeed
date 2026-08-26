@@ -71,6 +71,7 @@
     "@noble/hashes": "^2.2.0",
     "@scure/base": "^2.2.0",
     "@telegram-apps/sdk": "^3.11.8",
+    "@vitest/coverage-v8": "^4.1.11",
     "better-auth": "^1.6.25",
     "hls.js": "^1.6.16",
     "p2p-media-loader-hlsjs": "^3.0.1",
