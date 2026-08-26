@@ -96,7 +96,7 @@ export class RedditOAuth {
     const password = process.env.REDDIT_PASSWORD || '';
 
     if (!clientId || !clientSecret || !username || !password) {
-      console.log('[reddit-auth] OAuth not configured — missing env vars');
+      // console.log('[reddit-auth] OAuth not configured — missing env vars');
       return false;
     }
 
@@ -139,7 +139,7 @@ export class RedditOAuth {
       throw new Error('[reddit-auth] Cannot fetch token: not configured');
     }
 
-    console.log('[reddit-auth] Fetching new access token...');
+    // console.log('[reddit-auth] Fetching new access token...');
 
     const body = new URLSearchParams({
       grant_type: 'password',
@@ -188,7 +188,7 @@ export class RedditOAuth {
       expires_at: Date.now() + (data.expires_in || 3600) * 1000,
     };
 
-    console.log('[reddit-auth] Token obtained, expires in', token.expires_in, 'seconds');
+    // console.log('[reddit-auth] Token obtained, expires in', token.expires_in, 'seconds');
     return token;
   }
 
@@ -229,7 +229,7 @@ export class RedditOAuth {
 
       if (res.status === 401) {
         // Token expired, clear and retry once
-        console.log('[reddit-auth] Token expired (401), clearing and retrying...');
+        // console.log('[reddit-auth] Token expired (401), clearing and retrying...');
         this.token = null;
         const newHeaders = await this.getAuthHeaders();
         if (newHeaders.Authorization) {

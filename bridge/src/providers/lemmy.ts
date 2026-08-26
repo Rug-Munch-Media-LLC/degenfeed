@@ -425,7 +425,7 @@ export const schema: SchemaGuard = {
 export async function fetchLemmyPosts(limit = 20): Promise<UnifiedPost[]> {
   // Rate limit: 60 requests/minute per instance
   if (!checkRateLimit('lemmy', { maxRequests: 60, windowMs: 60_000 })) {
-    console.log('[lemmy] Rate limited, skipping fetch');
+    // console.log('[lemmy] Rate limited, skipping fetch');
     return [];
   }
   const all: UnifiedPost[] = [];
@@ -498,9 +498,9 @@ export async function fetchLemmyPosts(limit = 20): Promise<UnifiedPost[]> {
     }
   }
 
-  console.log(
-    `[bridge] Lemmy: ${deduped.length} posts (API: ${localCount}, RSS fallback: ${all.length - localCount})`,
-  );
+  //   console.log(
+  //     `[bridge] Lemmy: ${deduped.length} posts (API: ${localCount}, RSS fallback: ${all.length - localCount})`,
+  //   );
   return deduped;
 }
 

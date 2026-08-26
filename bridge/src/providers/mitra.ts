@@ -142,7 +142,7 @@ export async function fetchMitraPosts(limit = 20): Promise<UnifiedPost[]> {
       seen.add(p.id);
       deduped.push(p);
     }
-  console.log(`[bridge] Mitra: ${deduped.length} posts`);
+  // console.log(`[bridge] Mitra: ${deduped.length} posts`);
   return deduped;
 }
 

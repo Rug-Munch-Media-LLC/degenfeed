@@ -159,7 +159,7 @@ export const schema: SchemaGuard = {
 
 export async function fetchXmtpPosts(_limit = 20): Promise<UnifiedPost[]> {
   const posts = await fetchGatewayStatus();
-  console.log(`[bridge] XMTP: ${posts.length} gateway status`);
+  // console.log(`[bridge] XMTP: ${posts.length} gateway status`);
   return posts;
 }
 

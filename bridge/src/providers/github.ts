@@ -389,7 +389,7 @@ async function fetchRepoEvents(source: GitHubSource, limit: number): Promise<Uni
 
     // Handle rate limiting
     if (res.status === 403 && res.headers.get('X-RateLimit-Remaining') === '0') {
-      console.log('[bridge] GitHub API rate limited');
+      // console.log('[bridge] GitHub API rate limited');
       return [];
     }
 
@@ -401,9 +401,9 @@ async function fetchRepoEvents(source: GitHubSource, limit: number): Promise<Uni
       .filter((p): p is UnifiedPost => p !== null)
       .slice(0, limit);
   } catch (err) {
-    console.log(
-      `[bridge] GitHub fetch error (${source.owner}/${source.repo || ''}): ${(err as Error).message}`,
-    );
+    //     console.log(
+    //       `[bridge] GitHub fetch error (${source.owner}/${source.repo || ''}): ${(err as Error).message}`,
+    //     );
     return [];
   }
 }
@@ -427,7 +427,7 @@ async function fetchTrendingRepos(limit: number): Promise<UnifiedPost[]> {
 
     return data.items.map((item) => repoToPost(item)).slice(0, limit);
   } catch (err) {
-    console.log(`[bridge] GitHub trending fetch error: ${(err as Error).message}`);
+    // console.log(`[bridge] GitHub trending fetch error: ${(err as Error).message}`);
     return [];
   }
 }
@@ -447,7 +447,7 @@ export async function fetchGitHubPosts(limit = 20): Promise<UnifiedPost[]> {
   // Rate limit: 60 requests/hour (unauthenticated), 5000/hour (with GITHUB_TOKEN)
   // Use the conservative unauthenticated limit
   if (!checkRateLimit('github', { maxRequests: 60, windowMs: 3_600_000 })) {
-    console.log('[github] Rate limited, skipping fetch');
+    // console.log('[github] Rate limited, skipping fetch');
     return [];
   }
   const perSource = Math.max(2, Math.ceil(limit / TRACKED_SOURCES.length));
@@ -473,7 +473,7 @@ export async function fetchGitHubPosts(limit = 20): Promise<UnifiedPost[]> {
     }
   }
 
-  console.log(`[bridge] GitHub: ${deduped.length} events`);
+  // console.log(`[bridge] GitHub: ${deduped.length} events`);
   return deduped;
 }
 

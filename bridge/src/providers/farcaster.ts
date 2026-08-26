@@ -231,15 +231,15 @@ async function hubbleFetch(path: string): Promise<HubbleResponse | null> {
         headers: { 'User-Agent': 'DegenFeed-Bridge/1.0' },
       });
       if (!res.ok) {
-        console.log(`[farcaster] Hubble ${base}: HTTP ${res.status} for ${path.split('?')[0]}`);
+        // console.log(`[farcaster] Hubble ${base}: HTTP ${res.status} for ${path.split('?')[0]}`);
         continue;
       }
       return (await res.json()) as HubbleResponse;
     } catch (err: any) {
       if (err?.name === 'AbortError') {
-        console.log(`[farcaster] Hubble ${base}: timeout on ${path.split('?')[0]}`);
+        // console.log(`[farcaster] Hubble ${base}: timeout on ${path.split('?')[0]}`);
       } else {
-        console.log(`[farcaster] Hubble ${base}: ${path.split('?')[0]} error - ${err?.message}`);
+        // console.log(`[farcaster] Hubble ${base}: ${path.split('?')[0]} error - ${err?.message}`);
       }
     }
   }
@@ -409,9 +409,9 @@ const NEYNAR_MAX_CALLS = parseInt(process.env.NEYNAR_MAX_CALLS_PER_MONTH || '500
 function getNeynarKey(): string {
   if (NEYNAR_KEYS.length === 0) return '';
   if (_neynarCallCount >= NEYNAR_MAX_CALLS) {
-    console.log(
-      `[farcaster] Neynar monthly budget exhausted (${_neynarCallCount}/${NEYNAR_MAX_CALLS})`,
-    );
+    //     console.log(
+    //       `[farcaster] Neynar monthly budget exhausted (${_neynarCallCount}/${NEYNAR_MAX_CALLS})`,
+    //     );
     return '';
   }
   const key = NEYNAR_KEYS[_neynarKeyIndex];
@@ -451,7 +451,7 @@ interface NeynarCast {
 async function fetchFromNeynar(limit: number): Promise<UnifiedPost[]> {
   const apiKey = getNeynarKey();
   if (!apiKey) {
-    console.log('[farcaster] No NEYNAR_API_KEY configured, skipping public API fallback');
+    // console.log('[farcaster] No NEYNAR_API_KEY configured, skipping public API fallback');
     return [];
   }
 
@@ -469,7 +469,7 @@ async function fetchFromNeynar(limit: number): Promise<UnifiedPost[]> {
       signal: AbortSignal.timeout(9000),
     });
     if (!res.ok) {
-      console.log(`[farcaster] Neynar returned ${res.status}`);
+      // console.log(`[farcaster] Neynar returned ${res.status}`);
       return [];
     }
     const data = (await res.json()) as { casts?: NeynarCast[] };
@@ -481,7 +481,7 @@ async function fetchFromNeynar(limit: number): Promise<UnifiedPost[]> {
     );
     return meaningful.slice(0, limit).map((cast) => neynarCastToPost(cast));
   } catch (err: any) {
-    console.log(`[farcaster] Neynar fallback failed: ${err?.message || err}`);
+    // console.log(`[farcaster] Neynar fallback failed: ${err?.message || err}`);
     // One bounded retry: Neynar occasionally times out on the first attempt
     // (cold connection / upstream slowness). A single retry is cheap and the
     // caller still respects the feed builder's 5s provider budget.
@@ -496,7 +496,7 @@ async function fetchFromNeynar(limit: number): Promise<UnifiedPost[]> {
         signal: AbortSignal.timeout(6000),
       });
       if (!res.ok) {
-        console.log(`[farcaster] Neynar retry returned ${res.status}`);
+        // console.log(`[farcaster] Neynar retry returned ${res.status}`);
         return [];
       }
       const data = (await res.json()) as { casts?: NeynarCast[] };
@@ -506,7 +506,7 @@ async function fetchFromNeynar(limit: number): Promise<UnifiedPost[]> {
       );
       return meaningful.slice(0, limit).map((cast) => neynarCastToPost(cast));
     } catch (retryErr: any) {
-      console.log(`[farcaster] Neynar retry failed: ${retryErr?.message || retryErr}`);
+      // console.log(`[farcaster] Neynar retry failed: ${retryErr?.message || retryErr}`);
       return [];
     }
   }
@@ -579,7 +579,7 @@ function neynarCastToPost(cast: NeynarCast): UnifiedPost {
 export async function fetchFarcasterPosts(limit = 20): Promise<UnifiedPost[]> {
   // Rate limit: 120 requests/minute (conservative for self-hosted Hubble)
   if (!checkRateLimit('farcaster', { maxRequests: 120, windowMs: 60_000 })) {
-    console.log('[farcaster] Rate limited, skipping fetch');
+    // console.log('[farcaster] Rate limited, skipping fetch');
     return [];
   }
 
@@ -605,11 +605,11 @@ export async function fetchFarcasterPosts(limit = 20): Promise<UnifiedPost[]> {
       } else if (hubbleStatus.syncPercentage < HUBBLE_MIN_SYNC_PERCENT) {
         reason = `only ${hubbleStatus.syncPercentage}% synced (min ${HUBBLE_MIN_SYNC_PERCENT}%)`;
       }
-      console.log(`[farcaster] Hubble ${reason} — preferring Neynar API`);
+      // console.log(`[farcaster] Hubble ${reason} — preferring Neynar API`);
 
       const neynarPosts = await fetchFromNeynar(targetLimit).catch(() => [] as UnifiedPost[]);
       if (neynarPosts.length > 0) {
-        console.log(`[farcaster] Neynar returned ${neynarPosts.length} posts`);
+        // console.log(`[farcaster] Neynar returned ${neynarPosts.length} posts`);
         return filterFreshPosts(neynarPosts).slice(0, limit);
       }
 
@@ -617,9 +617,9 @@ export async function fetchFarcasterPosts(limit = 20): Promise<UnifiedPost[]> {
       // When Hubble is confirmed unreachable, a partial scan would just burn
       // 8s timeouts against a dead hub — return empty and let the
       // bridge-level fallback (cache/failover) serve content instead.
-      console.log('[farcaster] Neynar empty — falling back to partial Hubble data');
+      // console.log('[farcaster] Neynar empty — falling back to partial Hubble data');
       if (hubbleStatus === null) {
-        console.log('[farcaster] Hubble unreachable — skipping partial scan');
+        // console.log('[farcaster] Hubble unreachable — skipping partial scan');
         return [];
       }
       const hubblePosts = await tryHubbleFetch(
@@ -627,7 +627,7 @@ export async function fetchFarcasterPosts(limit = 20): Promise<UnifiedPost[]> {
         targetLimit,
       );
       if (hubblePosts.length > 0) {
-        console.log(`[farcaster] Hubble partial returned ${hubblePosts.length} posts`);
+        // console.log(`[farcaster] Hubble partial returned ${hubblePosts.length} posts`);
         return filterFreshPosts(hubblePosts).slice(0, limit);
       }
       return []; // Let bridge-level fallback handle it
@@ -648,12 +648,12 @@ export async function fetchFarcasterPosts(limit = 20): Promise<UnifiedPost[]> {
     return dedupeFarcasterPosts(all, limit);
   } catch (err: any) {
     const elapsed = Date.now() - startTime;
-    console.log(`[farcaster] Fetch failed after ${elapsed}ms: ${err?.message || err}`);
+    // console.log(`[farcaster] Fetch failed after ${elapsed}ms: ${err?.message || err}`);
 
     // Final fallback: try Neynar
     const neynarPosts = await fetchFromNeynar(targetLimit).catch(() => [] as UnifiedPost[]);
     if (neynarPosts.length > 0) {
-      console.log(`[farcaster] Neynar emergency fallback: ${neynarPosts.length} posts`);
+      // console.log(`[farcaster] Neynar emergency fallback: ${neynarPosts.length} posts`);
       return filterFreshPosts(neynarPosts).slice(0, limit);
     }
     return [];

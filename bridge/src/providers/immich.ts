@@ -27,7 +27,7 @@ export async function fetchImmichPosts(limit = 20): Promise<UnifiedPost[]> {
     const { fetchImmichPosts: adapterFetch } = await getAdapter();
     return adapterFetch(limit);
   } catch (err) {
-    console.log(`[bridge] Immich error: ${(err as Error).message}`);
+    // console.log(`[bridge] Immich error: ${(err as Error).message}`);
     return [];
   }
 }

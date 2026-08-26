@@ -134,7 +134,7 @@ export async function provisionMeshAccounts(
     if (protocolsToSkip.includes(proto.id)) {
       results.push({ protocol: proto.id, ok: true, status: 'skipped' });
       skipCount++;
-      console.log(`[sso] Skipped ${proto.id} — already provisioned by caller`);
+      // console.log(`[sso] Skipped ${proto.id} — already provisioned by caller`);
       continue;
     }
 
@@ -156,7 +156,7 @@ export async function provisionMeshAccounts(
             { timeout: 15_000, stdio: 'pipe' },
           );
           okCount++;
-          console.log(`[sso] ✓ Provisioned Pixelfed for ${username} via artisan`);
+          // console.log(`[sso] ✓ Provisioned Pixelfed for ${username} via artisan`);
           results.push({
             protocol: 'pixelfed',
             ok: true,
@@ -229,7 +229,7 @@ export async function provisionMeshAccounts(
 
       if (registration.status === 'created') {
         okCount++;
-        console.log(`[sso] ✓ Provisioned ${proto.label} (${proto.id}) for ${username}`);
+        // console.log(`[sso] ✓ Provisioned ${proto.label} (${proto.id}) for ${username}`);
         results.push({
           protocol: proto.id,
           ok: true,
@@ -239,7 +239,7 @@ export async function provisionMeshAccounts(
       } else if (registration.status === 'pending') {
         // Pending means created but requires email verification
         okCount++;
-        console.log(`[sso] ~ ${proto.label} (${proto.id}) pending verification for ${username}`);
+        // console.log(`[sso] ~ ${proto.label} (${proto.id}) pending verification for ${username}`);
         results.push({
           protocol: proto.id,
           ok: true,

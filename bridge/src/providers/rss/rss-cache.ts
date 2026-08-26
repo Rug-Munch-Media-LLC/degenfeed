@@ -29,9 +29,9 @@ export async function fetchRssPosts(limit = 50): Promise<UnifiedPost[]> {
   // Return cached data if still fresh
   if (rssCache && Date.now() - rssCache.fetchedAt < RSS_CACHE_TTL) {
     const cached = rssCache.posts.slice(0, limit);
-    console.log(
-      `[rss] Cache HIT: ${cached.length} posts (age: ${Math.round((Date.now() - rssCache.fetchedAt) / 1000)}s)`,
-    );
+    //     console.log(
+    //       `[rss] Cache HIT: ${cached.length} posts (age: ${Math.round((Date.now() - rssCache.fetchedAt) / 1000)}s)`,
+    //     );
     return cached;
   }
 
@@ -40,10 +40,10 @@ export async function fetchRssPosts(limit = 50): Promise<UnifiedPost[]> {
     // Return stale cache if available (better than nothing)
     if (rssCache) {
       const stale = rssCache.posts.slice(0, limit);
-      console.log(`[rss] Rate limited, serving ${stale.length} stale cached posts`);
+      // console.log(`[rss] Rate limited, serving ${stale.length} stale cached posts`);
       return stale;
     }
-    console.log('[rss] Rate limited, skipping fetch');
+    // console.log('[rss] Rate limited, skipping fetch');
     return [];
   }
 
@@ -66,7 +66,7 @@ export async function fetchRssPosts(limit = 50): Promise<UnifiedPost[]> {
   const activeFeeds = ALL_FEEDS;
   const perFeed = Math.max(1, Math.ceil((cacheLimit * 2) / activeFeeds.length));
 
-  console.log(`[rss] Fetching ${activeFeeds.length} feeds, ${perFeed} items per feed`);
+  // console.log(`[rss] Fetching ${activeFeeds.length} feeds, ${perFeed} items per feed`);
 
   // Fetch feeds in parallel with concurrency control. Stop fetching once we
   // have enough posts (early exit) — fetching all 148 feeds for a small limit
@@ -118,11 +118,11 @@ export async function fetchRssPosts(limit = 50): Promise<UnifiedPost[]> {
     }
   }
 
-  console.log(
-    `[rss] Total: ${deduped.length} posts from ~${activeFeeds.length} feeds (${all.length} raw)`,
-  );
+  //   console.log(
+  //     `[rss] Total: ${deduped.length} posts from ~${activeFeeds.length} feeds (${all.length} raw)`,
+  //   );
   for (const [cat, count] of byCategory) {
-    console.log(`[rss]   ${cat}: ${count} posts`);
+    // console.log(`[rss]   ${cat}: ${count} posts`);
   }
 
   // Anti-poisoning: never replace a healthy cache with a degraded fetch.
@@ -138,9 +138,9 @@ export async function fetchRssPosts(limit = 50): Promise<UnifiedPost[]> {
     rssCache.posts.length > 0 &&
     deduped.length < Math.min(RSS_CACHE_MIN_POOL, rssCache.posts.length)
   ) {
-    console.log(
-      `[rss] Degraded fetch (${deduped.length} posts) — keeping existing cache (${rssCache.posts.length} posts, age ${Math.round((Date.now() - rssCache.fetchedAt) / 1000)}s)`,
-    );
+    //     console.log(
+    //       `[rss] Degraded fetch (${deduped.length} posts) — keeping existing cache (${rssCache.posts.length} posts, age ${Math.round((Date.now() - rssCache.fetchedAt) / 1000)}s)`,
+    //     );
     return rssCache.posts.slice(0, limit);
   }
 
@@ -193,7 +193,7 @@ export async function fetchNewsletterPosts(limit = 30): Promise<UnifiedPost[]> {
   }
 
   const deduped = deduplicatePosts(all, limit);
-  console.log(`[rss] Newsletters: ${deduped.length} posts from ${newsletters.length} sources`);
+  // console.log(`[rss] Newsletters: ${deduped.length} posts from ${newsletters.length} sources`);
   return deduped;
 }
 

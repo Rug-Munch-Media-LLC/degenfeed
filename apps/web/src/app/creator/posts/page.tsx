@@ -677,7 +677,7 @@ export default function CreatorPostsPage() {
 
   const handleBulkRepublish = useCallback((ids: string[]) => {
     // In a full implementation, this would trigger re-publish
-    console.log('Re-publish:', ids);
+    // console.log('Re-publish:', ids);
     setSelectedIds([]);
   }, []);
 

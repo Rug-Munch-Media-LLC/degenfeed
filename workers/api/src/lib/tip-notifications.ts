@@ -303,9 +303,9 @@ async function sendProtocolNotification(env: Env, event: TipNotificationEvent): 
       // Farcaster push notifications require Onchain/Frame-based delivery.
       // Hubble does not provide push notifications — users check DegenFeed.
       // We log the notification for now; Frame-based delivery is planned.
-      console.log(
-        '[tip-notifications] Farcaster notification pending (Frame-based delivery planned)',
-      );
+      //       console.log(
+      //         '[tip-notifications] Farcaster notification pending (Frame-based delivery planned)',
+      //       );
       break;
     }
 

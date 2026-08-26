@@ -160,7 +160,7 @@ async function fetchDiscoverFeed(limit: number): Promise<UnifiedPost[]> {
     const items = feed.items || [];
     return items.slice(0, limit).map((i) => microblogItemToPost(i, 'discover'));
   } catch (err) {
-    console.log(`[bridge] Micro.blog discover error: ${(err as Error).message}`);
+    // console.log(`[bridge] Micro.blog discover error: ${(err as Error).message}`);
     return [];
   }
 }
@@ -227,7 +227,7 @@ export async function fetchMicroblogPosts(limit = 20): Promise<UnifiedPost[]> {
     }
   }
 
-  console.log(`[bridge] Micro.blog: ${deduped.length} posts`);
+  // console.log(`[bridge] Micro.blog: ${deduped.length} posts`);
   return deduped;
 }
 

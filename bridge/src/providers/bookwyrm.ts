@@ -293,7 +293,7 @@ export async function fetchBookWyrmPosts(limit = 20): Promise<UnifiedPost[]> {
     if (deduped.length >= limit) break;
   }
 
-  console.log(`[bridge] BookWyrm: ${deduped.length} statuses from ${CURATED_USERS.length} users`);
+  // console.log(`[bridge] BookWyrm: ${deduped.length} statuses from ${CURATED_USERS.length} users`);
   return deduped;
 }
 

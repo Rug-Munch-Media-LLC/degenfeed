@@ -125,9 +125,9 @@ export async function enqueue(env: Env, action: SyncAction): Promise<string> {
   }
 
   // Log for monitoring
-  console.log(
-    `[sync-queue] enqueued ${action.type} from ${action.sourceProtocol} → ${action.targetProtocol} (${action.id})`,
-  );
+  //   console.log(
+  //     `[sync-queue] enqueued ${action.type} from ${action.sourceProtocol} → ${action.targetProtocol} (${action.id})`,
+  //   );
 
   return action.id;
 }

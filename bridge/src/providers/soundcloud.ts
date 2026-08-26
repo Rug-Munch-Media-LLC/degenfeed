@@ -260,7 +260,7 @@ export async function fetchSoundCloudPosts(limit: number = 20): Promise<UnifiedP
     if (deduped.length >= limit) break;
   }
 
-  console.log(`[bridge] SoundCloud: ${deduped.length} posts from ${sources.length} sources`);
+  // console.log(`[bridge] SoundCloud: ${deduped.length} posts from ${sources.length} sources`);
   // Only cache non-empty results so a bad window is retried next cycle.
   if (deduped.length > 0) {
     scCache = { posts: deduped, expiresAt: Date.now() + SC_CACHE_TTL_MS };

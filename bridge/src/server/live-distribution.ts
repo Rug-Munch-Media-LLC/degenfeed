@@ -586,9 +586,9 @@ export async function distributeLiveStart(
     try {
       const result = await distributor(session, hlsUrl);
       session.distribution[platform] = result;
-      console.log(
-        `[live-dist] ${platform} ${result.ok ? 'LIVE' : 'FAILED'}: ${result.error || result.eventId || result.castHash || result.url || 'ok'}`,
-      );
+      //       console.log(
+      //         `[live-dist] ${platform} ${result.ok ? 'LIVE' : 'FAILED'}: ${result.error || result.eventId || result.castHash || result.url || 'ok'}`,
+      //       );
     } catch (err) {
       session.distribution[platform] = {
         ok: false,
@@ -624,9 +624,9 @@ export async function distributeLiveEnd(
         ...session.distribution[platform],
         ...result,
       };
-      console.log(
-        `[live-dist] ${platform} ${result.ok ? 'ENDED' : 'END_FAILED'}: ${result.error || result.eventId || result.castHash || 'ok'}`,
-      );
+      //       console.log(
+      //         `[live-dist] ${platform} ${result.ok ? 'ENDED' : 'END_FAILED'}: ${result.error || result.eventId || result.castHash || 'ok'}`,
+      //       );
     } catch (err) {
       session.distribution[platform] = {
         ...session.distribution[platform],
@@ -658,7 +658,7 @@ export function initLiveDistribution(): void {
   if (process.env.BLUESKY_CROSSPOST_DID || process.env.BLUESKY_IDENTIFIER)
     configured.push('bluesky');
   if (process.env.MASTODON_ACCESS_TOKEN) configured.push('mastodon');
-  console.log(
-    `[bridge] Live distribution ready — configured: ${configured.length ? configured.join(', ') : '(none)'}`,
-  );
+  //   console.log(
+  //     `[bridge] Live distribution ready — configured: ${configured.length ? configured.join(', ') : '(none)'}`,
+  //   );
 }

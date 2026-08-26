@@ -201,16 +201,16 @@ function logBridgeFailure(
   severity: string,
   context?: string,
 ): void {
-  console.log(
-    JSON.stringify({
-      event: 'bridge_failure_throttled',
-      protocol,
-      error,
-      severity,
-      context,
-      timestamp: Date.now(),
-    }),
-  );
+  //   console.log(
+  //     JSON.stringify({
+  //       event: 'bridge_failure_throttled',
+  //       protocol,
+  //       error,
+  //       severity,
+  //       context,
+  //       timestamp: Date.now(),
+  //     }),
+  //   );
 }
 
 // ─── KV Operations ─────────────────────────────────────────────────────────

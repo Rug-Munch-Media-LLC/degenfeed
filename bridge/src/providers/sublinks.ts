@@ -29,7 +29,7 @@ export async function fetchSublinksPosts(limit = 20): Promise<UnifiedPost[]> {
     const { fetchSublinksPosts: adapterFetch } = await getAdapter();
     return adapterFetch(limit);
   } catch (err) {
-    console.log(`[bridge] Sublinks error: ${(err as Error).message}`);
+    // console.log(`[bridge] Sublinks error: ${(err as Error).message}`);
     return [];
   }
 }

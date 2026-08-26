@@ -123,7 +123,7 @@ export async function authenticateWriteFreely(
   });
 
   if (result.ok && result.data?.access_token) {
-    console.log(`[writefreely-write] ✓ Authenticated as ${alias}`);
+    // console.log(`[writefreely-write] ✓ Authenticated as ${alias}`);
     return { ok: true, token: result.data.access_token };
   }
 
@@ -175,7 +175,7 @@ export async function postToWriteFreely(
   });
 
   if (result.ok && result.data) {
-    console.log(`[writefreely-write] ✓ Posted: ${result.data.url}`);
+    // console.log(`[writefreely-write] ✓ Posted: ${result.data.url}`);
     return { ok: true, post: result.data };
   }
 

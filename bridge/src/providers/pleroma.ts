@@ -147,9 +147,9 @@ export async function fetchPleromaPosts(limit = 20): Promise<UnifiedPost[]> {
     }
   }
 
-  console.log(
-    `[bridge] Pleroma/Akkoma: ${deduped.length} posts from ${PLEROMA_INSTANCES.length} instances`,
-  );
+  //   console.log(
+  //     `[bridge] Pleroma/Akkoma: ${deduped.length} posts from ${PLEROMA_INSTANCES.length} instances`,
+  //   );
   return deduped;
 }
 

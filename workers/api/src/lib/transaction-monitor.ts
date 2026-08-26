@@ -148,7 +148,7 @@ export async function trackTransaction(
     await env.CACHE.put(`${TX_PREFIX}${hash}`, JSON.stringify(record), {
       expirationTtl: 86_400, // 24h
     });
-    console.log(`[tx-monitor] Tracking ${label}: ${hash} on ${opts.chainName}`);
+    // console.log(`[tx-monitor] Tracking ${label}: ${hash} on ${opts.chainName}`);
   } catch (err) {
     console.error('[tx-monitor] Failed to track:', err);
   }
@@ -216,7 +216,7 @@ export async function pollPendingTransactions(
         if (chainResult.status === 'confirmed') {
           tx.status = 'confirmed';
           result.confirmed++;
-          console.log(`[tx-monitor] Confirmed ${tx.label}: ${tx.hash}`);
+          // console.log(`[tx-monitor] Confirmed ${tx.label}: ${tx.hash}`);
         } else if (chainResult.status === 'failed') {
           tx.status = 'failed';
           tx.error = chainResult.error ?? 'Transaction reverted';

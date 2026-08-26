@@ -74,7 +74,7 @@ export function registerAllProvidersWithCircuitBreaker(): void {
     healthDashboard.recordFetch(provider);
   }
 
-  console.log(`[reliability] Registered ${providers.length} providers with circuit breakers`);
+  // console.log(`[reliability] Registered ${providers.length} providers with circuit breakers`);
 }
 
 /**
@@ -98,5 +98,5 @@ export function registerFailoverStrategies(_providers: Record<string, { name: st
     failoverRouter.register(primary, fallbacks, 60000);
   }
 
-  console.log(`[reliability] Registered ${Object.keys(strategies).length} failover strategies`);
+  // console.log(`[reliability] Registered ${Object.keys(strategies).length} failover strategies`);
 }

@@ -116,7 +116,7 @@ export async function fetchMbinPosts(limit = 20): Promise<UnifiedPost[]> {
     }
   }
 
-  console.log(`[bridge] Mbin: ${deduped.length} entries`);
+  // console.log(`[bridge] Mbin: ${deduped.length} entries`);
   return deduped;
 }
 

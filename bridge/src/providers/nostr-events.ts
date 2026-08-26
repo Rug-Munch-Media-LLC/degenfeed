@@ -431,7 +431,7 @@ export async function fetchNostrTextNotes(limit = 25): Promise<UnifiedPost[]> {
     }
   }
 
-  console.log(`[nostr-events] Text notes: ${posts.length} kind-1 posts`);
+  // console.log(`[nostr-events] Text notes: ${posts.length} kind-1 posts`);
   return posts;
 }
 
@@ -466,7 +466,7 @@ export async function fetchNostrCalendarEvents(limit = 20): Promise<UnifiedEvent
     }
   }
 
-  console.log(`[nostr-events] NIP-52: ${unified.length} calendar events`);
+  // console.log(`[nostr-events] NIP-52: ${unified.length} calendar events`);
   return unified;
 }
 

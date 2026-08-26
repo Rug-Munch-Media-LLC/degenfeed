@@ -29,7 +29,7 @@ export async function fetchHubzillaPosts(limit = 20): Promise<UnifiedPost[]> {
     const { fetchHubzillaPosts: adapterFetch } = await getAdapter();
     return adapterFetch(limit);
   } catch (err) {
-    console.log(`[bridge] Hubzilla error: ${(err as Error).message}`);
+    // console.log(`[bridge] Hubzilla error: ${(err as Error).message}`);
     return [];
   }
 }

@@ -571,9 +571,9 @@ export async function handlePublishRoute(
     return true;
   }
 
-  console.log(
-    `[publish] fan-out by ${requestedBy || 'anonymous'} → ${protocols.join(',')} (${media.length} media)`,
-  );
+  //   console.log(
+  //     `[publish] fan-out by ${requestedBy || 'anonymous'} → ${protocols.join(',')} (${media.length} media)`,
+  //   );
 
   const results: Record<string, PublishResult> = {};
   const publishedAt = new Date().toISOString();

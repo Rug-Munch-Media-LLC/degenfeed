@@ -261,7 +261,7 @@ export async function fetchForgejoPosts(limit = 20): Promise<UnifiedPost[]> {
     }
   }
 
-  console.log(`[bridge] Forgejo: ${deduped.length} repos/activities`);
+  // console.log(`[bridge] Forgejo: ${deduped.length} repos/activities`);
   return deduped;
 }
 

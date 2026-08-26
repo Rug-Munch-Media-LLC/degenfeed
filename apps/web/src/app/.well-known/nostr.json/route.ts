@@ -88,7 +88,7 @@ export async function GET(request: NextRequest) {
     }
   } catch {
     // Bridge unavailable — use local knownNames
-    console.log('[nip05] Bridge unavailable, using local mappings');
+    // console.log('[nip05] Bridge unavailable, using local mappings');
   }
 
   // Filter to requested name if provided

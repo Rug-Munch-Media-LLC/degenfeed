@@ -26,7 +26,7 @@ export async function fetchKnownPosts(limit = 20): Promise<UnifiedPost[]> {
     const { fetchKnownPosts: adapterFetch } = await getAdapter();
     return adapterFetch(limit);
   } catch (err) {
-    console.log(`[bridge] Known error: ${(err as Error).message}`);
+    // console.log(`[bridge] Known error: ${(err as Error).message}`);
     return [];
   }
 }

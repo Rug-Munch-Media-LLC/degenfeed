@@ -203,7 +203,7 @@ export async function fetchOwncastLiveStreams(limit = 10): Promise<OwncastLiveSt
     return b.viewers - a.viewers;
   });
 
-  console.log(`[bridge] Owncast live: ${streams.length} stream(s)`);
+  // console.log(`[bridge] Owncast live: ${streams.length} stream(s)`);
   return streams.slice(0, limit);
 }
 
@@ -320,7 +320,7 @@ export async function fetchOwncastSchedule(
           });
         }
       }
-      console.log(`[bridge] Owncast schedule: ${schedule.length} upcoming stream(s)`);
+      // console.log(`[bridge] Owncast schedule: ${schedule.length} upcoming stream(s)`);
       return schedule;
     }
   } catch {
@@ -339,7 +339,7 @@ export async function fetchOwncastSchedule(
       };
       const title = info.streamTitle || info.name || 'Scheduled Stream';
       // No explicit schedule data — return empty rather than fabricate times.
-      console.log('[bridge] Owncast schedule: no schedule endpoint, using empty schedule');
+      // console.log('[bridge] Owncast schedule: no schedule endpoint, using empty schedule');
       return schedule;
     }
   } catch {
@@ -413,7 +413,7 @@ export async function fetchOwncastArchive(
     }
   }
 
-  console.log(`[bridge] Owncast archive: ${archive.length} past stream(s)`);
+  // console.log(`[bridge] Owncast archive: ${archive.length} past stream(s)`);
   return archive;
 }
 
@@ -449,7 +449,7 @@ export async function fetchOwncastPosts(limit = 20): Promise<UnifiedPost[]> {
     if (r.status === 'fulfilled' && r.value) all.push(r.value);
   }
 
-  console.log(`[bridge] Owncast: ${all.length} stream(s)`);
+  // console.log(`[bridge] Owncast: ${all.length} stream(s)`);
   return all.slice(0, limit);
 }
 

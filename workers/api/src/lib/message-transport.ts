@@ -667,7 +667,7 @@ export class MessageTransport {
       //
       // In production, this would import and use an XMTP client library.
       // For now, we log and return a placeholder result.
-      console.log('[transport] XMTP delivery not yet implemented for', recipientAddress);
+      // console.log('[transport] XMTP delivery not yet implemented for', recipientAddress);
 
       return {
         protocol,

@@ -156,7 +156,7 @@ export async function fetchPeerTubeCategories(): Promise<CategoryMap> {
  */
 export async function fetchPeerTubeTrending(limit = 12): Promise<UnifiedPost[]> {
   if (!checkRateLimit('peertube', { maxRequests: 50, windowMs: 60_000 })) {
-    console.log('[peertube] Rate limited, skipping trending fetch');
+    // console.log('[peertube] Rate limited, skipping trending fetch');
     return [];
   }
   try {
@@ -167,7 +167,7 @@ export async function fetchPeerTubeTrending(limit = 12): Promise<UnifiedPost[]> 
     });
     if (!res.ok) {
       // Fall back to view-count sort for instances without trendingScore
-      console.log('[bridge] PeerTube trending: HTTP ' + res.status + ' — falling back to -views');
+      // console.log('[bridge] PeerTube trending: HTTP ' + res.status + ' — falling back to -views');
       const fallback = await $fetch(
         `${PEERTUBE_BASE}/api/v1/videos?count=${Math.min(limit, 50)}&sort=-views`,
         {
@@ -182,7 +182,7 @@ export async function fetchPeerTubeTrending(limit = 12): Promise<UnifiedPost[]> 
     const data = (await res.json()) as PeerTubeResponse;
     return (data.data ?? []).slice(0, limit).map(videoToPost);
   } catch (err) {
-    console.log(`[bridge] PeerTube trending: error - ${(err as Error).message}`);
+    // console.log(`[bridge] PeerTube trending: error - ${(err as Error).message}`);
     return [];
   }
 }
@@ -193,7 +193,7 @@ export async function fetchPeerTubeTrending(limit = 12): Promise<UnifiedPost[]> 
  */
 export async function fetchPeerTubeChannels(limit = 20): Promise<PeerTubeChannel[]> {
   if (!checkRateLimit('peertube', { maxRequests: 50, windowMs: 60_000 })) {
-    console.log('[peertube] Rate limited, skipping channel fetch');
+    // console.log('[peertube] Rate limited, skipping channel fetch');
     return [];
   }
   try {
@@ -234,7 +234,7 @@ export async function fetchPeerTubeChannels(limit = 20): Promise<PeerTubeChannel
       isLocal: c.isLocal ?? true,
     }));
   } catch (err) {
-    console.log(`[bridge] PeerTube channels: error - ${(err as Error).message}`);
+    // console.log(`[bridge] PeerTube channels: error - ${(err as Error).message}`);
     return [];
   }
 }
@@ -380,7 +380,7 @@ export const schema: SchemaGuard = {
 export async function fetchPeerTubePosts(limit = 20): Promise<UnifiedPost[]> {
   // Rate limit: 50 requests/minute
   if (!checkRateLimit('peertube', { maxRequests: 50, windowMs: 60_000 })) {
-    console.log('[peertube] Rate limited, skipping fetch');
+    // console.log('[peertube] Rate limited, skipping fetch');
     return [];
   }
   const all: UnifiedPost[] = [];
@@ -413,7 +413,7 @@ export async function fetchPeerTubePosts(limit = 20): Promise<UnifiedPost[]> {
       }
     }
   } catch (err) {
-    console.log(`[bridge] PeerTube local: error - ${(err as Error).message}`);
+    // console.log(`[bridge] PeerTube local: error - ${(err as Error).message}`);
   }
 
   // 2. Federated instances — only when the local instance is thin, so the
@@ -455,7 +455,7 @@ export async function fetchPeerTubePosts(limit = 20): Promise<UnifiedPost[]> {
     }
   }
 
-  console.log(`[bridge] PeerTube: ${deduped.length} posts`);
+  // console.log(`[bridge] PeerTube: ${deduped.length} posts`);
   return deduped;
 }
 
@@ -473,7 +473,7 @@ export const fetch = fetchPeerTubePosts;
 export async function fetchPeerTubeLiveStreams(limit = 20): Promise<PeerTubeLiveStream[]> {
   // Rate limit: 50 requests/minute (shared budget with VOD fetches)
   if (!checkRateLimit('peertube', { maxRequests: 50, windowMs: 60_000 })) {
-    console.log('[peertube] Rate limited, skipping live fetch');
+    // console.log('[peertube] Rate limited, skipping live fetch');
     return [];
   }
   try {
@@ -487,13 +487,13 @@ export async function fetchPeerTubeLiveStreams(limit = 20): Promise<PeerTubeLive
     });
 
     if (!res.ok) {
-      console.log(`[bridge] PeerTube live: HTTP ${res.status}`);
+      // console.log(`[bridge] PeerTube live: HTTP ${res.status}`);
       return [];
     }
 
     const data = (await res.json()) as PeerTubeResponse;
     if (!data.data || data.data.length === 0) {
-      console.log('[bridge] PeerTube live: no live videos');
+      // console.log('[bridge] PeerTube live: no live videos');
       return [];
     }
 
@@ -517,10 +517,10 @@ export async function fetchPeerTubeLiveStreams(limit = 20): Promise<PeerTubeLive
       });
     }
 
-    console.log(`[bridge] PeerTube live: ${streams.length} stream(s)`);
+    // console.log(`[bridge] PeerTube live: ${streams.length} stream(s)`);
     return streams.slice(0, limit);
   } catch (err) {
-    console.log(`[bridge] PeerTube live: error - ${(err as Error).message}`);
+    // console.log(`[bridge] PeerTube live: error - ${(err as Error).message}`);
     return [];
   }
 }

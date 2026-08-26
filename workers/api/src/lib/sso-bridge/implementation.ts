@@ -292,9 +292,9 @@ export async function provisionAllProtocols(
           createdAt: Date.now(),
         } as SSOAccountState);
 
-        console.log(
-          `[sso-bridge] Provisioned ${protocolId} for ${walletAddress.slice(0, 8)} as ${registration.username}`,
-        );
+        //         console.log(
+        //           `[sso-bridge] Provisioned ${protocolId} for ${walletAddress.slice(0, 8)} as ${registration.username}`,
+        //         );
       } else {
         failed.push(protocolId);
         results.push({
@@ -379,9 +379,9 @@ export async function provisionSingleProtocol(
       } as SSOAccountState);
       await ssoStoreSet(env, ssoWalletStateKey(walletAddress), JSON.stringify(state));
 
-      console.log(
-        `[sso-bridge] Provisioned single ${protocolId} for ${walletAddress.slice(0, 8)} as ${registration.username}`,
-      );
+      //       console.log(
+      //         `[sso-bridge] Provisioned single ${protocolId} for ${walletAddress.slice(0, 8)} as ${registration.username}`,
+      //       );
 
       return {
         ok: true,

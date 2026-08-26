@@ -117,7 +117,7 @@ export async function fetchKbinPosts(limit = 20): Promise<UnifiedPost[]> {
     }
   }
 
-  console.log(`[bridge] Kbin: ${deduped.length} entries`);
+  // console.log(`[bridge] Kbin: ${deduped.length} entries`);
   return deduped;
 }
 

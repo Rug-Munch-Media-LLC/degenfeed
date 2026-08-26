@@ -1053,8 +1053,8 @@ function QuickActions({ coin, onRefresh }: { coin: CoinSummary; onRefresh: () =>
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ amount }),
     })
-      .then((r) => (r.ok ? alert('🔥 Burn successful!') : alert('Burn failed')))
-      .catch(() => alert('Burn failed'));
+      .then((r) => (r.ok ? console.info('🔥 Burn successful!') : console.error('Burn failed')))
+      .catch(() => console.error('Burn failed'));
     onRefresh();
   }, [coin.address, onRefresh]);
 
@@ -1067,8 +1067,8 @@ function QuickActions({ coin, onRefresh }: { coin: CoinSummary; onRefresh: () =>
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ recipients: [{ address: addr, amount: amt }] }),
     })
-      .then((r) => (r.ok ? alert('✈️ Airdrop sent!') : alert('Airdrop failed')))
-      .catch(() => alert('Airdrop failed'));
+      .then((r) => (r.ok ? console.info('✈️ Airdrop sent!') : console.error('Airdrop failed')))
+      .catch(() => console.error('Airdrop failed'));
     onRefresh();
   }, [coin.address, onRefresh]);
 
@@ -1077,7 +1077,7 @@ function QuickActions({ coin, onRefresh }: { coin: CoinSummary; onRefresh: () =>
     if (!action) return;
     const value = prompt('Enter new value:');
     if (!value) return;
-    alert(`⚡ DAO proposal submitted to update ${action} to ${value}. Community vote required.`);
+    // alert(`⚡ DAO proposal submitted to update ${action} to ${value}. Community vote required.`);
   }, []);
 
   return (

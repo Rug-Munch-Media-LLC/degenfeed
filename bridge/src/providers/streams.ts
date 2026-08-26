@@ -29,7 +29,7 @@ export async function fetchStreamsPosts(limit = 20): Promise<UnifiedPost[]> {
     const { fetchStreamsPosts: adapterFetch } = await getAdapter();
     return adapterFetch(limit);
   } catch (err) {
-    console.log(`[bridge] Streams error: ${(err as Error).message}`);
+    // console.log(`[bridge] Streams error: ${(err as Error).message}`);
     return [];
   }
 }

@@ -292,16 +292,16 @@ async function fetchProfileHtml(username: string): Promise<FetchHtmlResult> {
       const html = await res.text();
       if (res.status === 429 || res.status >= 500) {
         const backoff = 1500 * attempt;
-        console.log(`[threads] @${username}: HTTP ${res.status}, backing off ${backoff}ms`);
+        // console.log(`[threads] @${username}: HTTP ${res.status}, backing off ${backoff}ms`);
         await sleep(backoff);
         continue;
       }
       return { html, status: res.status };
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
-      console.log(
-        `[threads] @${username}: fetch error (${msg}), attempt ${attempt}/${maxAttempts}`,
-      );
+      //       console.log(
+      //         `[threads] @${username}: fetch error (${msg}), attempt ${attempt}/${maxAttempts}`,
+      //       );
       if (attempt < maxAttempts) await sleep(1200 * attempt);
     }
   }
@@ -611,7 +611,7 @@ async function fetchViaActivityPub(limit: number): Promise<UnifiedPost[]> {
     const result = await provider.fetchFeed({ timeoutMs: 10_000 });
     return (result.posts || []).slice(0, limit);
   } catch (err) {
-    console.log(`[threads] ActivityPub fallback error: ${(err as Error).message}`);
+    // console.log(`[threads] ActivityPub fallback error: ${(err as Error).message}`);
     return [];
   }
 }
@@ -634,7 +634,7 @@ export async function fetchThreadsPosts(limit = 20): Promise<UnifiedPost[]> {
   if (cached) return filterFreshPosts(cached).slice(0, limit);
 
   if (!checkRateLimit('threads', { maxRequests: 40, windowMs: 600_000 })) {
-    console.log('[threads] Rate limited, skipping fetch');
+    // console.log('[threads] Rate limited, skipping fetch');
     return [];
   }
 
@@ -695,9 +695,9 @@ export async function fetchThreadsPosts(limit = 20): Promise<UnifiedPost[]> {
     return freshAp;
   }
 
-  console.log(
-    `[bridge] Threads: ${deduped.length} posts from ${handles.length} curated accounts (embedded-json: ${scraping} raw)`,
-  );
+  //   console.log(
+  //     `[bridge] Threads: ${deduped.length} posts from ${handles.length} curated accounts (embedded-json: ${scraping} raw)`,
+  //   );
   setCachedPosts(deduped);
   return deduped;
 }

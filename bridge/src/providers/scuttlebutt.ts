@@ -205,7 +205,7 @@ async function fetchFromSSBLocal(limit: number): Promise<UnifiedPost[]> {
       .map((m) => ssbMessageToPost(m, SSB_LOCAL))
       .filter((p): p is UnifiedPost => p !== null);
   } catch (err) {
-    console.log(`[bridge] SSB local error: ${(err as Error).message}`);
+    // console.log(`[bridge] SSB local error: ${(err as Error).message}`);
     return [];
   }
 }
@@ -274,9 +274,9 @@ export async function fetchScuttlebuttPosts(limit = 20): Promise<UnifiedPost[]> 
     }
   }
 
-  console.log(
-    `[bridge] Scuttlebutt: ${deduped.length} posts (local: ${local.length}, pub: ${pubPosts.length})`,
-  );
+  //   console.log(
+  //     `[bridge] Scuttlebutt: ${deduped.length} posts (local: ${local.length}, pub: ${pubPosts.length})`,
+  //   );
   return deduped;
 }
 

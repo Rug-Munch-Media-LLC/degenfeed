@@ -496,7 +496,7 @@ function publishNostrStatus(
     }, 5000);
     ws.addEventListener('open', () => {
       ws.send(JSON.stringify(['EVENT', signed]));
-      console.log(`[webhook] Nostr ${status} event sent (${signed.id.slice(0, 8)})`);
+      // console.log(`[webhook] Nostr ${status} event sent (${signed.id.slice(0, 8)})`);
       clearTimeout(timer);
       ws.close();
     });

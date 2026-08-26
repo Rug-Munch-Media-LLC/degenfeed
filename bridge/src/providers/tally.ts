@@ -146,7 +146,7 @@ async function graphQLQuery<T>(
     if (!res.ok) return {};
     return (await res.json()) as GraphQLResponse<T>;
   } catch (err) {
-    console.log(`[bridge] Tally GraphQL error: ${(err as Error).message}`);
+    // console.log(`[bridge] Tally GraphQL error: ${(err as Error).message}`);
     return {};
   }
 }
@@ -341,7 +341,7 @@ export async function fetchTallyPosts(limit = 20): Promise<UnifiedPost[]> {
     }
   }
 
-  console.log(`[bridge] Tally: ${deduped.length} posts`);
+  // console.log(`[bridge] Tally: ${deduped.length} posts`);
   return deduped;
 }
 

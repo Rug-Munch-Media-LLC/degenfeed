@@ -135,7 +135,7 @@ async function fetchPublicNotifications(limit: number): Promise<UnifiedPost[]> {
     }
     return all.slice(0, limit);
   } catch (err) {
-    console.log(`[bridge] Push API error: ${(err as Error).message}`);
+    // console.log(`[bridge] Push API error: ${(err as Error).message}`);
     return [];
   }
 }
@@ -153,7 +153,7 @@ export const schema: SchemaGuard = {
 
 export async function fetchPushPosts(limit = 20): Promise<UnifiedPost[]> {
   const posts = await fetchPublicNotifications(limit);
-  console.log(`[bridge] Push Protocol: ${posts.length} notifications`);
+  // console.log(`[bridge] Push Protocol: ${posts.length} notifications`);
   return posts;
 }
 

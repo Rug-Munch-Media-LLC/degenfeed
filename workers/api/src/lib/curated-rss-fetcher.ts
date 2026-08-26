@@ -447,7 +447,7 @@ export async function seedCuratedPodcasts(kv: KVNamespace): Promise<void> {
     await kv.put(`podcast:curated:index:${category}`, JSON.stringify(podcasts.map((p) => p.id)));
   }
 
-  console.log(`[curated-rss] Seeded ${indexAll.length} curated podcasts into KV`);
+  // console.log(`[curated-rss] Seeded ${indexAll.length} curated podcasts into KV`);
 }
 
 // ─── Trending Calculation ────────────────────────────────────────────────

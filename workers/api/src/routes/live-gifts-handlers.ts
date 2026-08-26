@@ -739,7 +739,7 @@ export async function handleGiftPayout(request: Request, env: Env): Promise<Resp
           created_at: Math.floor(Date.now() / 1000),
         };
         // Fire-and-forget
-        console.log('[live-gifts] Payout event created for Nostr:', event.kind);
+        // console.log('[live-gifts] Payout event created for Nostr:', event.kind);
       }
     } catch {
       /* Nostr payout announcement is optional */

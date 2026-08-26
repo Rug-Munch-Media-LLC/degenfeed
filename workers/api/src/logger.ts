@@ -6,12 +6,12 @@
  */
 
 export function log(level: 'info' | 'warn' | 'error', msg: string, data?: unknown): void {
-  console.log(
-    JSON.stringify({
-      l: level,
-      m: msg,
-      t: Date.now(),
-      ...(data ? { d: data } : {}),
-    }),
-  );
+  //   console.log(
+  //     JSON.stringify({
+  //       l: level,
+  //       m: msg,
+  //       t: Date.now(),
+  //       ...(data ? { d: data } : {}),
+  //     }),
+  //   );
 }

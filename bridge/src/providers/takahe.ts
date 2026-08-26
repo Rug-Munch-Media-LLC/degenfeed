@@ -144,7 +144,7 @@ export async function fetchTakahePosts(limit = 20): Promise<UnifiedPost[]> {
       seen.add(p.id);
       deduped.push(p);
     }
-  console.log(`[bridge] Takahē: ${deduped.length} posts`);
+  // console.log(`[bridge] Takahē: ${deduped.length} posts`);
   return deduped;
 }
 

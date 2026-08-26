@@ -357,7 +357,7 @@ async function fetchRssSource(src: NewsletterSource, limit: number): Promise<Uni
       signal: AbortSignal.timeout(5000),
     });
     if (!res.ok) {
-      console.log(`[newsletter] ${src.name}: HTTP ${res.status}`);
+      // console.log(`[newsletter] ${src.name}: HTTP ${res.status}`);
       return [];
     }
     const xml = await res.text();
@@ -382,9 +382,9 @@ async function fetchRssSource(src: NewsletterSource, limit: number): Promise<Uni
       })
       .filter(Boolean);
   } catch (err) {
-    console.log(
-      `[newsletter] ${src.name}: error — ${err instanceof Error ? err.message : 'unknown'}`,
-    );
+    //     console.log(
+    //       `[newsletter] ${src.name}: error — ${err instanceof Error ? err.message : 'unknown'}`,
+    //     );
     return [];
   }
 }
@@ -409,7 +409,7 @@ async function fetchMirrorBridge(limit: number): Promise<UnifiedPost[]> {
       signal: AbortSignal.timeout(5000),
     });
     if (!res.ok) {
-      console.log(`[newsletter] mirror-bridge: HTTP ${res.status}`);
+      // console.log(`[newsletter] mirror-bridge: HTTP ${res.status}`);
       return [];
     }
     const data = (await res.json()) as { articles?: MirrorBridgeArticle[] };
@@ -453,9 +453,9 @@ async function fetchMirrorBridge(limit: number): Promise<UnifiedPost[]> {
       })
       .filter(Boolean);
   } catch (err) {
-    console.log(
-      `[newsletter] mirror-bridge: error — ${err instanceof Error ? err.message : 'unknown'}`,
-    );
+    //     console.log(
+    //       `[newsletter] mirror-bridge: error — ${err instanceof Error ? err.message : 'unknown'}`,
+    //     );
     return [];
   }
 }
@@ -512,7 +512,7 @@ async function fetchParagraphOfficial(limit: number): Promise<UnifiedPost[]> {
     signal: AbortSignal.timeout(7000),
   });
   if (!res.ok) {
-    console.log(`[newsletter] paragraph official API: HTTP ${res.status}`);
+    // console.log(`[newsletter] paragraph official API: HTTP ${res.status}`);
     return [];
   }
   const data = (await res.json()) as { items?: ParagraphFeedItem[] };
@@ -574,7 +574,7 @@ async function fetchParagraphBridge(limit: number): Promise<UnifiedPost[]> {
       },
     );
     if (!res.ok) {
-      console.log(`[newsletter] paragraph-bridge: HTTP ${res.status}`);
+      // console.log(`[newsletter] paragraph-bridge: HTTP ${res.status}`);
       return [];
     }
     const data = (await res.json()) as { posts?: ParagraphBridgePost[] };
@@ -608,9 +608,9 @@ async function fetchParagraphBridge(limit: number): Promise<UnifiedPost[]> {
       })
       .filter(Boolean);
   } catch (err) {
-    console.log(
-      `[newsletter] paragraph-bridge: error — ${err instanceof Error ? err.message : 'unknown'}`,
-    );
+    //     console.log(
+    //       `[newsletter] paragraph-bridge: error — ${err instanceof Error ? err.message : 'unknown'}`,
+    //     );
     return [];
   }
 }
@@ -734,9 +734,9 @@ export async function fetchNewsletterPosts(limit = 30): Promise<UnifiedPost[]> {
   const fresh = filterFreshPosts(all);
   const deduped = deduplicateNewsletterPosts(fresh, limit);
   const platforms = new Set(deduped.map(newsletterPlatformOf));
-  console.log(
-    `[newsletter] ${deduped.length} posts from ${rssSources.length} RSS sources + mirror-bridge + paragraph-api across ${platforms.size} platforms (${failed} fetch groups failed)`,
-  );
+  //   console.log(
+  //     `[newsletter] ${deduped.length} posts from ${rssSources.length} RSS sources + mirror-bridge + paragraph-api across ${platforms.size} platforms (${failed} fetch groups failed)`,
+  //   );
   return deduped;
 }
 

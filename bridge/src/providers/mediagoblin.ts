@@ -117,7 +117,7 @@ async function fetchFromInstance(instance: string, limit: number): Promise<Unifi
         };
       });
   } catch (err) {
-    console.log(`[bridge] MediaGoblin error (${instance}): ${(err as Error).message}`);
+    // console.log(`[bridge] MediaGoblin error (${instance}): ${(err as Error).message}`);
     return [];
   }
 }
@@ -154,7 +154,7 @@ export async function fetchMediaGoblinPosts(limit = 20): Promise<UnifiedPost[]> 
     }
   }
 
-  console.log(`[bridge] MediaGoblin: ${deduped.length} entries`);
+  // console.log(`[bridge] MediaGoblin: ${deduped.length} entries`);
   return deduped;
 }
 

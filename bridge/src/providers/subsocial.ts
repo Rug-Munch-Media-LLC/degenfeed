@@ -165,7 +165,7 @@ async function graphQLQuery(query: string): Promise<GraphQLResponse> {
     if (!res.ok) return {};
     return (await res.json()) as GraphQLResponse;
   } catch (err) {
-    console.log(`[bridge] Subsocial GraphQL error: ${(err as Error).message}`);
+    // console.log(`[bridge] Subsocial GraphQL error: ${(err as Error).message}`);
     return {};
   }
 }
@@ -268,7 +268,7 @@ export async function fetchSubsocialPosts(limit = 20): Promise<UnifiedPost[]> {
     }
   }
 
-  console.log(`[bridge] Subsocial: ${deduped.length} posts`);
+  // console.log(`[bridge] Subsocial: ${deduped.length} posts`);
   return deduped;
 }
 

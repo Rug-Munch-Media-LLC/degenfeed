@@ -101,7 +101,7 @@ export function CreatorCoinDashboard({
         }),
       });
       const data = await res.json();
-      console.log('Buy result:', data);
+      // console.log('Buy result:', data);
     },
     [selectedToken],
   );
@@ -120,7 +120,7 @@ export function CreatorCoinDashboard({
         }),
       });
       const data = await res.json();
-      console.log('Sell result:', data);
+      // console.log('Sell result:', data);
     },
     [selectedToken],
   );

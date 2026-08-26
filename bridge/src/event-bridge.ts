@@ -58,7 +58,7 @@ let lastPollTime = 0;
 // ─── Logging ──────────────────────────────────────────────────────────
 
 function log(msg: string) {
-  console.log(`[event-bridge] ${msg}`);
+  // console.log(`[event-bridge] ${msg}`);
 }
 
 // ─── Dedup Helpers ────────────────────────────────────────────────────

@@ -133,7 +133,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     // Structured logging
     // eslint-disable-next-line no-console
-    console.log(JSON.stringify(logEntry));
+    // console.log(JSON.stringify(logEntry));
 
     // == Persist to database (async, non-blocking) ==
     // This is a placeholder for the actual DB insertion.

@@ -12,6 +12,6 @@ import { app } from './app';
 
 const port = parseInt(process.env.PORT || '8787', 10);
 
-console.log(`DegenFeed API running on http://localhost:${port}`);
+// console.log(`DegenFeed API running on http://localhost:${port}`);
 
 serve({ fetch: app.fetch, port });

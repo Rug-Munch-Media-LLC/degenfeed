@@ -141,7 +141,7 @@ async function fetchFromInstance(instance: string, limit: number): Promise<Unifi
       };
     });
   } catch (err) {
-    console.log(`[bridge] Castopod error (${instance}): ${(err as Error).message}`);
+    // console.log(`[bridge] Castopod error (${instance}): ${(err as Error).message}`);
     return [];
   }
 }
@@ -178,7 +178,7 @@ export async function fetchCastopodPosts(limit = 20): Promise<UnifiedPost[]> {
     }
   }
 
-  console.log(`[bridge] Castopod: ${deduped.length} episodes`);
+  // console.log(`[bridge] Castopod: ${deduped.length} episodes`);
   return deduped;
 }
 

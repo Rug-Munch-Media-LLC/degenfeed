@@ -143,7 +143,7 @@ async function fetchPKPActivity(_limit: number): Promise<UnifiedPost[]> {
 
     return infoPosts;
   } catch (err) {
-    console.log(`[bridge] Lit Protocol error: ${(err as Error).message}`);
+    // console.log(`[bridge] Lit Protocol error: ${(err as Error).message}`);
     return [];
   }
 }
@@ -152,7 +152,7 @@ async function fetchPKPActivity(_limit: number): Promise<UnifiedPost[]> {
 
 export async function fetchLitPosts(limit = 20): Promise<UnifiedPost[]> {
   const posts = await fetchPKPActivity(limit);
-  console.log(`[bridge] Lit Protocol: ${posts.length} posts`);
+  // console.log(`[bridge] Lit Protocol: ${posts.length} posts`);
   return posts;
 }
 

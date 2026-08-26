@@ -94,7 +94,7 @@ export default function NostrDashboardPage() {
       sessionStorage.setItem('nostr_nsec', nsec);
       setNsecStored(nsec);
     } else if (nsec) {
-      alert('Invalid nsec format. Must start with nsec1...');
+      // alert('Invalid nsec format. Must start with nsec1...');
     }
   }, []);
 
@@ -145,7 +145,7 @@ export default function NostrDashboardPage() {
   // Publish relay list
   const handlePublishRelayList = useCallback(async () => {
     if (!nsecStored) {
-      alert('Enter your nsec first');
+      // alert('Enter your nsec first');
       return;
     }
 
@@ -172,12 +172,12 @@ export default function NostrDashboardPage() {
 
       const data = await res.json();
       if (data.ok) {
-        alert('✅ Relay list published! Your Nostr clients will now know your preferred relays.');
+        // alert('✅ Relay list published! Your Nostr clients will now know your preferred relays.');
       } else {
-        alert(`❌ ${data.error?.message || 'Failed'}`);
+        // alert(`❌ ${data.error?.message || 'Failed'}`);
       }
     } catch (err) {
-      alert(`❌ Error: ${(err as Error).message}`);
+      // alert(`❌ Error: ${(err as Error).message}`);
     }
   }, [nsecStored, getSdk]);
 

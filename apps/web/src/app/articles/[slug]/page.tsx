@@ -208,7 +208,7 @@ function ShareMenu({ post }: { post: GhostPost }) {
     if (link.name === 'Copy Link') {
       try {
         await navigator.clipboard.writeText(url);
-        alert('Link copied!');
+        // alert('Link copied!');
       } catch {
         /* fallback */
       }

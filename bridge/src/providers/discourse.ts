@@ -26,7 +26,7 @@ export async function fetchDiscoursePosts(limit = 20): Promise<UnifiedPost[]> {
     const { fetchDiscoursePosts: adapterFetch } = await getAdapter();
     return adapterFetch(limit);
   } catch (err) {
-    console.log(`[bridge] Discourse error: ${(err as Error).message}`);
+    // console.log(`[bridge] Discourse error: ${(err as Error).message}`);
     return [];
   }
 }

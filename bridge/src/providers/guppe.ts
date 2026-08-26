@@ -29,7 +29,7 @@ export async function fetchGuppePosts(limit = 20): Promise<UnifiedPost[]> {
     const { fetchGuppePosts: adapterFetch } = await getAdapter();
     return adapterFetch(limit);
   } catch (err) {
-    console.log(`[bridge] Guppe error: ${(err as Error).message}`);
+    // console.log(`[bridge] Guppe error: ${(err as Error).message}`);
     return [];
   }
 }

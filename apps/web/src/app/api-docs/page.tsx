@@ -784,16 +784,16 @@ const results = await client.search.query('bitcoin');
 // Resolve identity
 const identity = await client.identity.resolve('vitalik.eth');
 
-console.log(feed.posts, results.results, identity.resolved);`}</CodeBlock>
-
-      <CodeBlock>{`// Or use fetch directly
-const API_KEY = 'df_key_...';
-const BASE = 'https://degenfeed.xyz/v1';
-
-async function getFeed() {
-  const res = await fetch(\`\${BASE}/feed/home?sort=hot&limit=10\`, {
-    headers: { Authorization: \`Bearer \${API_KEY}\` },
-  });
+// console.log(feed.posts, results.results, identity.resolved);`}</CodeBlock>
+// 
+//       <CodeBlock>{`// Or use fetch directly
+// const API_KEY = 'df_key_...';
+// const BASE = 'https://degenfeed.xyz/v1';
+// 
+// async function getFeed() {
+//   const res = await fetch(\`\${BASE}/feed/home?sort=hot&limit=10\`, {
+//     headers: { Authorization: \`Bearer \${API_KEY}\` },
+//   });
   if (!res.ok) throw new Error(\`API error: \${res.status}\`);
   return res.json();
 }

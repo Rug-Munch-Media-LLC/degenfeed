@@ -248,7 +248,7 @@ export async function fetchAtprotoPosts(limit = 20): Promise<UnifiedPost[]> {
     }
   }
 
-  console.log(`[bridge] ATProto: ${posts.length} posts`);
+  // console.log(`[bridge] ATProto: ${posts.length} posts`);
   return posts;
 }
 

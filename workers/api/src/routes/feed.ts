@@ -190,7 +190,7 @@ async function generateAndCacheFeed(
         allPosts = bridgeResult.posts || [];
         if (bridgeResult.notice) notices.push(bridgeResult.notice);
         perProtocol = { bridge: allPosts.length };
-        console.log(`[feed] home feed: bridge returned ${allPosts.length} posts`);
+        // console.log(`[feed] home feed: bridge returned ${allPosts.length} posts`);
       } catch (err) {
         const msg = err instanceof Error ? err.message : 'unknown';
         notices.push(`Bridge unavailable: ${msg}`);
@@ -213,7 +213,7 @@ async function generateAndCacheFeed(
       allPosts = collected.posts;
       errors = collected.errors;
       perProtocol = collected.perProtocol;
-      console.log(`[feed] home feed: direct providers returned ${allPosts.length} posts`);
+      // console.log(`[feed] home feed: direct providers returned ${allPosts.length} posts`);
     }
   } else {
     // Same treatment as home: without BRIDGE_API_KEY the bridge-backed
@@ -576,14 +576,14 @@ export async function handleFeedCacheInvalidate(request: Request, env: Env): Pro
  */
 export async function warmupFeedCache(env: Env): Promise<void> {
   const now = Date.now();
-  console.log('[feed-warmup] Starting feed cache warmup...');
+  // console.log('[feed-warmup] Starting feed cache warmup...');
 
   // Warm up anonymous home feed
   try {
     const cronReq = new Request('http://cron/');
     const homeResp = await generateAndCacheFeed(cronReq, env, undefined, 'home', null);
     if (homeResp.ok) {
-      console.log(`[feed-warmup] Home feed cached in ${Date.now() - now}ms`);
+      // console.log(`[feed-warmup] Home feed cached in ${Date.now() - now}ms`);
     } else {
       console.warn(`[feed-warmup] Home feed returned status ${homeResp.status}`);
     }
@@ -599,7 +599,7 @@ export async function warmupFeedCache(env: Env): Promise<void> {
     const cronReq = new Request('http://cron/');
     const trendResp = await generateAndCacheFeed(cronReq, env, undefined, 'trending', null);
     if (trendResp.ok) {
-      console.log(`[feed-warmup] Trending feed cached in ${Date.now() - now}ms`);
+      // console.log(`[feed-warmup] Trending feed cached in ${Date.now() - now}ms`);
     } else {
       console.warn(`[feed-warmup] Trending feed returned status ${trendResp.status}`);
     }
@@ -610,5 +610,5 @@ export async function warmupFeedCache(env: Env): Promise<void> {
     );
   }
 
-  console.log(`[feed-warmup] Feed cache warmup complete (${Date.now() - now}ms total)`);
+  // console.log(`[feed-warmup] Feed cache warmup complete (${Date.now() - now}ms total)`);
 }

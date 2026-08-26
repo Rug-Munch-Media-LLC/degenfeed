@@ -81,10 +81,10 @@ export default function CreatorVideosPage() {
         window.location.reload();
       } else {
         const data = await res.json();
-        alert(data.error || 'Delete failed');
+        // alert(data.error || 'Delete failed');
       }
     } catch {
-      alert('Delete failed');
+      // alert('Delete failed');
     }
   }, [confirmDeleteUuid]);
 

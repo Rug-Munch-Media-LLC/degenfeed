@@ -162,7 +162,7 @@ export async function handleSourcesDiscover(request: Request, env: Env): Promise
     const existing = await getExistingSources(env);
     const rejected = await getRejectedIds(env);
 
-    console.log(`[source-discovery] running for platform=${platform}`);
+    // console.log(`[source-discovery] running for platform=${platform}`);
 
     let sources: DiscoveredSource[];
 

@@ -317,7 +317,7 @@ async function fetchRecentPosts(limit: number): Promise<UnifiedPost[]> {
     }
     return posts.slice(0, limit);
   } catch (err) {
-    console.log(`[bridge] Mirror Arweave error: ${(err as Error).message}`);
+    // console.log(`[bridge] Mirror Arweave error: ${(err as Error).message}`);
     return [];
   }
 }
@@ -431,9 +431,9 @@ export async function fetchMirrorPosts(limit = 20): Promise<UnifiedPost[]> {
     }
   }
 
-  console.log(
-    `[bridge] Mirror: ${deduped.length} posts (arweave-graphql: ${graphqlPosts.length}, writers: ${writerPosts.length} feeds)`,
-  );
+  //   console.log(
+  //     `[bridge] Mirror: ${deduped.length} posts (arweave-graphql: ${graphqlPosts.length}, writers: ${writerPosts.length} feeds)`,
+  //   );
   return deduped;
 }
 

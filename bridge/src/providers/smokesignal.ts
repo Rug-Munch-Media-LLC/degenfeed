@@ -276,10 +276,10 @@ async function _fetchFromPDS(limit: number): Promise<UnifiedEvent[]> {
       }
     }
 
-    console.log(`[smokesignal] PDS: ${events.length} events`);
+    // console.log(`[smokesignal] PDS: ${events.length} events`);
     return events;
   } catch (err) {
-    console.log(`[smokesignal] PDS fetch error: ${(err as Error).message}`);
+    // console.log(`[smokesignal] PDS fetch error: ${(err as Error).message}`);
     return [];
   }
 }
@@ -298,7 +298,7 @@ async function fetchFromAPI(limit: number): Promise<UnifiedEvent[]> {
     });
 
     if (!res.ok) {
-      console.log(`[smokesignal] API: HTTP ${res.status}`);
+      // console.log(`[smokesignal] API: HTTP ${res.status}`);
       return [];
     }
 
@@ -314,10 +314,10 @@ async function fetchFromAPI(limit: number): Promise<UnifiedEvent[]> {
       }
     }
 
-    console.log(`[smokesignal] API: ${events.length} events`);
+    // console.log(`[smokesignal] API: ${events.length} events`);
     return events;
   } catch (err) {
-    console.log(`[smokesignal] API fetch error: ${(err as Error).message}`);
+    // console.log(`[smokesignal] API fetch error: ${(err as Error).message}`);
     return [];
   }
 }
@@ -387,7 +387,7 @@ export async function fetchSmokeSignalEvents(limit = 20): Promise<UnifiedEvent[]
     }
   }
 
-  console.log(`[smokesignal] Total: ${deduped.length} events`);
+  // console.log(`[smokesignal] Total: ${deduped.length} events`);
   return deduped;
 }
 

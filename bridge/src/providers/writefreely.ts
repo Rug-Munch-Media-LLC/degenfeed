@@ -257,7 +257,7 @@ async function fetchBlogPosts(blog: BlogSource, limit: number): Promise<UnifiedP
     }
     return all;
   } catch (err) {
-    console.log(`[bridge] WriteFreely REST error (${blog.alias}): ${(err as Error).message}`);
+    // console.log(`[bridge] WriteFreely REST error (${blog.alias}): ${(err as Error).message}`);
     return all;
   }
 }
@@ -378,7 +378,7 @@ export async function fetchWriteFreelyPosts(limit = 20): Promise<UnifiedPost[]> 
     }
   }
 
-  console.log(`[bridge] WriteFreely: ${deduped.length} posts`);
+  // console.log(`[bridge] WriteFreely: ${deduped.length} posts`);
   return deduped;
 }
 

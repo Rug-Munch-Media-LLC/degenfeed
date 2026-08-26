@@ -61,9 +61,9 @@ export async function handlePodcastAggregation(env: Env): Promise<{
   try {
     const episodes = await fetchAllCuratedEpisodes(env.CACHE);
     newEpisodes = episodes.length;
-    console.log(
-      `[podcast-cron] Fetched ${newEpisodes} new episodes from ${ALL_CURATED_PODCASTS.length} feeds`,
-    );
+    //     console.log(
+    //       `[podcast-cron] Fetched ${newEpisodes} new episodes from ${ALL_CURATED_PODCASTS.length} feeds`,
+    //     );
   } catch (err) {
     errors.push(`Fetch failed: ${String(err)}`);
   }

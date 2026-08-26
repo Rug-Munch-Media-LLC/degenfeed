@@ -144,9 +144,9 @@ export async function fetchMisskeyPosts(limit = 20): Promise<UnifiedPost[]> {
     }
   }
 
-  console.log(
-    `[bridge] Misskey: ${deduped.length} notes from ${MISSKEY_INSTANCES.length} instances`,
-  );
+  //   console.log(
+  //     `[bridge] Misskey: ${deduped.length} notes from ${MISSKEY_INSTANCES.length} instances`,
+  //   );
   return deduped;
 }
 

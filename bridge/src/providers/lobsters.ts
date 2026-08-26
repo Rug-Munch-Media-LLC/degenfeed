@@ -230,7 +230,7 @@ async function fetchHottestStories(limit: number): Promise<UnifiedPost[]> {
     const stories = (await res.json()) as LobstersStory[];
     return stories.map(lobstersStoryToPost).filter((p): p is UnifiedPost => p !== null);
   } catch (err) {
-    console.log(`[bridge] Lobsters hottest error: ${(err as Error).message}`);
+    // console.log(`[bridge] Lobsters hottest error: ${(err as Error).message}`);
     return [];
   }
 }
@@ -247,7 +247,7 @@ async function fetchRecentComments(limit: number): Promise<UnifiedPost[]> {
     const comments = (await res.json()) as LobstersComment[];
     return comments.map(lobstersCommentToPost).filter((p): p is UnifiedPost => p !== null);
   } catch (err) {
-    console.log(`[bridge] Lobsters recent error: ${(err as Error).message}`);
+    // console.log(`[bridge] Lobsters recent error: ${(err as Error).message}`);
     return [];
   }
 }
@@ -264,7 +264,7 @@ async function fetchTaggedStories(tag: string, limit: number): Promise<UnifiedPo
     const stories = (await res.json()) as LobstersStory[];
     return stories.map(lobstersStoryToPost).filter((p): p is UnifiedPost => p !== null);
   } catch (err) {
-    console.log(`[bridge] Lobsters tag ${tag} error: ${(err as Error).message}`);
+    // console.log(`[bridge] Lobsters tag ${tag} error: ${(err as Error).message}`);
     return [];
   }
 }
@@ -303,7 +303,7 @@ export async function fetchLobstersPosts(limit = 20): Promise<UnifiedPost[]> {
     }
   }
 
-  console.log(`[bridge] Lobsters: ${deduped.length} posts`);
+  // console.log(`[bridge] Lobsters: ${deduped.length} posts`);
   return deduped;
 }
 

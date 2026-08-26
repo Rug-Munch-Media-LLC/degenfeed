@@ -151,11 +151,11 @@ export async function authenticateLens(
 
     // Step 1: Get challenge
     const { text: challengeText, id: challengeId } = await getChallenge(profileId);
-    console.log('[lens-poster] Got challenge:', challengeText.slice(0, 60), '...');
+    // console.log('[lens-poster] Got challenge:', challengeText.slice(0, 60), '...');
 
     // Step 2: Sign the challenge
     const signature = await signMessage(challengeText, pk);
-    console.log('[lens-poster] Signed challenge');
+    // console.log('[lens-poster] Signed challenge');
 
     // Step 3: Verify and get JWT
     const mutation = `
@@ -178,7 +178,7 @@ export async function authenticateLens(
       );
     }
 
-    console.log('[lens-poster] Authenticated, got JWT');
+    // console.log('[lens-poster] Authenticated, got JWT');
     return { ok: true, jwt: result.accessToken };
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
@@ -245,7 +245,7 @@ export async function publishToLens(
       | undefined;
 
     if (result?.id) {
-      console.log(`[lens-poster] ✓ Published Momoka publication: ${result.id}`);
+      // console.log(`[lens-poster] ✓ Published Momoka publication: ${result.id}`);
       return { ok: true, publicationId: result.id };
     }
 

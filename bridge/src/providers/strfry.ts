@@ -26,7 +26,7 @@ export async function fetchStrfryPosts(limit = 20): Promise<UnifiedPost[]> {
     const { fetchStrfryPosts: adapterFetch } = await getAdapter();
     return adapterFetch(limit);
   } catch (err) {
-    console.log(`[bridge] strfry error: ${(err as Error).message}`);
+    // console.log(`[bridge] strfry error: ${(err as Error).message}`);
     return [];
   }
 }

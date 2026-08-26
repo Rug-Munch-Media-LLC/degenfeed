@@ -543,9 +543,9 @@ export default function CoinComparePage() {
     if (!shareUrl) return;
     try {
       await navigator.clipboard.writeText(shareUrl);
-      alert('Link copied to clipboard!');
+      // alert('Link copied to clipboard!');
     } catch {
-      alert('Could not copy link');
+      // alert('Could not copy link');
     }
   }, [shareUrl]);
 

@@ -185,7 +185,7 @@ export async function fetchArweavePosts(limit = 20): Promise<UnifiedPost[]> {
       } as UnifiedPost);
     }
   } catch (err) {
-    console.log(`[bridge] Arweave GraphQL error: ${(err as Error).message}`);
+    // console.log(`[bridge] Arweave GraphQL error: ${(err as Error).message}`);
   }
 
   // Query 2: Curated app content
@@ -251,11 +251,11 @@ export async function fetchArweavePosts(limit = 20): Promise<UnifiedPost[]> {
         }
       }
     } catch (err) {
-      console.log(`[bridge] Arweave app query error: ${(err as Error).message}`);
+      // console.log(`[bridge] Arweave app query error: ${(err as Error).message}`);
     }
   }
 
-  console.log(`[bridge] Arweave: ${all.length} permaweb items`);
+  // console.log(`[bridge] Arweave: ${all.length} permaweb items`);
   return all.slice(0, limit);
 }
 

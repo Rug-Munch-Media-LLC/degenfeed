@@ -764,7 +764,7 @@ async function crossProtocolSearch(
     }
   } catch {
     // Meilisearch unavailable, fall through to direct provider search
-    console.log('[bridge] Meilisearch unavailable, searching providers directly');
+    // console.log('[bridge] Meilisearch unavailable, searching providers directly');
   }
 
   // Fallback: search providers directly
@@ -877,7 +877,7 @@ const server = http.createServer(async (req, res) => {
   const url = new URL(req.url || '/', `http://${req.headers.host || 'localhost'}`);
   const path = url.pathname;
   const searchParams = url.searchParams;
-  console.log(`[bridge] ${req.method} ${path}`);
+  // console.log(`[bridge] ${req.method} ${path}`);
 
   try {
     if (['/api/health', '/health', '/api'].includes(path)) {
@@ -1715,27 +1715,27 @@ attachRealtimeWebSocket(server);
 
 const BRIDGE_HOST = process.env.BRIDGE_HOST || '127.0.0.1';
 server.listen(PORT, BRIDGE_HOST, () => {
-  console.log(`[bridge] DegenFeed Bridge v0.4.0 running on http://${BRIDGE_HOST}:${PORT}`);
-  console.log('[bridge] Realtime WebSocket: /ws/realtime (heartbeat 30s)');
-  console.log(
-    '[bridge] Data sources: Mastodon/GTS, Reddit, RSS, Lemmy, PeerTube, Loops, YouTube, Bluesky, Nostr, Farcaster, Lens, Pixelfed, Threads, Zora, DTube, LBRY, Gab, Minds, Aether, Scuttlebutt, Hive, Mirror, Funkwhale, Castopod, WriteFreely, MediaGoblin, Owncast, BookWyrm, Mobilizon, Forgejo, Bonfire, Mitra, Takahe, Orbis, XMTP, Push, Huddle01, Ceramic, Tableland, Telegram, Discord, Matrix, GitHub',
-  );
-  console.log(
-    '[bridge] Cross-poster: GTS→Nostr, GTS→Bluesky, GTS→PeerTube, GTS→Lens, GTS→Farcaster, GTS→Pixelfed, GTS→WriteFreely, Pixelfed→Mastodon, Lemmy→Nostr, BookWyrm→All, Mobilizon→All, Forgejo→Fediverse',
-  );
-  console.log('[bridge] Cross-protocol search: Meilisearch unified index + direct fallback');
-  console.log('[bridge] Cross-protocol notifications: unified stream from all protocols');
-  console.log(
-    '[bridge] Cross-protocol events: Smoke Signal (ATProto) ↔ Mobilizon (ActivityPub) via Bridgy Fed',
-  );
-  console.log(
-    '[bridge] Event routes: /api/events, /api/events/atproto, /api/events/create, /api/events/discover',
-  );
+  // console.log(`[bridge] DegenFeed Bridge v0.4.0 running on http://${BRIDGE_HOST}:${PORT}`);
+  // console.log('[bridge] Realtime WebSocket: /ws/realtime (heartbeat 30s)');
+  //   console.log(
+  //     '[bridge] Data sources: Mastodon/GTS, Reddit, RSS, Lemmy, PeerTube, Loops, YouTube, Bluesky, Nostr, Farcaster, Lens, Pixelfed, Threads, Zora, DTube, LBRY, Gab, Minds, Aether, Scuttlebutt, Hive, Mirror, Funkwhale, Castopod, WriteFreely, MediaGoblin, Owncast, BookWyrm, Mobilizon, Forgejo, Bonfire, Mitra, Takahe, Orbis, XMTP, Push, Huddle01, Ceramic, Tableland, Telegram, Discord, Matrix, GitHub',
+  //   );
+  //   console.log(
+  //     '[bridge] Cross-poster: GTS→Nostr, GTS→Bluesky, GTS→PeerTube, GTS→Lens, GTS→Farcaster, GTS→Pixelfed, GTS→WriteFreely, Pixelfed→Mastodon, Lemmy→Nostr, BookWyrm→All, Mobilizon→All, Forgejo→Fediverse',
+  //   );
+  // console.log('[bridge] Cross-protocol search: Meilisearch unified index + direct fallback');
+  // console.log('[bridge] Cross-protocol notifications: unified stream from all protocols');
+  //   console.log(
+  //     '[bridge] Cross-protocol events: Smoke Signal (ATProto) ↔ Mobilizon (ActivityPub) via Bridgy Fed',
+  //   );
+  //   console.log(
+  //     '[bridge] Event routes: /api/events, /api/events/atproto, /api/events/create, /api/events/discover',
+  //   );
   startCrossPoster();
   // Start unified search indexer
   startIndexer()
     .then(() => {
-      console.log('[bridge] Search indexer started successfully');
+      // console.log('[bridge] Search indexer started successfully');
     })
     .catch((err) => {
       console.error('[bridge] Search indexer failed:', err);

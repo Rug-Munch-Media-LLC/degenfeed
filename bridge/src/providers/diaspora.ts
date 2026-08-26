@@ -152,7 +152,7 @@ export async function fetchDiasporaPosts(limit = 20): Promise<UnifiedPost[]> {
     }
   }
 
-  console.log(`[bridge] Diaspora: ${deduped.length} posts from ${DIASPORA_PODS.length} pods`);
+  // console.log(`[bridge] Diaspora: ${deduped.length} posts from ${DIASPORA_PODS.length} pods`);
   return deduped;
 }
 

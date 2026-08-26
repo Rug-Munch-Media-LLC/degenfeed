@@ -27,7 +27,7 @@ export async function fetchYggdrasilPosts(limit = 20): Promise<UnifiedPost[]> {
     const { fetchYggdrasilPosts: adapterFetch } = await getAdapter();
     return adapterFetch(limit);
   } catch (err) {
-    console.log(`[bridge] Yggdrasil error: ${(err as Error).message}`);
+    // console.log(`[bridge] Yggdrasil error: ${(err as Error).message}`);
     return [];
   }
 }

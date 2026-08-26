@@ -130,7 +130,7 @@ function openSocket(): void {
   state.ws.addEventListener('open', () => {
     state.connectedAt = Date.now();
     state.reconnectAttempts = 0;
-    console.log('[bluesky:firehose] Jetstream connected');
+    // console.log('[bluesky:firehose] Jetstream connected');
   });
 
   state.ws.addEventListener('message', (e: { data: unknown }) => handleMessage(e.data));
@@ -140,13 +140,13 @@ function openSocket(): void {
     state.ws = null;
     const backoff = Math.min(30_000, 1000 * 2 ** state.reconnectAttempts);
     state.reconnectAttempts += 1;
-    console.log(`[bluesky:firehose] disconnected, reconnecting in ${backoff}ms`);
+    // console.log(`[bluesky:firehose] disconnected, reconnecting in ${backoff}ms`);
     setTimeout(openSocket, backoff);
   });
 
   state.ws.addEventListener('error', (e: { message?: string }) => {
     state.lastError = e.message || 'websocket error';
-    console.log(`[bluesky:firehose] error: ${state.lastError}`);
+    // console.log(`[bluesky:firehose] error: ${state.lastError}`);
   });
 }
 

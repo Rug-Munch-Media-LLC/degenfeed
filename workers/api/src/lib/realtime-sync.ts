@@ -549,7 +549,7 @@ export function subscribeToProtocol(protocol: Protocol, identity: ProtocolIdenti
     lastEventAt: Date.now(),
   });
 
-  console.log(`[realtime-sync] Subscribed to ${protocol} (${identity.handle ?? identity.id})`);
+  // console.log(`[realtime-sync] Subscribed to ${protocol} (${identity.handle ?? identity.id})`);
   return true;
 }
 
@@ -562,7 +562,7 @@ export function unsubscribeFromProtocol(protocol: Protocol, identityId: string):
   if (sub) {
     sub.active = false;
     subscriptions.delete(key);
-    console.log(`[realtime-sync] Unsubscribed from ${protocol} (${identityId})`);
+    // console.log(`[realtime-sync] Unsubscribed from ${protocol} (${identityId})`);
     return true;
   }
   return false;

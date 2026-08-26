@@ -175,7 +175,7 @@ async function checkEmptyFeedAlert(
       existingAlert.resolved = true;
       existingAlert.resolvedAt = now;
       await env.CACHE.put(alertKey2, JSON.stringify(existingAlert), { expirationTtl: 86400 * 3 });
-      console.log(`[feed-monitor] RESOLVED: ${protocol} feed has content again`);
+      // console.log(`[feed-monitor] RESOLVED: ${protocol} feed has content again`);
     }
   }
 }

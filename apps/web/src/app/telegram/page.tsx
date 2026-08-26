@@ -195,9 +195,9 @@ function QuickTradeBar({ coins }: { coins: UserCoin[] }) {
 
   const handleTrade = useCallback(() => {
     if (!tradeAmount || Number(tradeAmount) <= 0) return;
-    alert(
-      `✅ ${tradeMode === 'buy' ? 'Bought' : 'Sold'} ${tradeAmount} ${selectedCoin} successfully!`,
-    );
+    //     alert(
+    //       `✅ ${tradeMode === 'buy' ? 'Bought' : 'Sold'} ${tradeAmount} ${selectedCoin} successfully!`,
+    //     );
     setTradeAmount('');
   }, [tradeAmount, selectedCoin, tradeMode]);
 

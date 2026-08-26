@@ -741,7 +741,7 @@ async function publishToFarcaster(_payload: unknown): Promise<boolean> {
   const payload = _payload as { text: string; embeds?: Array<{ url: string }> };
 
   if (!fid || !signerKey) {
-    console.log('[crossposter] Farcaster: missing FARCASTER_BOT_FID or FARCASTER_BOT_SIGNER_KEY');
+    // console.log('[crossposter] Farcaster: missing FARCASTER_BOT_FID or FARCASTER_BOT_SIGNER_KEY');
     return false;
   }
 
@@ -758,7 +758,7 @@ async function publishToFarcaster(_payload: unknown): Promise<boolean> {
     });
 
     if (!castResult.ok || !castResult.messageHex) {
-      console.log(`[crossposter] ✗ Failed to build Farcaster cast: ${castResult.error}`);
+      // console.log(`[crossposter] ✗ Failed to build Farcaster cast: ${castResult.error}`);
       return false;
     }
 
@@ -775,15 +775,15 @@ async function publishToFarcaster(_payload: unknown): Promise<boolean> {
     });
 
     if (res.ok) {
-      console.log(`[crossposter] ✓ Farcaster cast submitted to Hubble`);
+      // console.log(`[crossposter] ✓ Farcaster cast submitted to Hubble`);
       return true;
     }
 
     const errBody = await res.text().catch(() => '');
-    console.log(`[crossposter] ✗ Farcaster: HTTP ${res.status} ${errBody.slice(0, 200)}`);
+    // console.log(`[crossposter] ✗ Farcaster: HTTP ${res.status} ${errBody.slice(0, 200)}`);
     return false;
   } catch (err) {
-    console.log(`[crossposter] ✗ Farcaster error: ${(err as Error).message}`);
+    // console.log(`[crossposter] ✗ Farcaster error: ${(err as Error).message}`);
     return false;
   }
 }
@@ -795,7 +795,7 @@ async function publishToLens(_payload: unknown): Promise<boolean> {
   const payload = _payload as { text: string; embeds?: Array<{ url: string }> };
 
   if (!accessToken || !profileId) {
-    console.log('[crossposter] Lens: missing LENS_ACCESS_TOKEN or LENS_PROFILE_ID');
+    // console.log('[crossposter] Lens: missing LENS_ACCESS_TOKEN or LENS_PROFILE_ID');
     return false;
   }
 
@@ -826,15 +826,15 @@ async function publishToLens(_payload: unknown): Promise<boolean> {
     });
 
     if (res.ok) {
-      console.log(`[crossposter] ✓ Lens post successful`);
+      // console.log(`[crossposter] ✓ Lens post successful`);
       return true;
     }
 
     const errBody = await res.text().catch(() => '');
-    console.log(`[crossposter] ✗ Lens: HTTP ${res.status} ${errBody.slice(0, 200)}`);
+    // console.log(`[crossposter] ✗ Lens: HTTP ${res.status} ${errBody.slice(0, 200)}`);
     return false;
   } catch (err) {
-    console.log(`[crossposter] ✗ Lens error: ${(err as Error).message}`);
+    // console.log(`[crossposter] ✗ Lens error: ${(err as Error).message}`);
     return false;
   }
 }
@@ -875,7 +875,7 @@ async function publishToPixelfed(_payload: unknown): Promise<boolean> {
   };
 
   if (!payload.images || payload.images.length === 0) {
-    console.log('[crossposter] Pixelfed: no images in payload');
+    // console.log('[crossposter] Pixelfed: no images in payload');
     return false;
   }
 
@@ -914,13 +914,13 @@ async function publishToPixelfed(_payload: unknown): Promise<boolean> {
 
     const result = await publishUnifiedPost(mockPost as UnifiedPost);
     if (result.ok) {
-      console.log(`[crossposter] ✓ Pixelfed: ${result.status?.url || 'ok'}`);
+      // console.log(`[crossposter] ✓ Pixelfed: ${result.status?.url || 'ok'}`);
       return true;
     }
-    console.log(`[crossposter] ✗ Pixelfed: ${result.error}`);
+    // console.log(`[crossposter] ✗ Pixelfed: ${result.error}`);
     return false;
   } catch (err) {
-    console.log(`[crossposter] ✗ Pixelfed error: ${(err as Error).message}`);
+    // console.log(`[crossposter] ✗ Pixelfed error: ${(err as Error).message}`);
     return false;
   }
 }
@@ -940,7 +940,7 @@ async function publishToWriteFreely(_payload: unknown): Promise<boolean> {
   const alias = process.env.WRITEFREELY_ALIAS || 'degenfeed';
 
   if (!token) {
-    console.log('[crossposter] WriteFreely: missing WRITEFREELY_TOKEN');
+    // console.log('[crossposter] WriteFreely: missing WRITEFREELY_TOKEN');
     return false;
   }
 
@@ -950,13 +950,13 @@ async function publishToWriteFreely(_payload: unknown): Promise<boolean> {
     const result = await postToWriteFreely(payload.title, payload.body, token, alias, payload.tags);
 
     if (result.ok) {
-      console.log(`[crossposter] ✓ WriteFreely: ${result.post?.url || 'ok'}`);
+      // console.log(`[crossposter] ✓ WriteFreely: ${result.post?.url || 'ok'}`);
       return true;
     }
-    console.log(`[crossposter] ✗ WriteFreely: ${result.error}`);
+    // console.log(`[crossposter] ✗ WriteFreely: ${result.error}`);
     return false;
   } catch (err) {
-    console.log(`[crossposter] ✗ WriteFreely error: ${(err as Error).message}`);
+    // console.log(`[crossposter] ✗ WriteFreely error: ${(err as Error).message}`);
     return false;
   }
 }
@@ -982,7 +982,7 @@ async function fetchLatestGtsPost(): Promise<UnifiedPost | null> {
   const clientSecret = process.env.GTS_CLIENT_SECRET || '';
 
   if (!clientId || !clientSecret) {
-    console.log('[crossposter] GTS: no credentials');
+    // console.log('[crossposter] GTS: no credentials');
     return null;
   }
 
@@ -1000,7 +1000,7 @@ async function fetchLatestGtsPost(): Promise<UnifiedPost | null> {
     });
 
     if (!tokenRes.ok) {
-      console.log('[crossposter] GTS token failed');
+      // console.log('[crossposter] GTS token failed');
       return null;
     }
 
@@ -1056,7 +1056,7 @@ async function fetchLatestGtsPost(): Promise<UnifiedPost | null> {
       niches: [],
     };
   } catch (err) {
-    console.log('[crossposter] GTS fetch error:', (err as Error).message);
+    // console.log('[crossposter] GTS fetch error:', (err as Error).message);
     return null;
   }
 }
@@ -1066,7 +1066,7 @@ async function fetchLatestPixelfedPost(): Promise<UnifiedPost | null> {
   const token = process.env.PIXELFED_ACCESS_TOKEN || '';
 
   if (!token) {
-    console.log('[crossposter] Pixelfed: missing PIXELFED_ACCESS_TOKEN');
+    // console.log('[crossposter] Pixelfed: missing PIXELFED_ACCESS_TOKEN');
     return null;
   }
 
@@ -1120,7 +1120,7 @@ async function fetchLatestPixelfedPost(): Promise<UnifiedPost | null> {
       niches: [],
     };
   } catch (err) {
-    console.log('[crossposter] Pixelfed fetch error:', (err as Error).message);
+    // console.log('[crossposter] Pixelfed fetch error:', (err as Error).message);
     return null;
   }
 }
@@ -1530,7 +1530,7 @@ export async function crossPost(
       if (publishOk) {
         results.push({ success: true, target, latencyMs });
         failureTracker.recordSuccess(config.id, target);
-        console.log(`[crossposter] ✓ ${config.id} → ${target} (${latencyMs}ms): ${post.id}`);
+        // console.log(`[crossposter] ✓ ${config.id} → ${target} (${latencyMs}ms): ${post.id}`);
       } else {
         const result: PublishResult = {
           success: false,
@@ -1541,7 +1541,7 @@ export async function crossPost(
         };
         results.push(result);
         failureTracker.recordFailure(config.id, target, result.error!);
-        console.log(`[crossposter] ✗ ${config.id} → ${target}: publisher failed`);
+        // console.log(`[crossposter] ✗ ${config.id} → ${target}: publisher failed`);
       }
     } catch (err) {
       const latencyMs = Date.now() - startTime;
@@ -1554,7 +1554,7 @@ export async function crossPost(
       };
       results.push(result);
       failureTracker.recordFailure(config.id, target, result.error!);
-      console.log(`[crossposter] ✗ ${config.id} → ${target}: ${(err as Error).message}`);
+      // console.log(`[crossposter] ✗ ${config.id} → ${target}: ${(err as Error).message}`);
     }
   }
 
@@ -1568,14 +1568,14 @@ export async function crossPost(
 async function pollSource(config: CrossPairConfig): Promise<void> {
   const poller = SOURCE_POLLERS[config.source];
   if (!poller) {
-    console.log(`[crossposter] No poller for source: ${config.source}`);
+    // console.log(`[crossposter] No poller for source: ${config.source}`);
     return;
   }
 
   try {
     const post = await poller();
     if (!post) {
-      console.log(`[crossposter] ${config.id}: no new posts from ${config.source}`);
+      // console.log(`[crossposter] ${config.id}: no new posts from ${config.source}`);
       return;
     }
 
@@ -1586,7 +1586,7 @@ async function pollSource(config: CrossPairConfig): Promise<void> {
 
     // Apply content filter
     if (config.contentFilter && !config.contentFilter(post)) {
-      console.log(`[crossposter] ${config.id}: post filtered out`);
+      // console.log(`[crossposter] ${config.id}: post filtered out`);
       return;
     }
 
@@ -1594,15 +1594,15 @@ async function pollSource(config: CrossPairConfig): Promise<void> {
 
     if (success) {
       lastSeenIds.set(config.id, post.id);
-      console.log(`[crossposter] ${config.id}: all targets succeeded (${results.length})`);
+      // console.log(`[crossposter] ${config.id}: all targets succeeded (${results.length})`);
     } else {
       const failures = results.filter((r) => !r.success);
-      console.log(
-        `[crossposter] ${config.id}: ${failures.length}/${results.length} targets failed`,
-      );
+      //       console.log(
+      //         `[crossposter] ${config.id}: ${failures.length}/${results.length} targets failed`,
+      //       );
     }
   } catch (err) {
-    console.log(`[crossposter] ${config.id}: poll error - ${(err as Error).message}`);
+    // console.log(`[crossposter] ${config.id}: poll error - ${(err as Error).message}`);
   }
 }
 
@@ -1618,14 +1618,14 @@ export function startCrossPoster(customConfigs?: CrossPairConfig[]): Map<string,
 
   for (const config of configs) {
     if (!config.enabled) {
-      console.log(`[crossposter] ${config.id}: disabled, skipping`);
+      // console.log(`[crossposter] ${config.id}: disabled, skipping`);
       continue;
     }
 
     const interval = config.pollIntervalMs || 60000;
-    console.log(
-      `[crossposter] ${config.id}: ${config.source} → ${config.targets.join(', ')} every ${interval}ms`,
-    );
+    //     console.log(
+    //       `[crossposter] ${config.id}: ${config.source} → ${config.targets.join(', ')} every ${interval}ms`,
+    //     );
 
     // Run immediately
     pollSource(config);
@@ -1670,7 +1670,7 @@ export function getCrossPosterStats(configs?: CrossPairConfig[]): PairStats[] {
 export function stopCrossPoster(timers: Map<string, NodeJS.Timeout>): void {
   for (const [id, timer] of timers) {
     clearInterval(timer);
-    console.log(`[crossposter] ${id}: stopped`);
+    // console.log(`[crossposter] ${id}: stopped`);
   }
   timers.clear();
 }

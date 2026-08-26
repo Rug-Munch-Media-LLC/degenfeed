@@ -261,9 +261,9 @@ async function fetchPosts(limit: number): Promise<UnifiedPost[]> {
       if (post) posts.push(post);
     }
 
-    console.log(
-      `[bridge] Lens Indexer: ${posts.length} posts (trending mix of ${data.meta.total} local)`,
-    );
+    //     console.log(
+    //       `[bridge] Lens Indexer: ${posts.length} posts (trending mix of ${data.meta.total} local)`,
+    //     );
     // Freshness: discard posts outside the FEED_MAX_AGE_HOURS window (48h).
     return filterFreshPosts(posts).slice(0, limit);
   } catch (err) {
@@ -289,7 +289,7 @@ export const schema: SchemaGuard = {
 export async function fetchLensPosts(limit = 20): Promise<UnifiedPost[]> {
   // Rate limit: 50 requests/minute
   if (!checkRateLimit('lens', { maxRequests: 50, windowMs: 60_000 })) {
-    console.log('[lens] Rate limited, skipping fetch');
+    // console.log('[lens] Rate limited, skipping fetch');
     return [];
   }
   const posts = await fetchPosts(limit);

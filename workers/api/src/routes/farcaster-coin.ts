@@ -215,7 +215,7 @@ async function registerCrossChain(opts: {
   token: string;
 }): Promise<void> {
   // In production, calls CrossChainRegistry.register via a microservice or KV.
-  console.log('[farcaster-coin] Registered cross-chain:', opts);
+  // console.log('[farcaster-coin] Registered cross-chain:', opts);
 }
 
 async function wrapForZora(opts: {
@@ -225,7 +225,7 @@ async function wrapForZora(opts: {
   metadata: { name: string; description: string; image: string };
 }): Promise<void> {
   // In production, calls Zora's wrapper contract to make the coin visible on Zora.
-  console.log('[farcaster-coin] Wrapped for Zora:', opts.metadata.name);
+  // console.log('[farcaster-coin] Wrapped for Zora:', opts.metadata.name);
 }
 
 async function postToFarcaster(_fid: number, _text: string): Promise<string | null> {

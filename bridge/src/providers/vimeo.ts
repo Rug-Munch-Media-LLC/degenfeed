@@ -188,7 +188,7 @@ export async function fetchVimeoPosts(limit: number = 20): Promise<UnifiedPost[]
     if (deduped.length >= limit) break;
   }
 
-  console.log(`[bridge] Vimeo: ${deduped.length} posts from ${VIMEO_CHANNELS.length} channels`);
+  // console.log(`[bridge] Vimeo: ${deduped.length} posts from ${VIMEO_CHANNELS.length} channels`);
   // Only cache non-empty results so a bad window is retried next cycle.
   if (deduped.length > 0) {
     vimeoCache = { posts: deduped, expiresAt: Date.now() + VIMEO_CACHE_TTL_MS };

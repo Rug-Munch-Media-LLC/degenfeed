@@ -472,7 +472,7 @@ export default function MembersPage({ params }: { params: { id: string } }) {
                 }}
                 onMessage={(addr) => {
                   // In a real app, this would open a DM interface
-                  alert(`DM to ${shortAddr(addr)} — coming soon`);
+                  // alert(`DM to ${shortAddr(addr)} — coming soon`);
                 }}
               />
             ))}
@@ -637,7 +637,7 @@ export default function MembersPage({ params }: { params: { id: string } }) {
                 onClick={() => {
                   setShowDelegateModal(false);
                   setDelegateTarget('');
-                  alert('✅ Delegation submitted! (mock)');
+                  // alert('✅ Delegation submitted! (mock)');
                 }}
                 className="flex-1 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 px-4 py-2.5 text-xs font-bold text-black transition-all hover:from-amber-400 hover:to-orange-400 active:scale-95"
               >
@@ -689,7 +689,7 @@ export default function MembersPage({ params }: { params: { id: string } }) {
                 <button
                   type="button"
                   onClick={() => {
-                    if (confirm('Revoke delegation?')) alert('✅ Delegation revoked');
+                    if (confirm('Revoke delegation?')) console.info('✅ Delegation revoked');
                   }}
                   className="rounded-lg bg-red-500/10 px-2.5 py-1.5 text-[9px] font-semibold text-red-400 hover:bg-red-500/20 transition-colors"
                 >

@@ -99,7 +99,7 @@ export async function fetchPixelfedPosts(limit = 20): Promise<UnifiedPost[]> {
     const result = await provider.fetchFeed({ timeoutMs: 10000 });
     if (result.posts?.length) all.push(...result.posts);
   } catch (err) {
-    console.log(`[bridge] Pixelfed adapter error: ${(err as Error).message}`);
+    // console.log(`[bridge] Pixelfed adapter error: ${(err as Error).message}`);
   }
 
   // ── 2. Account-statuses for known local accounts ──
@@ -125,7 +125,7 @@ export async function fetchPixelfedPosts(limit = 20): Promise<UnifiedPost[]> {
     });
     all.push(...statuses.map(toUnified));
   } catch (err) {
-    console.log(`[bridge] Pixelfed local timeline error: ${(err as Error).message}`);
+    // console.log(`[bridge] Pixelfed local timeline error: ${(err as Error).message}`);
   }
 
   // ── 4. Hashtag timelines on the local instance (best-effort) ──
@@ -150,7 +150,7 @@ export async function fetchPixelfedPosts(limit = 20): Promise<UnifiedPost[]> {
     if (deduped.length >= limit) break;
   }
 
-  console.log(`[bridge] Pixelfed: ${deduped.length} posts`);
+  // console.log(`[bridge] Pixelfed: ${deduped.length} posts`);
   return deduped;
 }
 

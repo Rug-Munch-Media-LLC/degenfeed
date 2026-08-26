@@ -11,7 +11,7 @@ async function publishToNostrRelay(_payload: unknown): Promise<boolean> {
   const relayUrl = process.env.NOSTR_RELAY_URL || 'ws://127.0.0.1:8085';
   const privateKeyHex = process.env.NOSTR_PRIVATE_KEY_HEX;
   if (!privateKeyHex) {
-    console.log('[nostr] No NOSTR_PRIVATE_KEY_HEX configured — cannot sign events');
+    // console.log('[nostr] No NOSTR_PRIVATE_KEY_HEX configured — cannot sign events');
     return false;
   }
   try {
@@ -39,7 +39,7 @@ async function publishToNostrRelay(_payload: unknown): Promise<boolean> {
 
         ws.addEventListener('open', () => {
           ws.send(JSON.stringify(['EVENT', signedEvent]));
-          console.log(`[nostr] Sent signed event ${signedEvent.id.slice(0, 8)} to ${relayUrl}`);
+          // console.log(`[nostr] Sent signed event ${signedEvent.id.slice(0, 8)} to ${relayUrl}`);
         });
 
         ws.addEventListener('message', (event: MessageEvent) => {
@@ -50,9 +50,9 @@ async function publishToNostrRelay(_payload: unknown): Promise<boolean> {
               ws.close();
               const ok = msg[2] === true;
               if (ok) {
-                console.log(`[nostr] ✓ Event accepted by relay`);
+                // console.log(`[nostr] ✓ Event accepted by relay`);
               } else {
-                console.log(`[nostr] ✗ Relay rejected event: ${JSON.stringify(msg).slice(0, 200)}`);
+                // console.log(`[nostr] ✗ Relay rejected event: ${JSON.stringify(msg).slice(0, 200)}`);
               }
               resolve(ok);
             }
@@ -91,7 +91,7 @@ async function publishToBluesky(_payload: unknown): Promise<boolean> {
   let jwt = process.env.BLUESKY_CROSSPOST_JWT || '';
   if (!jwt || isJwtExpired(jwt)) {
     if (!appPassword || !identifier) {
-      console.log('[crossposter] Bluesky: missing app password or identifier for JWT refresh');
+      // console.log('[crossposter] Bluesky: missing app password or identifier for JWT refresh');
       return false;
     }
     try {
@@ -101,18 +101,18 @@ async function publishToBluesky(_payload: unknown): Promise<boolean> {
         body: JSON.stringify({ identifier, password: appPassword }),
       });
       if (!sessionRes.ok) {
-        console.log('[crossposter] Bluesky: session refresh failed');
+        // console.log('[crossposter] Bluesky: session refresh failed');
         return false;
       }
       const session = (await sessionRes.json()) as { accessJwt?: string };
       if (!session.accessJwt) {
-        console.log('[crossposter] Bluesky: no accessJwt in session response');
+        // console.log('[crossposter] Bluesky: no accessJwt in session response');
         return false;
       }
       jwt = session.accessJwt;
-      console.log('[crossposter] Bluesky: JWT refreshed via app password');
+      // console.log('[crossposter] Bluesky: JWT refreshed via app password');
     } catch (err) {
-      console.log('[crossposter] Bluesky: session error', (err as Error).message);
+      // console.log('[crossposter] Bluesky: session error', (err as Error).message);
       return false;
     }
   }
@@ -179,7 +179,7 @@ async function publishToFarcaster(_payload: unknown): Promise<boolean> {
   const payload = _payload as { text: string; embeds?: Array<{ url: string }> };
 
   if (!fid || !signerKey) {
-    console.log('[crossposter] Farcaster: missing FARCASTER_BOT_FID or FARCASTER_BOT_SIGNER_KEY');
+    // console.log('[crossposter] Farcaster: missing FARCASTER_BOT_FID or FARCASTER_BOT_SIGNER_KEY');
     return false;
   }
 
@@ -195,7 +195,7 @@ async function publishToFarcaster(_payload: unknown): Promise<boolean> {
     });
 
     if (!castResult.ok || !castResult.messageHex) {
-      console.log(`[crossposter] ✗ Failed to build Farcaster cast: ${castResult.error}`);
+      // console.log(`[crossposter] ✗ Failed to build Farcaster cast: ${castResult.error}`);
       return false;
     }
 
@@ -212,15 +212,15 @@ async function publishToFarcaster(_payload: unknown): Promise<boolean> {
     });
 
     if (res.ok) {
-      console.log(`[crossposter] ✓ Farcaster cast submitted to Hubble`);
+      // console.log(`[crossposter] ✓ Farcaster cast submitted to Hubble`);
       return true;
     }
 
     const errBody = await res.text().catch(() => '');
-    console.log(`[crossposter] ✗ Farcaster: HTTP ${res.status} ${errBody.slice(0, 200)}`);
+    // console.log(`[crossposter] ✗ Farcaster: HTTP ${res.status} ${errBody.slice(0, 200)}`);
     return false;
   } catch (err) {
-    console.log(`[crossposter] ✗ Farcaster error: ${(err as Error).message}`);
+    // console.log(`[crossposter] ✗ Farcaster error: ${(err as Error).message}`);
     return false;
   }
 }
@@ -239,9 +239,9 @@ async function lensAuthenticate(): Promise<string | null> {
   const accountAddr = process.env.LENS_ACCOUNT_ADDRESS || '';
 
   if (!refreshToken || !accountAddr) {
-    console.log(
-      '[crossposter] Lens: cannot authenticate — missing LENS_REFRESH_TOKEN or LENS_ACCOUNT_ADDRESS',
-    );
+    //     console.log(
+    //       '[crossposter] Lens: cannot authenticate — missing LENS_REFRESH_TOKEN or LENS_ACCOUNT_ADDRESS',
+    //     );
     return null;
   }
 
@@ -259,7 +259,7 @@ async function lensAuthenticate(): Promise<string | null> {
       }),
     });
     if (!res.ok) {
-      console.log(`[crossposter] Lens: token refresh HTTP ${res.status}`);
+      // console.log(`[crossposter] Lens: token refresh HTTP ${res.status}`);
       return null;
     }
     const body = (await res.json()) as {
@@ -267,13 +267,13 @@ async function lensAuthenticate(): Promise<string | null> {
     };
     const newToken = body?.data?.refresh?.accessToken;
     if (!newToken) {
-      console.log('[crossposter] Lens: token refresh failed — no accessToken in response');
+      // console.log('[crossposter] Lens: token refresh failed — no accessToken in response');
       return null;
     }
 
     _lensAccessToken = newToken;
     _lensTokenExpiresAt = decodeJwtExpiry(newToken);
-    console.log('[crossposter] Lens: token refreshed');
+    // console.log('[crossposter] Lens: token refreshed');
 
     // Store updated refresh token
     const newRefresh = body?.data?.refresh?.refreshToken;
@@ -283,7 +283,7 @@ async function lensAuthenticate(): Promise<string | null> {
 
     return newToken;
   } catch (err) {
-    console.log(`[crossposter] Lens: token refresh error: ${(err as Error).message}`);
+    // console.log(`[crossposter] Lens: token refresh error: ${(err as Error).message}`);
     return null;
   }
 }
@@ -307,7 +307,7 @@ async function publishToLens(_payload: unknown): Promise<boolean> {
   const payload = _payload as { text: string; embeds?: Array<{ url: string }> };
 
   if (!accountAddr) {
-    console.log('[crossposter] Lens: missing LENS_ACCOUNT_ADDRESS — cannot post');
+    // console.log('[crossposter] Lens: missing LENS_ACCOUNT_ADDRESS — cannot post');
     return false;
   }
 
@@ -321,7 +321,7 @@ async function publishToLens(_payload: unknown): Promise<boolean> {
   if (!accessToken) {
     accessToken = await lensAuthenticate();
     if (!accessToken) {
-      console.log('[crossposter] Lens: failed to authenticate');
+      // console.log('[crossposter] Lens: failed to authenticate');
       return false;
     }
   }
@@ -359,18 +359,18 @@ async function publishToLens(_payload: unknown): Promise<boolean> {
       };
       const result = body?.data?.post;
       if (result?.__typename === 'PostResponse') {
-        console.log(`[crossposter] ✓ Lens post successful: ${result.hash?.slice(0, 18) || ''}...`);
+        // console.log(`[crossposter] ✓ Lens post successful: ${result.hash?.slice(0, 18) || ''}...`);
         return true;
       }
-      console.log(`[crossposter] ✗ Lens: ${result?.__typename}: ${result?.reason || ''}`);
+      // console.log(`[crossposter] ✗ Lens: ${result?.__typename}: ${result?.reason || ''}`);
       return false;
     }
 
     const errBody = await res.text().catch(() => '');
-    console.log(`[crossposter] ✗ Lens: HTTP ${res.status} ${errBody.slice(0, 200)}`);
+    // console.log(`[crossposter] ✗ Lens: HTTP ${res.status} ${errBody.slice(0, 200)}`);
     return false;
   } catch (err) {
-    console.log(`[crossposter] ✗ Lens error: ${(err as Error).message}`);
+    // console.log(`[crossposter] ✗ Lens error: ${(err as Error).message}`);
     return false;
   }
 }
@@ -407,7 +407,7 @@ async function publishToPixelfed(_payload: unknown): Promise<boolean> {
   };
 
   if (!payload.images || payload.images.length === 0) {
-    console.log('[crossposter] Pixelfed: no images in payload');
+    // console.log('[crossposter] Pixelfed: no images in payload');
     return false;
   }
 
@@ -446,13 +446,13 @@ async function publishToPixelfed(_payload: unknown): Promise<boolean> {
 
     const result = await publishUnifiedPost(mockPost as UnifiedPost);
     if (result.ok) {
-      console.log(`[crossposter] ✓ Pixelfed: ${result.status?.url || 'ok'}`);
+      // console.log(`[crossposter] ✓ Pixelfed: ${result.status?.url || 'ok'}`);
       return true;
     }
-    console.log(`[crossposter] ✗ Pixelfed: ${result.error}`);
+    // console.log(`[crossposter] ✗ Pixelfed: ${result.error}`);
     return false;
   } catch (err) {
-    console.log(`[crossposter] ✗ Pixelfed error: ${(err as Error).message}`);
+    // console.log(`[crossposter] ✗ Pixelfed error: ${(err as Error).message}`);
     return false;
   }
 }
@@ -469,7 +469,7 @@ async function publishToWriteFreely(_payload: unknown): Promise<boolean> {
   const alias = process.env.WRITEFREELY_ALIAS || 'degenfeed';
 
   if (!token) {
-    console.log('[crossposter] WriteFreely: missing WRITEFREELY_TOKEN');
+    // console.log('[crossposter] WriteFreely: missing WRITEFREELY_TOKEN');
     return false;
   }
 
@@ -479,13 +479,13 @@ async function publishToWriteFreely(_payload: unknown): Promise<boolean> {
     const result = await postToWriteFreely(payload.title, payload.body, token, alias, payload.tags);
 
     if (result.ok) {
-      console.log(`[crossposter] ✓ WriteFreely: ${result.post?.url || 'ok'}`);
+      // console.log(`[crossposter] ✓ WriteFreely: ${result.post?.url || 'ok'}`);
       return true;
     }
-    console.log(`[crossposter] ✗ WriteFreely: ${result.error}`);
+    // console.log(`[crossposter] ✗ WriteFreely: ${result.error}`);
     return false;
   } catch (err) {
-    console.log(`[crossposter] ✗ WriteFreely error: ${(err as Error).message}`);
+    // console.log(`[crossposter] ✗ WriteFreely error: ${(err as Error).message}`);
     return false;
   }
 }

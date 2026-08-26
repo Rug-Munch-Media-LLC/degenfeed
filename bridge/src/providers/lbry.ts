@@ -226,7 +226,7 @@ async function fetchTrending(limit: number): Promise<UnifiedPost[]> {
     if (!result?.items) return [];
     return result.items.map(claimToPost);
   } catch (err) {
-    console.log(`[bridge] LBRY trending error: ${(err as Error).message}`);
+    // console.log(`[bridge] LBRY trending error: ${(err as Error).message}`);
     return [];
   }
 }
@@ -243,7 +243,7 @@ async function fetchRecent(limit: number): Promise<UnifiedPost[]> {
     if (!result?.items) return [];
     return result.items.map(claimToPost);
   } catch (err) {
-    console.log(`[bridge] LBRY recent error: ${(err as Error).message}`);
+    // console.log(`[bridge] LBRY recent error: ${(err as Error).message}`);
     return [];
   }
 }
@@ -261,7 +261,7 @@ async function fetchCryptoRelated(limit: number): Promise<UnifiedPost[]> {
     if (!result?.items) return [];
     return result.items.map(claimToPost);
   } catch (err) {
-    console.log(`[bridge] LBRY crypto search error: ${(err as Error).message}`);
+    // console.log(`[bridge] LBRY crypto search error: ${(err as Error).message}`);
     return [];
   }
 }
@@ -296,9 +296,9 @@ export async function fetchLBRYPosts(limit = 20): Promise<UnifiedPost[]> {
     }
   }
 
-  console.log(
-    `[bridge] LBRY: ${deduped.length} posts (trending: ${trending.length}, recent: ${recent.length}, crypto: ${crypto.length})`,
-  );
+  //   console.log(
+  //     `[bridge] LBRY: ${deduped.length} posts (trending: ${trending.length}, recent: ${recent.length}, crypto: ${crypto.length})`,
+  //   );
   return deduped;
 }
 

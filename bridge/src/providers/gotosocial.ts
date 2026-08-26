@@ -163,7 +163,7 @@ async function fetchFromGts(limit: number): Promise<UnifiedPost[]> {
   const clientId = process.env.GTS_CLIENT_ID || '';
   const clientSecret = process.env.GTS_CLIENT_SECRET || '';
   if (!clientId || !clientSecret) {
-    console.log('[bridge] GTS: no credentials configured, skipping');
+    // console.log('[bridge] GTS: no credentials configured, skipping');
     return [];
   }
 
@@ -182,7 +182,7 @@ async function fetchFromGts(limit: number): Promise<UnifiedPost[]> {
     });
 
     if (!tokenRes.ok) {
-      console.log(`[bridge] GTS: OAuth failed (${tokenRes.status}), trying without auth`);
+      // console.log(`[bridge] GTS: OAuth failed (${tokenRes.status}), trying without auth`);
       // Fall through to try without auth — some GTS configs allow public access
     } else {
       const data = (await tokenRes.json()) as { access_token?: string };
@@ -206,7 +206,7 @@ async function fetchFromGts(limit: number): Promise<UnifiedPost[]> {
       return raw.map((s) => statusToPost(s, 'social.degenfeed.xyz'));
     }
   } catch (err) {
-    console.log('[bridge] GTS: fetch error:', (err as Error).message);
+    // console.log('[bridge] GTS: fetch error:', (err as Error).message);
   }
 
   return [];
@@ -284,7 +284,7 @@ export const schema: SchemaGuard = {
 export async function fetchMastodonPosts(limit = 20): Promise<UnifiedPost[]> {
   // Rate limit: 300 requests/5 minutes (public Mastodon API)
   if (!checkRateLimit('mastodon', { maxRequests: 300, windowMs: 300_000 })) {
-    console.log('[mastodon] Rate limited, skipping fetch');
+    // console.log('[mastodon] Rate limited, skipping fetch');
     return [];
   }
   const [gts, publics] = await Promise.all([
@@ -313,11 +313,11 @@ export async function fetchMastodonPosts(limit = 20): Promise<UnifiedPost[]> {
   }
 
   if (deduped.length === 0) {
-    console.log('[bridge] GTS/Mastodon: no posts from any instance');
+    // console.log('[bridge] GTS/Mastodon: no posts from any instance');
   } else {
-    console.log(
-      `[bridge] GTS/Mastodon: ${deduped.length} posts (GTS: ${gts.length}, public: ${publics.length})`,
-    );
+    //     console.log(
+    //       `[bridge] GTS/Mastodon: ${deduped.length} posts (GTS: ${gts.length}, public: ${publics.length})`,
+    //     );
   }
 
   return deduped;

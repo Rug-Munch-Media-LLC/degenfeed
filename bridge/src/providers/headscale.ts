@@ -27,7 +27,7 @@ export async function fetchHeadscalePosts(limit = 20): Promise<UnifiedPost[]> {
     const { fetchHeadscalePosts: adapterFetch } = await getAdapter();
     return adapterFetch(limit);
   } catch (err) {
-    console.log(`[bridge] Headscale error: ${(err as Error).message}`);
+    // console.log(`[bridge] Headscale error: ${(err as Error).message}`);
     return [];
   }
 }

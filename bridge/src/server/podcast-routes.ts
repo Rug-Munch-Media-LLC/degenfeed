@@ -584,7 +584,7 @@ async function handleCreatePodcast(
 
     addPodcast(podcast);
 
-    console.log(`[podcast] Created podcast "${podcast.title}" (${id}) for ${walletAddress}`);
+    // console.log(`[podcast] Created podcast "${podcast.title}" (${id}) for ${walletAddress}`);
 
     // Trigger RSS auto-generation
     generateRssFeed(id).catch(() => {});
@@ -665,9 +665,9 @@ async function handleCreateEpisode(
 
     addEpisode(episode);
 
-    console.log(
-      `[podcast] Created episode "${episode.title}" (${id}) for podcast ${body.podcastId}`,
-    );
+    //     console.log(
+    //       `[podcast] Created episode "${episode.title}" (${id}) for podcast ${body.podcastId}`,
+    //     );
 
     // Auto-cross-post if published and requested
     if (status === 'published') {
@@ -715,7 +715,7 @@ async function handlePublishEpisode(
     // Trending score boost on publish
     trendingScores.set(episodeId, (trendingScores.get(episodeId) || 0) + 1000);
 
-    console.log(`[podcast] Published episode "${episode.title}" (${episodeId})`);
+    // console.log(`[podcast] Published episode "${episode.title}" (${episodeId})`);
 
     // Trigger RSS + ActivityPub + cross-post
     generateRssFeed(episode.podcastId).catch(() => {});
@@ -758,7 +758,7 @@ async function handleTipEpisode(
     episode.tipsReceived = totalTips.toFixed(6);
     episodes.set(episodeId, episode);
 
-    console.log(`[podcast] Tip: ${body.amount} ${body.chain} on episode ${episodeId}`);
+    // console.log(`[podcast] Tip: ${body.amount} ${body.chain} on episode ${episodeId}`);
 
     return jsonOk(res, {
       ok: true,
@@ -801,7 +801,7 @@ async function handleDeleteEpisode(
       (e) => e.podcastId === episode.podcastId,
     ).length;
 
-    console.log(`[podcast] Deleted episode ${episodeId}`);
+    // console.log(`[podcast] Deleted episode ${episodeId}`);
 
     return jsonOk(res, { ok: true });
   } catch (err) {
@@ -962,7 +962,7 @@ async function generateRssFeed(podcastId: string): Promise<string | null> {
     // In production, write the actual XML to disk here.
     // The RSS XML follows: https://validator.w3.org/feed/docs/rss2.html
     // with iTunes namespace extensions.
-    console.log(`[podcast] RSS feed generated for "${podcast.title}" at ${feedUrl}`);
+    // console.log(`[podcast] RSS feed generated for "${podcast.title}" at ${feedUrl}`);
 
     return feedUrl;
   } catch (err) {
@@ -979,7 +979,7 @@ async function generateRssFeed(podcastId: string): Promise<string | null> {
 async function publishPodcastActivityPub(podcast: Podcast): Promise<void> {
   // Castopod handles ActivityPub federation automatically.
   // For non-Castopod podcasts, we would create an ActivityPub Announce.
-  console.log(`[podcast] ActivityPub: Published podcast "${podcast.title}"`);
+  // console.log(`[podcast] ActivityPub: Published podcast "${podcast.title}"`);
 }
 
 /**
@@ -988,7 +988,7 @@ async function publishPodcastActivityPub(podcast: Podcast): Promise<void> {
 async function publishEpisodeActivityPub(episode: PodcastEpisode, podcast: Podcast): Promise<void> {
   // Castopod handles ActivityPub automatically.
   // For independent podcasts, we emit a Create/Note with audio attachment.
-  console.log(`[podcast] ActivityPub: Published episode "${episode.title}"`);
+  // console.log(`[podcast] ActivityPub: Published episode "${episode.title}"`);
 }
 
 // ─── Cross-Post to Protocols ─────────────────────────────────────────────
@@ -1122,7 +1122,7 @@ async function crossPostEpisodeToProtocols(
   episodes.set(episode.id, episode);
 
   const succeeded = Object.values(results).filter(Boolean).length;
-  console.log(`[podcast] Cross-posted "${episode.title}": ${succeeded}/4 protocols`);
+  // console.log(`[podcast] Cross-posted "${episode.title}": ${succeeded}/4 protocols`);
 
   return results;
 }

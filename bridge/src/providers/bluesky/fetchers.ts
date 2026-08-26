@@ -189,7 +189,7 @@ async function fetchFromPds(limit: number): Promise<UnifiedPost[]> {
     const listUrl = `${PDS_BASE}/xrpc/com.atproto.sync.listRepos?limit=30`;
     const listRes = await $fetch(listUrl, { signal: AbortSignal.timeout(5000) });
     if (!listRes.ok) {
-      console.log(`[bluesky] PDS listRepos: HTTP ${listRes.status}`);
+      // console.log(`[bluesky] PDS listRepos: HTTP ${listRes.status}`);
       return [];
     }
     const listData = (await listRes.json()) as {
@@ -197,10 +197,10 @@ async function fetchFromPds(limit: number): Promise<UnifiedPost[]> {
     };
     const repos = (listData.repos ?? []).filter((r) => r.active !== false);
     if (repos.length === 0) {
-      console.log('[bluesky] PDS: no repos found');
+      // console.log('[bluesky] PDS: no repos found');
       return [];
     }
-    console.log(`[bluesky] PDS: ${repos.length} repos found`);
+    // console.log(`[bluesky] PDS: ${repos.length} repos found`);
 
     // Step 2: Fetch posts from each repo (up to 15 repos, limit total)
     const perRepo = Math.max(1, Math.ceil(limit / Math.min(repos.length, 15)));
@@ -320,10 +320,10 @@ async function fetchFromPds(limit: number): Promise<UnifiedPost[]> {
       if (r.status === 'fulfilled') allPosts.push(...r.value);
     }
 
-    console.log(`[bluesky] PDS: ${allPosts.length} posts from local PDS`);
+    // console.log(`[bluesky] PDS: ${allPosts.length} posts from local PDS`);
     return allPosts.slice(0, limit);
   } catch (err) {
-    console.log(`[bluesky] PDS error: ${(err as Error).message}`);
+    // console.log(`[bluesky] PDS error: ${(err as Error).message}`);
     return [];
   }
 }
@@ -357,7 +357,7 @@ async function searchPosts(query: string, limit: number): Promise<UnifiedPost[]>
       signal: AbortSignal.timeout(5000),
     });
     if (!res.ok) {
-      console.log(`[bluesky] searchPosts(${query}): HTTP ${res.status}`);
+      // console.log(`[bluesky] searchPosts(${query}): HTTP ${res.status}`);
       return [];
     }
     const data = (await res.json()) as BskyFeedResponse;
@@ -387,7 +387,7 @@ async function fetchFeedByUri(
       signal: AbortSignal.timeout(8000),
     });
     if (!res.ok) {
-      console.log(`[bluesky] getFeed(${feedUri.split('/').pop()}): HTTP ${res.status}`);
+      // console.log(`[bluesky] getFeed(${feedUri.split('/').pop()}): HTTP ${res.status}`);
       return [];
     }
     const data = (await res.json()) as BskyFeedResponse;
@@ -457,7 +457,7 @@ async function fetchTrendingTopics(limit: number): Promise<UnifiedPost[]> {
       signal: AbortSignal.timeout(8000),
     });
     if (!res.ok) {
-      console.log(`[bluesky] getTrendingTopics: HTTP ${res.status}`);
+      // console.log(`[bluesky] getTrendingTopics: HTTP ${res.status}`);
       return [];
     }
     const data = (await res.json()) as {
@@ -481,7 +481,7 @@ async function fetchTrendingTopics(limit: number): Promise<UnifiedPost[]> {
       links.map((feedUri) => fetchFeedByUri(feedUri, perFeed)),
     );
     for (const r of results) if (r.status === 'fulfilled') all.push(...r.value);
-    console.log(`[bluesky] Trending topics: ${all.length} posts`);
+    // console.log(`[bluesky] Trending topics: ${all.length} posts`);
     return all.slice(0, limit);
   } catch {
     return [];
@@ -514,7 +514,7 @@ export async function fetchBlueskyImageFeed(limit = 30): Promise<UnifiedPost[]> 
   }
   const filtered = all.filter((p) => p.embeds.some((e) => e.kind === 'image'));
   const deduped = dedupe(filtered, limit);
-  console.log(`[bridge] Bluesky Image Feed: ${deduped.length} posts`);
+  // console.log(`[bridge] Bluesky Image Feed: ${deduped.length} posts`);
   return deduped;
 }
 
@@ -522,7 +522,7 @@ export async function fetchBlueskyVideoFeed(limit = 20): Promise<UnifiedPost[]> 
   const all = await fetchAllCuratedPosts(Math.ceil(limit * 2));
   const filtered = all.filter((p) => p.embeds.some((e) => e.kind === 'link' || e.kind === 'video'));
   const deduped = dedupe(filtered, limit);
-  console.log(`[bridge] Bluesky Video Feed: ${deduped.length} posts`);
+  // console.log(`[bridge] Bluesky Video Feed: ${deduped.length} posts`);
   return deduped;
 }
 
@@ -535,7 +535,7 @@ export async function fetchBlueskyTrending(limit = 20): Promise<UnifiedPost[]> {
     all.push(...curated);
   }
   const deduped = dedupe(all, limit);
-  console.log(`[bridge] Bluesky Trending: ${deduped.length} posts`);
+  // console.log(`[bridge] Bluesky Trending: ${deduped.length} posts`);
   return deduped;
 }
 
@@ -554,7 +554,7 @@ async function fetchAllCuratedPosts(limit: number): Promise<UnifiedPost[]> {
 export async function fetchBlueskyPosts(limit = 20): Promise<UnifiedPost[]> {
   // Rate limit: 3000 requests/5 minutes (public API)
   if (!checkRateLimit('bluesky', { maxRequests: 3000, windowMs: 300_000 })) {
-    console.log('[bluesky] Rate limited, skipping fetch');
+    // console.log('[bluesky] Rate limited, skipping fetch');
     return [];
   }
   const all: UnifiedPost[] = [];
@@ -619,9 +619,9 @@ export async function fetchBlueskyPosts(limit = 20): Promise<UnifiedPost[]> {
   // BEFORE dedup so the cap fills with fresh content only.
   const fresh = filterFreshPosts(all);
   const deduped = dedupe(fresh, limit);
-  console.log(
-    `[bridge] Bluesky: ${deduped.length} posts (firehose: ${firehosePosts.length}, timeline: ${timeline.length}, whats-hot: ${whatsHot.length}, pds: ${pdsPosts.length})`,
-  );
+  //   console.log(
+  //     `[bridge] Bluesky: ${deduped.length} posts (firehose: ${firehosePosts.length}, timeline: ${timeline.length}, whats-hot: ${whatsHot.length}, pds: ${pdsPosts.length})`,
+  //   );
   return deduped;
 }
 

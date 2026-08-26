@@ -575,7 +575,7 @@ export function initializeReliability(): void {
   registerAllProvidersWithCircuitBreaker();
   registerFailoverStrategies(PROVIDERS);
 
-  console.log('[reliability] All providers registered with circuit breakers and failover');
+  // console.log('[reliability] All providers registered with circuit breakers and failover');
 }
 
 /**
@@ -1090,7 +1090,7 @@ async function buildFeedInternal(
         const cached = fallbackCache.get(protocol);
         if (cached) {
           const ageMs = Date.now() - cached.fetchedAt;
-          console.log(`[reliability] ${protocol}: Circuit open, serving ${ageMs}ms old cache`);
+          // console.log(`[reliability] ${protocol}: Circuit open, serving ${ageMs}ms old cache`);
           return {
             protocol,
             posts: cached.posts.slice(0, perProviderLimit),
@@ -1222,7 +1222,7 @@ async function buildFeedInternal(
   }
 
   for (const [protocol, count] of Object.entries(perProtocol))
-    console.log(`[bridge] ${protocol}: ${count} posts`);
+    // console.log(`[bridge] ${protocol}: ${count} posts`);
 
   if (allPosts.length === 0) {
     // Demo/seed content is BANNED. Never fabricate posts — return an
@@ -1271,14 +1271,14 @@ async function buildFeedInternal(
 
   const degradedCount = Object.keys(cacheAges).length;
 
-  console.log(
-    '[bridge] Built feed: ' +
-      deduped.length +
-      ' posts from ' +
-      Object.keys(perProtocol).length +
-      ' sources' +
-      (degradedCount > 0 ? ` (${degradedCount} degraded)` : ''),
-  );
+  //   console.log(
+  //     '[bridge] Built feed: ' +
+  //       deduped.length +
+  //       ' posts from ' +
+  //       Object.keys(perProtocol).length +
+  //       ' sources' +
+  //       (degradedCount > 0 ? ` (${degradedCount} degraded)` : ''),
+  //   );
   return {
     posts: deduped,
     meta: {
@@ -1314,7 +1314,7 @@ async function buildFeedInternal(
 export async function prewarmFeedCache(): Promise<void> {
   const started = Date.now();
   try {
-    console.log('[feeds] Pre-warming feed result cache...');
+    // console.log('[feeds] Pre-warming feed result cache...');
 
     // Slow-protocol direct warm-up FIRST, bypassing the 5s buildFeed fetch
     // wrapper (FETCH_TIMEOUT_MS). These providers hold their own internal
@@ -1331,7 +1331,7 @@ export async function prewarmFeedCache(): Promise<void> {
     // Each direct warm is individually fire-and-forget with allSettled so a
     // slow provider can never block the rest of the prewarm or crash it.
     await Promise.allSettled([fetchRssPosts(50), fetchPeerTubePosts(20), fetchNostrPosts(20)]);
-    console.log(`[feeds] Slow-protocol caches pre-warmed in ${Date.now() - started}ms`);
+    // console.log(`[feeds] Slow-protocol caches pre-warmed in ${Date.now() - started}ms`);
 
     const targets: Array<{ protocols: string[]; limit: number }> = [
       // limit=50: RSS provider early-exits after ~50 raw posts (~3s total build),
@@ -1357,7 +1357,7 @@ export async function prewarmFeedCache(): Promise<void> {
         FEED_CACHE_TTL_MS,
       );
     }
-    console.log(`[feeds] Feed cache pre-warmed in ${Date.now() - started}ms`);
+    // console.log(`[feeds] Feed cache pre-warmed in ${Date.now() - started}ms`);
   } catch (err) {
     console.error('[feeds] Feed cache pre-warm failed:', err);
   }
