@@ -733,8 +733,8 @@ export class GlobalDedupRegistry {
             copyCount: cluster.copyCount,
             protocols: cluster.protocols,
             canonicalReference: {
-              protocol: cluster.copies[0]?.sourceProtocol,
-              id: cluster.copies[0]?.sourceId,
+              protocol: cluster.copies[0]?.sourceProtocol ?? 'unknown',
+              id: cluster.copies[0]?.sourceId ?? '',
             },
           };
         }
@@ -777,8 +777,8 @@ export class GlobalDedupRegistry {
             copyCount: cluster.copyCount,
             protocols: cluster.protocols,
             canonicalReference: {
-              protocol: cluster.copies[0]?.sourceProtocol,
-              id: cluster.copies[0]?.sourceId,
+              protocol: cluster.copies[0]?.sourceProtocol ?? 'unknown',
+              id: cluster.copies[0]?.sourceId ?? '',
             },
           };
         }

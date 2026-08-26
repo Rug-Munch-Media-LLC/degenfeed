@@ -87,9 +87,9 @@ export async function handleLemmyFeed(request: Request, _env: Env): Promise<Resp
         community: {
           name: pv.community.name,
           title: pv.community.title,
-          icon: pv.community.icon,
+          icon: pv.community.icon ?? undefined,
           actorId: pv.community.actor_id,
-          subscriberCount: pv.counts ? undefined : undefined,
+          subscriberCount: (pv.counts as { subscribers?: number } | undefined)?.subscribers,
         },
       }),
     );
@@ -144,9 +144,9 @@ export async function handleLemmyCommunity(
         community: {
           name: pv.community.name,
           title: pv.community.title,
-          icon: pv.community.icon,
+          icon: pv.community.icon ?? undefined,
           actorId: pv.community.actor_id,
-          subscriberCount: communityView.counts.subscribers,
+          subscriberCount: (communityView.counts as { subscribers?: number }).subscribers ?? 0,
           usersActiveMonth: communityView.counts.users_active_month,
         },
       }),
@@ -504,8 +504,8 @@ export async function handleLemmyPostById(
       community: {
         name: postView.community.name,
         title: postView.community.title,
-        icon: postView.community.icon,
-        subscriberCount: postView.counts ? undefined : undefined,
+        icon: postView.community.icon ?? undefined,
+        subscriberCount: postView.counts?.subscribers,
       },
     });
 
