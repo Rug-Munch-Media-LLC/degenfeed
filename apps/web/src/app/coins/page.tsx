@@ -97,7 +97,7 @@ export default function CoinsPage() {
   const [chainFilter, setChainFilter] = useState<'all' | 'base' | 'solana'>('all');
 
   useEffect(() => {
-    // Fetch from API, fall back to mock
+    // Fetch from API only — mock data banned
     const fetchCoins = async () => {
       try {
         const res = await fetch('/api/creator/coins');
@@ -109,10 +109,11 @@ export default function CoinsPage() {
             return;
           }
         }
-      } catch {
-        // Fall through to mock
+      } catch (err) {
+        console.error('[coins] fetch failed:', err);
       }
-      setCoins(generateMockCoins(20));
+      // No mock fallback — show empty state
+      setCoins([]);
       setLoading(false);
     };
     fetchCoins();
