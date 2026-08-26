@@ -107,8 +107,22 @@ export interface TierLimits {
 }
 
 export const TIER_LIMITS: Record<string, TierLimits> = {
-  basic: { protocols: 3, creatorCoins: 0, communities: 0, scheduledPosts: 10, evergreenPosts: 0 },
-  pro: { protocols: 10, creatorCoins: 0, communities: 3, scheduledPosts: 100, evergreenPosts: 3 },
+  basic: {
+    protocols: 3,
+    creatorCoins: 0,
+    communities: 0,
+    scheduledPosts: 10,
+    evergreenPosts: 0,
+    queuedPosts: 5,
+  },
+  pro: {
+    protocols: 10,
+    creatorCoins: 0,
+    communities: 3,
+    scheduledPosts: 100,
+    evergreenPosts: 3,
+    queuedPosts: 25,
+  },
   creator: {
     protocols: 999,
     creatorCoins: 50,
@@ -142,6 +156,7 @@ export const DEFAULT_TIER_LIMITS: TierLimits = TIER_LIMITS.basic ?? {
   communities: 0,
   scheduledPosts: 10,
   evergreenPosts: 0,
+  queuedPosts: 5,
 };
 
 /** One-time fee per additional creator coin on Pro tier (USD). Covers gas + platform costs. */
