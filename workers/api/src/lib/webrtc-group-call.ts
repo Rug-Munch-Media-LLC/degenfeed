@@ -24,8 +24,8 @@
  *   - Both:      Room state tracked in KV
  */
 
-import type { Env } from '../types';
 import { log } from '../logger';
+import type { Env } from '../types';
 
 // ─── Types ────────────────────────────────────────────────────────────────
 
@@ -206,7 +206,7 @@ async function generateSfuToken(env: Env, callId: string): Promise<string> {
     false,
     ['sign'],
   );
-  const sig = await crypto.subtle.sign('HMAC', hmacKey, encoded);
+  const sig = await crypto.subtle.sign('HMAC', hmacKey, encoded.buffer as ArrayBuffer);
   return `sfu_${toBase64Url(encoded)}.${toBase64Url(sig)}`;
 }
 
@@ -873,8 +873,8 @@ async function saveGroupCall(env: Env, call: GroupCall): Promise<void> {
 
 // ─── Utility ─────────────────────────────────────────────────────────────
 
-function toBase64Url(buffer: ArrayBuffer): string {
-  const bytes = new Uint8Array(buffer);
+function toBase64Url(buffer: ArrayBuffer | Uint8Array): string {
+  const bytes = buffer instanceof Uint8Array ? buffer : new Uint8Array(buffer);
   let binary = '';
   for (let i = 0; i < bytes.length; i++) {
     binary += String.fromCharCode(bytes[i]!);

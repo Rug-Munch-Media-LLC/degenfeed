@@ -150,6 +150,12 @@ export interface Env {
   IRC_BRIDGE_URL?: string;
   /** XMPP bridge URL */
   XMPP_BRIDGE_URL?: string;
+  /** Lemmy JWT for authenticated actions (comments on tip) */
+  LEMMY_JWT?: string;
+  /** SFU (Selective Forwarding Unit) endpoint for group calls */
+  SFU_ENDPOINT?: string;
+  /** SFU shared secret token */
+  SFU_SECRET_TOKEN?: string;
   /** Signal API URL */
   SIGNAL_API_URL?: string;
   /** Signal phone number */
