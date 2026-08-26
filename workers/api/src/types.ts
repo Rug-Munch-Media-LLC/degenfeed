@@ -29,8 +29,6 @@ export interface Env {
   FARCASTER_BOT_FID?: string;
   FARCASTER_BOT_SIGNER_KEY?: string;
   FARCASTER_BOT_HUB_URL?: string;
-  /** Farcaster OAuth client id (Warpcast sign-in, auth.farcaster.xyz) */
-  FARCASTER_CLIENT_ID?: string;
   REDDIT_CLIENT_ID?: string;
   REDDIT_CLIENT_SECRET?: string;
   GOOGLE_CLIENT_ID?: string;
@@ -55,55 +53,18 @@ export interface Env {
   RMI_BACKEND_URL?: string;
   /** Bridge service internal URL for protocol feed fetching */
   BRIDGE_INTERNAL_URL?: string;
-  /** Bridge API key for authenticated requests to the bridge service */
-  BRIDGE_API_KEY?: string;
   /** Self-hosted Redlib instance for Reddit feed proxying */
   REDLIB_URL?: string;
-  /**
-   * Comma-separated list of healthy Mastodon instances for the discover
-   * directory proxy (defaults to mastodon.social, fosstodon.org,
-   * hachyderm.io, infosec.exchange, indieweb.social).
-   */
-  DISCOVER_MASTODON_INSTANCES?: string;
   /** Self-hosted RSS-Bridge instance for proxied RSS feed fetching */
   RSS_BRIDGE_URL?: string;
-  /** FlareSolverr instance for Cloudflare-challenge bypass (Medium etc.) */
-  FLARESOLVERR_URL?: string;
-  /** Paragraph bridge base URL (fallback for the native RSS path) */
-  PARAGRAPH_BRIDGE_URL?: string;
-  /** Mirror bridge base URL (fallback for the Arweave GraphQL path) */
-  MIRROR_BRIDGE_URL?: string;
   /** Owncast instance URL for live streaming clips */
-  OWNCAST_INSTANCE_URL?: string;
+  OWCAST_INSTANCE_URL?: string;
   /** Comma-separated list of Lemmy instances to fetch from */
   LEMMY_INSTANCES?: string;
   /** Comma-separated list of Pixelfed instances to fetch from */
   PIXELFED_INSTANCES?: string;
   /** Optional bearer for rmi-backend if gated */
   RMI_API_KEY?: string;
-  /** Fallback/primary rmi-backend API key for persistent storage endpoints (X-API-Key). */
-  RMI_INTERNAL_KEY?: string;
-  /**
-   * When "true", rmi-backend API results are authoritative for the
-   * KV-migrated namespaces (bookmarks / identities / chat / sessions) even
-   * when the API returns an empty result. When unset, empty API results
-   * fall back to the legacy KV store.
-   */
-  USE_RMI_API?: string;
-  /**
-   * When "true" (default), queue processing uses the rmi-backend queue API
-   * (GET/POST /v1/queue/*) instead of KV list()-based queue scans.
-   * Set to "false" to fall back to the legacy KV behavior.
-   */
-  USE_RMI_QUEUE_API?: string;
-  /**
-   * How often the scheduled post executor may run, in minutes.
-   * The cron trigger still fires every minute; the executor self-throttles
-   * to this interval. Defaults to 5.
-   */
-  SCHEDULED_EXECUTOR_INTERVAL_MINUTES?: string;
-  /** Self-hosted rmi-backend URL for persistent storage (default: https://api.rugmunch.io) */
-  RMI_API_URL?: string;
   /** Optional Sentry DSN for error reporting */
   SENTRY_DSN?: string;
   /** API key for MeiliSearch (production requires Authorization: Bearer <key>) */
@@ -140,8 +101,6 @@ export interface Env {
   FARCASTER_SIGNER_UUID?: string;
   /** Mastodon/ActivityPub access token */
   MASTODON_ACCESS_TOKEN?: string;
-  /** Mastodon instance URL (wrangler: MASTODON_INSTANCE_URL) */
-  MASTODON_INSTANCE_URL?: string;
   /** ActivityPub instance URL */
   AP_INSTANCE_URL?: string;
   /** Discord bot token */
@@ -150,12 +109,6 @@ export interface Env {
   IRC_BRIDGE_URL?: string;
   /** XMPP bridge URL */
   XMPP_BRIDGE_URL?: string;
-  /** Lemmy JWT for authenticated actions (comments on tip) */
-  LEMMY_JWT?: string;
-  /** SFU (Selective Forwarding Unit) endpoint for group calls */
-  SFU_ENDPOINT?: string;
-  /** SFU shared secret token */
-  SFU_SECRET_TOKEN?: string;
   /** Signal API URL */
   SIGNAL_API_URL?: string;
   /** Signal phone number */
@@ -285,31 +238,27 @@ export interface Env {
   PERMANENCE?: KVNamespace;
 
   /** KV namespace for global dedup registry */
-  // NOTE: [KV-MIGRATION] Unbound — code guards against undefined; feature silently disabled.
   DEDUP?: KVNamespace;
   /** KV namespace for per-user seen content tracking */
-  // NOTE: [KV-MIGRATION] Unbound — code guards against undefined; feature silently disabled.
   SEEN?: KVNamespace;
 
   /** KV namespace for Farcaster creator coin records */
   FARCASTER_COINS?: KVNamespace;
+  /** KV namespace for Lens Protocol creator coin records */
+  // LENS_COINS removed 2026-08-06 — dead binding, namespace deleted from Cloudflare
   /** KV namespace for cross-chain token registrations */
   XCHAIN_REGISTRY?: KVNamespace;
 
   /** KV namespace for DegenFeed multi-type streaming system — solo, spaces, collab, coin-launch */
-  // NOTE: [KV-MIGRATION] Unbound — code guards against undefined; feature silently disabled.
   STREAMS?: KVNamespace;
   /** Zora wrapper factory contract address (Base) */
   ZORA_WRAPPER_FACTORY?: string;
-  /** Self-hosted Zora indexer URL (default: http://127.0.0.1:8091) */
-  ZORA_INDEXER_URL?: string;
   /** Wormhole bridge address for cross-chain tips */
   WORMHOLE_BRIDGE?: string;
 
   /** KV namespace for custom feed storage */
   CUSTOM_FEEDS?: KVNamespace;
   /** KV namespace for creator coin treasury fee tracking */
-  // NOTE: [KV-MIGRATION] Unbound — code guards against undefined; feature silently disabled.
   TREASURY?: KVNamespace;
 
   // ─── Postiz cross-posting ───────────────────────────────────────────
@@ -322,16 +271,6 @@ export interface Env {
    * Example: '{"mastodon":"int-abc","bluesky":"int-def"}'
    */
   POSTIZ_INTEGRATIONS?: string;
-
-  // ─── Restreamer (multi-platform RTMP push) ─────────────────────────
-  /** Restreamer API base URL (datarhei core, default http://127.0.0.1:8088) */
-  RESTREAMER_URL?: string;
-  /** Restreamer admin username for JWT login */
-  RS_ADMIN_USER?: string;
-  /** Restreamer admin password for JWT login */
-  RS_ADMIN_PASSWORD?: string;
-  /** Owncast instance URL for live streaming / restream HLS source (defined above) */
-  // OWNCAST_INSTANCE_URL?: string;
 
   // ─── Cross-platform registration ─────────────────────────────────────
   /** KV namespace for storing platform account records */
@@ -348,12 +287,6 @@ export interface Env {
   POLYGON_RPC_URL?: string;
   /** Private key of the premium wallet for paying on-chain registration fees */
   PREMIUM_WALLET_KEY?: string;
-  /**
-   * Receiver address that must match the `to` field of a registration
-   * payment txHash (EVM). When set, register-all only proceeds with a paid
-   * plan if the verified payment actually arrived at this address.
-   */
-  REGISTRATION_PAYMENT_ADDRESS?: string;
   /** Application base URL — e.g. https://app.degenfeed.xyz */
   APP_BASE_URL?: string;
   /** GoToSocial instance URL (ActivityPub-compatible Mastodon API) for account creation */
@@ -362,10 +295,6 @@ export interface Env {
   LEMMY_INSTANCE_URL?: string;
   /** Pixelfed instance URL for account creation */
   PIXELFED_INSTANCE_URL?: string;
-  /** Pixelfed access token (Bearer) for the local instance public timeline */
-  PIXELFED_ACCESS_TOKEN?: string;
-  /** Public origin for local Pixelfed media (default: https://photos.degenfeed.xyz) */
-  PIXELFED_PUBLIC_URL?: string;
   /** Nostr relay URLs (comma-separated) */
   NOSTR_RELAYS?: string;
 
@@ -374,12 +303,14 @@ export interface Env {
   PDS_INSTANCE_URL?: string;
   /** Nostr relay instance URL — relay.degenfeed.xyz */
   RELAY_INSTANCE_URL?: string;
+  /** Matrix homeserver URL — matrix.degenfeed.xyz */
+  MATRIX_INSTANCE_URL?: string;
   /** Ghost CMS instance URL — articles.degenfeed.xyz */
   GHOST_INSTANCE_URL?: string;
   /** WriteFreely instance URL — blog.degenfeed.xyz */
   WRITEFREELY_INSTANCE_URL?: string;
-  /** Owncast instance URL — live.degenfeed.xyz (defined above) */
-  // OWNCAST_INSTANCE_URL?: string;
+  /** Owncast instance URL — live.degenfeed.xyz */
+  OWNCAST_INSTANCE_URL?: string;
   /** Mobilizon instance URL — events.degenfeed.xyz */
   MOBILIZON_INSTANCE_URL?: string;
   /** BookWyrm instance URL — books.degenfeed.xyz */
@@ -397,15 +328,15 @@ export interface Env {
   /** Pinata secret key for IPFS pinning (Content Permanence API) */
   PINATA_SECRET_KEY?: string;
 
-  // ─── Blossom (decentralized free-tier video hosting) ─────────────────
-  /** Blossom-compatible server base URL (default: https://blossom.nostr.build) */
-  BLOSSOM_SERVER_URL?: string;
-
   // ─── Live Shorts / Protocol Streaming ──────────────────────────────
   /** Farcaster signer private key hex for live short frame posting */
   FARCASTER_SIGNER_KEY?: string;
   /** Farcaster FID for the bot account used for live short announcements */
   FARCASTER_FID?: string;
+  /** Bluesky access JWT for AT Protocol live short announcements */
+  BSKY_ACCESS_TOKEN?: string;
+  /** Lens API access token for Lens live short publishing */
+  LENS_ACCESS_TOKEN?: string;
   /** Livepeer Studio API key for Livepeer-backed streaming (Zora, generic) */
   LIVEPEER_API_KEY?: string;
   /** Cloudflare Stream API token for enterprise CDN streaming */
@@ -425,15 +356,12 @@ export interface Env {
   /** Ghost Content API key (optional, falls back to Admin key) */
   GHOST_CONTENT_KEY?: string;
   /** KV namespace for Ghost subscriber data */
-  // NOTE: [KV-MIGRATION] Unbound — code guards against undefined; feature silently disabled.
   GHOST_SUBSCRIBERS?: KVNamespace;
   /** KV namespace for Ghost tip records */
-  // NOTE: [KV-MIGRATION] Unbound — code guards against undefined; feature silently disabled.
   GHOST_TIPS?: KVNamespace;
 
   // ─── Content Library ────────────────────────────────────────────────
   /** KV namespace for the unified content library — all creator content stored here */
-  // NOTE: [KV-MIGRATION] Unbound — code guards against undefined; feature silently disabled.
   CONTENT_LIBRARY?: KVNamespace;
   /** SendGrid or Mailgun API key for email delivery */
   EMAIL_API_KEY?: string;
@@ -472,35 +400,17 @@ export interface Env {
 
   // ─── Unified Shorts ──────────────────────────────────────────────────
   /** KV namespace for unified shorts (cross-protocol short-form video) */
-  // NOTE: [KV-MIGRATION] Unbound — code guards against undefined; feature silently disabled.
   SHORTS?: KVNamespace;
   /** Zora video NFT contract address */
   ZORA_VIDEO_CONTRACT?: string;
   /** CDN base URL for short video content */
   DEGENFEED_CDN_URL?: string;
-  /** RMI platform OIDC SSO (base URL of the RMI auth server) */
-  RUGMUNCH_OIDC_BASE_URL?: string;
-  RUGMUNCH_OIDC_CLIENT_ID?: string;
-  RUGMUNCH_OIDC_CLIENT_SECRET?: string;
-  /** Legacy S3-compatible object storage (used for Backblaze B2 via its S3 API) */
-  S3_ENDPOINT?: string;
-  S3_ACCESS_KEY_ID?: string;
-  S3_SECRET_ACCESS_KEY?: string;
-  S3_BUCKET?: string;
-  /**
-   * Optional CF-native R2 binding. NOTE: degenfeed production storage is
-   * Backblaze B2 (via the S3_* vars above); this binding stays for
-   * Cloudflare-native deployments only.
-   */
-  R2_BUCKET?: R2Bucket;
 
   // ─── Video Platform Wrappers ────────────────────────────────────────
   /** Zora API relayer for on-chain operations */
   ZORA_RELAYER_URL?: string;
   /** x402 relayer for payment-gated content */
   X402_RELAYER_URL?: string;
-  /** x402 relayer signer private key (hex) for gasless minting */
-  X402_RELAYER_KEY?: string;
   /** Farcaster watchlist for live activity monitoring */
   FARCASTER_WATCHLIST?: string;
 
@@ -509,6 +419,8 @@ export interface Env {
   MEDIA_STORAGE_BINDING?: R2Bucket;
   /** R2 bucket binding for video storage (used by video-storage.ts) */
   VIDEO_STORAGE_BINDING?: R2Bucket;
+  /** KV namespace for media metadata (image dimensions, creator links, storage stats) */
+  MEDIA_METADATA?: KVNamespace;
   /** Irys node URL for Arweave uploads (default: https://node1.irys.xyz) */
   IRYS_NODE_URL?: string;
   /** Irys/Arweave wallet private key (for platform-paid permanent storage) */
@@ -520,6 +432,10 @@ export interface Env {
   /** Media transformation service URL (e.g. Cloudflare Image Resizing) */
   IMAGE_TRANSFORM_URL?: string;
 
+  // ─── SSO (Single Sign-On) Infrastructure ──────────────────────────────
+  /** KV namespace for SSO session data and wallet state (aliases to IDENTITIES) */
+  SSO_STATE?: KVNamespace;
+
   // ─── Self-hosted image galleries (Immich/Lychee) ─────────────────────
   /** Immich server URL (e.g. https://photos.example.com) */
   IMMICH_URL?: string;
@@ -529,6 +445,8 @@ export interface Env {
   // ─── Multi-Protocol Coin Announcement ───────────────────────────────
   /** Bluesky app password for bot posting (not the main password) */
   BSKY_APP_PASSWORD?: string;
+  /** Mastodon/GTS access token for bot tooting */
+  MASTODON_ACCESS_TOKEN?: string;
   /** Telegram chat ID for coin launch announcements */
   TELEGRAM_ANNOUNCEMENT_CHAT_ID?: string;
   /** Telegram coin announcement chat ID (overrides TELEGRAM_ANNOUNCEMENT_CHAT_ID) */
@@ -539,24 +457,6 @@ export interface Env {
   DISCORD_COIN_WEBHOOK_URL?: string;
   /** Coingecko API key (free tier) for price feeds */
   COINGECKO_API_KEY?: string;
-
-  // ─── Governance / Markets / NFT Feed Providers (2026-08-06) ─────────
-  /** Tally API key (optional — sent as Api-Key header to api.tally.xyz). */
-  TALLY_API_KEY?: string;
-  /** OpenSea API v2 key (optional — sent as X-API-KEY header). */
-  OPENSEA_API_KEY?: string;
-
-  // ─── Audio / Video Streaming Feed Providers (2026-08-06) ───────────
-  /** Twitch OAuth access token (client credentials grant). Used by the Twitch feed provider. */
-  TWITCH_ACCESS_TOKEN?: string;
-
-  // ─── News Aggregation ──────────────────────────────────────────────
-  /** Overall wall-clock budget for one aggregateNews() run (ms). Default 25000. */
-  NEWS_AGGREGATION_TIMEOUT_MS?: string;
-  /** Max articles HTML-enriched per aggregation run. Default 10. */
-  NEWS_ENRICH_LIMIT?: string;
-  /** Secret key required to trigger GET /api/news/warmup (set via wrangler secret). */
-  NEWS_WARMUP_SECRET?: string;
 }
 
 // ─── Common type aliases used across routes ───────────────────────────
