@@ -78,6 +78,7 @@ function suggestCommunity(
       // Count occurrences for weighted scoring
       let idx = 0;
       let count = 0;
+      // biome-ignore lint/suspicious/noAssignInExpressions: standard indexOf scan loop
       while ((idx = textLower.indexOf(kw, idx)) !== -1) {
         count++;
         idx += kw.length;
@@ -306,7 +307,7 @@ export async function handleLemmyBridgeShare(request: Request, env: Env): Promis
 
           case 'nostr': {
             // Publish kind 1 note via relay
-            const { createTextNote, signEvent, getPublicKey, generateSecretKey } = await import(
+            const { createTextNote, signEvent, getPublicKey } = await import(
               '@degenfeed/nostr-sdk'
             );
             const { RelayPool } = await import('@degenfeed/nostr-sdk');
@@ -323,7 +324,7 @@ export async function handleLemmyBridgeShare(request: Request, env: Env): Promis
               break;
             }
             const { nsecDecode } = await import('@degenfeed/nostr-sdk');
-            const { data: secretKey } = nsecDecode(nsec);
+            const { hex: secretKey } = nsecDecode(nsec);
 
             const event = createTextNote(secretKey, shareText, [
               ['t', 'lemmy'],
@@ -334,7 +335,6 @@ export async function handleLemmyBridgeShare(request: Request, env: Env): Promis
 
             const pool = new RelayPool(relays);
             await pool.publish(signed);
-            await pool.close();
 
             const _pubkey = getPublicKey(secretKey);
             results.nostr = {
