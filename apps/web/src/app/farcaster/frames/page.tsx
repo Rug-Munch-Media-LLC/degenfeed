@@ -39,14 +39,14 @@ interface FrameData {
 
 const DEMO_FRAMES: FrameData[] = [
   {
-    url: 'https://paragraph.xyz/frames/discover',
-    image: 'https://paragraph.xyz/images/og.png',
-    title: 'Discover Paragraph Newsletters',
-    description: 'Browse trending on-chain newsletters on Farcaster',
+    url: 'https://degenfeed.xyz/frames/trending',
+    image: 'https://degenfeed.xyz/og-image.png',
+    title: 'DegenFeed Trending',
+    description: 'Discover trending content across 44+ protocols',
     buttons: [
       { index: 1, label: 'Browse', action: 'post' },
-      { index: 2, label: 'Subscribe', action: 'post' },
-      { index: 3, label: 'Learn More', action: 'link', target: 'https://paragraph.xyz' },
+      { index: 2, label: 'Search', action: 'post' },
+      { index: 3, label: 'About', action: 'link', target: 'https://degenfeed.xyz' },
     ],
     postUrl: 'https://api.paragraph.xyz/frames/discover',
     aspectRatio: '1.91:1',
