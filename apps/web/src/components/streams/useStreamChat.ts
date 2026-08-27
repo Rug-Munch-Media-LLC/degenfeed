@@ -85,22 +85,6 @@ const MOCK_MSGS = [
   'nice',
 ];
 
-function generateMockChatMessage(_existing: ChatMessage[]): ChatMessage {
-  const name = MOCK_NAMES[Math.floor(Math.random() * MOCK_NAMES.length)] ?? 'anonymous';
-  const text = MOCK_MSGS[Math.floor(Math.random() * MOCK_MSGS.length)] ?? '';
-  const badgePool: Array<'mod' | 'sub' | 'host' | 'verified'> = ['mod', 'sub', 'host', 'verified'];
-  const badge =
-    Math.random() > 0.7 ? badgePool[Math.floor(Math.random() * badgePool.length)] : undefined;
-
-  return {
-    id: `chat-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-    userId: `user-${name}`,
-    displayName: name,
-    text,
-    timestamp: Date.now(),
-    badge,
-  };
-}
 
 /* === Hook ===================================================== */
 

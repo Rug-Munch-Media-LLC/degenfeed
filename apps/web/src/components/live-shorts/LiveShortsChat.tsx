@@ -31,47 +31,6 @@ interface ChatMessage {
 
 // === Mock messages (dev/fallback) ======================================
 
-function generateMockMessages(): ChatMessage[] {
-  const users = [
-    { name: 'alice.eth', avatar: '', protocol: 'ethereum' },
-    { name: 'bob.nostr', avatar: '', protocol: 'nostr' },
-    { name: 'charlie.lens', avatar: '', protocol: 'lens' },
-    { name: 'diana.bsky', avatar: '', protocol: 'bluesky' },
-    { name: 'eve.farc', avatar: '', protocol: 'farcaster' },
-  ];
-  const messages = [
-    'LFG! 🔥',
-    'This is fire!!',
-    'WAGMI 💎',
-    'Just tipped! ❤️',
-    'Bullish 🚀',
-    'Great call!',
-    'What do you think about ETH?',
-    'Haha nice',
-    '💀💀💀',
-    'Can you talk about Solana?',
-    'First time watching live, this is cool!',
-    'Apes together strong 🦍',
-  ];
-
-  const now = Date.now();
-  return Array.from({ length: 30 }, (_, i) => {
-    const userIndex = i % users.length;
-    const user = users[userIndex] ?? { name: 'anon', avatar: '', protocol: '' };
-    const isTip = i % 7 === 0;
-    const msgIndex = i % messages.length;
-    return {
-      id: `chat-${i}`,
-      sender: user.name,
-      senderAvatar: user.avatar,
-      text: isTip ? `Sent ${(Math.random() * 0.5).toFixed(2)} ETH! 🎉` : (messages[msgIndex] ?? ''),
-      timestamp: now - (30 - i) * 3000,
-      protocol: user.protocol,
-      isTip,
-      tipAmount: isTip ? `${(Math.random() * 0.5).toFixed(2)} ETH` : undefined,
-    };
-  });
-}
 
 // === Protocol badge colors ============================================
 
@@ -204,7 +163,7 @@ interface LiveShortsChatProps {
 export function LiveShortsChat({ sessionId: _sessionId }: LiveShortsChatProps) {
   const { ready, signedInProtocols } = useAuth();
   const hasSignedIn = ready && Object.values(signedInProtocols).some(Boolean);
-  const [messages, setMessages] = useState<ChatMessage[]>(() => generateMockMessages());
+  const [messages, setMessages] = useState<ChatMessage[]>(() => []);
   const listRef = useRef<HTMLDivElement>(null);
   const [autoScroll, setAutoScroll] = useState(true);
 
