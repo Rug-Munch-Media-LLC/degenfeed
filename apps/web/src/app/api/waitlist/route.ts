@@ -1,18 +1,15 @@
 import { NextResponse } from 'next/server';
-
-interface WaitlistBody {
-  email: string;
-  creatorType?: string;
-  platforms?: string[];
-  features?: string[];
-}
+import { WaitlistSchema } from '../../../lib/validation/schemas';
 
 export async function POST(request: Request) {
   try {
-    const body = (await request.json()) as WaitlistBody;
-
-    if (!body.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(body.email)) {
-      return NextResponse.json({ error: 'Invalid email' }, { status: 400 });
+    const rawBody = await request.json().catch(() => ({}));
+    const parsed = WaitlistSchema.safeParse(rawBody);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: 'Validation failed', details: parsed.error.flatten() },
+        { status: 400 },
+      );
     }
 
     // In production, insert into your waitlist database or CRM here
@@ -20,10 +17,10 @@ export async function POST(request: Request) {
     console.info(
       '[Waitlist]',
       JSON.stringify({
-        email: body.email,
-        creatorType: body.creatorType,
-        platforms: body.platforms,
-        features: body.features,
+        email: parsed.data.email,
+        name: parsed.data.name,
+        referrer: parsed.data.referrer,
+        interests: parsed.data.interests,
         timestamp: new Date().toISOString(),
       }),
     );

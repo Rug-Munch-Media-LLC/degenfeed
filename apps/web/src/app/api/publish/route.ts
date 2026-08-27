@@ -1,6 +1,7 @@
 import type { AnnouncePlatform, SpaceItem } from '@degenfeed/spaces-bridge';
 import { announceSpace } from '@degenfeed/spaces-bridge';
 import { NextResponse } from 'next/server';
+import { PublishSchema } from '../../../lib/validation/schemas';
 export const dynamic = 'force-dynamic';
 
 const VALID_TARGETS: AnnouncePlatform[] = [
@@ -46,8 +47,15 @@ async function checkUserPremium(request: Request): Promise<{
  */
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
-    const text = typeof body.text === 'string' ? body.text.trim() : '';
+    const rawBody = await request.json();
+    const parsed = PublishSchema.safeParse(rawBody);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: 'Validation failed', details: parsed.error.flatten() },
+        { status: 400 },
+      );
+    }
+    const { content: text, platforms, media, scheduledAt } = parsed.data;
     const targets = Array.isArray(body.targets)
       ? body.targets.filter((t: string) => VALID_TARGETS.includes(t as AnnouncePlatform))
       : [];
