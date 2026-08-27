@@ -55,50 +55,7 @@ function timeAgo(ts: number): string {
   return `${Math.floor(hrs / 24)}d ago`;
 }
 
-// ─── Mock Data ─────────────────────────────────────────────────────────
 
-function generateMockCoins(): UserCoin[] {
-  const symbols = ['DEGEN', 'PEPE', 'MOCHI', 'RUG', 'WAGMI', 'GM', 'LFG', 'MOON'];
-  return symbols.map((s) => {
-    const price = Math.random() * 0.05 + 0.0001;
-    const balance = Math.floor(Math.random() * 100000) + 100;
-    return {
-      symbol: s,
-      name: `${s.charAt(0).toUpperCase() + s.slice(1).toLowerCase()} Token`,
-      balance,
-      price,
-      priceChange24h: -30 + Math.random() * 60,
-      value: price * balance,
-    };
-  });
-}
-
-function generateMockActivity(): ActivityItem[] {
-  const symbols = ['DEGEN', 'PEPE', 'MOCHI', 'RUG'];
-  const types: ActivityItem['type'][] = ['buy', 'sell', 'holder', 'alert'];
-  return Array.from({ length: 20 }, (_, i) => {
-    const type = types[Math.floor(Math.random() * types.length)] ?? 'alert';
-    const symbol = symbols[Math.floor(Math.random() * symbols.length)] ?? 'DEGEN';
-    const texts: Record<ActivityItem['type'], string[]> = {
-      buy: [`Bought ${symbol}`, `Purchased more ${symbol}`, `Accumulated ${symbol}`],
-      sell: [`Sold some ${symbol}`, `Took profit on ${symbol}`, `Reduced ${symbol} position`],
-      holder: [
-        `New whale detected in ${symbol}`,
-        `${symbol} holder count up`,
-        `Big wallet moved ${symbol}`,
-      ],
-      alert: [`${symbol} price target hit`, `${symbol} volume spike`, `${symbol} trending`],
-    };
-    const textList = texts[type];
-    return {
-      id: `act-${i}`,
-      type,
-      symbol,
-      text: textList[Math.floor(Math.random() * textList.length)] ?? `Update on ${symbol}`,
-      timestamp: Date.now() - Math.floor(Math.random() * 86400000),
-    };
-  }).sort((a, b) => b.timestamp - a.timestamp);
-}
 
 // ══════════════════════════════════════════════════════════════════════
 // PORTFOLIO CARD
@@ -392,9 +349,9 @@ export default function TelegramMiniAppPage() {
   );
 
   useEffect(() => {
-    // Load data
-    setCoins(generateMockCoins());
-    setActivity(generateMockActivity());
+    // Load data — no mock fallback
+    setCoins([]);
+    setActivity([]);
     setLoading(false);
 
     // Signal ready to Telegram
