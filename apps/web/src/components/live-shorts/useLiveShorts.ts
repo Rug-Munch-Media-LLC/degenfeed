@@ -182,7 +182,7 @@ export function useLiveShortSession(sessionId: string): {
       refreshInterval: 5_000,
       revalidateOnFocus: true,
       dedupingInterval: 2_000,
-      fallbackData: { session: generateMockSession(0) },
+      fallbackData: { session: null },
       onError: () => {
         /* use fallback */
       },

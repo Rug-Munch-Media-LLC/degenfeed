@@ -220,35 +220,7 @@ function _formatViews(views: number): string {
 // with a warning notice. This stub exists to preserve call sites while
 // guaranteeing no fake content is ever served.
 
-function generateMockVideos(
-  count: number,
-  options: {
-    source?: VideoSource;
-    category?: VideoCategoryId;
-    sort?: SortMode;
-    page?: number;
-  } = {},
-): UnifiedVideo[] {
-  console.warn(
-    '[video-hub] generateMockVideos is deprecated — demo/seed content is banned. Returning empty.',
-  );
-  void count;
-  void options;
-  return [];
-}
-
-// ─── Feed Aggregator ──────────────────────────────────────────────────────
-
-async function getUnifiedVideoFeed(params: {
-  category: VideoCategoryId;
-  source: VideoSource;
-  sort: SortMode;
-  cursor?: string;
-  limit?: number;
-  wallet?: string;
-  env: Env;
-}): Promise<UnifiedVideoFeed> {
-  const { category, source, sort, cursor, wallet, env } = params;
+ = params;
   const limit = params.limit ?? HUB_PAGE_SIZE;
   const page = cursor ? Number(cursor) || 1 : 1;
 

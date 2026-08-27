@@ -1,10 +1,6 @@
 'use client';
 
-import {
-  generateMockSchedule,
-  getCategoryInfo,
-  type StreamSchedule as ScheduleType,
-} from './types';
+
 
 interface StreamScheduleProps {
   streams?: ScheduleType[];

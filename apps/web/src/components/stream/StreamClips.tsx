@@ -1,6 +1,6 @@
 'use client';
 
-import { type Clip, generateMockClips } from './types';
+
 
 interface StreamClipsProps {
   clips?: Clip[];

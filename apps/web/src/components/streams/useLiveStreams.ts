@@ -215,7 +215,7 @@ export function useLiveStreams() {
       refreshInterval: 10000, // Poll every 10s
       revalidateOnFocus: true,
       dedupingInterval: 5000,
-      fallbackData: generateMockStreams(),
+      fallbackData: [],
       onError: () => {
         // Use mock data on error (already set via fallbackData)
       },
