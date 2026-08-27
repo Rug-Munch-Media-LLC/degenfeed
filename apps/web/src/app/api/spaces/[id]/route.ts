@@ -1,7 +1,14 @@
 import { getLiveSpaces } from '@degenfeed/spaces-bridge';
 import { NextResponse } from 'next/server';
+import { z } from 'zod';
 
 export const dynamic = 'force-dynamic';
+
+const UpdateSpaceSchema = z.object({
+  title: z.string().min(1).max(100).optional(),
+  description: z.string().max(500).optional(),
+  tags: z.array(z.string().max(30)).max(10).optional(),
+});
 
 /**
  * GET /api/spaces/[id] — Get space details
@@ -28,6 +35,14 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   try {
+    const rawBody = await request.json().catch(() => ({}));
+    const parsed = UpdateSpaceSchema.safeParse(rawBody);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: 'Validation failed', details: parsed.error.flatten() },
+        { status: 400 },
+      );
+    }
     const body = await request.json();
     return NextResponse.json({
       space: { id, ...body },

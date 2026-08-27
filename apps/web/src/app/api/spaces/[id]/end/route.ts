@@ -1,7 +1,12 @@
 import { endSpace, getLiveSpaces } from '@degenfeed/spaces-bridge';
 import { NextResponse } from 'next/server';
+import { z } from 'zod';
 
 export const dynamic = 'force-dynamic';
+
+const EndSchema = z.object({
+  hostId: z.string().optional(),
+});
 
 /**
  * POST /api/spaces/[id]/end — End a space (host only)
@@ -11,8 +16,15 @@ export const dynamic = 'force-dynamic';
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   try {
-    const body = await request.json();
-    const hostId = body.hostId;
+    const rawBody = await request.json().catch(() => ({}));
+    const parsed = EndSchema.safeParse(rawBody);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: 'Validation failed', details: parsed.error.flatten() },
+        { status: 400 },
+      );
+    }
+    const hostId = parsed.data.hostId;
 
     // Find the space
     const spaces = await getLiveSpaces({ timeout: 3000 });
