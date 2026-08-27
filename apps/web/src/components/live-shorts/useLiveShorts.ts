@@ -122,147 +122,8 @@ const fetcher = async <T>(url: string): Promise<T> => {
 
 // === Mock generators (dev/fallback) ====================================
 
-function generateMockSession(idx: number): LiveShortSession {
-  const now = Date.now();
-  const creators: LiveShortCreator[] = [
-    { id: 'c1', handle: 'defi_degen', displayName: 'DeFi Degen', avatarUrl: '', verified: true },
-    { id: 'c2', handle: 'sol_whale', displayName: 'Sol Whale', avatarUrl: '', verified: false },
-    { id: 'c3', handle: 'nft_queen', displayName: 'NFT Queen', avatarUrl: '', verified: true },
-    {
-      id: 'c4',
-      handle: 'crypto_analyst',
-      displayName: 'Crypto Analyst',
-      avatarUrl: '',
-      verified: false,
-    },
-    { id: 'c5', handle: 'meme_lord', displayName: 'Meme Lord', avatarUrl: '', verified: false },
-    {
-      id: 'c6',
-      handle: 'yield_farmer',
-      displayName: 'Yield Farmer',
-      avatarUrl: '',
-      verified: true,
-    },
-    {
-      id: 'c7',
-      handle: 'base_builder',
-      displayName: 'Base Builder',
-      avatarUrl: '',
-      verified: false,
-    },
-    {
-      id: 'c8',
-      handle: 'token_whisperer',
-      displayName: 'Token Whisperer',
-      avatarUrl: '',
-      verified: false,
-    },
-  ];
 
-  const titles = [
-    'DeFi Alpha RIGHT NOW 🔥',
-    'Solana memecoin watch 📈',
-    'BTC analysis — live charting',
-    'Base ecosystem deep dive',
-    "Trading signals — don't miss!",
-    'NFT mint happening NOW',
-    'ETH L2 comparison live',
-    'Alt season or nah?',
-  ];
 
-  const creatorIndex = idx % creators.length;
-  const creator = creators[creatorIndex] ?? creators[0]!;
-
-  return {
-    id: `liveshort-${idx + 1}`,
-    title: titles[idx % titles.length] ?? 'Live Short',
-    description: `Join ${creator.displayName} for an exclusive live short!`,
-    creator,
-    thumbnailUrl: '',
-    playbackUrl: `https://stream.degenfeed.example/live/${creator.handle}/index.m3u8`,
-    protocol: 'hls',
-    startedAt: now - Math.floor(Math.random() * 1800000),
-    maxDuration: 60,
-    viewerCount: Math.floor(Math.random() * 1200) + 10,
-    viewerBreakdown: [
-      {
-        platform: 'degenfeed',
-        count: Math.floor(Math.random() * 300) + 5,
-        label: 'DegenFeed',
-        color: '#00ff41',
-      },
-      {
-        platform: 'farcaster',
-        count: Math.floor(Math.random() * 200) + 3,
-        label: 'Farcaster',
-        color: '#8a63d2',
-      },
-      {
-        platform: 'nostr',
-        count: Math.floor(Math.random() * 100) + 1,
-        label: 'Nostr',
-        color: '#8b5cf6',
-      },
-      {
-        platform: 'lens',
-        count: Math.floor(Math.random() * 150) + 2,
-        label: 'Lens',
-        color: '#abfe2c',
-      },
-      {
-        platform: 'bluesky',
-        count: Math.floor(Math.random() * 80) + 1,
-        label: 'Bluesky',
-        color: '#1185fe',
-      },
-    ],
-    tipCount: Math.floor(Math.random() * 25),
-    tipAmount: `${(Math.random() * 5).toFixed(2)} SOL`,
-    reactionCount: Math.floor(Math.random() * 200),
-    status: 'live',
-    tags: ['live', 'crypto', 'alpha'],
-  };
-}
-
-function generateMockSessions(count = 12): LiveShortSession[] {
-  return Array.from({ length: count }, (_, i) => generateMockSession(i));
-}
-
-function generateMockTips(count = 20): LiveShortTip[] {
-  const names = [
-    'alice.eth',
-    'bob.nostr',
-    'charlie.lens',
-    'diana.bsky',
-    'eve.farc',
-    'frank.eth',
-    'grace.sol',
-    'harry.btc',
-  ];
-  const currencies = ['ETH', 'SOL', 'DEGEN', 'USDC', 'BTC'];
-  const protocols = ['ethereum', 'solana', 'lightning', 'base', 'polygon'];
-  const messages = [
-    'LFG! 🔥',
-    'WAGMI 💎',
-    'Great content!',
-    'Bullish 🚀',
-    'Keep it up!',
-    '',
-    '',
-    '',
-  ];
-
-  return Array.from({ length: count }, (_, i) => ({
-    id: `tip-${i + 1}`,
-    sender: names[i % names.length] ?? 'anonymous',
-    senderAvatar: undefined,
-    amount: (Math.random() * 2).toFixed(3),
-    currency: currencies[i % currencies.length] ?? 'ETH',
-    message: messages[i % messages.length] || undefined,
-    timestamp: Date.now() - Math.floor(Math.random() * 60000),
-    protocol: protocols[i % protocols.length] ?? 'ethereum',
-  }));
-}
 
 // === Hooks =============================================================
 
@@ -289,7 +150,7 @@ export function useActiveLiveShorts(opts?: { protocol?: string }): {
       refreshInterval: 8_000,
       revalidateOnFocus: true,
       dedupingInterval: 4_000,
-      fallbackData: { sessions: generateMockSessions(), total: 12, aggregatedAt: Date.now() },
+      fallbackData: { sessions: [], total: 12, aggregatedAt: Date.now() },
       onError: () => {
         /* use fallback */
       },
@@ -349,7 +210,7 @@ export function useLiveShortTips(sessionId: string): {
     {
       refreshInterval: 3_000,
       dedupingInterval: 1_500,
-      fallbackData: { tips: generateMockTips(), total: 20 },
+      fallbackData: { tips: [], total: 20 },
       onError: () => {
         /* ignore */
       },

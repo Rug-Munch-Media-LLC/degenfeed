@@ -204,59 +204,6 @@ const MOCK_CREATORS = [
 
 const MOCK_SOURCES: StreamSource[] = ['twitch', 'kick', 'peertube', 'youtube', 'owncast', 'spaces'];
 
-function generateMockStreams(): LiveStreamsResponse {
-  const now = Date.now();
-  const sourceCounts: Record<string, number> = {};
-  const categoryCounts: Record<string, number> = {};
-
-  const streams: LiveStream[] = MOCK_LIVE_TITLES.map((title, i) => {
-    const creator = MOCK_CREATORS[i % MOCK_CREATORS.length]!;
-    const source = MOCK_SOURCES[i % MOCK_SOURCES.length]!;
-    const sourceConfig = SOURCE_CONFIG[source]!;
-
-    // Determine stream type from source
-    let streamType: StreamType = SOURCE_TO_STREAM_TYPE[source] ?? 'solo';
-    if (i % 5 === 0) streamType = 'spaces';
-    else if (i % 7 === 0) streamType = 'launch';
-    else if (i % 9 === 0) streamType = 'collab';
-
-    const category =
-      streamType === 'spaces' ? 'talk' : streamType === 'launch' ? 'crypto' : 'gaming';
-    categoryCounts[category] = (categoryCounts[category] ?? 0) + 1;
-    sourceCounts[source] = (sourceCounts[source] ?? 0) + 1;
-
-    return {
-      id: `live-${i + 1}`,
-      title,
-      creatorId: creator.id,
-      creatorHandle: creator.handle,
-      creatorAvatar: undefined,
-      streamType,
-      source,
-      sourceLabel: sourceConfig.label,
-      sourceColor: sourceConfig.color,
-      viewerCount: Math.floor(Math.random() * 8500) + 12,
-      thumbnailUrl: undefined,
-      isLive: true,
-      startedAt: now - Math.floor(Math.random() * 7200000),
-      tags: ['live', source, category],
-    };
-  });
-
-  // Sort by viewer count desc for featured
-  const sorted = [...streams].sort((a, b) => b.viewerCount - a.viewerCount);
-  const featured = sorted.slice(0, 5);
-  // Shuffle the rest for variety
-  const remaining = sorted.slice(5).sort(() => Math.random() - 0.5);
-
-  return {
-    streams: [...featured, ...remaining],
-    featured,
-    total: streams.length,
-    sourceCounts,
-    categoryCounts,
-  };
-}
 
 /* === Hook ===================================================== */
 

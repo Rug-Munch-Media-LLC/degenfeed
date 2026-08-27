@@ -99,29 +99,6 @@ function MetricBar({
 
 /* === Generate mock analytics ================================== */
 
-function generateMockAnalytics(): ViewerAnalytics {
-  const now = Date.now();
-  return {
-    peakViewers: 1250,
-    averageViewers: 432,
-    totalUniqueViewers: 3401,
-    watchTimeMinutes: 28730,
-    newFollowers: 89,
-    newSubscribers: 23,
-    tipsReceived: 456.78,
-    topChatters: [
-      { handle: 'degen_maxi', messages: 342 },
-      { handle: 'sol_queen', messages: 287 },
-      { handle: 'meme_lord', messages: 198 },
-      { handle: 'crypto_wizard', messages: 156 },
-      { handle: 'yield_seeker', messages: 134 },
-    ],
-    viewerHistory: Array.from({ length: 120 }, (_, i) => ({
-      timestamp: now - (120 - i) * 60000,
-      count: Math.floor(Math.random() * 800) + 50,
-    })),
-  };
-}
 
 /* === CreatorDashboard ========================================= */
 
@@ -131,8 +108,8 @@ interface CreatorDashboardProps {
 
 export function CreatorDashboard(_props: CreatorDashboardProps) {
   const [activeTab, setActiveTab] = useState<'overview' | 'chat' | 'revenue' | 'vods'>('overview');
-  const analytics = useRef(generateMockAnalytics()).current;
-  const streams = useRef(generateMockStream(1)).current[0];
+  const analytics = useRef({}).current;
+  const streams = useRef([]).current[0];
 
   /* === Stream health simulation =============================== */
   const [uptime, setUptime] = useState('00:00:00');
