@@ -1,6 +1,13 @@
 import { NextResponse } from 'next/server';
+import { z } from 'zod';
 
 export const dynamic = 'force-dynamic';
+
+const RequestSpeakSchema = z.object({
+  userId: z.string().min(1).max(100),
+  displayName: z.string().max(50).optional(),
+  avatarUrl: z.string().url().optional(),
+});
 
 /**
  * POST /api/spaces/[id]/request-speak — Request to become a speaker
@@ -8,12 +15,15 @@ export const dynamic = 'force-dynamic';
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   try {
-    const body = await request.json();
-    const { userId, displayName, avatarUrl } = body;
-
-    if (!userId) {
-      return NextResponse.json({ error: 'userId required' }, { status: 400 });
+    const rawBody = await request.json().catch(() => ({}));
+    const parsed = RequestSpeakSchema.safeParse(rawBody);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: 'Validation failed', details: parsed.error.flatten() },
+        { status: 400 },
+      );
     }
+    const { userId, displayName, avatarUrl } = parsed.data;
 
     // Simulate speaker addition
     return NextResponse.json({
