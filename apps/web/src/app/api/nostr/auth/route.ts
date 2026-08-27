@@ -1,3 +1,5 @@
+import { z } from 'zod';
+
 /**
  * POST /api/nostr/auth
  *

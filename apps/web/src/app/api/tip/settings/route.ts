@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-// TODO: Wire to worker backend
+import { z } from 'zod';
 export const dynamic = 'force-dynamic';
 
 export async function POST(request: Request) {
