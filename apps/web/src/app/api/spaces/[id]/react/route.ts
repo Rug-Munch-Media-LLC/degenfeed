@@ -1,6 +1,12 @@
 import { NextResponse } from 'next/server';
+import { z } from 'zod';
 
 export const dynamic = 'force-dynamic';
+
+const ReactSchema = z.object({
+  userId: z.string().min(1).max(100),
+  emoji: z.string().min(1).max(10),
+});
 
 /**
  * POST /api/spaces/[id]/react — Send a reaction
@@ -8,11 +14,15 @@ export const dynamic = 'force-dynamic';
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   void params;
   try {
-    const body = await request.json();
-    const { userId, emoji } = body;
-    if (!userId || !emoji) {
-      return NextResponse.json({ error: 'userId and emoji required' }, { status: 400 });
+    const rawBody = await request.json().catch(() => ({}));
+    const parsed = ReactSchema.safeParse(rawBody);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: 'Validation failed', details: parsed.error.flatten() },
+        { status: 400 },
+      );
     }
+    const { userId, emoji } = parsed.data;
 
     return NextResponse.json({
       ok: true,
