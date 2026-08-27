@@ -13,7 +13,7 @@ function formatViews(n: number): string {
 }
 
 export function StreamClips({ clips }: StreamClipsProps) {
-  const items = clips ?? generateMockClips();
+  const items = clips ?? [];
 
   if (items.length === 0) return null;
 

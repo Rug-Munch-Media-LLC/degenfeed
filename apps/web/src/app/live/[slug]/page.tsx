@@ -23,12 +23,7 @@ import { StreamPlayer } from '../../../components/stream/StreamPlayer';
 import { StreamSchedule } from '../../../components/stream/StreamSchedule';
 import { StreamVODs } from '../../../components/stream/StreamVODs';
 import type { StreamExtended } from '../../../components/stream/types';
-import {
-  generateMockClips,
-  generateMockSchedule,
-  generateMockStream,
-  generateMockVODs,
-} from '../../../components/stream/types';
+
 
 // ─── Types ─────────────────────────────────────────────────────────────
 
@@ -96,7 +91,7 @@ function isStreamId(slug: string): boolean {
 // ─── Mock Creator Data ────────────────────────────────────────────────
 
 function useStreamData(id: string): StreamExtended {
-  const [stream] = useMemo(() => generateMockStream(1), []);
+  const [stream] = useMemo(() => [], []);
   const base = stream!;
   return {
     ...base,
@@ -617,9 +612,9 @@ function CreatorPageView({ slug }: { slug: string }) {
   );
   const [showSidebar, setShowSidebar] = useState(true);
 
-  const vods = useMemo(() => generateMockVODs(6), []);
-  const clips = useMemo(() => generateMockClips(8), []);
-  const schedule = useMemo(() => generateMockSchedule(), []);
+  const vods = useMemo(() => [], []);
+  const clips = useMemo(() => [], []);
+  const schedule = useMemo(() => [], []);
 
   const handleTheaterToggle = useCallback(() => {
     setIsTheater((v) => !v);
