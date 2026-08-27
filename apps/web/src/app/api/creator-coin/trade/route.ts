@@ -1,5 +1,6 @@
 import type { TradeResult } from '@degenfeed/creator-coin';
 import { NextResponse } from 'next/server';
+import { z } from 'zod';
 import { getSessionFromRequest, requireSession } from '../../_auth';
 import {
   evmClientFromEnv,
@@ -7,6 +8,16 @@ import {
   isValidSolanaAddress,
   solanaClientFromEnv,
 } from '../lib';
+
+const TradeSchema = z.object({
+  action: z.enum(['buy', 'sell']),
+  amount: z.union([z.string(), z.number()]).refine((v) => Number(v) > 0, 'Amount must be positive'),
+  tokenAddress: z.string().optional(),
+  chain: z.enum(['base', 'solana']).optional(),
+  slippageBps: z.number().min(10).max(1500).optional(),
+  clientRequestId: z.string().max(128).optional(),
+  minTokensOut: z.union([z.string(), z.number()]).optional(),
+});
 
 /**
  * POST /api/creator-coin/trade
@@ -94,31 +105,17 @@ export async function POST(request: Request) {
   if (authError) return authError;
 
   try {
-    const body = await request.json();
-    const { action, amount, tokenAddress, chain, slippageBps, clientRequestId, minTokensOut } =
-      body as {
-        action?: string;
-        amount?: string | number;
-        tokenAddress?: string;
-        chain?: string;
-        slippageBps?: number;
-        clientRequestId?: string;
-        minTokensOut?: string | number;
-      };
+    const rawBody = await request.json();
+    const parsed = TradeSchema.safeParse(rawBody);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: 'Invalid request body', details: parsed.error.flatten() },
+        { status: 400 },
+      );
+    }
+    const { action, amount, tokenAddress, chain, slippageBps, clientRequestId, minTokensOut } = parsed.data;
 
-    const normalizedAction = String(action ?? '').toLowerCase();
-    if (!TRADE_ACTIONS.has(normalizedAction)) {
-      return NextResponse.json(
-        { error: 'Missing or invalid "action" — must be "buy" or "sell"' },
-        { status: 400 },
-      );
-    }
-    if (amount === undefined || Number(amount) <= 0 || Number.isNaN(Number(amount))) {
-      return NextResponse.json(
-        { error: 'Missing or invalid "amount" — must be a positive number' },
-        { status: 400 },
-      );
-    }
+    const normalizedAction = action;
 
     // ── 2. Session identity → rate limit + idempotency key ───────────────────
     const session = await getSessionFromRequest(request);
