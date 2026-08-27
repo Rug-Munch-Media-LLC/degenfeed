@@ -5,21 +5,15 @@ import {
   verifyIdentity,
 } from '@degenfeed/identity';
 import { type NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 
 export const dynamic = 'force-dynamic';
 
-const SUPPORTED_PROTOCOLS = [
-  'nostr',
-  'farcaster',
-  'lens',
-  'bluesky',
-  'mastodon',
-  'twitter',
-  'youtube',
-  'github',
-  'discord',
-  'telegram',
-] as const;
+const VerifySchema = z.object({
+  protocol: z.enum(['nostr', 'farcaster', 'lens', 'bluesky', 'mastodon', 'twitter', 'youtube', 'github', 'discord', 'telegram']),
+  input: z.string().min(1).max(500),
+  nip05: z.string().email().optional(),
+});
 
 /**
  * POST /api/identity/verify
@@ -39,14 +33,15 @@ const SUPPORTED_PROTOCOLS = [
  */
 export async function POST(request: NextRequest) {
   try {
-    const body = (await request.json()) as {
-      protocol?: string;
-      input?: string;
-      nip05?: string;
-    };
-
-    const protocol = body.protocol?.toLowerCase() ?? '';
-    const input = body.input?.trim() ?? '';
+    const rawBody = await request.json().catch(() => ({}));
+    const parsed = VerifySchema.safeParse(rawBody);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: 'Validation failed', details: parsed.error.flatten() },
+        { status: 400 },
+      );
+    }
+    const { protocol, input, nip05 } = parsed.data;
 
     if (!SUPPORTED_PROTOCOLS.includes(protocol as (typeof SUPPORTED_PROTOCOLS)[number])) {
       return NextResponse.json(
