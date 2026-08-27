@@ -1,15 +1,23 @@
 import { getBridge, getLiveSpaces } from '@degenfeed/spaces-bridge';
 import { NextResponse } from 'next/server';
+import { z } from 'zod';
 
 export const dynamic = 'force-dynamic';
+
+const JoinSchema = z.object({
+  userId: z.string().optional(),
+  username: z.string().max(50).optional(),
+});
 
 /**
  * POST /api/spaces/[id]/join — Join a space
  * Records the join across all platforms the space is on.
  * Returns updated space info with new listener count.
  */
-export async function POST(_request: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
+  const rawBody = await request.json().catch(() => ({}));
+  JoinSchema.safeParse(rawBody);
   try {
     // Get current space info
     const spaces = await getLiveSpaces({ timeout: 3000 });
