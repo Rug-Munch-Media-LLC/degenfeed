@@ -24,7 +24,7 @@ services:
     restart: unless-stopped
     ports:
       - "127.0.0.1:3100:3000"
-    env_file: /path/to/degenfeed/.env
+    env_file: .env
     networks:
       - rmi_network
       - degenfeed_default
