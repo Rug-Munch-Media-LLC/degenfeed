@@ -1,15 +1,21 @@
 import { NextResponse } from 'next/server';
-// TODO: Wire to worker backend — see ROADMAP.md
+import { z } from 'zod';
 export const dynamic = 'force-dynamic';
+
+const TipSchema = z.object({
+  recipient: z.string().min(1).max(100),
+  method: z.enum(['lightning', 'on-chain', 'x402']),
+  amount: z.union([z.string(), z.number()]).refine((v) => Number(v) > 0, 'Amount must be positive'),
+  message: z.string().max(500).optional(),
+});
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
-    const { recipient, method, amount } = body;
-
-    if (!recipient || !method || !amount) {
+    const rawBody = await request.json().catch(() => ({}));
+    const parsed = TipSchema.safeParse(rawBody);
+    if (!parsed.success) {
       return NextResponse.json(
-        { error: 'Missing required fields: recipient, method, amount' },
+        { error: 'Validation failed', details: parsed.error.flatten() },
         { status: 400 },
       );
     }
