@@ -15,6 +15,7 @@
  */
 
 import { NextResponse } from 'next/server';
+import { SignupSchema } from '../../../lib/validation/schemas';
 
 // Bridge is reachable from the web container via host.docker.internal
 // (the self-hosted API server at :3101 is NOT — it binds host loopback only).
@@ -23,34 +24,17 @@ const BRIDGE_URL =
   process.env.WORKER_URL?.replace(/:\d+$/, ':8787') ??
   'http://host.docker.internal:8787';
 
-interface SignupBody {
-  walletAddress?: string;
-  username?: string;
-  email?: string;
-  password?: string;
-  displayName?: string;
-  method?: string; // 'wallet' | 'email' | 'platform' (frontend compat)
-  platform?: string; // frontend 'platform' method
-  referrer?: string;
-}
-
 export async function POST(request: Request) {
   try {
-    const body = (await request.json().catch(() => ({}))) as SignupBody;
-
-    // Accept both the canonical shape ({walletAddress, username}) and the
-    // frontend GuestSignUp shapes ({method: 'wallet'|'email'|'platform', …}).
-    const username = body.username?.trim().toLowerCase();
-    const walletAddress = body.walletAddress ?? (body.method === 'wallet' ? undefined : undefined);
-
-    if (!username || !/^[a-z0-9_]{1,30}$/.test(username)) {
+    const rawBody = await request.json().catch(() => ({}));
+    const parsed = SignupSchema.safeParse(rawBody);
+    if (!parsed.success) {
       return NextResponse.json(
-        {
-          error: 'Username must be 1-30 characters (lowercase letters, numbers, underscores)',
-        },
+        { error: 'Validation failed', details: parsed.error.flatten() },
         { status: 422 },
       );
     }
+    const { username, email, walletAddress, displayName, password } = parsed.data;
 
     const bridgeKey = process.env.BRIDGE_API_KEY;
     if (!bridgeKey) {
@@ -59,11 +43,11 @@ export async function POST(request: Request) {
 
     const payload: Record<string, unknown> = {
       username,
-      displayName: body.displayName || username,
+      displayName: displayName || username,
     };
     if (walletAddress) payload.walletAddress = walletAddress;
-    if (body.email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(body.email)) payload.email = body.email;
-    if (body.password && body.password.length >= 8) payload.password = body.password;
+    if (email) payload.email = email;
+    if (password) payload.password = password;
 
     const res = await fetch(`${BRIDGE_URL}/api/auth/signup`, {
       method: 'POST',

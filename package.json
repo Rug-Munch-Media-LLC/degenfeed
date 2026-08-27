@@ -63,6 +63,7 @@
     "pnpm": ">=11.0.0"
   },
   "dependencies": {
+    "zod": "^3.25.76",
     "@degenfeed/creator-coin": "workspace:*",
     "@degenfeed/degenchat": "workspace:*",
     "@degenfeed/monetization": "workspace:*",

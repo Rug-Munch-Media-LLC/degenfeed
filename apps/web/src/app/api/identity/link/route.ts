@@ -1,20 +1,7 @@
 import { type NextRequest, NextResponse } from 'next/server';
+import { IdentityLinkSchema } from '../../../lib/validation/schemas';
 // TODO: Wire to worker backend
 export const dynamic = 'force-dynamic';
-
-const VALID_PROTOCOLS = [
-  'nostr',
-  'farcaster',
-  'lens',
-  'bluesky',
-  'mastodon',
-  'reddit',
-  'threads',
-  'lemmy',
-  'rss',
-  'peertube',
-  'zora',
-];
 
 export async function GET() {
   return NextResponse.json(
@@ -40,24 +27,17 @@ export async function GET() {
  */
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const {
-      protocol,
-      identity: identityData,
-      walletAddress,
-      targetProtocol,
-      targetIdentity,
-    } = body;
-
-    if (!protocol || !VALID_PROTOCOLS.includes(protocol)) {
+    const rawBody = await request.json();
+    const parsed = IdentityLinkSchema.safeParse(rawBody);
+    if (!parsed.success) {
       return NextResponse.json(
-        { error: `Invalid protocol. Must be one of: ${VALID_PROTOCOLS.join(', ')}` },
+        { error: 'Validation failed', details: parsed.error.flatten() },
         { status: 400 },
       );
     }
+    const { protocol, identity: identityData, walletAddress, targetProtocol, targetIdentity } = parsed.data;
 
-    if (
-      !identityData ||
+    if (!identityData ||
       typeof identityData !== 'object' ||
       Object.keys(identityData).length === 0
     ) {
