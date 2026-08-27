@@ -1,8 +1,15 @@
 import { createHmac } from 'node:crypto';
 import { NextResponse } from 'next/server';
+import { z } from 'zod';
 import { getSessionFromRequest, requireSession } from '../../../_auth';
 
 export const dynamic = 'force-dynamic';
+
+const LiveKitTokenSchema = z.object({
+  displayName: z.string().max(50).optional(),
+  canPublish: z.boolean().optional(),
+  userId: z.string().optional(),
+});
 
 /**
  * POST /api/spaces/[id]/livekit-token
@@ -86,12 +93,15 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   }
 
   try {
-    const body = await request.json();
-    const { displayName, canPublish } = body as {
-      userId?: string;
-      displayName?: string;
-      canPublish?: boolean;
-    };
+    const rawBody = await request.json().catch(() => ({}));
+    const parsed = LiveKitTokenSchema.safeParse(rawBody);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: 'Validation failed', details: parsed.error.flatten() },
+        { status: 400 },
+      );
+    }
+    const { displayName, canPublish } = parsed.data;
 
     const session = await getSessionFromRequest(request);
     const identity = session?.address ?? 'anon';
