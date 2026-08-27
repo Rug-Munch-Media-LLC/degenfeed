@@ -1,6 +1,14 @@
 import { type NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 
 export const dynamic = 'force-dynamic';
+
+const CrossReplySchema = z.object({
+  parentId: z.string().min(1).max(100),
+  parentProtocol: z.string().min(1).max(50),
+  targetProtocol: z.string().min(1).max(50),
+  content: z.string().min(1).max(5000),
+});
 
 /**
  * POST /api/cross-reply
@@ -17,8 +25,15 @@ export const dynamic = 'force-dynamic';
  */
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { parentId, parentProtocol, targetProtocol, content } = body;
+    const rawBody = await request.json().catch(() => ({}));
+    const parsed = CrossReplySchema.safeParse(rawBody);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: 'Validation failed', details: parsed.error.flatten() },
+        { status: 400 },
+      );
+    }
+    const { parentId, parentProtocol, targetProtocol, content } = parsed.data;
 
     if (!parentId || !parentProtocol || !targetProtocol || !content) {
       return NextResponse.json(

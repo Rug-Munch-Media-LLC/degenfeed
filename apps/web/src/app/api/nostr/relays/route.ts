@@ -16,9 +16,14 @@
  */
 
 import { type NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 import { proxyPost } from '../../_proxy';
 
 export const dynamic = 'force-dynamic';
+
+const NostrRelaysSchema = z.object({
+  event: z.record(z.unknown()),
+});
 
 /**
  * GET: Get relay status info
