@@ -1,83 +1,35 @@
 import type { SpaceContentType, SpaceGating, SpacePlatform } from '@degenfeed/spaces-bridge';
 import { createSpace } from '@degenfeed/spaces-bridge';
 import { NextResponse } from 'next/server';
+import { SpaceCreateSchema } from '../../../lib/validation/schemas';
 
 export const dynamic = 'force-dynamic';
 
-/** Incoming request body shape (mirrors CreateSpaceOptions minus derived fields). */
-interface CreateSpaceBody {
-  title?: string;
-  description?: string;
-  hostId?: string;
-  hostName?: string;
-  hostAvatarUrl?: string;
-  coHosts?: string[];
-  platforms?: string[];
-  contentType?: SpaceContentType;
-  photoUrls?: string[];
-  scheduledAt?: string;
-  tippingEnabled?: boolean;
-  tipTokenAddress?: string;
-  gating?: SpaceGating;
-  tags?: string[];
-  peertubeTokenAddress?: string;
-  peertubeTokenSymbol?: string;
-  peertubeCreatorAddress?: string;
-  youTubePrivacy?: 'public' | 'unlisted' | 'private';
-  twitchGame?: string;
-  kickCategory?: string;
-}
-
-// All supported platforms for validation
-const VALID_PLATFORMS: SpacePlatform[] = [
-  // Audio
-  'nostr',
-  'peertube',
-  'owncast',
-  'livepeer',
-  // Social Announce
-  'farcaster',
-  'lens',
-  'bluesky',
-  'mastodon',
-  'discord',
-  'telegram',
-  'twitter',
-  // Video
-  'youtube',
-  'twitch',
-  'kick',
-  // Photos
-  'nostr-pictures',
-  'bluesky-photos',
-  'pixelfed',
-];
-
 export async function POST(request: Request) {
   try {
-    const body = (await request.json()) as CreateSpaceBody;
-    const title = typeof body.title === 'string' ? body.title.trim() : '';
-    if (!title) {
-      return NextResponse.json({ error: 'Title is required' }, { status: 400 });
+    const rawBody = await request.json();
+    const parsed = SpaceCreateSchema.safeParse(rawBody);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: 'Validation failed', details: parsed.error.flatten() },
+        { status: 400 },
+      );
     }
+    const { title, description, hostId, platforms: requestedPlatforms, contentType } = parsed.data;
 
     // Determine which platforms to create on
-    const requestedPlatforms: string[] = body.platforms ?? ['nostr'];
-    const platforms: SpacePlatform[] = requestedPlatforms.filter((p): p is SpacePlatform =>
-      VALID_PLATFORMS.includes(p as SpacePlatform),
+    const platforms: SpacePlatform[] = (requestedPlatforms ?? ['nostr']).filter((p): p is SpacePlatform =>
+      ['nostr', 'peertube', 'owncast', 'livepeer', 'farcaster', 'lens', 'bluesky', 'mastodon', 'discord', 'telegram', 'twitter', 'youtube', 'twitch', 'kick', 'nostr-pictures', 'bluesky-photos', 'pixelfed'].includes(p),
     );
 
     if (platforms.length === 0) {
       platforms.push('nostr');
     }
 
-    // Content type
-    const contentType: SpaceContentType = body.contentType ?? 'audio';
-
     const result = await createSpace({
       title,
-      description: body.description,
-      hostId: body.hostId || 'anon',
+      description,
+      hostId: hostId || 'anon',
       hostName: body.hostName || 'Anonymous',
       hostAvatarUrl: body.hostAvatarUrl,
       coHosts: body.coHosts || [],
