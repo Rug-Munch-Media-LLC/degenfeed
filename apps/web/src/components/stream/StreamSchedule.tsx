@@ -29,7 +29,7 @@ function formatDate(iso: string): string {
 }
 
 export function StreamSchedule({ streams }: StreamScheduleProps) {
-  const schedule = streams ?? generateMockSchedule();
+  const schedule = streams ?? [];
 
   if (schedule.length === 0) return null;
 

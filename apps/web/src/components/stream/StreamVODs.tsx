@@ -23,7 +23,7 @@ function formatDate(iso: string): string {
 }
 
 export function StreamVODs({ vods }: StreamVODsProps) {
-  const items = vods ?? generateMockVODs();
+  const items = vods ?? [];
 
   if (items.length === 0) return null;
 
