@@ -19,15 +19,27 @@
  */
 
 import { type NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 
 export const dynamic = 'force-dynamic';
 
+const NostrExportSchema = z.object({
+  nsec: z.string().min(1).max(200),
+  password: z.string().min(8).max(128),
+  format: z.enum(['json', 'qr', 'both']).optional(),
+});
+
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { nsec, password } = body as {
-      nsec?: string;
-      password?: string;
+    const rawBody = await request.json().catch(() => ({}));
+    const parsed = NostrExportSchema.safeParse(rawBody);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: 'Validation failed', details: parsed.error.flatten() },
+        { status: 400 },
+      );
+    }
+    const { nsec, password } = parsed.data;
     };
 
     if (!nsec) {
