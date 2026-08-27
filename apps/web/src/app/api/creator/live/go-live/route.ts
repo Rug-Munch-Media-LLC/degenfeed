@@ -1,7 +1,18 @@
 import { NextResponse } from 'next/server';
+import { z } from 'zod';
 import { proxyPost } from '../../../_proxy';
 
 export const dynamic = 'force-dynamic';
+
+const GoLiveSchema = z.object({
+  title: z.string().min(1, 'Title is required').max(100),
+  description: z.string().max(500).optional(),
+  category: z.string().max(50).optional(),
+  format: z.enum(['portrait', 'landscape']).optional(),
+  platforms: z.array(z.string()).min(1, 'Select at least one platform').max(20),
+  tipsEnabled: z.boolean().optional(),
+  chatEnabled: z.boolean().optional(),
+});
 
 /**
  * POST /api/creator/live/go-live
@@ -20,28 +31,18 @@ export const dynamic = 'force-dynamic';
  */
 export async function POST(request: Request) {
   try {
-    const body = (await request.json()) as {
-      title?: string;
-      description?: string;
-      category?: string;
-      format?: 'portrait' | 'landscape';
-      platforms?: string[];
-      tipsEnabled?: boolean;
-      chatEnabled?: boolean;
-    };
-
-    const title = (body.title ?? '').trim();
-    if (!title) {
-      return NextResponse.json({ error: 'Stream title is required' }, { status: 400 });
+    const rawBody = await request.json();
+    const parsed = GoLiveSchema.safeParse(rawBody);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: 'Validation failed', details: parsed.error.flatten() },
+        { status: 400 },
+      );
     }
-
-    const platforms = Array.isArray(body.platforms) ? body.platforms : [];
-    if (platforms.length === 0) {
-      return NextResponse.json({ error: 'Select at least one platform' }, { status: 400 });
-    }
+    const { title, description, category, format, platforms, tipsEnabled, chatEnabled } = parsed.data;
 
     // Bridge LiveStyle is vertical (9:16 portrait) | horizontal (16:9 landscape).
-    const style = body.format === 'portrait' ? 'vertical' : 'horizontal';
+    const style = format === 'portrait' ? 'vertical' : 'horizontal';
 
     try {
       // proxyPost resolves WORKER_URL and injects BRIDGE_API_KEY.
