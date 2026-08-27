@@ -131,7 +131,7 @@ export function useChatSearch(conversationId?: string) {
           setResults(data.results ?? []);
           setTotal(data.total ?? 0);
         }
-      } catch (err: any) {
+      } catch (err: unknown) {
         if (err?.name === 'AbortError') return;
         setError(err instanceof Error ? err.message : 'Search failed');
         setResults([]);
@@ -174,7 +174,7 @@ export function useChatSearch(conversationId?: string) {
         setResults(data.results ?? []);
         setTotal(data.total ?? 0);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       if (err?.name === 'AbortError') return;
       setError(err instanceof Error ? err.message : 'Advanced search failed');
     } finally {
