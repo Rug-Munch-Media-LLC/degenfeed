@@ -21,51 +21,6 @@ type SortMode = 'trending' | 'newest' | 'gainers' | 'marketcap' | 'volume';
 
 // ─── Mock Data Generator ──────────────────────────────────────────────
 
-function generateMockCoins(_count = 20): CoinDisplayData[] {
-  const names = [
-    { name: 'Degen Alice', symbol: 'ALICE' },
-    { name: 'Bob Protocol', symbol: 'BOB' },
-    { name: 'Charlie Coin', symbol: 'CHAR' },
-    { name: 'Diana Token', symbol: 'DIA' },
-    { name: 'Eve Finance', symbol: 'EVE' },
-    { name: 'Frank DeFi', symbol: 'FRANK' },
-    { name: 'Grace Swap', symbol: 'GRACE' },
-    { name: 'Harry Hedge', symbol: 'HARRY' },
-    { name: 'Ivy Invest', symbol: 'IVY' },
-    { name: 'Jack Jump', symbol: 'JUMP' },
-    { name: 'Kate Koin', symbol: 'KATE' },
-    { name: 'Leo Launch', symbol: 'LEO' },
-    { name: 'Mia Meme', symbol: 'MIA' },
-    { name: 'Noah NFT', symbol: 'NOAH' },
-    { name: 'Oscar Ops', symbol: 'OSCAR' },
-    { name: 'Pia Pump', symbol: 'PIA' },
-    { name: 'Quinn Quest', symbol: 'QUINN' },
-    { name: 'Rex Rocket', symbol: 'REX' },
-    { name: 'Sage Swap', symbol: 'SAGE' },
-    { name: 'Tess Token', symbol: 'TESS' },
-  ];
-
-  return names.map((n, i) => {
-    const phase = Math.floor(Math.random() * 5);
-    return {
-      address: `0x${(i + 1).toString(16).padStart(40, '0')}`,
-      name: n.name,
-      symbol: n.symbol,
-      chain: Math.random() > 0.5 ? ('base' as const) : ('solana' as const),
-      price: Math.random() * 0.05 + 0.0001,
-      priceChange24h: -30 + Math.random() * 80,
-      marketCap: 10000 + Math.random() * 5000000,
-      volume24h: 1000 + Math.random() * 500000,
-      holderCount: Math.floor(Math.random() * 1000) + 10,
-      totalSupply: 1_000_000_000,
-      graduated: Math.random() > 0.7,
-      bondingPhase: phase,
-      createdAt: Date.now() - Math.random() * 86400000 * 30,
-      creator: `0x${Math.random().toString(16).slice(2, 42)}`,
-      isLive: Math.random() > 0.9,
-    };
-  });
-}
 
 // ─── Sort Functions ───────────────────────────────────────────────────
 

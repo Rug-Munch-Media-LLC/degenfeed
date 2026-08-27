@@ -365,13 +365,6 @@ function PieChart({
 
 // ─── Mock Data ────────────────────────────────────────────────────────
 
-function generateMockPriceData(): number[] {
-  let val = 5000000 + Math.random() * 3000000;
-  return Array.from({ length: 14 }, () => {
-    val = Math.max(2000000, val + (Math.random() - 0.45) * 500000);
-    return val;
-  });
-}
 
 // ══════════════════════════════════════════════════════════════════════
 // MAIN PAGE

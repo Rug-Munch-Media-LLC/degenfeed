@@ -45,128 +45,7 @@ import { useActiveLiveShorts } from '../../components/live-shorts/useLiveShorts'
 
 // === Mock data for upcoming and recent sections =======================
 
-function generateMockUpcoming(): LiveShortSession[] {
-  const now = Date.now();
-  const offset = 3600000; // 1 hour
-  return [
-    {
-      id: 'upcoming-1',
-      title: 'ETH London Recap — Live Thoughts',
-      creator: {
-        id: 'c1',
-        handle: 'eth_dev',
-        displayName: 'ETH Dev',
-        avatarUrl: '',
-        verified: true,
-      },
-      playbackUrl: '',
-      protocol: 'hls',
-      startedAt: now + offset,
-      maxDuration: 60,
-      viewerCount: 0,
-      viewerBreakdown: [],
-      tipCount: 0,
-      tipAmount: '0',
-      reactionCount: 0,
-      status: 'starting',
-      tags: ['ethereum', 'recap'],
-    },
-    {
-      id: 'upcoming-2',
-      title: "Solana DeFi — What I'm Watching",
-      creator: {
-        id: 'c2',
-        handle: 'solana_dev',
-        displayName: 'Sol Dev',
-        avatarUrl: '',
-        verified: false,
-      },
-      playbackUrl: '',
-      protocol: 'webrtc',
-      startedAt: now + offset * 2,
-      maxDuration: 90,
-      viewerCount: 0,
-      viewerBreakdown: [],
-      tipCount: 0,
-      tipAmount: '0',
-      reactionCount: 0,
-      status: 'starting',
-      tags: ['solana', 'defi'],
-    },
-    {
-      id: 'upcoming-3',
-      title: 'NFT Market Pulse — Quick Take',
-      creator: {
-        id: 'c3',
-        handle: 'nft_watcher',
-        displayName: 'NFT Watcher',
-        avatarUrl: '',
-        verified: true,
-      },
-      playbackUrl: '',
-      protocol: 'hls',
-      startedAt: now + offset * 3,
-      maxDuration: 60,
-      viewerCount: 0,
-      viewerBreakdown: [],
-      tipCount: 0,
-      tipAmount: '0',
-      reactionCount: 0,
-      status: 'starting',
-      tags: ['nft', 'market'],
-    },
-  ];
-}
 
-function generateMockRecent(): LiveShortSession[] {
-  const now = Date.now();
-  return [
-    {
-      id: 'recent-1',
-      title: 'BTC to 100K? My hot take 🔥',
-      creator: {
-        id: 'c4',
-        handle: 'btc_maxi',
-        displayName: 'BTC Maxi',
-        avatarUrl: '',
-        verified: false,
-      },
-      playbackUrl: '',
-      protocol: 'hls',
-      startedAt: now - 7200000,
-      maxDuration: 60,
-      viewerCount: 342,
-      viewerBreakdown: [],
-      tipCount: 12,
-      tipAmount: '0.5 SOL',
-      reactionCount: 89,
-      status: 'ended',
-      tags: ['bitcoin', 'prediction'],
-    },
-    {
-      id: 'recent-2',
-      title: 'Airdrop farming alpha',
-      creator: {
-        id: 'c5',
-        handle: 'airdrop_hunter',
-        displayName: 'Airdrop Hunter',
-        avatarUrl: '',
-        verified: true,
-      },
-      playbackUrl: '',
-      protocol: 'hls',
-      startedAt: now - 10800000,
-      maxDuration: 120,
-      viewerCount: 891,
-      viewerBreakdown: [],
-      tipCount: 34,
-      tipAmount: '1.2 ETH',
-      reactionCount: 156,
-      status: 'ended',
-      tags: ['airdrop', 'alpha'],
-    },
-  ];
-}
 
 // === Horizontal row component for upcoming/recent ====================
 
@@ -279,8 +158,8 @@ export default function LiveShortsPage() {
 
   const [goLiveOpen, setGoLiveOpen] = useState(false);
 
-  const upcoming = useMemo(() => generateMockUpcoming(), []);
-  const recent = useMemo(() => generateMockRecent(), []);
+  const upcoming = useMemo(() => [], []);
+  const recent = useMemo(() => [], []);
 
   // Extract unique protocols from active sessions
   const activeProtocols = useMemo(() => {
