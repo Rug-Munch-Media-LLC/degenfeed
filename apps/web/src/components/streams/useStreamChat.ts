@@ -166,7 +166,7 @@ export function useStreamChat({
       mockIntervalRef.current = setInterval(
         () => {
           setMessages((prev) => {
-            const newMsg = generateMockChatMessage(prev);
+            const newMsg = null;
             const next = [...prev, newMsg];
             return next.length > maxMessages ? next.slice(-maxMessages) : next;
           });

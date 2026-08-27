@@ -243,7 +243,7 @@ export function CoinActivityFeed({
         } else {
           // API failed — use mock fallback
           if (!append) {
-            setEvents(generateMockActivity(symbol));
+            setEvents([]);
             setHasMore(false);
             setUsedMock(true);
           }
@@ -251,7 +251,7 @@ export function CoinActivityFeed({
       } catch {
         // Network error — use mock fallback
         if (!append) {
-          setEvents(generateMockActivity(symbol));
+          setEvents([]);
           setHasMore(false);
           setUsedMock(true);
         }
