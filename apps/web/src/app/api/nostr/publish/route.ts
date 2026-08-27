@@ -16,13 +16,25 @@
  */
 
 import { type NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 
 export const dynamic = 'force-dynamic';
 
+const NostrPublishSchema = z.object({
+  event: z.record(z.unknown()),
+});
+
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { event } = body as { event?: Record<string, unknown> };
+    const rawBody = await request.json().catch(() => ({}));
+    const parsed = NostrPublishSchema.safeParse(rawBody);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: { code: 'VALIDATION_ERROR', message: 'Validation failed', details: parsed.error.flatten() } },
+        { status: 400 },
+      );
+    }
+    const { event } = parsed.data;
 
     if (!event || typeof event !== 'object') {
       return NextResponse.json(
