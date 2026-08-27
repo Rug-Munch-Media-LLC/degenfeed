@@ -429,7 +429,7 @@ export async function handleDaoProposalExecute(
   }
   proposal.status = 'executed';
   proposal.executedAt = Date.now();
-  proposal.executionTxHash = `0x${crypto.randomUUID().replace(/-/g, '')}`;
+  proposal.executionTxHash = null;
   const kv = env.GOVERNANCE;
   if (!kv) return jsonResponse({ error: 'Governance KV not configured' }, 500);
   await kvPut(kv, KV.proposal(daoId, proposalId), proposal);

@@ -142,12 +142,9 @@ export async function handleCoinChallengesList(request: Request, env: Env): Prom
   const statusFilter = url.searchParams.get('status') as ChallengeStatus | 'all' | null;
   const typeFilter = url.searchParams.get('type') as ChallengeType | null;
 
-  let challenges = await getChallenges(env, symbol);
+  const challenges = await getChallenges(env, symbol);
 
-  if (challenges.length === 0) {
-    // Return mock challenges for demo
-    challenges = generateMockChallenges(symbol.toUpperCase());
-  } else {
+  if (challenges.length > 0) {
     // Update statuses based on time
     const now = Date.now();
     challenges = challenges.map((c) => {
@@ -222,7 +219,7 @@ export async function handleCoinChallengeCreate(request: Request, env: Env): Pro
 
   const now = Date.now();
   const challenge: Challenge = {
-    id: `ch_${crypto.randomUUID().slice(0, 8)}`,
+    id: `ch_${Date.now()}_${symbol}`,
     coinSymbol: symbol.toUpperCase(),
     type: body.type,
     title: sanitizeString(body.title, 200) || body.title,
