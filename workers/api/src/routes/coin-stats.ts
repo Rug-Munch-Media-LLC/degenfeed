@@ -74,32 +74,7 @@ const MOCK_NAMES = [
   { name: 'Zane Zone', symbol: 'ZANE' },
 ];
 
-function generateMockCoins(count = 50): CoinStatsItem[] {
-  return Array.from({ length: Math.min(count, MOCK_NAMES.length) }, (_, i) => {
-    const entry = MOCK_NAMES[i];
-    if (!entry) {
-      const _throwErr = new Error(`Missing mock name at index ${i}`);
-      throw _throwErr;
-    }
-    const basePrice = Math.random() * 0.05 + 0.0001;
-    const now = Date.now();
-    return {
-      rank: i + 1,
-      symbol: entry.symbol,
-      name: entry.name,
-      price: basePrice,
-      marketCap: basePrice * (500_000_000 + Math.random() * 2_000_000_000),
-      volume24h: 1000 + Math.random() * 5_000_000,
-      holders: Math.floor(Math.random() * 5000) + 10,
-      priceChange24h: -30 + Math.random() * 80,
-      priceChange7d: -45 + Math.random() * 100,
-      bondingCurvePhase: Math.floor(Math.random() * 5),
-      address: `0x${(i + 1).toString(16).padStart(40, '0')}`,
-      chain: Math.random() > 0.5 ? 'base' : 'solana',
-      createdAt: now - Math.random() * 86400000 * 30,
-    };
-  });
-}
+
 
 // ─── HELPERS ──────────────────────────────────────────────────────────
 
@@ -152,7 +127,7 @@ export async function handleCoinStatsTop(request: Request, _env: Env): Promise<R
   const url = new URL(request.url);
   const by = url.searchParams.get('by') || 'marketCap';
 
-  const coins = generateMockCoins(50);
+  const coins = [];
 
   const sortMap = new Map<string, (a: CoinStatsItem, b: CoinStatsItem) => number>([
     ['marketCap', (a, b) => b.marketCap - a.marketCap],
@@ -170,7 +145,7 @@ export async function handleCoinStatsTop(request: Request, _env: Env): Promise<R
  * GET /api/coins/stats/trending — Highest volume growth (24h momentum)
  */
 export async function handleCoinStatsTrending(_request: Request, _env: Env): Promise<Response> {
-  const coins = generateMockCoins(50);
+  const coins = [];
   // Trending = highest 24h volume * positive price momentum
   const scored = coins.map((c) => ({
     ...c,
@@ -189,7 +164,7 @@ export async function handleCoinStatsTrending(_request: Request, _env: Env): Pro
  * GET /api/coins/stats/new — Newest coins (last 7 days)
  */
 export async function handleCoinStatsNew(_request: Request, _env: Env): Promise<Response> {
-  const coins = generateMockCoins(50);
+  const coins = [];
   const sevenDaysAgo = Date.now() - 7 * 86400000;
   const recent = coins.filter((c) => c.createdAt >= sevenDaysAgo);
   // If mock didn't generate enough recent, create some fresh ones
@@ -206,7 +181,7 @@ export async function handleCoinStatsNew(_request: Request, _env: Env): Promise<
 export async function handleCoinStatsGainers(request: Request, _env: Env): Promise<Response> {
   const url = new URL(request.url);
   const period = url.searchParams.get('period') || '24h';
-  const coins = generateMockCoins(50);
+  const coins = [];
 
   const changeMap = new Map<string, (c: CoinStatsItem) => number>([
     ['24h', (c) => c.priceChange24h],
@@ -229,7 +204,7 @@ export async function handleCoinStatsGainers(request: Request, _env: Env): Promi
 export async function handleCoinStatsLosers(request: Request, _env: Env): Promise<Response> {
   const url = new URL(request.url);
   const period = url.searchParams.get('period') || '24h';
-  const coins = generateMockCoins(50);
+  const coins = [];
 
   const changeMap = new Map<string, (c: CoinStatsItem) => number>([
     ['24h', (c) => c.priceChange24h],
@@ -249,7 +224,7 @@ export async function handleCoinStatsLosers(request: Request, _env: Env): Promis
  * GET /api/coins/stats/most-holders — Coins with most holders
  */
 export async function handleCoinStatsMostHolders(_request: Request, _env: Env): Promise<Response> {
-  const coins = generateMockCoins(50);
+  const coins = [];
   return noCacheJsonResponse({
     coins: sortAndRank(coins, (a, b) => b.holders - a.holders),
   });
@@ -262,7 +237,7 @@ export async function handleCoinStatsHighestVolume(
   _request: Request,
   _env: Env,
 ): Promise<Response> {
-  const coins = generateMockCoins(50);
+  const coins = [];
   return noCacheJsonResponse({
     coins: sortAndRank(coins, (a, b) => b.volume24h - a.volume24h),
   });

@@ -166,7 +166,7 @@ export async function handleCoinActivity(request: Request, env: Env): Promise<Re
 
   if (events.length === 0) {
     // Generate mock activity for demo
-    const mockEvents = generateMockActivity(symbol.toUpperCase());
+    const mockEvents = [];
     return noCacheJsonResponse({
       events: mockEvents.slice(0, pageSize),
       total: mockEvents.length,
@@ -196,80 +196,6 @@ export async function handleCoinActivity(request: Request, env: Env): Promise<Re
 
 // ─── Mock Data Generator ──────────────────────────────────────────────────
 
-function generateMockActivity(symbol: string): ActivityEvent[] {
-  const traders = [
-    '0x1234...5678',
-    '0xabcd...ef01',
-    '0x9876...5432',
-    '0xfedc...ba09',
-    '0xdead...beef',
-    '0xcafe...babe',
-  ];
-  const names = ['alice.eth', 'bob.eth', 'charlie.eth', 'dave.eth', 'eve.eth', 'frank.eth'];
-  const phases = ['Steal Deal', 'Early Bird', 'Cruise Control', 'Final Call', 'Moonshot'];
-  const badges = ['Early Believer', 'Diamond Hands', 'Whale', 'OG', 'Community Builder'];
 
-  const now = Date.now();
-  const events: ActivityEvent[] = [];
-
-  for (let i = 0; i < 50; i++) {
-    const idx = Math.floor(Math.random() * traders.length);
-    const timestamp = now - Math.floor(Math.random() * 86400000);
-    const types: ActivityType[] = [
-      'buy',
-      'sell',
-      'claim_vested',
-      'new_holder',
-      'phase_change',
-      'badge_earned',
-      'tip_creator',
-    ];
-    const type = types[Math.floor(Math.random() * types.length)] as ActivityEvent['type'];
-
-    const base: ActivityEvent = {
-      id: `evt_${symbol}_${i}`,
-      type,
-      symbol,
-      actor: traders[idx]!,
-      actorLabel: names[idx],
-      timestamp,
-    };
-
-    switch (type) {
-      case 'buy':
-        base.amount = String(Math.floor(Math.random() * 5000) + 100);
-        base.nativeAmount = (Math.random() * 0.5 + 0.01).toFixed(4);
-        base.usdValue = (Math.random() * 500 + 5).toFixed(2);
-        base.price = (Math.random() * 0.01 + 0.001).toFixed(6);
-        break;
-      case 'sell':
-        base.amount = String(Math.floor(Math.random() * 3000) + 50);
-        break;
-      case 'claim_vested':
-        base.amount = String(Math.floor(Math.random() * 2000) + 500);
-        break;
-      case 'new_holder':
-        base.holderCount = Math.floor(Math.random() * 200) + 50;
-        break;
-      case 'phase_change':
-        base.phaseName = phases[Math.floor(Math.random() * phases.length)]!;
-        base.phaseIndex = Math.floor(Math.random() * 5);
-        base.price = (Math.random() * 0.05 + 0.001).toFixed(6);
-        break;
-      case 'badge_earned':
-        base.badgeName = badges[Math.floor(Math.random() * badges.length)]!;
-        base.badgeIcon = ['🎉', '🏆', '⭐', '💎', '🌟'][Math.floor(Math.random() * 5)];
-        break;
-      case 'tip_creator':
-        base.tipAmount = String(Math.floor(Math.random() * 10000) + 100);
-        break;
-    }
-
-    events.push(base);
-  }
-
-  // Sort by timestamp descending
-  return events.sort((a, b) => b.timestamp - a.timestamp);
-}
 
 export type { ActivityType as CoinActivityType };
