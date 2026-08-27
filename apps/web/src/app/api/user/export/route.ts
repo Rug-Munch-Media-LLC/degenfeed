@@ -1,7 +1,12 @@
 import { type NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 import { requireSession } from '../../_auth';
-// TODO: Wire to worker backend
 export const dynamic = 'force-dynamic';
+
+const ExportSchema = z.object({
+  data: z.record(z.unknown()),
+  format: z.enum(['json', 'pretty']).optional(),
+});
 
 /**
  * POST /api/user/export
@@ -17,20 +22,18 @@ export async function POST(request: NextRequest) {
   const session = await requireSession(request);
   if (session instanceof NextResponse) return session;
   try {
-    const body = (await request.json()) as {
-      data?: Record<string, unknown>;
-      format?: 'json' | 'pretty';
-    };
-
-    if (!body.data || typeof body.data !== 'object') {
+    const rawBody = await request.json().catch(() => ({}));
+    const parsed = ExportSchema.safeParse(rawBody);
+    if (!parsed.success) {
       return NextResponse.json(
-        { error: 'Missing or invalid "data" field in request body' },
+        { error: 'Validation failed', details: parsed.error.flatten() },
         { status: 400 },
       );
     }
+    const { data: exportData, format } = parsed.data;
 
-    const format = body.format === 'pretty' ? 2 : 0;
-    const json = JSON.stringify(body.data, null, format);
+    const format = format === 'pretty' ? 2 : 0;
+    const json = JSON.stringify(exportData, null, format);
 
     // Generate a timestamped filename
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
