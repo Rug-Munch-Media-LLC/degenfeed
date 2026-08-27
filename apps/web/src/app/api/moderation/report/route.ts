@@ -1,4 +1,5 @@
 import { type NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 import { proxyGet, proxyPost } from '../../_proxy';
 
 export const runtime = 'nodejs';
