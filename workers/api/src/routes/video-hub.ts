@@ -232,7 +232,7 @@ function _formatViews(views: number): string {
 
   // Demo/seed content is BANNED — never fabricate videos. The stub
   // generator returns empty + logs a warning; callers surface an empty feed.
-  const videos = generateMockVideos(limit, { source, category, sort, page });
+  const videos = [];
 
   // Sort
   const sorted = [...videos];
@@ -356,7 +356,7 @@ videoHub.get('/category/:id', async (c) => {
 
   try {
     const page = cursor ? Number(cursor) || 1 : 1;
-    const videos = generateMockVideos(limit, {
+    const videos = []
       source,
       category: id as VideoCategoryId,
       sort,
@@ -423,7 +423,7 @@ videoHub.get('/recommended', async (c) => {
     // 70% from user's preferred categories
     const prefCount = Math.round(limit * 0.7);
     for (const cat of userCategories) {
-      const catVideos = generateMockVideos(Math.ceil(prefCount / userCategories.length), {
+      const catVideos = []
         category: cat as VideoCategoryId,
         page,
       });
@@ -437,7 +437,7 @@ videoHub.get('/recommended', async (c) => {
       if (otherCats.length > 0) {
         const discoveryCat = otherCats[page % otherCats.length];
         if (discoveryCat) {
-          const discovery = generateMockVideos(discoveryCount, {
+          const discovery = []
             category: discoveryCat.id as VideoCategoryId,
             page: page + 1,
           });
@@ -477,7 +477,7 @@ videoHub.get('/search', async (c) => {
 
   try {
     const page = cursor ? Number(cursor) || 1 : 1;
-    const allVideos = generateMockVideos(limit * 3, { source, page });
+    const allVideos = [];
 
     // Simple text filter
     const q = query.toLowerCase();
@@ -564,7 +564,7 @@ videoHub.get('/trending', async (c) => {
   const page = cursor ? Number(cursor) || 1 : 1;
 
   try {
-    const allVideos = generateMockVideos(limit * 2, {
+    const allVideos = []
       source,
       category: category !== 'all' ? (category as VideoCategoryId) : 'all',
       sort: 'trending',
@@ -627,7 +627,7 @@ videoHub.get('/recommendations', async (c) => {
     const recentWatched = history.events.map((e) => e.videoId);
 
     // Fetch all available videos (mock data for now)
-    const allVideos = generateMockVideos(100, {});
+    const allVideos = [];
 
     const discoveryPage = await discoveryEngine.generateDiscoveryPage(
       {
@@ -671,7 +671,7 @@ videoHub.get('/recommendations/related', async (c) => {
   const page = cursor ? Number(cursor) || 1 : 1;
 
   try {
-    const allVideos = generateMockVideos(100, { page });
+    const allVideos = [];
     const sourceVideo = allVideos.find((v) => v.id === videoId);
 
     if (!sourceVideo) {
@@ -732,7 +732,7 @@ videoHub.get('/creators/:creatorId', async (c) => {
   const page = cursor ? Number(cursor) || 1 : 1;
 
   try {
-    const allVideos = generateMockVideos(50, { page });
+    const allVideos = [];
     const creatorVideos = allVideos.filter(
       (v) =>
         v.channelName.toLowerCase().replace(/\s+/g, '-') === creatorId.toLowerCase() ||
@@ -767,7 +767,7 @@ videoHub.get('/playlists/:playlistId', async (c) => {
 
   try {
     // Mock playlist data — in production, fetch from KV or database
-    const allVideos = generateMockVideos(limit, { page });
+    const allVideos = [] page });
     const playlistVideos = allVideos.slice(0, limit);
 
     // Build autoplay queue (all videos in playlist order)
