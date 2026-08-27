@@ -350,7 +350,10 @@ export function UnifiedVideoEmbed({
     if (source !== 'hls' && !resolvedUrl.endsWith('.m3u8')) return;
     if (!videoRef.current) return;
 
-    let hlsInstance: any = null;
+    let hlsInstance: {
+      destroy: () => void;
+      on: (event: string, callback: (...args: unknown[]) => void) => void;
+    } | null = null;
     let destroyed = false;
 
     (async () => {
@@ -382,7 +385,7 @@ export function UnifiedVideoEmbed({
         }
       });
 
-      hlsInstance.on(HlsClass.Events.ERROR, (_event: any, data: any) => {
+      hlsInstance.on(HlsClass.Events.ERROR, (_event: unknown, data: unknown) => {
         if (data.fatal) {
           setLoadError(true);
           setErrorMessage('HLS playback error');

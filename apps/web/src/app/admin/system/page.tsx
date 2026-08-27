@@ -71,7 +71,7 @@ export default function AdminSystemPage() {
         if (d.versions) setVersions(d.versions);
       }
       if (resLogs.ok) {
-        const d = (await resLogs.json()) as { logs: any[] };
+        const d = (await resLogs.json()) as { logs: Array<Record<string, unknown>> };
         // eslint-disable-next-line @typescript-eslint/no-unused-expressions
         d.logs && setLogs(d.logs);
       }
