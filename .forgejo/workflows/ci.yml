@@ -645,3 +645,118 @@ jobs:
           curl -sf http://localhost:3000/api/health || exit 1
           curl -sf http://localhost:3000/ || exit 1
           echo "Smoke tests passed"
+
+  # ── Gate 19: API smoke test ─────────────────────────────────
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs: build
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.7.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Build web app
+        run: pnpm --filter degenfeed build
+      - name: Start web app
+        run: pnpm --filter degenfeed start &
+      - name: Wait for app to start
+        run: sleep 10
+      - name: Run smoke tests
+        run: |
+          curl -sf http://localhost:3000/api/health || exit 1
+          curl -sf http://localhost:3000/ || exit 1
+          echo "Smoke tests passed"
+
+  # ── Gate 20: Performance (k6) ───────────────────────────────
+  performance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs: build
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.7.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Build web app
+        run: pnpm --filter degenfeed build
+      - name: Start web app
+        run: pnpm --filter degenfeed start &
+      - name: Wait for app to start
+        run: sleep 10
+      - name: Run k6 performance test
+        run: |
+          curl -sSfL https://github.com/grafana/k6/releases/download/v0.54.0/k6-v0.54.0-linux-amd64.tar.gz | tar xz
+          ./k6-v0.54.0-linux-amd64/k6 run --vus 10 --duration 30s - <<'K6SCRIPT'
+          import http from 'k6/http';
+          import { check } from 'k6';
+          export default function () {
+            const res = http.get('http://localhost:3000/');
+            check(res, { 'status is 200': (r) => r.status === 200 });
+          }
+          K6SCRIPT
+        continue-on-error: true
+
+  # ── Gate 21: SEO check ──────────────────────────────────────
+  seo:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs: build
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.7.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Build web app
+        run: pnpm --filter degenfeed build
+      - name: Start web app
+        run: pnpm --filter degenfeed start &
+      - name: Wait for app to start
+        run: sleep 10
+      - name: Check SEO meta tags
+        run: |
+          curl -sf http://localhost:3000/ | grep -q "<title>" || exit 1
+          curl -sf http://localhost:3000/ | grep -q "description" || exit 1
+          echo "SEO check passed"
+
+  # ── Gate 22: Security headers ───────────────────────────────
+  security-headers:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs: build
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.7.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Build web app
+        run: pnpm --filter degenfeed build
+      - name: Start web app
+        run: pnpm --filter degenfeed start &
+      - name: Wait for app to start
+        run: sleep 10
+      - name: Check security headers
+        run: |
+          curl -sI http://localhost:3000/ | grep -q "X-Content-Type-Options" || exit 1
+          curl -sI http://localhost:3000/ | grep -q "X-Frame-Options" || exit 1
+          echo "Security headers check passed"
