@@ -1,17 +1,22 @@
 import { NextResponse } from 'next/server';
-// TODO: Wire to worker backend
+import { z } from 'zod';
 export const dynamic = 'force-dynamic';
+
+const CommunitySchema = z.object({
+  name: z.string().min(2, 'Name must be at least 2 characters').max(48),
+  description: z.string().max(500).optional(),
+  tags: z.array(z.string().max(30)).max(10).optional(),
+});
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
-    const name = typeof body.name === 'string' ? body.name.trim() : '';
-
-    if (!name || name.length < 2) {
-      return NextResponse.json({ error: 'Name must be at least 2 characters' }, { status: 400 });
-    }
-    if (name.length > 48) {
-      return NextResponse.json({ error: 'Name must be 48 characters or fewer' }, { status: 400 });
+    const rawBody = await request.json().catch(() => ({}));
+    const parsed = CommunitySchema.safeParse(rawBody);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: 'Validation failed', details: parsed.error.flatten() },
+        { status: 400 },
+      );
     }
 
     // Not yet implemented — see ROADMAP.md
