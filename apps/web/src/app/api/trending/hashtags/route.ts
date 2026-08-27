@@ -1,6 +1,12 @@
 import { type NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 
 export const dynamic = 'force-dynamic';
+
+const HashtagsSchema = z.object({
+  limit: z.number().min(1).max(100).optional(),
+  offset: z.number().min(0).optional(),
+});
 
 /**
  * GET /api/trending/hashtags
