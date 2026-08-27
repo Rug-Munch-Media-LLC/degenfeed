@@ -75,9 +75,10 @@ interface LensPost {
   metadata?: {
     content?: string | null;
     image?: { item?: string | null } | null;
+    video?: { item?: string | null } | null;
   };
   author?: LensAccount;
-  stats?: { reactions?: number; comments?: number; reposts?: number; quotes?: number };
+  stats?: { reactions?: number; comments?: number; reposts?: number; quotes?: number; collects?: number };
 }
 
 export interface LensProviderOptions {
@@ -141,8 +142,8 @@ const POST_FIELDS = `
   id timestamp
   metadata {
     ... on TextOnlyMetadata { content }
-    ... on ImageMetadata { content image { item altTag width height } attachments { ... on MediaImage { item altTag width height } ... on MediaVideo { item altTag width height cover durationSeconds } } }
-    ... on VideoMetadata { content video { item altTag width height cover durationSeconds } attachments { ... on MediaImage { item altTag width height } ... on MediaVideo { item altTag width height cover durationSeconds } } }
+    ... on ImageMetadata { content image { item } }
+    ... on VideoMetadata { content video { item } }
     ... on LinkMetadata { content }
     ... on ArticleMetadata { content }
   }
@@ -171,7 +172,7 @@ export class LensProvider implements FeedProvider {
           const explore = await withTimeout(
             lensGql(
               this.apiUrl,
-              `query{mlPostsExplore(request:{pageSize:FIFTY}){items{__typename ... on Post{${POST_FIELDS}}}}}`,
+              `query{mlPostsExplore(request:{pageSize:FIFTY}){items{__typename ... on Post{id timestamp metadata{... on TextOnlyMetadata{content} ... on ImageMetadata{content image{item}} ... on VideoMetadata{content video{item}} ... on LinkMetadata{content} ... on ArticleMetadata{content}} author{address username{localName} metadata{name bio picture}} stats{reactions comments reposts quotes collects}}}}}`,
             ),
             Math.min(t, 4000),
             'lens:explore',
@@ -211,14 +212,13 @@ export class LensProvider implements FeedProvider {
             const curated = await withTimeout(
               lensGql(
                 this.apiUrl,
-                `query($a:[String!]!){posts(request:{filter:{authors:$a,postTypes:[ROOT]},pageSize:FIFTY}){items{__typename ... on Post{${POST_FIELDS}}}}}`,
+                `query($a:[String!]!){posts(request:{filter:{authors:$a,postTypes:[ROOT]},pageSize:FIFTY}){items{__typename ... on Post{id timestamp metadata{... on TextOnlyMetadata{content} ... on ImageMetadata{content image{item}} ... on VideoMetadata{content video{item}} ... on LinkMetadata{content} ... on ArticleMetadata{content}} author{address username{localName} metadata{name bio picture}} stats{reactions comments reposts quotes collects}}}}}`,
                 { a: addrs },
               ),
               Math.min(t, 4000),
               'lens:curated',
             );
             const items = (curated as { posts?: { items?: LensPost[] } })?.posts?.items ?? [];
-            // Prepend curated so they float above the explore feed
             posts.unshift(...items.map(postToUnified).map(enrichPostNiches));
           }
         } catch {
@@ -255,7 +255,7 @@ export class LensProvider implements FeedProvider {
             const mirrors = await withTimeout(
               lensGql(
                 this.apiUrl,
-                `query($a:[String!]!){posts(request:{filter:{authors:$a,postTypes:[REPOST]},pageSize:TEN}){items{__typename ... on Repost{id timestamp repostOf{... on Post{${POST_FIELDS}}}}}}}`,
+                `query($a:[String!]!){posts(request:{filter:{authors:$a,postTypes:[REPOST]},pageSize:TEN}){items{__typename ... on Repost{id timestamp repostOf{... on Post{id timestamp metadata{... on TextOnlyMetadata{content} ... on ImageMetadata{content image{item}} ... on VideoMetadata{content video{item}} ... on LinkMetadata{content} ... on ArticleMetadata{content}} author{address username{localName} metadata{name bio picture}} stats{reactions comments reposts quotes collects}}}}}}}`,
                 { a: mirrorAddrs },
               ),
               Math.min(t, 4000),
