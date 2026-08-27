@@ -308,8 +308,8 @@ creatorVesting.post('/:coinAddress/claim', async (c) => {
 
   // In production, this would call an on-chain claim function:
   // const tx = await contract.write.claimVestedTokens([coinAddress, session.address]);
-  // For now, simulate with a mock tx hash
-  const mockTxHash = `0x${crypto.randomUUID().replace(/-/g, '').slice(0, 64)}`;
+  // For now, mark as pending on-chain execution
+  const mockTxHash: string | null = null;
 
   // Update the claimed amount in KV
   try {

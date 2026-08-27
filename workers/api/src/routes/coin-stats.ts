@@ -104,7 +104,7 @@ function generateMockCoins(count = 50): CoinStatsItem[] {
 // ─── HELPERS ──────────────────────────────────────────────────────────
 
 function generateOverview(): CoinStatsOverview {
-  const coins = generateMockCoins();
+  const coins: CoinStatsItem[] = [];
   return {
     totalCoins: coins.length,
     totalVolume: coins.reduce((s, c) => s + c.volume24h, 0),
