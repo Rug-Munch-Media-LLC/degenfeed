@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 import { requireSession } from '../../../_auth';
-// TODO: Wire to worker backend
 export const dynamic = 'force-dynamic';
 
 /**
