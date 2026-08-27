@@ -19,38 +19,6 @@ const TrendingSidebar = dynamic(
 
 /* === Mock data for development ======================== */
 
-function generateMockCoins(): CoinCardData[] {
-  const names = [
-    { name: 'Degen Alice', symbol: 'ALICE', creator: 'alice.eth' },
-    { name: 'Bob Protocol', symbol: 'BOB', creator: 'bob.nostr' },
-    { name: 'Charlie Coin', symbol: 'CHAR', creator: 'charlie.lens' },
-    { name: 'Diana Token', symbol: 'DIA', creator: 'diana.bsky' },
-    { name: 'Eve Finance', symbol: 'EVE', creator: 'eve.eth' },
-    { name: 'Frank DeFi', symbol: 'FRANK', creator: 'frank.farc' },
-    { name: 'Grace Swap', symbol: 'GRACE', creator: 'grace.nostr' },
-    { name: 'Harry Hedge', symbol: 'HARRY', creator: 'harry.lens' },
-  ];
-
-  const phases: CoinCardData['phase'][] = ['early', 'growth', 'late', 'graduated'];
-
-  return names.map((n, i) => ({
-    address: `0x${Math.random().toString(16).slice(2, 42)}`,
-    symbol: n.symbol,
-    name: n.name,
-    price: 0.001 + Math.random() * 0.5,
-    priceChange24h: -20 + Math.random() * 50,
-    progress: Math.random() * 100,
-    totalRaised: 0.1 + Math.random() * 50,
-    holderCount: Math.floor(Math.random() * 500) + 1,
-    marketCap: 10000 + Math.random() * 5000000,
-    phase: phases[i % phases.length]!,
-    creator: {
-      name: n.creator,
-      reputation: Math.floor(Math.random() * 100),
-    },
-    socialProof: Math.floor(Math.random() * 300),
-  }));
-}
 
 /* === Page ============================================= */
 
@@ -86,7 +54,7 @@ export default function LaunchPage() {
         } else {
           // Dev mock
           if (!cancelled) {
-            const mockCoins = generateMockCoins();
+            const mockCoins = [];
             setCoins(mockCoins);
             setStats({
               totalLaunched: 47,
@@ -98,7 +66,7 @@ export default function LaunchPage() {
       } catch (err) {
         console.error('[LaunchPage] Failed to fetch creator coins:', err);
         if (!cancelled) {
-          setCoins(generateMockCoins());
+          setCoins([]);
           setStats({ totalLaunched: 47, totalVolume: 284_000, activePrebonding: 12 });
         }
       } finally {
