@@ -5,8 +5,8 @@
  * Accepts creator coin configuration and returns the deployed coin address.
  */
 
+import { CreatorCoinDeploySchema } from '../../../../../lib/validation/schemas';
 import { proxyPost } from '../../../_proxy';
-import { CreatorCoinDeploySchema } from '../../../../lib/validation/schemas';
 
 export const runtime = 'edge';
 

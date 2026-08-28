@@ -15,7 +15,7 @@
  */
 
 import { NextResponse } from 'next/server';
-import { SignupSchema } from '../../../lib/validation/schemas';
+import { SignupSchema } from '../../../../lib/validation/schemas';
 
 // Bridge is reachable from the web container via host.docker.internal
 // (the self-hosted API server at :3101 is NOT — it binds host loopback only).

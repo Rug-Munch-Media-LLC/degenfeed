@@ -30,9 +30,9 @@ export async function POST(request: NextRequest) {
         { status: 400 },
       );
     }
-    const { data: exportData, format } = parsed.data;
+    const { data: exportData, format: fmt } = parsed.data;
 
-    const format = format === 'pretty' ? 2 : 0;
+    const format = fmt === 'pretty' ? 2 : 0;
     const json = JSON.stringify(exportData, null, format);
 
     // Generate a timestamped filename

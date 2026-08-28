@@ -9,8 +9,32 @@ import { z } from 'zod';
 
 export const dynamic = 'force-dynamic';
 
+const SUPPORTED_PROTOCOLS = [
+  'nostr',
+  'farcaster',
+  'lens',
+  'bluesky',
+  'mastodon',
+  'twitter',
+  'youtube',
+  'github',
+  'discord',
+  'telegram',
+];
+
 const VerifySchema = z.object({
-  protocol: z.enum(['nostr', 'farcaster', 'lens', 'bluesky', 'mastodon', 'twitter', 'youtube', 'github', 'discord', 'telegram']),
+  protocol: z.enum([
+    'nostr',
+    'farcaster',
+    'lens',
+    'bluesky',
+    'mastodon',
+    'twitter',
+    'youtube',
+    'github',
+    'discord',
+    'telegram',
+  ]),
   input: z.string().min(1).max(500),
   nip05: z.string().email().optional(),
 });
@@ -41,7 +65,7 @@ export async function POST(request: NextRequest) {
         { status: 400 },
       );
     }
-    const { protocol, input, nip05 } = parsed.data;
+    const { protocol, input } = parsed.data;
 
     if (!SUPPORTED_PROTOCOLS.includes(protocol as (typeof SUPPORTED_PROTOCOLS)[number])) {
       return NextResponse.json(
@@ -57,7 +81,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ ok: false, error: 'input is required' }, { status: 400 });
     }
 
-    const identity = await verifyIdentity(protocol, input, { nip05: body.nip05 });
+    const identity = await verifyIdentity(protocol, input);
 
     if (!identity) {
       return NextResponse.json(
@@ -70,7 +94,7 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json({ ok: true, identity });
-  } catch (_error) {
+  } catch {
     return NextResponse.json({ ok: false, error: 'Verification failed' }, { status: 500 });
   }
 }

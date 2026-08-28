@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from 'next/server';
+import { MessageSendSchema } from '../../../../lib/validation/schemas';
 import { proxyPost } from '../../_proxy';
-import { MessageSendSchema } from '../../../lib/validation/schemas';
 
 export const dynamic = 'force-dynamic';
 

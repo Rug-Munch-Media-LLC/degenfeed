@@ -49,7 +49,6 @@ const TradeSchema = z.object({
  *  - `{ error, code }` — request or execution failure.
  */
 
-const TRADE_ACTIONS = new Set(['buy', 'sell']);
 const DEFAULT_SLIPPAGE_BPS = 100; // 1%
 const MIN_SLIPPAGE_BPS = 10; // 0.1%
 const MAX_SLIPPAGE_BPS = 1500; // 15% — beyond this the user is their own MEV victim
@@ -113,7 +112,8 @@ export async function POST(request: Request) {
         { status: 400 },
       );
     }
-    const { action, amount, tokenAddress, chain, slippageBps, clientRequestId, minTokensOut } = parsed.data;
+    const { action, amount, tokenAddress, chain, slippageBps, clientRequestId, minTokensOut } =
+      parsed.data;
 
     const normalizedAction = action;
 

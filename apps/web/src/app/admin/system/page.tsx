@@ -16,6 +16,7 @@ import type {
   DockerContainer,
   ServerResources,
   ServiceVersion,
+  SystemLog,
 } from './_types';
 import { formatBytes, formatDate, formatDuration, formatGB, formatTime } from './_utils';
 
@@ -71,9 +72,8 @@ export default function AdminSystemPage() {
         if (d.versions) setVersions(d.versions);
       }
       if (resLogs.ok) {
-        const d = (await resLogs.json()) as { logs: Array<Record<string, unknown>> };
-        // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-        d.logs && setLogs(d.logs);
+        const d = (await resLogs.json()) as { logs: SystemLog[] };
+        if (d.logs) setLogs(d.logs);
       }
     } catch {
       /* use defaults */

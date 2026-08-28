@@ -37,7 +37,6 @@ interface FrameData {
 
 // ─── Sample / demo frames ───────────────────────────────────────────────
 
-
 // ─── Page Component ─────────────────────────────────────────────────────
 
 export default function FarcasterFramesPage() {
@@ -63,7 +62,7 @@ export default function FarcasterFramesPage() {
     setActiveFrame(frame);
   }, [customFrameUrl]);
 
-  const handleSelectFrame = useCallback((frame: FrameData) => {
+  const _handleSelectFrame = useCallback((frame: FrameData) => {
     setActiveFrame(frame);
   }, []);
 
@@ -348,9 +347,7 @@ export default function FarcasterFramesPage() {
           Popular Frames
         </h2>
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {/* DEMO_FRAMES removed */}
-            <FrameCard key={frame.url} frame={frame} onSelect={handleSelectFrame} />
-          ))}
+          {/* DEMO_FRAMES removed - no frames to display */}
         </div>
       </section>
 
@@ -380,7 +377,7 @@ export default function FarcasterFramesPage() {
 
 // ─── Frame Card ─────────────────────────────────────────────────────────
 
-function FrameCard({
+function _FrameCard({
   frame,
   onSelect,
 }: {

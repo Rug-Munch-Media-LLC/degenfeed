@@ -1,7 +1,6 @@
-import type { SpaceContentType, SpaceGating, SpacePlatform } from '@degenfeed/spaces-bridge';
 import { createSpace } from '@degenfeed/spaces-bridge';
 import { NextResponse } from 'next/server';
-import { SpaceCreateSchema } from '../../../lib/validation/schemas';
+import { SpaceCreateSchema } from '../../../../lib/validation/schemas';
 
 export const dynamic = 'force-dynamic';
 
@@ -18,8 +17,27 @@ export async function POST(request: Request) {
     const { title, description, hostId, platforms: requestedPlatforms, contentType } = parsed.data;
 
     // Determine which platforms to create on
-    const platforms: SpacePlatform[] = (requestedPlatforms ?? ['nostr']).filter((p): p is SpacePlatform =>
-      ['nostr', 'peertube', 'owncast', 'livepeer', 'farcaster', 'lens', 'bluesky', 'mastodon', 'discord', 'telegram', 'twitter', 'youtube', 'twitch', 'kick', 'nostr-pictures', 'bluesky-photos', 'pixelfed'].includes(p),
+    const platforms: SpacePlatform[] = (requestedPlatforms ?? ['nostr']).filter(
+      (p): p is SpacePlatform =>
+        [
+          'nostr',
+          'peertube',
+          'owncast',
+          'livepeer',
+          'farcaster',
+          'lens',
+          'bluesky',
+          'mastodon',
+          'discord',
+          'telegram',
+          'twitter',
+          'youtube',
+          'twitch',
+          'kick',
+          'nostr-pictures',
+          'bluesky-photos',
+          'pixelfed',
+        ].includes(p),
     );
 
     if (platforms.length === 0) {
