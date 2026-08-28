@@ -80,8 +80,7 @@ export default function CreatorVideosPage() {
         // Force re-fetch by triggering a navigation-like effect
         window.location.reload();
       } else {
-        const data = await res.json();
-        // alert(data.error || 'Delete failed');
+        // alert('Delete failed');
       }
     } catch {
       // alert('Delete failed');

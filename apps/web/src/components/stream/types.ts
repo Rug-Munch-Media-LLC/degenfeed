@@ -286,6 +286,8 @@ export interface StreamSchedule {
   description?: string;
 }
 
+export type ScheduleType = StreamSchedule;
+
 /* === Viewer Analytics ========================================= */
 
 export interface ViewerAnalytics {
@@ -299,95 +301,3 @@ export interface ViewerAnalytics {
   topChatters: Array<{ handle: string; messages: number }>;
   viewerHistory: Array<{ timestamp: number; count: number }>;
 }
-
-/* === Mock Data Generator ====================================== */
-
-const CATEGORIES: StreamCategory[] = [
-  'gaming',
-  'music',
-  'crypto',
-  'art',
-  'irl',
-  'talk',
-  'education',
-  'sports',
-  'tech',
-  'trading',
-];
-
-const STREAM_TITLES: Record<StreamCategory, string[]> = {
-  gaming: [
-    'Elden Ring — No Hit Run',
-    'Valorant Ranked Grind',
-    'Minecraft Survival Series',
-    'Fortnite Zero Build Ws',
-  ],
-  music: [
-    'Lo-Fi Beats to DeFi To',
-    'Live Piano Improv',
-    'Producing a Beat from Scratch',
-    'Synthwave DJ Set',
-  ],
-  crypto: [
-    'DeFi Alpha Call — L2 Summer',
-    'Solana Ecosystem Deep Dive',
-    'BTC Post-Halving Analysis',
-    'Yield Farming Strategies',
-  ],
-  art: [
-    'Digital Painting Commission',
-    'Pixel Art Speed Build',
-    '3D Modeling in Blender',
-    'Character Design Stream',
-  ],
-  irl: [
-    'Coffee & Code Morning Routine',
-    'Studio vlog — Build Day',
-    'Tokyo Walk & Talk',
-    'Desk Setup Tour',
-  ],
-  talk: [
-    'Crypto Twitter Roundtable',
-    'The Degen Chat Podcast',
-    'Interview with a Founder',
-    'AMA — Ask Me Anything',
-  ],
-  education: [
-    'React Masterclass',
-    'Solidity Smart Contracts 101',
-    'Python for Data Science',
-    'System Design Interview Prep',
-  ],
-  sports: ['NBA 2K League Match', 'F1 Race Watchalong', 'FIFA Ultimate Team', 'Poker Night'],
-  tech: [
-    'Building a Full-Stack App Live',
-    'Linux Server Hardening',
-    'AI/ML Paper Review',
-    'Open Source Contribution',
-  ],
-  trading: [
-    'Day Trading S&P 500',
-    'Forex Analysis & Signals',
-    'Options Flow Deep Dive',
-    'Crypto Swing Trading',
-  ],
-};
-
-const CREATORS = [
-  { id: 'c1', handle: 'defi_degen', display: 'DeFi Degen', avatar: '' },
-  { id: 'c2', handle: 'sol_whale', display: 'Sol Whale', avatar: '' },
-  { id: 'c3', handle: 'nft_collector', display: 'NFT Collector', avatar: '' },
-  { id: 'c4', handle: 'crypto_analyst', display: 'Crypto Analyst', avatar: '' },
-  { id: 'c5', handle: 'base_builder', display: 'Base Builder', avatar: '' },
-  { id: 'c6', handle: 'meme_lord', display: 'Meme Lord', avatar: '' },
-  { id: 'c7', handle: 'ai_researcher', display: 'AI Researcher', avatar: '' },
-  { id: 'c8', handle: 'yield_farmer', display: 'Yield Farmer', avatar: '' },
-  { id: 'c9', handle: 'code_ninja', display: 'Code Ninja', avatar: '' },
-  { id: 'c10', handle: 'pixel_wizard', display: 'Pixel Wizard', avatar: '' },
-  { id: 'c11', handle: 'beats_degen', display: 'Beats Degen', avatar: '' },
-  { id: 'c12', handle: 'trade_master', display: 'Trade Master', avatar: '' },
-];
-
-
-
-

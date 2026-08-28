@@ -1,6 +1,6 @@
 'use client';
 
-
+import type { Clip } from './types';
 
 interface StreamClipsProps {
   clips?: Clip[];

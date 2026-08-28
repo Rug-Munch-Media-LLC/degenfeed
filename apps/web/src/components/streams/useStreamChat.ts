@@ -29,63 +29,6 @@ export interface UseStreamChatResult {
   clearMessages: () => void;
 }
 
-/* === Fallback generator for mock chat ========================= */
-
-const MOCK_NAMES = [
-  'degen_maxi',
-  'sol_queen',
-  'nft_king',
-  'crypto_wizard',
-  'meme_lord',
-  'yield_seeker',
-  'base_builder',
-  'eth_staker',
-  'ai_enthusiast',
-  'defi_shark',
-  'token_trader',
-  'dao_voter',
-  'l2_researcher',
-  'wallet_warrior',
-  'nft_artist',
-  'rug_police',
-  'whale_watcher',
-  'airdrop_hunter',
-  'validator_vision',
-  'pump_patrol',
-];
-
-const MOCK_MSGS = [
-  'gm! 🚀',
-  'based',
-  'lets gooo',
-  'chart looking bullish',
-  'whats the price target?',
-  'been waiting for this stream',
-  '🔥🔥🔥',
-  'can we get a price check?',
-  'love the content!',
-  'holding since day 1',
-  'when moon?',
-  'serious alpha in here',
-  'just joined, what did I miss?',
-  'TL;DR?',
-  'this is the play',
-  'wagmi',
-  'pretty cool setup',
-  'anyone else buying the dip?',
-  'solid analysis',
-  'need to look into this more',
-  'gm frens',
-  'to the moon! 🚀',
-  'based and green-pilled',
-  'degen things',
-  'whats the mc?',
-  'chart is looking clean',
-  'accumulation zone',
-  'nice',
-];
-
-
 /* === Hook ===================================================== */
 
 export function useStreamChat({
@@ -166,8 +109,7 @@ export function useStreamChat({
       mockIntervalRef.current = setInterval(
         () => {
           setMessages((prev) => {
-            const newMsg = null;
-            const next = [...prev, newMsg];
+            const next = [...prev];
             return next.length > maxMessages ? next.slice(-maxMessages) : next;
           });
         },

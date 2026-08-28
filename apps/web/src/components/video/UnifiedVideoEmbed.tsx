@@ -351,8 +351,10 @@ export function UnifiedVideoEmbed({
     if (!videoRef.current) return;
 
     let hlsInstance: {
-      destroy: () => void;
+      loadSource(url: string): void;
+      attachMedia(element: HTMLMediaElement): void;
       on: (event: string, callback: (...args: unknown[]) => void) => void;
+      destroy(): void;
     } | null = null;
     let destroyed = false;
 
@@ -386,7 +388,7 @@ export function UnifiedVideoEmbed({
       });
 
       hlsInstance.on(HlsClass.Events.ERROR, (_event: unknown, data: unknown) => {
-        if (data.fatal) {
+        if ((data as { fatal?: boolean }).fatal) {
           setLoadError(true);
           setErrorMessage('HLS playback error');
           onError?.('HLS playback error');

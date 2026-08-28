@@ -55,10 +55,8 @@ export async function POST(request: Request) {
         { status: 400 },
       );
     }
-    const { content: text, platforms, media, scheduledAt } = parsed.data;
-    const targets = Array.isArray(body.targets)
-      ? body.targets.filter((t: string) => VALID_TARGETS.includes(t as AnnouncePlatform))
-      : [];
+    const { content: text, platforms } = parsed.data;
+    const targets = platforms.filter((t) => VALID_TARGETS.includes(t as AnnouncePlatform));
 
     if (!text) {
       return NextResponse.json({ error: 'Invalid text' }, { status: 400 });
@@ -92,9 +90,9 @@ export async function POST(request: Request) {
       id: spaceId,
       title: text.slice(0, 80),
       description: text,
-      hostId: body.hostId ?? 'anon',
-      hostName: body.hostName ?? 'Anonymous',
-      hostAvatarUrl: body.hostAvatarUrl,
+      hostId: rawBody.hostId ?? 'anon',
+      hostName: rawBody.hostName ?? 'Anonymous',
+      hostAvatarUrl: rawBody.hostAvatarUrl,
       coHosts: [],
       platforms: [],
       status: 'live',

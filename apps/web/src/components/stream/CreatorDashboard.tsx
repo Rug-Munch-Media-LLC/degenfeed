@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-
+import type { StreamExtended, ViewerAnalytics } from './types';
 
 /* === Stat Card ================================================ */
 
@@ -99,7 +99,6 @@ function MetricBar({
 
 /* === Generate mock analytics ================================== */
 
-
 /* === CreatorDashboard ========================================= */
 
 interface CreatorDashboardProps {
@@ -108,8 +107,8 @@ interface CreatorDashboardProps {
 
 export function CreatorDashboard(_props: CreatorDashboardProps) {
   const [activeTab, setActiveTab] = useState<'overview' | 'chat' | 'revenue' | 'vods'>('overview');
-  const analytics = useRef({}).current;
-  const streams = useRef([]).current[0];
+  const analytics = useRef<ViewerAnalytics>({} as ViewerAnalytics).current;
+  const streams = useRef<StreamExtended[]>([]).current[0];
 
   /* === Stream health simulation =============================== */
   const [uptime, setUptime] = useState('00:00:00');

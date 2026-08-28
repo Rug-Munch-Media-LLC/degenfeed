@@ -4,18 +4,22 @@ import { z } from 'zod';
 
 // TODO: Wire to worker backend
 
-const PreferencesSchema = z.object({
-  theme: z.enum(['light', 'dark', 'system']).optional(),
-  language: z.string().max(10).optional(),
-  notifications: z.object({
-    email: z.boolean().optional(),
-    push: z.boolean().optional(),
-    priceAlerts: z.boolean().optional(),
-    protocolUpdates: z.boolean().optional(),
-  }).optional(),
-  defaultFeedView: z.enum(['compact', 'comfortable']).optional(),
-  defaultFeedSort: z.enum(['trending', 'newest', 'following']).optional(),
-}).catchall(z.unknown());
+const PreferencesSchema = z
+  .object({
+    theme: z.enum(['light', 'dark', 'system']).optional(),
+    language: z.string().max(10).optional(),
+    notifications: z
+      .object({
+        email: z.boolean().optional(),
+        push: z.boolean().optional(),
+        priceAlerts: z.boolean().optional(),
+        protocolUpdates: z.boolean().optional(),
+      })
+      .optional(),
+    defaultFeedView: z.enum(['compact', 'comfortable']).optional(),
+    defaultFeedSort: z.enum(['trending', 'newest', 'following']).optional(),
+  })
+  .catchall(z.unknown());
 
 // === In-memory store (replace with KV in production) ==========
 // This is a simple store for demo. In production, use Cloudflare KV, Upstash, or similar.
@@ -59,8 +63,8 @@ export async function POST(request: NextRequest) {
     const response = NextResponse.json({ data: { ok: true } });
 
     // Handle theme cookie if present
-    if (typeof body.theme === 'string') {
-      response.cookies.set('df_theme', body.theme, {
+    if (typeof parsed.data.theme === 'string') {
+      response.cookies.set('df_theme', parsed.data.theme, {
         path: '/',
         maxAge: 31536000,
         sameSite: 'lax',

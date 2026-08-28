@@ -11,7 +11,7 @@ export type LogLevel = 'info' | 'warn' | 'error';
  * Log a structured message.
  * In production, consider sending to an observability sink in addition to stdout.
  */
-export function log(level: LogLevel, message: string, data?: unknown): void {
+export function log(_level: LogLevel, _message: string, _data?: unknown): void {
   //   console.log(
   //     JSON.stringify({
   //       l: level,

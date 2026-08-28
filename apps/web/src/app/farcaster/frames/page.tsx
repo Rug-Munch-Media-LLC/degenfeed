@@ -62,10 +62,6 @@ export default function FarcasterFramesPage() {
     setActiveFrame(frame);
   }, [customFrameUrl]);
 
-  const _handleSelectFrame = useCallback((frame: FrameData) => {
-    setActiveFrame(frame);
-  }, []);
-
   const handleBack = useCallback(() => {
     setActiveFrame(null);
   }, []);
@@ -372,82 +368,6 @@ export default function FarcasterFramesPage() {
         </div>
       </footer>
     </div>
-  );
-}
-
-// ─── Frame Card ─────────────────────────────────────────────────────────
-
-function _FrameCard({
-  frame,
-  onSelect,
-}: {
-  frame: FrameData;
-  onSelect: (frame: FrameData) => void;
-}) {
-  return (
-    <article
-      className="group relative overflow-hidden rounded-xl border p-4 transition-all duration-[var(--duration-normal)] hover:-translate-y-0.5 cursor-pointer"
-      style={{
-        borderColor: `${FC_COLOR}22`,
-        backgroundColor: 'var(--color-card)',
-      }}
-      onClick={() => onSelect(frame)}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter') onSelect(frame);
-      }}
-      aria-label={`View frame: ${frame.title}`}
-    >
-      {/* Preview image */}
-      <div
-        className="mb-3 overflow-hidden rounded-lg bg-[var(--color-muted-bg)]"
-        style={{ aspectRatio: frame.aspectRatio === '1:1' ? '1/1' : '1.91/1' }}
-      >
-        <img
-          src={frame.image}
-          alt={frame.title}
-          className="h-full w-full object-cover"
-          loading="lazy"
-        />
-      </div>
-
-      <h3 className="font-heading text-sm font-bold" style={{ color: 'var(--color-fg)' }}>
-        {frame.title}
-      </h3>
-      <p className="mt-1 text-xs line-clamp-2" style={{ color: 'var(--color-fg-secondary)' }}>
-        {frame.description}
-      </p>
-
-      {/* Buttons preview */}
-      <div className="mt-3 flex flex-wrap gap-1">
-        {frame.buttons.map((btn) => (
-          <span
-            key={btn.index}
-            className="rounded-md px-2 py-0.5 text-[9px] font-mono"
-            style={{
-              backgroundColor: `${FC_COLOR}10`,
-              color: FC_COLOR,
-            }}
-          >
-            {btn.action === 'link' && '↗ '}
-            {btn.action === 'mint' && '◆ '}
-            {btn.label}
-          </span>
-        ))}
-      </div>
-
-      {/* View button */}
-      <div className="mt-4 flex justify-end">
-        <span
-          className="rounded-lg px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider transition-all group-hover:scale-105"
-          style={{
-            backgroundColor: `${FC_COLOR}12`,
-            color: FC_COLOR,
-          }}
-        >
-          View Frame →
-        </span>
-      </div>
-    </article>
   );
 }
 

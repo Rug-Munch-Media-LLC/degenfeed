@@ -1,4 +1,4 @@
-import { createSpace } from '@degenfeed/spaces-bridge';
+import { createSpace, type SpaceContentType, type SpacePlatform } from '@degenfeed/spaces-bridge';
 import { NextResponse } from 'next/server';
 import { SpaceCreateSchema } from '../../../../lib/validation/schemas';
 
@@ -7,6 +7,9 @@ export const dynamic = 'force-dynamic';
 export async function POST(request: Request) {
   try {
     const rawBody = await request.json();
+    // Bind `body` to the already-parsed request body (avoids consuming the
+    // request stream twice) so the passthrough fields below type-check.
+    const body = rawBody;
     const parsed = SpaceCreateSchema.safeParse(rawBody);
     if (!parsed.success) {
       return NextResponse.json(
@@ -52,7 +55,7 @@ export async function POST(request: Request) {
       hostAvatarUrl: body.hostAvatarUrl,
       coHosts: body.coHosts || [],
       platforms,
-      contentType,
+      contentType: contentType as SpaceContentType,
       photoUrls: body.photoUrls,
       scheduledAt: body.scheduledAt,
       tippingEnabled: body.tippingEnabled ?? true,

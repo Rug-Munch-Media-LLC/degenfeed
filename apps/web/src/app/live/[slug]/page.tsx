@@ -24,7 +24,6 @@ import { StreamSchedule } from '../../../components/stream/StreamSchedule';
 import { StreamVODs } from '../../../components/stream/StreamVODs';
 import type { StreamExtended } from '../../../components/stream/types';
 
-
 // ─── Types ─────────────────────────────────────────────────────────────
 
 interface ChatMessage {
@@ -91,8 +90,30 @@ function isStreamId(slug: string): boolean {
 // ─── Mock Creator Data ────────────────────────────────────────────────
 
 function useStreamData(id: string): StreamExtended {
-  const [stream] = useMemo(() => [], []);
-  const base = stream!;
+  const base: StreamExtended = {
+    id: '',
+    title: '',
+    creatorId: '',
+    creatorHandle: '',
+    creatorDisplayName: '',
+    category: 'crypto',
+    tags: [],
+    viewerCount: 0,
+    isLive: true,
+    startedAt: Date.now(),
+    description: '',
+    stats: {
+      followers: 0,
+      subscribers: 0,
+      totalViews: 0,
+      totalStreams: 0,
+      averageViewers: 0,
+      peakViewers: 0,
+      streamingSince: '',
+    },
+    isFollowing: false,
+    isSubscribed: false,
+  };
   return {
     ...base,
     id,
@@ -102,7 +123,7 @@ function useStreamData(id: string): StreamExtended {
       .split('_')
       .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
       .join(' '),
-    creatorId: base.creatorId ?? id,
+    creatorId: base.creatorId || id,
   };
 }
 

@@ -16,14 +16,9 @@
  */
 
 import { type NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
 import { proxyPost } from '../../_proxy';
 
 export const dynamic = 'force-dynamic';
-
-const NostrRelaysSchema = z.object({
-  event: z.record(z.unknown()),
-});
 
 /**
  * GET: Get relay status info
@@ -31,7 +26,9 @@ const NostrRelaysSchema = z.object({
 export async function GET() {
   try {
     const workerUrl =
-      process.env.WORKER_URL ?? process.env.NEXT_PUBLIC_WORKER_URL ?? 'http://host.docker.internal:3101';
+      process.env.WORKER_URL ??
+      process.env.NEXT_PUBLIC_WORKER_URL ??
+      'http://host.docker.internal:3101';
 
     const res = await fetch(`${workerUrl}/api/nostr/relays`, {
       signal: AbortSignal.timeout(3000),

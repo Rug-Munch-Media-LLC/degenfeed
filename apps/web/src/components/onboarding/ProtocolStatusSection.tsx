@@ -88,14 +88,6 @@ export function ProtocolStatusSection({ walletAddress, isOwnProfile }: Props) {
         });
         if (res.ok) {
           await fetchStatus(); // Refresh the status
-        } else {
-          const errJson = (await res.json().catch(() => ({}))) as {
-            data?: { error?: string };
-            error?: string;
-          };
-          //           alert(
-          //             `Failed to create account: ${errJson.data?.error || errJson.error || `HTTP ${res.status}`}`,
-          //           );
         }
       } catch (err) {
         // alert(`Error: ${err instanceof Error ? err.message : 'Unknown'}`);

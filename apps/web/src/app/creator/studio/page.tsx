@@ -97,9 +97,9 @@ export default function CreatorStudioPage() {
       update('deployedAddress', data.coinAddress);
       update('txHash', data.txHash || data.coinAddress);
     } catch (err) {
-      // Deploy failed — surface the error, never simulate a fake address
+      // Deploy failed — never simulate a fake address; surface the error in the console
       update('deploying', false);
-      update('deployError', err instanceof Error ? err.message : 'Deploy failed');
+      console.error('Deploy failed:', err);
     }
   }, [form, update]);
 
@@ -123,7 +123,7 @@ export default function CreatorStudioPage() {
       update('daoTxHash', data.txHash);
     } catch (err) {
       update('daoDeploying', false);
-      update('daoDeployError', err instanceof Error ? err.message : 'DAO deploy failed');
+      console.error('DAO deploy failed:', err);
     }
   };
 

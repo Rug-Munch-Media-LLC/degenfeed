@@ -470,7 +470,7 @@ export default function MembersPage({ params }: { params: { id: string } }) {
                   setDelegateTarget(addr);
                   setShowDelegateModal(true);
                 }}
-                onMessage={(addr) => {
+                onMessage={() => {
                   // In a real app, this would open a DM interface
                   // alert(`DM to ${shortAddr(addr)} — coming soon`);
                 }}

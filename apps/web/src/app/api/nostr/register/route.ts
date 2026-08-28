@@ -24,22 +24,9 @@
  */
 
 import { type NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
 import { proxyPost } from '../../_proxy';
 
 export const dynamic = 'force-dynamic';
-
-const NostrRegisterSchema = z.object({
-  pubkey: z.string().length(64).optional(),
-  npub: z.string().min(1).max(100).optional(),
-  username: z.string().min(1).max(30).regex(/^[a-z0-9_]+$/),
-  profile: z.object({
-    name: z.string().max(50).optional(),
-    display_name: z.string().max(50).optional(),
-    about: z.string().max(500).optional(),
-    picture: z.string().url().optional(),
-  }).optional(),
-});
 
 export async function POST(request: NextRequest) {
   try {
