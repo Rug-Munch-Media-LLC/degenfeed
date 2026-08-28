@@ -132,7 +132,7 @@ export function useChatSearch(conversationId?: string) {
           setTotal(data.total ?? 0);
         }
       } catch (err: unknown) {
-        if (err?.name === 'AbortError') return;
+        if (err instanceof Error && err.name === 'AbortError') return;
         setError(err instanceof Error ? err.message : 'Search failed');
         setResults([]);
       } finally {
@@ -175,7 +175,7 @@ export function useChatSearch(conversationId?: string) {
         setTotal(data.total ?? 0);
       }
     } catch (err: unknown) {
-      if (err?.name === 'AbortError') return;
+      if (err instanceof Error && err.name === 'AbortError') return;
       setError(err instanceof Error ? err.message : 'Advanced search failed');
     } finally {
       if (!abort.signal.aborted) setSearching(false);

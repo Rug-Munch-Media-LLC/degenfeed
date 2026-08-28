@@ -1,6 +1,6 @@
 'use client';
 
-
+import type { VOD } from './types';
 
 interface StreamVODsProps {
   vods?: VOD[];

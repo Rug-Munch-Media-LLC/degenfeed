@@ -78,7 +78,13 @@ interface LensPost {
     video?: { item?: string | null } | null;
   };
   author?: LensAccount;
-  stats?: { reactions?: number; comments?: number; reposts?: number; quotes?: number; collects?: number };
+  stats?: {
+    reactions?: number;
+    comments?: number;
+    reposts?: number;
+    quotes?: number;
+    collects?: number;
+  };
 }
 
 export interface LensProviderOptions {
@@ -138,19 +144,6 @@ async function lensGql(url: string, q: string, v?: unknown): Promise<unknown> {
 // Shared selection fragments for the 2026 Lens API (api.lens.xyz/graphql).
 // PostMetadata is a UNION — content lives on the concrete metadata types.
 // Media fields: ImageMetadata.image + attachments, VideoMetadata.video.
-const POST_FIELDS = `
-  id timestamp
-  metadata {
-    ... on TextOnlyMetadata { content }
-    ... on ImageMetadata { content image { item } }
-    ... on VideoMetadata { content video { item } }
-    ... on LinkMetadata { content }
-    ... on ArticleMetadata { content }
-  }
-  author { address username { localName } metadata { name bio picture } }
-  stats { reactions comments reposts quotes collects }
-`;
-
 export class LensProvider implements FeedProvider {
   readonly protocol: Protocol = 'lens';
 

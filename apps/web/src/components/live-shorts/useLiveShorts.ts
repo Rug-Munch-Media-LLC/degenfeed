@@ -75,7 +75,7 @@ export interface ActiveLiveShortsResponse {
 }
 
 export interface LiveShortSessionResponse {
-  session: LiveShortSession;
+  session: LiveShortSession | null;
 }
 
 export interface LiveShortTipsResponse {
@@ -121,9 +121,6 @@ const fetcher = async <T>(url: string): Promise<T> => {
 };
 
 // === Mock generators (dev/fallback) ====================================
-
-
-
 
 // === Hooks =============================================================
 

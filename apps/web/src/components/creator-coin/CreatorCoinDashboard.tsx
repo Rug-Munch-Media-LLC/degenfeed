@@ -89,7 +89,7 @@ export function CreatorCoinDashboard({
   const handleBuy = useCallback(
     async (amountIn: bigint, minOut: bigint) => {
       if (!selectedToken) return;
-      const res = await fetch('/api/creator-coin/trade', {
+      await fetch('/api/creator-coin/trade', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -100,8 +100,7 @@ export function CreatorCoinDashboard({
           minTokensOut: minOut.toString(),
         }),
       });
-      const data = await res.json();
-      // console.log('Buy result:', data);
+      // console.log('Buy result:');
     },
     [selectedToken],
   );
@@ -109,7 +108,7 @@ export function CreatorCoinDashboard({
   const handleSell = useCallback(
     async (amountIn: bigint) => {
       if (!selectedToken) return;
-      const res = await fetch('/api/creator-coin/trade', {
+      await fetch('/api/creator-coin/trade', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -119,8 +118,7 @@ export function CreatorCoinDashboard({
           amountIn: amountIn.toString(),
         }),
       });
-      const data = await res.json();
-      // console.log('Sell result:', data);
+      // console.log('Sell result:');
     },
     [selectedToken],
   );

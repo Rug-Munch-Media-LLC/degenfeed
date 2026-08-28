@@ -140,22 +140,6 @@ export const SOURCE_CONFIG: Record<
   },
 };
 
-/* === Source-to-StreamType mapping ============================= */
-
-const SOURCE_TO_STREAM_TYPE: Record<string, StreamType> = {
-  twitch: 'solo',
-  kick: 'solo',
-  peertube: 'solo',
-  owncast: 'solo',
-  youtube: 'solo',
-  spaces: 'spaces',
-  farcaster: 'solo',
-  nostr: 'solo',
-  degenfeed: 'solo',
-  lens: 'solo',
-  zora: 'solo',
-};
-
 /* === Fetcher ================================================== */
 
 const fetcher = async (url: string): Promise<LiveStreamsResponse> => {
@@ -165,45 +149,6 @@ const fetcher = async (url: string): Promise<LiveStreamsResponse> => {
 };
 
 /* === API-to-Frontend Converter ================================ */
-
-/* === Mock Data (Fallback when API unavailable) ================ */
-
-const MOCK_LIVE_TITLES = [
-  '🚀 Solana Ecosystem Deep Dive — L2 Summer is Here!',
-  "BTC Post-Halving Analysis — What's Next?",
-  'DeFi Yield Strategies — Q3 Outlook',
-  'Building on Base — Live Coding Session',
-  'Meme Coin Watch Party 🐸',
-  'AI × Crypto Panel Discussion',
-  'Wallet Security Best Practices',
-  'Trading Room: BTC / ETH Technicals',
-  'Web3 Gaming Roundup — New Releases',
-  'On-Chain Analytics Masterclass',
-  'Validator Operations Chat',
-  'NFT Market Analysis — Buy the Dip?',
-  'Cross-Chain Bridge Deep Dive',
-  'DePIN Projects to Watch in 2026',
-  'The Future of Decentralized Social',
-  'ZK-Proofs Explained Simply',
-];
-
-const MOCK_CREATORS = [
-  { id: 'c1', handle: 'defi_degen', display: 'DeFi Degen' },
-  { id: 'c2', handle: 'sol_whale', display: 'Sol Whale' },
-  { id: 'c3', handle: 'nft_collector', display: 'NFT Collector' },
-  { id: 'c4', handle: 'crypto_analyst', display: 'Crypto Analyst' },
-  { id: 'c5', handle: 'base_builder', display: 'Base Builder' },
-  { id: 'c6', handle: 'meme_lord', display: 'Meme Lord' },
-  { id: 'c7', handle: 'ai_researcher', display: 'AI Researcher' },
-  { id: 'c8', handle: 'yield_farmer', display: 'Yield Farmer' },
-  { id: 'c9', handle: 'code_ninja', display: 'Code Ninja' },
-  { id: 'c10', handle: 'pixel_wizard', display: 'Pixel Wizard' },
-  { id: 'c11', handle: 'beats_degen', display: 'Beats Degen' },
-  { id: 'c12', handle: 'trade_master', display: 'Trade Master' },
-];
-
-const MOCK_SOURCES: StreamSource[] = ['twitch', 'kick', 'peertube', 'youtube', 'owncast', 'spaces'];
-
 
 /* === Hook ===================================================== */
 
@@ -215,9 +160,9 @@ export function useLiveStreams() {
       refreshInterval: 10000, // Poll every 10s
       revalidateOnFocus: true,
       dedupingInterval: 5000,
-      fallbackData: [],
+      fallbackData: { streams: [], featured: [], total: 0, sourceCounts: {}, categoryCounts: {} },
       onError: () => {
-        // Use mock data on error (already set via fallbackData)
+        // Use fallback data on error (already set via fallbackData)
       },
     },
   );

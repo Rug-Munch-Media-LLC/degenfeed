@@ -1,6 +1,6 @@
 'use client';
 
-
+import { getCategoryInfo, type ScheduleType } from './types';
 
 interface StreamScheduleProps {
   streams?: ScheduleType[];

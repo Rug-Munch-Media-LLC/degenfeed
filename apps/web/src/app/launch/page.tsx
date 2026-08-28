@@ -19,7 +19,6 @@ const TrendingSidebar = dynamic(
 
 /* === Mock data for development ======================== */
 
-
 /* === Page ============================================= */
 
 export default function LaunchPage() {
@@ -54,7 +53,7 @@ export default function LaunchPage() {
         } else {
           // Dev mock
           if (!cancelled) {
-            const mockCoins = [];
+            const mockCoins: CoinCardData[] = [];
             setCoins(mockCoins);
             setStats({
               totalLaunched: 47,

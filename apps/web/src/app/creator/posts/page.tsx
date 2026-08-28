@@ -221,7 +221,8 @@ function EngagementComparison({ copies }: { copies: CrossPostRecord['copies'] })
             color: '#666',
           };
           const firstProtocol = sorted[0]?.protocol;
-          const maxLikes = sorted.length > 0 ? (firstProtocol ? (metrics[firstProtocol]?.likes ?? 1) : 1) : 1;
+          const maxLikes =
+            sorted.length > 0 ? (firstProtocol ? (metrics[firstProtocol]?.likes ?? 1) : 1) : 1;
           const barWidth = Math.max(5, (m.likes / maxLikes) * 100);
 
           return (
@@ -675,9 +676,8 @@ export default function CreatorPostsPage() {
     setSelectedIds([]);
   }, []);
 
-  const handleBulkRepublish = useCallback((ids: string[]) => {
+  const handleBulkRepublish = useCallback(() => {
     // In a full implementation, this would trigger re-publish
-    // console.log('Re-publish:', ids);
     setSelectedIds([]);
   }, []);
 
