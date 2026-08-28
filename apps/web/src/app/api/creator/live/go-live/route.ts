@@ -39,7 +39,7 @@ export async function POST(request: Request) {
         { status: 400 },
       );
     }
-    const { title, description, category, format, platforms, tipsEnabled, chatEnabled } = parsed.data;
+    const { format, platforms } = parsed.data;
 
     // Bridge LiveStyle is vertical (9:16 portrait) | horizontal (16:9 landscape).
     const style = format === 'portrait' ? 'vertical' : 'horizontal';
@@ -55,7 +55,7 @@ export async function POST(request: Request) {
             cookie: request.headers.get('cookie') ?? '',
             authorization: request.headers.get('authorization') ?? '',
           },
-          body: JSON.stringify({ ...body, style }),
+          body: JSON.stringify({ ...rawBody, style }),
         }),
       );
       const data = await res.json();
@@ -88,7 +88,7 @@ export async function POST(request: Request) {
       // Worker unreachable — build a valid stream connection locally so the
       // frontend orchestration flow completes.
       const id = `df_live_${crypto.randomUUID().slice(0, 12)}`;
-      const format = body.format === 'portrait' ? 'portrait' : 'landscape';
+      const fmt = rawBody.format === 'portrait' ? 'portrait' : 'landscape';
       const platformMessages: Record<string, { ok: boolean; id: string; url: string }> = {};
       for (const p of platforms) {
         platformMessages[p] = {
@@ -101,7 +101,7 @@ export async function POST(request: Request) {
         stream: {
           streamId: id,
           rtmpUrl:
-            format === 'portrait'
+            fmt === 'portrait'
               ? 'rtmp://live.degenfeed.xyz/shorts'
               : 'rtmp://live.degenfeed.xyz/live',
           streamKey: id,

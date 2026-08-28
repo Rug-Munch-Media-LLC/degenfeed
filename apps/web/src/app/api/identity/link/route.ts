@@ -1,7 +1,21 @@
 import { type NextRequest, NextResponse } from 'next/server';
-import { IdentityLinkSchema } from '../../../lib/validation/schemas';
+import { IdentityLinkSchema } from '../../../../lib/validation/schemas';
 // TODO: Wire to worker backend
 export const dynamic = 'force-dynamic';
+
+const VALID_PROTOCOLS = [
+  'nostr',
+  'farcaster',
+  'lens',
+  'bluesky',
+  'mastodon',
+  'reddit',
+  'threads',
+  'lemmy',
+  'rss',
+  'peertube',
+  'zora',
+];
 
 export async function GET() {
   return NextResponse.json(
@@ -35,9 +49,16 @@ export async function POST(request: NextRequest) {
         { status: 400 },
       );
     }
-    const { protocol, identity: identityData, walletAddress, targetProtocol, targetIdentity } = parsed.data;
+    const {
+      protocol,
+      identity: identityData,
+      walletAddress,
+      targetProtocol,
+      targetIdentity,
+    } = parsed.data;
 
-    if (!identityData ||
+    if (
+      !identityData ||
       typeof identityData !== 'object' ||
       Object.keys(identityData).length === 0
     ) {
@@ -138,7 +159,7 @@ export async function POST(request: NextRequest) {
 
     // Single protocol link
     return NextResponse.json({ success: true, protocol, linked: true, walletAddress });
-  } catch (_error) {
+  } catch {
     return NextResponse.json({ error: 'Invalid request body' }, { status: 400 });
   }
 }
@@ -162,7 +183,7 @@ export async function DELETE(request: NextRequest) {
 
     // In production, this removes the linked identity from Postgres/KV
     return NextResponse.json({ success: true, protocol, unlinked: true });
-  } catch (_error) {
+  } catch {
     return NextResponse.json({ error: 'Failed to unlink identity' }, { status: 500 });
   }
 }

@@ -40,7 +40,6 @@ export async function POST(request: NextRequest) {
       );
     }
     const { nsec, password } = parsed.data;
-    };
 
     if (!nsec) {
       return NextResponse.json(
