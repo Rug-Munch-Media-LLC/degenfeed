@@ -93,11 +93,21 @@ const PROTOCOLS: Protocol[] = [
   },
   {
     name: 'Lemmy',
-    color: '#f2690d',
+    color: '#d4d4d4',
     icon: (
       <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
         <circle cx="12" cy="12" r="10" />
         <path d="M7 10c1.5-2 4-3 5-3s3.5 1 5 3c-1.5 1-3 1.5-5 1.5S8.5 11 7 10z" fill="#0d0d0d" />
+      </svg>
+    ),
+  },
+  {
+    name: 'Threads',
+    color: '#888888',
+    icon: (
+      <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M12 11.5c-1.5-1-2.6-2-2.6-3.6C9.4 6.4 10.5 5.5 12 5.5c1.3 0 2.2.6 2.6 1.8l2-.6C15.9 4.9 14.2 3.5 12 3.5c-3 0-4.9 1.9-4.9 4.5 0 2.8 1.9 4.3 5.1 6.2l-.5-.3c-1.4-1-2.3-1.9-2.7-3.1.4.2.9.4 1.6.5.4.1.9.1 1.4.2z" />
+        <path d="M18.5 8.5c-.2-.1-.4-.2-.6-.3.1 1-.2 1.8-.8 2.6-.6.8-1.5 1.4-2.6 1.9 2.6.5 4.4 1.9 4.4 4.2 0 2.5-2 4.1-5.2 4.1-2.8 0-4.9-1.3-5.3-3.8l2-.3c.3 1.4 1.5 2.1 3.3 2.1 1.9 0 3.2-1 3.2-2.2 0-1.4-1.5-2.3-4.3-2.7l.3-2c1.5.1 2.5-.4 3-1.2.5-.8.6-1.9.6-2.4z" />
       </svg>
     ),
   },
@@ -110,6 +120,27 @@ const PROTOCOLS: Protocol[] = [
         <circle cx="9" cy="12" r="1.6" fill="#0d0d0d" />
         <circle cx="15" cy="12" r="1.6" fill="#0d0d0d" />
         <path d="M12 15c1.8 0 3.2.8 4 2h-8c.8-1.2 2.2-2 4-2z" fill="#0d0d0d" />
+      </svg>
+    ),
+  },
+  {
+    name: 'RSS',
+    color: '#ffa500',
+    icon: (
+      <svg
+        aria-hidden="true"
+        width="22"
+        height="22"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M4 11a9 9 0 0 1 9 9" />
+        <path d="M4 4a16 16 0 0 1 16 16" />
+        <circle cx="5" cy="19" r="1.8" fill="currentColor" stroke="none" />
       </svg>
     ),
   },
@@ -130,6 +161,17 @@ const PROTOCOLS: Protocol[] = [
       <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
         <rect x="2.5" y="4" width="19" height="16" rx="4.5" />
         <path d="M10 9l5.5 3-5.5 3V9z" fill="#0d0d0d" />
+      </svg>
+    ),
+  },
+  {
+    name: 'Pixelfed',
+    color: '#ff4c6a',
+    icon: (
+      <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+        <rect x="2.5" y="4" width="19" height="16" rx="4.5" />
+        <circle cx="12" cy="12" r="4.5" />
+        <circle cx="9.6" cy="10" r="1.2" fill="#0d0d0d" />
       </svg>
     ),
   },
@@ -223,8 +265,9 @@ interface Feature {
 
 const FEATURES: Feature[] = [
   {
-    title: 'One Feed, All Protocols',
-    description: 'Browse content from every major decentralized protocol',
+    title: 'Unified Feed',
+    description:
+      'Mastodon, Bluesky, Nostr, Farcaster, Lens, Lemmy, RSS and more — merged into one chronological stream. No switching accounts, no missed posts.',
     icon: (
       <svg
         aria-hidden="true"
@@ -244,8 +287,51 @@ const FEATURES: Feature[] = [
     ),
   },
   {
+    title: 'Cross-Protocol Composer',
+    description:
+      'Write once, publish everywhere. Compose a post and fan it out to every connected network in a single click — replies, media and all.',
+    icon: (
+      <svg
+        aria-hidden="true"
+        width="24"
+        height="24"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M12 20h9" />
+        <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4 11.5-11.5z" />
+      </svg>
+    ),
+  },
+  {
+    title: 'Decentralized Identity',
+    description:
+      'One portable identity that lives on the open protocols — not in a corporate database. Your handle, your keys, your reputation. Everywhere.',
+    icon: (
+      <svg
+        aria-hidden="true"
+        width="24"
+        height="24"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1" />
+        <circle cx="12" cy="12" r="3.5" />
+      </svg>
+    ),
+  },
+  {
     title: 'Network Ownership',
-    description: 'Your identity belongs to you on every protocol',
+    description:
+      'Your follows, your graph, your data — yours. Exportable, portable and self-hostable. No algorithm farm harvesting your attention.',
     icon: (
       <svg
         aria-hidden="true"
@@ -265,8 +351,9 @@ const FEATURES: Feature[] = [
     ),
   },
   {
-    title: 'Open Source',
-    description: 'Fully open source. Self-hostable. No vendor lock-in.',
+    title: 'Bias-Rated News',
+    description:
+      'Crypto news with media-bias ratings on every story — see the slant before you read. Better than Ground News, purpose-built for degens.',
     icon: (
       <svg
         aria-hidden="true"
@@ -279,15 +366,14 @@ const FEATURES: Feature[] = [
         strokeLinecap="round"
         strokeLinejoin="round"
       >
-        <path d="M8 8l-4 4 4 4" />
-        <path d="M16 8l4 4-4 4" />
-        <path d="M13.5 5l-3 14" />
+        <path d="M12 3l2.7 5.6 6.3.9-4.5 4.4 1 6.1L12 17.8l-5.5 3 1-6.1L3 9.5l6.3-.9z" />
       </svg>
     ),
   },
   {
-    title: 'No Algorithms',
-    description: 'Chronological feeds. No engagement optimization. Just content.',
+    title: 'Tipping & Creator Coins',
+    description:
+      'Send sats, tips and creator coins straight to the people you follow — peer-to-peer, on-chain, with zero platform cut. Fund the feeds you love.',
     icon: (
       <svg
         aria-hidden="true"
@@ -301,13 +387,91 @@ const FEATURES: Feature[] = [
         strokeLinejoin="round"
       >
         <circle cx="12" cy="12" r="9" />
-        <path d="M12 7v5l3.5 2" />
+        <path d="M12 7v10M15 9.5c0-1.4-1.3-2.5-3-2.5s-3 1.1-3 2.5 1.3 2.2 3 2.5 3 1.1 3 2.5-1.3 2.5-3 2.5-3-1.1-3-2.5" />
       </svg>
     ),
   },
 ];
 
-/* ─── FOOTER LINKS (static) ─────────────────────────────────────────── */
+/* ─── DOCS & LINKS (static) ─────────────────────────────────────────── */
+
+interface DocLink {
+  label: string;
+  href: string;
+  description: string;
+  group: string;
+}
+
+const DOC_LINKS: DocLink[] = [
+  {
+    label: 'Docs Home',
+    href: '/docs',
+    description: 'Everything you need to get started with DegenFeed.',
+    group: 'Get Started',
+  },
+  {
+    label: 'Quickstart',
+    href: '/docs/quickstart',
+    description: 'Spin up your first unified feed in minutes.',
+    group: 'Get Started',
+  },
+  {
+    label: 'Architecture',
+    href: '/docs/architecture',
+    description: 'How the federated protocol layer fits together.',
+    group: 'Get Started',
+  },
+  {
+    label: 'API Reference',
+    href: '/docs/api',
+    description: 'Endpoints, schemas and rate limits for developers.',
+    group: 'Developers',
+  },
+  {
+    label: 'Interactive API',
+    href: '/api-docs',
+    description: 'Try the live API directly in your browser.',
+    group: 'Developers',
+  },
+  {
+    label: 'User Guide',
+    href: '/docs/user-guide',
+    description: 'Feeds, composer, identity and tipping in depth.',
+    group: 'Learn',
+  },
+  {
+    label: 'Features',
+    href: '/features',
+    description: 'A tour of everything DegenFeed can do.',
+    group: 'Learn',
+  },
+  {
+    label: 'Pricing',
+    href: '/pricing',
+    description: 'Free by default. Self-hostable. No lock-in.',
+    group: 'Learn',
+  },
+  {
+    label: 'FAQ',
+    href: '/faq',
+    description: 'Answers to the most common questions.',
+    group: 'Learn',
+  },
+  {
+    label: 'About',
+    href: '/about',
+    description: 'The mission behind the platform.',
+    group: 'Learn',
+  },
+  {
+    label: 'Developers',
+    href: '/developers',
+    description: 'Build on DegenFeed with our open APIs.',
+    group: 'Developers',
+  },
+];
+
+const DOC_GROUPS = ['Get Started', 'Developers', 'Learn'] as const;
 
 const SOURCE_LINKS = [
   { label: 'Forgejo', href: 'https://git.rugmunch.io/RugMunchMedia/degenfeed' },
@@ -320,6 +484,7 @@ const PAGE_LINKS = [
   { label: 'Docs', href: '/docs' },
   { label: 'FAQ', href: '/faq' },
   { label: 'About', href: '/about' },
+  { label: 'Pricing', href: '/pricing' },
 ];
 
 /* ─── STATIC STYLES ─────────────────────────────────────────────────── */
@@ -346,7 +511,6 @@ const STYLES = `
   body {
     background:
       radial-gradient(1100px 520px at 50% -8%, rgba(0, 255, 65, 0.07), transparent 62%),
-      radial-gradient(800px 500px at 85% 12%, rgba(0, 255, 65, 0.04), transparent 55%),
       linear-gradient(180deg, #000 0%, #040404 40%, #000 100%);
     background-attachment: fixed;
     color: var(--fg);
@@ -381,27 +545,56 @@ const STYLES = `
 
   /* ── Hero ── */
   .hero {
-    position: relative; overflow: hidden;
-    padding: 88px 20px 64px; text-align: center;
+    position: relative;
+    padding: 72px 20px 40px; text-align: center;
+    isolation: isolate;
   }
   .hero-glow {
-    position: absolute; top: -30%; left: 50%; transform: translateX(-50%);
-    width: 820px; height: 820px; pointer-events: none;
-    background: radial-gradient(circle, var(--accent-glow) 0%, transparent 65%);
+    position: absolute; top: -220px; left: 50%; transform: translateX(-50%);
+    width: 640px; height: 640px; pointer-events: none; z-index: -1;
+    background: radial-gradient(circle, rgba(0, 255, 65, 0.08) 0%, transparent 62%);
   }
-  .hero-logo { margin-bottom: 32px; position: relative; }
-  .hero-logo img { max-width: min(400px, 80vw); height: auto; }
+  .hero-grid-overlay {
+    position: absolute; inset: 0; pointer-events: none; z-index: -1; opacity: 0.5;
+    background-image:
+      linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+    background-size: 44px 44px;
+    mask-image: radial-gradient(640px 360px at 50% 0%, #000 0%, transparent 75%);
+    -webkit-mask-image: radial-gradient(640px 360px at 50% 0%, #000 0%, transparent 75%);
+  }
+  .hero-badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    border: 1px solid rgba(0, 255, 65, 0.25); border-radius: 9999px;
+    background: rgba(0, 255, 65, 0.06);
+    padding: 6px 14px; font-size: 12px; font-weight: 700;
+    letter-spacing: 0.06em; text-transform: uppercase; color: var(--accent);
+    margin-bottom: 28px;
+  }
+  .hero-badge-dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--accent); box-shadow: 0 0 10px var(--accent);
+  }
+  .hero-lockup {
+    display: flex; align-items: center; justify-content: center; gap: 14px;
+    margin-bottom: 24px;
+  }
+  .hero-lockup img { width: 52px; height: auto; }
+  .hero-lockup-word {
+    font-family: var(--font-heading, Syne, sans-serif);
+    font-size: 34px; font-weight: 800; letter-spacing: -0.02em; color: var(--fg);
+  }
   .hero h1 {
     font-family: var(--font-heading, Syne, sans-serif);
     font-size: clamp(2.4rem, 6vw, 4.2rem);
-    font-weight: 800; letter-spacing: -0.03em; line-height: 1.1;
+    font-weight: 800; letter-spacing: -0.03em; line-height: 1.08;
     margin-bottom: 20px;
   }
   .hero h1 .accent { color: var(--accent); }
   .hero-sub {
-    font-size: clamp(1.05rem, 2.4vw, 1.35rem);
-    color: var(--fg-secondary); margin-bottom: 40px;
-    max-width: 640px; margin-left: auto; margin-right: auto;
+    font-size: clamp(1.05rem, 2.4vw, 1.3rem);
+    color: var(--fg-secondary); margin-bottom: 36px;
+    max-width: 680px; margin-left: auto; margin-right: auto;
   }
   .hero-cta { display: flex; flex-wrap: wrap; justify-content: center; gap: 16px; }
   .btn {
@@ -411,10 +604,18 @@ const STYLES = `
     transition: transform 0.15s, background 0.2s, border-color 0.2s;
   }
   .btn:hover { transform: translateY(-1px); }
-  .btn-primary { background: var(--accent); color: #000; }
+  .btn-primary { background: var(--accent); color: #000; box-shadow: 0 0 0 1px rgba(0, 255, 65, 0.3), 0 8px 32px rgba(0, 255, 65, 0.18); }
   .btn-primary:hover { background: var(--accent-dim); }
   .btn-secondary { border: 1px solid var(--border); color: var(--fg); }
   .btn-secondary:hover { border-color: var(--fg-secondary); background: var(--surface-raised); }
+
+  /* ── Stat strip ── */
+  .stat-strip {
+    display: flex; flex-wrap: wrap; justify-content: center;
+    gap: 10px 44px; padding: 28px 20px 8px;
+    font-size: 13px; color: var(--fg-tertiary);
+  }
+  .stat-strip strong { color: var(--fg); font-family: var(--font-heading, Syne, sans-serif); font-size: 15px; }
 
   /* ── Section shell ── */
   .section { padding: 72px 20px; }
@@ -431,7 +632,7 @@ const STYLES = `
   }
   .section-sub {
     font-size: 16px; color: var(--fg-secondary); text-align: center;
-    max-width: 560px; margin: 0 auto 40px;
+    max-width: 600px; margin: 0 auto 40px;
   }
 
   /* ── Protocol grid ── */
@@ -457,7 +658,7 @@ const STYLES = `
 
   /* ── Features ── */
   .features-grid {
-    display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px;
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;
   }
   .feature-card {
     display: flex; flex-direction: column; gap: 14px;
@@ -474,7 +675,46 @@ const STYLES = `
     font-family: var(--font-heading, Syne, sans-serif);
     font-size: 18px; font-weight: 800; letter-spacing: -0.01em;
   }
-  .feature-card p { font-size: 15px; color: var(--fg-secondary); }
+  .feature-card p { font-size: 14px; color: var(--fg-secondary); }
+
+  /* ── Docs ── */
+  .docs-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px;
+    margin-bottom: 48px;
+  }
+  .docs-group-title {
+    font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em;
+    color: var(--fg-tertiary); margin: 0 2px 10px;
+  }
+  .docs-card {
+    display: flex; flex-direction: column; gap: 6px;
+    padding: 20px; border: 1px solid var(--border); border-radius: 14px;
+    background: var(--card); transition: border-color 0.2s, background 0.2s, transform 0.15s;
+  }
+  .docs-card:hover { border-color: rgba(0, 255, 65, 0.35); background: var(--surface-raised); transform: translateY(-1px); }
+  .docs-card-title {
+    display: flex; align-items: center; justify-content: space-between; gap: 8px;
+    font-family: var(--font-heading, Syne, sans-serif);
+    font-size: 15px; font-weight: 800; letter-spacing: -0.01em; color: var(--fg);
+  }
+  .docs-card:hover .docs-card-title { color: var(--accent); }
+  .docs-card-desc { font-size: 13px; color: var(--fg-secondary); line-height: 1.45; }
+
+  /* ── CTA band ── */
+  .cta-band {
+    border: 1px solid rgba(0, 255, 65, 0.22);
+    border-radius: 24px; padding: 56px 28px; text-align: center;
+    background:
+      radial-gradient(560px 240px at 50% 0%, rgba(0, 255, 65, 0.1), transparent 70%),
+      var(--card);
+  }
+  .cta-band h2 {
+    font-family: var(--font-heading, Syne, sans-serif);
+    font-size: clamp(1.5rem, 3.2vw, 2.2rem); font-weight: 800; letter-spacing: -0.02em;
+    margin-bottom: 12px;
+  }
+  .cta-band p { font-size: 15px; color: var(--fg-secondary); max-width: 520px; margin: 0 auto 32px; }
+  .cta-band .hero-cta { margin: 0; }
 
   /* ── Footer ── */
   .footer { border-top: 1px solid var(--border-soft); padding: 40px 20px 28px; background: rgba(0, 0, 0, 0.6); }
@@ -500,11 +740,14 @@ const STYLES = `
 
   @media (max-width: 1024px) {
     .protocol-grid { grid-template-columns: repeat(4, 1fr); }
+    .features-grid { grid-template-columns: repeat(2, 1fr); }
+    .docs-grid { grid-template-columns: repeat(2, 1fr); }
   }
   @media (max-width: 768px) {
-    .hero { padding: 64px 20px 48px; }
+    .hero { padding: 56px 20px 32px; }
     .protocol-grid { grid-template-columns: repeat(3, 1fr); }
     .features-grid { grid-template-columns: 1fr; }
+    .docs-grid { grid-template-columns: 1fr; }
     .footer-grid { grid-template-columns: 1fr 1fr; }
   }
   @media (max-width: 480px) {
@@ -539,9 +782,16 @@ export default function LandingPage() {
           {/* ── Hero ── */}
           <section className="hero" aria-labelledby="hero-title">
             <div className="hero-glow" aria-hidden="true" />
+            <div className="hero-grid-overlay" aria-hidden="true" />
 
-            <div className="hero-logo">
-              <img src="/degenfeedlogo.png" alt="DegenFeed" width={400} height={251} />
+            <div className="hero-badge">
+              <span className="hero-badge-dot" aria-hidden="true" />
+              20+ protocols · one feed · yours
+            </div>
+
+            <div className="hero-lockup">
+              <img src="/degenfeedlogo-nav.png" alt="DegenFeed logo" width={52} height={52} />
+              <span className="hero-lockup-word">DegenFeed</span>
             </div>
 
             <h1 id="hero-title">
@@ -549,7 +799,10 @@ export default function LandingPage() {
             </h1>
 
             <p className="hero-sub">
-              20+ decentralized protocols. One feed. No switching accounts. Own your network.
+              DegenFeed pulls Mastodon, Bluesky, Nostr, Farcaster, Lens, Lemmy and 20+ more
+              protocols into a single chronological stream — with a cross-protocol composer,
+              portable identity and bias-rated crypto news. No switching accounts. No algorithm. No
+              lock-in. Own your network.
             </p>
 
             <div className="hero-cta">
@@ -566,9 +819,22 @@ export default function LandingPage() {
                 </svg>
               </Link>
               <Link href="/docs" className="btn btn-secondary">
-                Learn More
+                Read the docs
               </Link>
             </div>
+          </section>
+
+          {/* ── Stat strip ── */}
+          <section className="stat-strip" aria-label="DegenFeed at a glance">
+            <span>
+              <strong>20+</strong> protocols
+            </span>
+            <span>
+              <strong>0</strong> algorithms
+            </span>
+            <span>
+              <strong>100%</strong> your network
+            </span>
           </section>
 
           {/* ── Protocol showcase ── */}
@@ -578,7 +844,10 @@ export default function LandingPage() {
               <h2 id="protocols-title" className="section-title">
                 One feed, every network
               </h2>
-              <p className="section-sub">Content from across the decentralized web</p>
+              <p className="section-sub">
+                Content from across the decentralized web — social graphs, blogs, video and news —
+                unified in one chronological stream.
+              </p>
               <div className="protocol-grid">
                 {PROTOCOLS.map((p) => (
                   <div key={p.name} className="protocol-tile">
@@ -598,10 +867,14 @@ export default function LandingPage() {
           {/* ── Features ── */}
           <section className="section" aria-labelledby="features-title">
             <div className="section-inner">
-              <p className="section-label">Why DegenFeed</p>
+              <p className="section-label">What we do</p>
               <h2 id="features-title" className="section-title">
                 Built different. On purpose.
               </h2>
+              <p className="section-sub">
+                Not another walled garden. DegenFeed is an open layer over the protocols you already
+                use.
+              </p>
               <div className="features-grid">
                 {FEATURES.map((f) => (
                   <div key={f.title} className="feature-card">
@@ -612,6 +885,75 @@ export default function LandingPage() {
                     <p>{f.description}</p>
                   </div>
                 ))}
+              </div>
+            </div>
+          </section>
+
+          {/* ── Documentation ── */}
+          <section className="section" aria-labelledby="docs-title">
+            <div className="section-inner">
+              <p className="section-label">Documentation</p>
+              <h2 id="docs-title" className="section-title">
+                Read the docs, ship the feed
+              </h2>
+              <p className="section-sub">
+                Everything from the five-minute quickstart to the full API reference.
+              </p>
+              <div className="docs-grid">
+                {DOC_GROUPS.map((group) => (
+                  <div key={group} className="docs-group">
+                    <h3 className="docs-group-title">{group}</h3>
+                    {DOC_LINKS.filter((link) => link.group === group).map((link) => (
+                      <Link key={link.href} href={link.href} className="docs-card">
+                        <span className="docs-card-title">
+                          {link.label}
+                          <svg
+                            width="14"
+                            height="14"
+                            viewBox="0 0 20 20"
+                            fill="none"
+                            aria-hidden="true"
+                          >
+                            <path
+                              d="M7 5l5 5-5 5M12 5l5 5-5 5"
+                              stroke="currentColor"
+                              strokeWidth="1.8"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            />
+                          </svg>
+                        </span>
+                        <span className="docs-card-desc">{link.description}</span>
+                      </Link>
+                    ))}
+                  </div>
+                ))}
+              </div>
+
+              {/* ── CTA band ── */}
+              <div className="cta-band">
+                <h2>Ready to own your feed?</h2>
+                <p>
+                  Stop switching apps. DegenFeed brings the decentralized web to one place — free to
+                  start, open source, and self-hostable.
+                </p>
+                <div className="hero-cta">
+                  <Link href="/feed" className="btn btn-primary">
+                    Launch App
+                    <svg width="18" height="18" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                      <path
+                        d="M4 10h12M10 4l6 6-6 6"
+                        stroke="currentColor"
+                        strokeWidth="1.8"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  </Link>
+                  <Link href="/docs" className="btn btn-secondary">
+                    Read the docs
+                  </Link>
+                </div>
               </div>
             </div>
           </section>
