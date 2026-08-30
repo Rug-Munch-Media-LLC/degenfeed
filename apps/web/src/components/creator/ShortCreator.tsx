@@ -802,7 +802,7 @@ export default function ShortCreator({ onClose, onSuccess }: ShortCreatorProps) 
                 <p className="mb-2 text-xs font-medium text-white/60">Share</p>
                 <div className="flex flex-wrap gap-1.5">
                   {Object.entries(publishResults)
-                    .filter(([_, r]) => r.ok)
+                    .filter(([, r]) => r.ok)
                     .map(([protocol]) => {
                       const meta = PROTOCOL_META[protocol as ShortProtocol];
                       if (!meta) return null;

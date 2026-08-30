@@ -10,7 +10,7 @@
 #   API_PROXY_TARGET (default http://localhost:8787 = degenfeed-bridge.service).
 #
 # FIX 2026-08-30: /api/(feed|rss)/, =/api/health and /v1|health previously
-# proxied to 127.0.0.1:3101 (degenfeed-api container — RETIRED, nothing
+# proxied to 127.0.0.1:3100 (degenfeed-api container — RETIRED, nothing
 # listens there → 502 on every feed request). They now go straight to the
 # bridge on :8787, matching what the app's own proxy targets.
 #

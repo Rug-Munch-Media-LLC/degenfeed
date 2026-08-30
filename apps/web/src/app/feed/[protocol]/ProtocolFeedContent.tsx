@@ -246,7 +246,7 @@ export function ProtocolFeedContent({
           // would return the same posts and infinite scroll would spin
           // forever. Only honor an explicit hasMore, never the length
           // heuristic.
-          const fallbackMeta = { ...(fallbackJson.meta ?? {}), hasMore: false };
+          const fallbackMeta = { ...fallbackJson.meta, hasMore: false };
           applyFeed(fallbackFeed, fallbackMeta, append);
           return;
         }

@@ -290,7 +290,9 @@ export function VoiceNoteRecorder({
   // Recording state
   const [state, setState] = useState<RecordingState>('idle');
   const [duration, setDuration] = useState(0);
-  const [waveform, setWaveform] = useState<number[]>(new Array(WAVEFORM_SAMPLES).fill(0.1));
+  const [waveform, setWaveform] = useState<number[]>(
+    Array.from({ length: WAVEFORM_SAMPLES }, () => 0.1),
+  );
   const [voiceNote, setVoiceNote] = useState<VoiceNoteData | null>(null);
   const [transcribing, _setTranscribing] = useState(false);
   const [transcript, setTranscript] = useState<string | undefined>();
@@ -526,7 +528,7 @@ export function VoiceNoteRecorder({
       setVoiceNote(null);
       setTranscript(undefined);
       setDuration(0);
-      setWaveform(new Array(WAVEFORM_SAMPLES).fill(0.1));
+      setWaveform(Array.from({ length: WAVEFORM_SAMPLES }, () => 0.1));
     }
   }, [voiceNote, transcript, onSend]);
 
@@ -538,7 +540,7 @@ export function VoiceNoteRecorder({
     setState('idle');
     setVoiceNote(null);
     setDuration(0);
-    setWaveform(new Array(WAVEFORM_SAMPLES).fill(0.1));
+    setWaveform(Array.from({ length: WAVEFORM_SAMPLES }, () => 0.1));
     setError(null);
     setTranscript(undefined);
     onCancel?.();
