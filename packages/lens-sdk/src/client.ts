@@ -8,8 +8,11 @@
  * this file directly instead of index.ts.
  */
 
-export const LENS_API_URL = 'https://api-v2.lens.dev/graphql';
-export const FALLBACK_LENS_URLS = ['https://api.lens.xyz/graphql', LENS_API_URL];
+// Live Lens v3 endpoint (2026). The legacy api-v2.lens.dev host 301-redirects
+// to api.lens.xyz and the browser/fetch redirect rewrites POST → GET, dropping
+// the GraphQL body — so it is NOT a usable fallback anymore.
+export const LENS_API_URL = 'https://api.lens.xyz/graphql';
+export const FALLBACK_LENS_URLS = [LENS_API_URL];
 
 export interface LensProfile {
   id: string;
@@ -46,7 +49,12 @@ export class LensClient {
       'content-type': 'application/json',
       'user-agent': 'DegenFeed/0.1 (+https://degenfeed.xyz)',
     };
-    if (this.accessToken) headers.authorization = `Bearer ${this.accessToken}`;
+    if (this.accessToken) {
+      // Lens v3 authenticates via the x-access-token header. Keep the
+      // authorization header too for any v2-era gateway that still expects it.
+      headers['x-access-token'] = this.accessToken;
+      headers.authorization = `Bearer ${this.accessToken}`;
+    }
     const res = await fetch(url, {
       method: 'POST',
       headers,

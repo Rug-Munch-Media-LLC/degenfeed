@@ -128,7 +128,10 @@ export const schema: SchemaGuard = {
   contentType: 'image',
 };
 
-function toUnified(status: import('@degenfeed/pixelfed-sdk').PixelfedStatus, base: string): UnifiedPost {
+function toUnified(
+  status: import('@degenfeed/pixelfed-sdk').PixelfedStatus,
+  base: string,
+): UnifiedPost {
   // normalizePixelfedPost returns the shared @degenfeed/types UnifiedPost whose
   // author.keys is a richer object (fid?: number, etc.). The bridge's narrower
   // UnifiedPost requires keys: Record<string, string | undefined>. Pixelfed

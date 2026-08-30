@@ -470,7 +470,12 @@ export async function fetchLemmyPosts(limit = 20): Promise<UnifiedPost[]> {
   // Fetch from local Lemmy communities via API
   const localPromises = localUp
     ? LOCAL_COMMUNITIES.map((comm) =>
-        fetchCommunityPosts(LEMMY_LOCAL, comm, Math.ceil(limit / LOCAL_COMMUNITIES.length), LOCAL_TIMEOUT_MS),
+        fetchCommunityPosts(
+          LEMMY_LOCAL,
+          comm,
+          Math.ceil(limit / LOCAL_COMMUNITIES.length),
+          LOCAL_TIMEOUT_MS,
+        ),
       )
     : [];
 
@@ -484,7 +489,12 @@ export async function fetchLemmyPosts(limit = 20): Promise<UnifiedPost[]> {
   // Also fetch from local RSS feeds (complementary to API)
   if (all.length < limit && localUp) {
     const rssPromises = LOCAL_COMMUNITIES.map((comm) =>
-      fetchRssFromInstance(LEMMY_LOCAL, comm, Math.ceil(limit / LOCAL_COMMUNITIES.length), LOCAL_TIMEOUT_MS),
+      fetchRssFromInstance(
+        LEMMY_LOCAL,
+        comm,
+        Math.ceil(limit / LOCAL_COMMUNITIES.length),
+        LOCAL_TIMEOUT_MS,
+      ),
     );
     const rssResults = await Promise.allSettled(rssPromises);
     for (const r of rssResults) {
