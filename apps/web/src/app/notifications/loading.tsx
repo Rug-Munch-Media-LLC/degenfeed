@@ -26,6 +26,7 @@ export default function NotificationsLoading() {
         <div className="space-y-1 pl-2 mt-2 mb-6">
           {Array.from({ length: 5 }, (_, i) => (
             <div
+              // biome-ignore lint/suspicious/noArrayIndexKey: static skeleton
               key={i}
               className="flex items-start gap-3 rounded-xl border p-4"
               style={{ borderColor: 'var(--color-glass-border)' }}
@@ -59,6 +60,7 @@ export default function NotificationsLoading() {
         <div className="space-y-1 pl-2 mt-2">
           {Array.from({ length: 3 }, (_, i) => (
             <div
+              // biome-ignore lint/suspicious/noArrayIndexKey: static skeleton
               key={`y-${i}`}
               className="flex items-start gap-3 rounded-xl border p-4"
               style={{ borderColor: 'var(--color-glass-border)' }}

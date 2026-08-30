@@ -54,7 +54,7 @@ function GuestView({ onOpenSignIn }: { onOpenSignIn: () => void }) {
   return (
     <>
       <div className="mb-8 flex flex-col items-center py-12">
-        <div className="mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-gradient-to-br from-degen-500/30 via-purple-500/20 to-fuchsia-500/30 shadow-[0_0_40px_rgba(34,197,94,0.15)]">
+        <div className="mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-gradient-to-br from-degen-500/30 via-purple-500/20 to-fuchsia-500/30 shadow-[0_0_40px_var(--color-accent-glow)]">
           <span className="text-4xl font-bold text-[var(--color-fg)]">?</span>
         </div>
         <h1 className="mb-2 text-2xl font-bold text-[var(--color-fg)]">Welcome to DegenFeed</h1>
