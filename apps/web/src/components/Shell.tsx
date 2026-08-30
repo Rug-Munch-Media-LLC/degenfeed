@@ -200,14 +200,14 @@ function MobileTopBar({
         <Link
           href="/feed"
           className="flex items-center shrink-0 ml-0.5"
-          aria-label="Crypto Rug Muncher Home"
+          aria-label="DegenFeed Home"
         >
           <Image
-            src="/avatar.jpg"
-            alt="Crypto Rug Muncher"
+            src="/degenfeedlogo-nav.png"
+            alt="DegenFeed"
             width={75}
             height={75}
-            className="h-7 w-auto rounded-full"
+            className="h-7 w-auto"
           />
         </Link>
       </div>

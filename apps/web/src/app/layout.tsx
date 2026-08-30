@@ -188,8 +188,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <meta name="apple-mobile-web-app-title" content="DegenFeed" />
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="application-name" content="DegenFeed" />
-        <link rel="icon" href="/avatar.jpg" type="image/jpeg" />
-        <link rel="apple-touch-icon" href="/avatar.jpg" />
+        <link rel="icon" href="/favicon.png" type="image/png" />
+        <link rel="apple-touch-icon" href="/favicon.png" />
         <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon" />
         <link rel="apple-touch-icon" href="/icon-192.png" />
         <link

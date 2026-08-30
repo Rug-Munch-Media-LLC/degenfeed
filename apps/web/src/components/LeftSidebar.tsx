@@ -593,7 +593,7 @@ export const LeftSidebar = memo(function LeftSidebar({
           aria-label="DegenFeed Home"
         >
           <Image
-            src="/avatar.jpg"
+            src="/degenfeedlogo-nav.png"
             alt=""
             width={collapsed ? 28 : 32}
             height={collapsed ? 28 : 32}
