@@ -1,257 +1,189 @@
 /**
- * JWT Authentication — validates tokens issued by rmi-backend.
+ * DegenFeed JWT Authentication — validates tokens issued by DegenFeed itself.
  *
- * Uses Web Crypto API (edge-compatible) to verify RS256 JWTs.
- * Supports both the existing wallet-based HMAC sessions AND JWT from rmi-backend.
+ * DegenFeed is a self-contained social product. It does NOT trust tokens
+ * issued by rmi-backend; instead it issues and validates its OWN JWTs using a
+ * private HMAC secret (`DF_JWT_SECRET`, falling back to `AUTH_SECRET`). No
+ * JWKS fetch, no external issuer, no network calls — validation is fully
+ * offline and edge-compatible (Web Crypto / HMAC-SHA256).
  *
  * Configuration (env vars):
- *   - NEXT_PUBLIC_RMI_JWKS_URL: JWKS endpoint URL (default: https://rugmunch.io/.well-known/jwks.json)
- *   - RMI_JWT_PUBLIC_KEY: RSA public key PEM (optional, for offline validation)
- *   - RMI_JWT_ALGORITHM: "RS256" (default) or "HS256"
- *   - RMI_JWT_SECRET: HMAC secret (only for HS256 mode)
+ *   - DF_JWT_SECRET: HMAC secret used to sign/verify degenfeed JWTs.
+ *                    Falls back to AUTH_SECRET (the wallet-session secret).
+ *   - DF_JWT_TTL_SECONDS: token lifetime for signing (default 3600).
+ *   - DF_JWT_ISSUER: issuer claim (default "degenfeed").
  *
  * Usage:
- *   import { verifyRmiJwt, extractJwtFromRequest } from '@/lib/jwt-auth';
+ *   import { verifyDfJwt, signDfJwt, extractJwtFromRequest } from '@/lib/jwt-auth';
  *
- *   const claims = await verifyRmiJwt(token);
- *   if (claims) {
- *     // Authenticated as rmi-backend user
- *     console.log(claims.email, claims.tier);
- *   }
+ *   const token  = await signDfJwt({ sub, address, displayName }, secret); // issue
+ *   const claims = await verifyDfJwt(token);                               // validate
  */
 
 // ── Types ────────────────────────────────────────────────────────────────
 
-export interface JwtClaims {
-  /** User ID (sub claim) */
-  id: string;
-  /** Email address */
-  email: string;
-  /** Subscription tier: FREE, PRO, ENTERPRISE */
+export interface DfJwtClaims {
+  /** Subject — degenfeed user id / wallet address (sub claim). */
+  sub: string;
+  /** Canonical wallet address (lowercased). */
+  address: string;
+  /** Optional display name. */
+  displayName?: string;
+  /** Subscription tier: FREE, PRO, PLATINUM. */
   tier: string;
-  /** User role: USER, ADMIN, MODERATOR */
+  /** User role: USER, ADMIN, MODERATOR. */
   role: string;
-  /** Optional wallet address */
-  wallet: string | null;
-}
-
-interface JwksResponse {
-  keys?: Array<{ kid?: string; kty?: string; n?: string; e?: string }>;
-  pem?: string;
+  /** Optional wallet address alias. */
+  wallet?: string | null;
+  /** Expiry, unix seconds (exp claim). */
+  exp: number;
+  /** Issued-at, unix seconds (iat claim). */
+  iat: number;
+  /** Issuer identifier (iss claim). */
+  iss?: string;
 }
 
 // ── Configuration ────────────────────────────────────────────────────────
+// No external issuer is consulted. A missing secret means DegenFeed cannot
+// validate tokens AND never tries to — it fail-closed to `null`.
 
-const JWKS_URL =
-  process.env.NEXT_PUBLIC_RMI_JWKS_URL ?? 'https://rugmunch.io/.well-known/jwks.json';
+const DF_JWT_SECRET = process.env.DF_JWT_SECRET ?? process.env.AUTH_SECRET ?? '';
+const DF_JWT_TTL_SECONDS = Number(process.env.DF_JWT_TTL_SECONDS ?? '3600') || 3600;
+const DF_JWT_ISSUER = process.env.DF_JWT_ISSUER ?? 'degenfeed';
 
-const RMI_JWT_ALGORITHM = (process.env.RMI_JWT_ALGORITHM ?? 'RS256') as 'RS256' | 'HS256';
-const RMI_JWT_SECRET = process.env.RMI_JWT_SECRET ?? '';
-const RMI_JWT_PUBLIC_KEY = process.env.RMI_JWT_PUBLIC_KEY ?? '';
+// ── base64url helpers (edge-safe) ────────────────────────────────────────
 
-// ── Cache ────────────────────────────────────────────────────────────────
-
-interface CacheEntry {
-  key: CryptoKey | null;
-  fetchedAt: number;
+function bytesToBase64Url(bytes: Uint8Array): string {
+  let binary = '';
+  for (const b of bytes) binary += String.fromCharCode(b);
+  return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
 
-let keyCache: CacheEntry = { key: null, fetchedAt: 0 };
-const CACHE_TTL_MS = 3_600_000; // 1 hour
-
-// ── PEM parsing (edge-safe) ──────────────────────────────────────────────
-
-/**
- * Import an RSA public key from PEM format for RS256 verification.
- */
-async function importRsaPublicKey(pem: string): Promise<CryptoKey> {
-  // Strip PEM headers and decode base64
-  const pemContents = pem
-    .replace(/-----BEGIN PUBLIC KEY-----/, '')
-    .replace(/-----END PUBLIC KEY-----/, '')
-    .replace(/\s+/g, '');
-  const binaryDer = Uint8Array.from(atob(pemContents), (c) => c.charCodeAt(0));
-
-  return crypto.subtle.importKey(
-    'spki',
-    binaryDer,
-    { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' },
-    false,
-    ['verify'],
-  );
+function base64UrlToBytes(input: string): Uint8Array {
+  const b64 = input.replace(/-/g, '+').replace(/_/g, '/');
+  const padded = b64.padEnd(Math.ceil(b64.length / 4) * 4, '=');
+  const binary = atob(padded);
+  return Uint8Array.from(binary, (c) => c.charCodeAt(0));
 }
 
-/**
- * Import an HMAC key for HS256 verification.
- */
+function encodeJsonB64Url(obj: unknown): string {
+  return bytesToBase64Url(new TextEncoder().encode(JSON.stringify(obj)));
+}
+
+function decodeJsonB64Url<T>(b64: string): T | null {
+  try {
+    const bytes = base64UrlToBytes(b64);
+    return JSON.parse(new TextDecoder().decode(bytes)) as T;
+  } catch {
+    return null;
+  }
+}
+
+// ── Key import (HMAC-SHA256) ─────────────────────────────────────────────
+
 async function importHmacKey(secret: string): Promise<CryptoKey> {
   const keyBytes = new TextEncoder().encode(secret);
   return crypto.subtle.importKey('raw', keyBytes, { name: 'HMAC', hash: 'SHA-256' }, false, [
+    'sign',
     'verify',
   ]);
 }
 
-// ── JWKS fetching ────────────────────────────────────────────────────────
-
-async function fetchPublicKey(): Promise<CryptoKey | null> {
-  const now = Date.now();
-
-  // Check cache
-  if (keyCache.key && now - keyCache.fetchedAt < CACHE_TTL_MS) {
-    return keyCache.key;
-  }
-
-  // Try direct PEM env var first (fast path)
-  if (RMI_JWT_PUBLIC_KEY) {
-    try {
-      const key = await importRsaPublicKey(RMI_JWT_PUBLIC_KEY);
-      keyCache = { key, fetchedAt: now };
-      return key;
-    } catch (err) {
-      console.error('[jwt-auth] Failed to import RSA key from env:', err);
-    }
-  }
-
-  // HS256 mode
-  if (RMI_JWT_ALGORITHM === 'HS256' && RMI_JWT_SECRET) {
-    try {
-      const key = await importHmacKey(RMI_JWT_SECRET);
-      keyCache = { key, fetchedAt: now };
-      return key;
-    } catch (err) {
-      console.error('[jwt-auth] Failed to import HMAC key:', err);
-    }
-  }
-
-  // Fetch from JWKS endpoint
-  try {
-    const response = await fetch(JWKS_URL, { signal: AbortSignal.timeout(5000) });
-    if (!response.ok) {
-      throw new Error(`JWKS endpoint returned ${response.status}`);
-    }
-    const data = (await response.json()) as JwksResponse;
-
-    // Try PEM field first (our fallback format)
-    if (data.pem) {
-      const key = await importRsaPublicKey(data.pem);
-      keyCache = { key, fetchedAt: now };
-      return key;
-    }
-  } catch (err) {
-    console.error('[jwt-auth] Failed to fetch JWKS:', err);
-  }
-
-  return null;
-}
-
-// ── JWT decoding (no external deps — edge-safe) ──────────────────────────
+// ── Signing / issuance ───────────────────────────────────────────────────
 
 /**
- * Decode a JWT's payload without verification (header inspection only).
- * Uses base64url decode safe for edge runtimes.
+ * Issue a DegenFeed JWT signed with HS256 using DegenFeed's own secret.
+ * Intended for internal product flows that need a short-lived DegenFeed token
+ * (e.g. an API access token). Never signs anything meant for rmi-backend.
  */
-function decodeJwtPayload(token: string): Record<string, unknown> | null {
-  try {
-    const parts = token.split('.');
-    if (parts.length !== 3) return null;
-    // biome-ignore lint/style/noNonNullAssertion: length checked above
-    const payload = parts[1]!;
-    const json = atob(payload.replace(/-/g, '+').replace(/_/g, '/'));
-    return JSON.parse(json) as Record<string, unknown>;
-  } catch {
-    return null;
-  }
+export async function signDfJwt(
+  payload: Pick<DfJwtClaims, 'sub' | 'address'> &
+    Partial<Omit<DfJwtClaims, 'sub' | 'address' | 'exp' | 'iat'>> & { expiresInSeconds?: number },
+  secret?: string,
+): Promise<string> {
+  const key = secret ?? DF_JWT_SECRET;
+  if (!key) throw new Error('[jwt-auth] No DF_JWT_SECRET configured; cannot sign token');
+  const now = Math.floor(Date.now() / 1000);
+  const ttl = payload.expiresInSeconds ?? DF_JWT_TTL_SECONDS;
+  const claims: DfJwtClaims = {
+    sub: payload.sub,
+    address: payload.address.toLowerCase(),
+    displayName: payload.displayName,
+    tier: payload.tier ?? 'FREE',
+    role: payload.role ?? 'USER',
+    wallet: payload.wallet ?? null,
+    iat: now,
+    exp: now + ttl,
+    iss: DF_JWT_ISSUER,
+  };
+  const headerPart = encodeJsonB64Url({ alg: 'HS256', typ: 'JWT' });
+  const payloadPart = encodeJsonB64Url(claims);
+  const data = `${headerPart}.${payloadPart}`;
+  const sig = await crypto.subtle.sign(
+    'HMAC',
+    await importHmacKey(key),
+    new TextEncoder().encode(data),
+  );
+  const sigPart = bytesToBase64Url(new Uint8Array(sig));
+  return `${data}.${sigPart}`;
 }
 
-/**
- * Verify an RS256 JWT signature using Web Crypto API.
- */
-async function verifyRs256(token: string, key: CryptoKey): Promise<boolean> {
-  try {
-    const parts = token.split('.');
-    if (parts.length !== 3) return false;
-    const data = new TextEncoder().encode(`${parts[0]}.${parts[1]}`);
-    const sigPart = parts[2];
-    if (!sigPart) return false;
-    const signature = Uint8Array.from(atob(sigPart.replace(/-/g, '+').replace(/_/g, '/')), (c) =>
-      c.charCodeAt(0),
-    );
-
-    return crypto.subtle.verify('RSASSA-PKCS1-v1_5', key, signature, data);
-  } catch {
-    return false;
-  }
-}
+// ── Verification ─────────────────────────────────────────────────────────
 
 /**
- * Verify an HS256 JWT signature using Web Crypto API.
- */
-async function verifyHs256(token: string, key: CryptoKey): Promise<boolean> {
-  try {
-    const parts = token.split('.');
-    if (parts.length !== 3) return false;
-    const data = new TextEncoder().encode(`${parts[0]}.${parts[1]}`);
-    const sigPart = parts[2];
-    if (!sigPart) return false;
-    const signature = Uint8Array.from(atob(sigPart.replace(/-/g, '+').replace(/_/g, '/')), (c) =>
-      c.charCodeAt(0),
-    );
-
-    return crypto.subtle.verify('HMAC', key, signature, data);
-  } catch {
-    return false;
-  }
-}
-
-// ── Public API ───────────────────────────────────────────────────────────
-
-/**
- * Verify a JWT issued by rmi-backend.
+ * Verify a DegenFeed JWT signature. Fail-closed and fully offline:
+ *   - non-3-segment token → null
+ *   - no configured secret (DF_JWT_SECRET / AUTH_SECRET) → null
+ *   - wrong alg, bad signature, malformed payload → null
+ *   - expired / wrong issuer → null
  *
  * @param token - Raw JWT string (without 'Bearer ' prefix).
- * @returns User claims if valid, null otherwise.
+ * @returns DegenFeed claims if valid, null otherwise.
  */
-export async function verifyRmiJwt(token: string): Promise<JwtClaims | null> {
-  if (token?.split('.').length !== 3) {
-    return null;
-  }
+export async function verifyDfJwt(token: string): Promise<DfJwtClaims | null> {
+  if (!token || token.split('.').length !== 3) return null;
+  const secret = DF_JWT_SECRET;
+  if (!secret) return null; // fail-closed: never trust a token without a secret
 
-  // Decode payload first to check expiration
-  const payload = decodeJwtPayload(token);
-  if (!payload) return null;
+  const [headerPart, payloadPart, sigPart] = token.split('.');
+  if (!headerPart || !payloadPart || !sigPart) return null;
 
-  // Check expiration
-  const exp = payload.exp as number | undefined;
-  if (exp && exp * 1000 < Date.now()) {
-    return null; // Expired
-  }
+  const header = decodeJsonB64Url<{ alg?: string; typ?: string }>(headerPart);
+  if (!header || header.alg !== 'HS256') return null;
 
-  // Get verification key
-  const key = await fetchPublicKey();
-  if (!key) return null;
-
-  // Verify signature
-  let valid = false;
-  if (RMI_JWT_ALGORITHM === 'HS256') {
-    valid = await verifyHs256(token, key);
-  } else {
-    valid = await verifyRs256(token, key);
-  }
+  const data = `${headerPart}.${payloadPart}`;
+  const signature = base64UrlToBytes(sigPart);
+  const valid = await crypto.subtle.verify(
+    'HMAC',
+    await importHmacKey(secret),
+    signature as Uint8Array<ArrayBuffer>,
+    new TextEncoder().encode(data),
+  );
   if (!valid) return null;
 
-  // Return typed claims
+  const claims = decodeJsonB64Url<Partial<DfJwtClaims>>(payloadPart);
+  if (!claims) return null;
+
+  if (typeof claims.sub !== 'string' || typeof claims.address !== 'string') return null;
+  if (typeof claims.exp === 'number' && claims.exp * 1000 < Date.now()) return null;
+  if (claims.iss && claims.iss !== DF_JWT_ISSUER) return null;
+
   return {
-    id: String(payload.sub ?? ''),
-    email: String(payload.email ?? ''),
-    tier: String(payload.tier ?? 'FREE'),
-    role: String(payload.role ?? 'USER'),
-    wallet: payload.wallet ? String(payload.wallet) : null,
+    sub: claims.sub,
+    address: claims.address,
+    displayName: claims.displayName,
+    tier: claims.tier ?? 'FREE',
+    role: claims.role ?? 'USER',
+    wallet: claims.wallet ?? null,
+    exp: claims.exp ?? 0,
+    iat: claims.iat ?? 0,
+    iss: claims.iss,
   };
 }
 
 /**
- * Extract JWT from request headers or cookies.
- * Checks ``Authorization: Bearer`` header first, then ``rmi_token`` cookie.
+ * Extract a DegenFeed JWT from request headers or cookies.
+ * Checks `Authorization: Bearer` header first, then `df_token` cookie.
  *
  * @returns The raw JWT string, or null if not found.
  */
@@ -267,7 +199,7 @@ export function extractJwtFromRequest(req: {
     }
   }
 
-  // 2. Check rmi_token cookie
+  // 2. Check df_token cookie
   const cookie = req.headers.get('cookie');
   if (cookie) {
     for (const part of cookie.split(';')) {
@@ -275,7 +207,7 @@ export function extractJwtFromRequest(req: {
       if (eq === -1) continue;
       const name = part.slice(0, eq).trim();
       const value = part.slice(eq + 1).trim();
-      if (name === 'rmi_token' && value) {
+      if (name === 'df_token' && value) {
         return value;
       }
     }
