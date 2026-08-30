@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Script from 'next/script';
 import { fetchInitialFeedData } from '../../lib/feedApi';
+import { InitialFeedProvider } from './components/InitialFeedContext';
 import { FeedShell } from './FeedShell';
 
 const breadcrumbStructuredData = {
@@ -66,12 +67,11 @@ export default async function FeedLayout({ children }: { children: React.ReactNo
       <Script id="breadcrumb-feed" type="application/ld+json">
         {JSON.stringify(breadcrumbStructuredData)}
       </Script>
-      {initialPosts.length > 0 && (
-        <Script id="feed-initial-data" type="application/json" data-initial-feed="true">
-          {JSON.stringify(initialPosts)}
-        </Script>
-      )}
-      <FeedShell>{children}</FeedShell>
+      {/* Typed SSR handoff: the client feed page seeds its state from this
+          context instead of parsing a JSON <script> tag out of the DOM. */}
+      <InitialFeedProvider initialPosts={initialPosts}>
+        <FeedShell>{children}</FeedShell>
+      </InitialFeedProvider>
     </>
   );
 }

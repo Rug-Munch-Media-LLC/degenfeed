@@ -13,6 +13,7 @@ import { RealtimeClientProvider } from '../components/RealtimeClientProvider';
 import { SolanaProvider } from '../components/SolanaProvider';
 import { ToastProvider } from '../components/Toast';
 import { Web3Provider } from '../components/Web3Provider';
+import { NotificationProvider } from '../hooks/NotificationProvider';
 import { TelegramProvider } from '../lib/telegram-provider';
 
 const plusJakarta = Plus_Jakarta_Sans({
@@ -338,13 +339,19 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             <ToastProvider>
               <AuthProvider>
                 <RealtimeClientProvider>
-                  <TelegramProvider>
-                    <GlobalErrorBoundary>
-                      <main id="main-content">
-                        <ConditionalShell>{children}</ConditionalShell>
-                      </main>
-                    </GlobalErrorBoundary>
-                  </TelegramProvider>
+                  {/* NotificationProvider needs useAuth (AuthProvider) and
+                      useRealtimeContext (RealtimeClientProvider → WebSocketProvider),
+                      so it must sit inside both. Mounting it here revives the
+                      notification bell, the /notifications page, and markAllRead. */}
+                  <NotificationProvider>
+                    <TelegramProvider>
+                      <GlobalErrorBoundary>
+                        <main id="main-content">
+                          <ConditionalShell>{children}</ConditionalShell>
+                        </main>
+                      </GlobalErrorBoundary>
+                    </TelegramProvider>
+                  </NotificationProvider>
                 </RealtimeClientProvider>
               </AuthProvider>
             </ToastProvider>

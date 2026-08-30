@@ -44,9 +44,8 @@ export function ProtocolStats({
   const color = explicitColor ?? PROTOCOL_COLORS[protocol] ?? '#666';
 
   return (
-    <div
+    <fieldset
       className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4"
-      role="group"
       aria-label="Protocol statistics"
     >
       {/* Total posts */}
@@ -157,6 +156,6 @@ export function ProtocolStats({
           )}
         </div>
       </div>
-    </div>
+    </fieldset>
   );
 }

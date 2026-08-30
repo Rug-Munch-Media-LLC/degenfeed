@@ -53,19 +53,15 @@ const FEED_TABS: { id: FeedTab; label: string; icon: string }[] = [
 
 function ContentWarningOverlay({ warning, onReveal }: { warning: string; onReveal: () => void }) {
   return (
-    <div
-      className="relative mb-3 overflow-hidden rounded-xl border transition-all cursor-pointer"
+    <button
+      type="button"
+      className="relative mb-3 block w-full overflow-hidden rounded-xl border text-left transition-all cursor-pointer"
       style={{
         borderColor: 'rgba(29, 155, 240, 0.15)',
         background:
           'repeating-linear-gradient(45deg, rgba(10,10,10,0.95) 0px, rgba(10,10,10,0.95) 10px, rgba(0,0,0,0.8) 10px, rgba(0,0,0,0.8) 20px)',
       }}
       onClick={onReveal}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') onReveal();
-      }}
-      role="button"
-      tabIndex={0}
       aria-label={`Content warning: ${warning}. Click to reveal.`}
     >
       {/* Decorative blur lines */}
@@ -94,7 +90,7 @@ function ContentWarningOverlay({ warning, onReveal }: { warning: string; onRevea
           Click or press enter to reveal
         </p>
       </div>
-    </div>
+    </button>
   );
 }
 

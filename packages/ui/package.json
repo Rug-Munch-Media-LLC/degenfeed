@@ -6,6 +6,8 @@
   "main": "./src/index.ts",
   "types": "./src/index.ts",
   "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "clean": "rm -rf dist",
     "typecheck": "tsc --noEmit",
     "lint": "biome check src/",
     "test": "vitest run"
@@ -34,5 +36,6 @@
     ".": "./src/index.ts",
     "./server": "./src/server.ts",
     "./protocol-shell": "./src/protocol-shell/index.ts"
-  }
+  },
+  "sideEffects": false
 }

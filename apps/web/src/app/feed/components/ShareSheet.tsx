@@ -234,6 +234,7 @@ export function ShareSheet({ post, open, onClose, onToast }: ShareSheetProps) {
       aria-modal="true"
       aria-label="Share post"
     >
+      {/* biome-ignore lint/a11y/noStaticElementInteractions: swipe-to-dismiss gesture surface inside the dialog; stopPropagation prevents backdrop-close when tapping the sheet body */}
       <div
         ref={sheetRef}
         className={`w-full max-w-sm rounded-t-2xl bg-[var(--color-card)] p-5 shadow-2xl sm:rounded-2xl ${
