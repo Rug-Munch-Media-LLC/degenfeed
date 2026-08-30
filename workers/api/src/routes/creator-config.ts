@@ -486,31 +486,20 @@ creatorConfig.post('/coin/farcaster', async (c) => {
   // const registry = getContract({ address: REGISTRY_ADDRESS, abi: REGISTRY_ABI, client });
   // await registry.write.registerCrossChain([8453, 'farcaster', body.fid.toString(), '0x...', '0x...']);
 
-  const mockAddress = `0x${crypto.randomUUID().replace(/-/g, '').slice(0, 40)}`;
-
-  // Store Farcaster mapping
-  const mappingKey = `${CROSS_CHAIN_PREFIX}8453:farcaster:${body.fid}`;
-  await c.env.CACHE?.put(
-    mappingKey,
-    JSON.stringify([
-      {
-        chainId: 8453,
-        protocol: 'farcaster',
-        creatorId: body.fid.toString(),
-        tokenAddress: mockAddress,
-        isOrigin: true,
-      },
-    ]),
-    { expirationTtl: 60 * 60 * 24 * 365 },
+  // FENCE: on-chain deployment is NOT implemented. Never fabricate a coin
+  // address or persist a fake cross-chain mapping — that would make a
+  // non-existent deployment look real for a year. Fail honestly instead.
+  return jsonResponse(
+    {
+      ok: false,
+      configured: false,
+      error:
+        'On-chain creator coin deployment is not implemented yet. No coin was deployed and no cross-chain mapping was registered.',
+      message:
+        'POST /api/creator/coin/farcaster is not implemented — a real factory/registry transaction is required before a coinAddress can exist.',
+    },
+    501,
   );
-
-  return noCacheJsonResponse({
-    ok: true,
-    coinAddress: mockAddress,
-    protocol: 'farcaster',
-    creatorId: body.fid.toString(),
-    message: `Farcaster creator coin deployed on Base. Registered as farcaster:${body.fid} in cross-chain registry.`,
-  });
 });
 
 // ═════════════════════════════════════════════════════════════════════════════
@@ -547,30 +536,19 @@ creatorConfig.post('/coin/lens', async (c) => {
     );
   }
 
-  const mockAddress = `0x${crypto.randomUUID().replace(/-/g, '').slice(0, 40)}`;
-
-  const mappingKey = `${CROSS_CHAIN_PREFIX}8453:lens:${body.profileId}`;
-  await c.env.CACHE?.put(
-    mappingKey,
-    JSON.stringify([
-      {
-        chainId: 8453,
-        protocol: 'lens',
-        creatorId: body.profileId,
-        tokenAddress: mockAddress,
-        isOrigin: true,
-      },
-    ]),
-    { expirationTtl: 60 * 60 * 24 * 365 },
+  // FENCE: on-chain deployment is NOT implemented. Never fabricate a coin
+  // address or persist a fake cross-chain mapping — fail honestly instead.
+  return jsonResponse(
+    {
+      ok: false,
+      configured: false,
+      error:
+        'On-chain creator coin deployment is not implemented yet. No coin was deployed and no cross-chain mapping was registered.',
+      message:
+        'POST /api/creator/coin/lens is not implemented — a real factory/registry transaction is required before a coinAddress can exist.',
+    },
+    501,
   );
-
-  return noCacheJsonResponse({
-    ok: true,
-    coinAddress: mockAddress,
-    protocol: 'lens',
-    creatorId: body.profileId,
-    message: `Lens creator coin deployed on Base. Registered as lens:${body.profileId} in cross-chain registry.`,
-  });
 });
 
 // ═════════════════════════════════════════════════════════════════════════════

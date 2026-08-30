@@ -37,36 +37,31 @@ export default function LaunchPage() {
         // Fall back to mock data if API not available yet
         if (res.ok) {
           const data = (await res.json()) as {
-            coins: CoinCardData[];
-            totalLaunched: number;
-            totalVolume: number;
-            activePrebonding: number;
+            coins?: CoinCardData[];
+            totalLaunched?: number;
+            totalVolume?: number;
+            activePrebonding?: number;
           };
           if (!cancelled) {
-            setCoins(data.coins);
+            setCoins(data.coins ?? []);
             setStats({
-              totalLaunched: data.totalLaunched,
-              totalVolume: data.totalVolume,
-              activePrebonding: data.activePrebonding,
+              totalLaunched: data.totalLaunched ?? 0,
+              totalVolume: data.totalVolume ?? 0,
+              activePrebonding: data.activePrebonding ?? 0,
             });
           }
         } else {
-          // Dev mock
+          // API unavailable — show an honest empty state, never fabricated stats.
           if (!cancelled) {
-            const mockCoins: CoinCardData[] = [];
-            setCoins(mockCoins);
-            setStats({
-              totalLaunched: 47,
-              totalVolume: 284_000,
-              activePrebonding: 12,
-            });
+            setCoins([]);
+            setStats({ totalLaunched: 0, totalVolume: 0, activePrebonding: 0 });
           }
         }
       } catch (err) {
         console.error('[LaunchPage] Failed to fetch creator coins:', err);
         if (!cancelled) {
           setCoins([]);
-          setStats({ totalLaunched: 47, totalVolume: 284_000, activePrebonding: 12 });
+          setStats({ totalLaunched: 0, totalVolume: 0, activePrebonding: 0 });
         }
       } finally {
         if (!cancelled) setLoading(false);
