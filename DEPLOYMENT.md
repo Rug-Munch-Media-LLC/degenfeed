@@ -1,7 +1,40 @@
 # DegenFeed Web — Deployment Guide
 
 **Status:** canonical  
-**Last updated:** 2026-07-25
+**Last updated:** 2026-08-30
+
+> ## ⚠️ CURRENT TRUTH (2026-08-30) — read this first
+>
+> **Production is a systemd standalone service, NOT Cloudflare and NOT Docker Compose.**
+>
+> | Component | Mechanism | Endpoint |
+> |---|---|---|
+> | Web app (`apps/web`) | `degenfeed-web.service` — Next.js 16 standalone, runs from this repo's checkout (`apps/web/.next/standalone`) | 127.0.0.1:3100 |
+> | Feed API (bridge) | `degenfeed-bridge.service` | :8787 |
+> | TLS / routing | nginx (`deploy/nginx/*.conf` versioned here) → Cloudflare Tunnel | degenfeed.xyz / app.degenfeed.xyz |
+>
+> **Cloudflare Workers + Pages are RETIRED (2026-08-04).** The `workers/api`
+> Worker and Pages frontend no longer serve production traffic; the app
+> proxies bridge-owned `/api/feed*` routes to the bridge itself
+> (`API_PROXY_TARGET`, default `http://localhost:8787`).
+>
+> **Deploy = update checkout → build → restart the unit** (automated by
+> `.forgejo/workflows/deploy.yml` on push to main; requires `DEPLOY_HOST`,
+> `DEPLOY_USER`, `DEPLOY_SSH_KEY` Forgejo secrets + passwordless sudo for
+> `systemctl restart degenfeed-web`):
+>
+> ```bash
+> cd /srv/work/repos/degenfeed-web
+> git fetch origin main && git reset --hard origin/main
+> pnpm install --frozen-lockfile
+> pnpm --filter degenfeed build
+> sudo systemctl restart degenfeed-web   # ExecStartPre re-links public/ + .next/static
+> curl -sf http://127.0.0.1:3100/api/health
+> ```
+>
+> The Cloudflare Workers/Pages sections below are **historical reference
+> only** — kept for the KV/secrets inventory and in case the edge path is
+> ever re-activated. Do not follow them for current deploys.
 
 This doc covers deploying the full DegenFeed stack: Cloudflare Workers + Pages frontend, self-hosted infrastructure (GoToSocial, AT Protocol PDS, PeerTube, Prosody XMPP, Redlib, RSS-Bridge, Matrix), and smart contracts (Base + Solana). 44+ protocols, 48+ Docker services, ~500+ API routes.
 

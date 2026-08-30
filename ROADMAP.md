@@ -3,12 +3,12 @@
 **Next 90 days.**
 
 ## Completed
-- Upgrade to Next.js 15 + React 19
+- Upgrade to Next.js 15 + React 19 (now Next.js 16)
 - Turborepo + pnpm workspace structure (`apps/*`, `packages/*`, `workers/*`)
-- Landing page live at `degenfeed.xyz` (served by Worker from `workers/api/src/routes/landing.ts`)
-- Deploy `apps/web` to Cloudflare Pages at `app.degenfeed.xyz`
-- Deploy `workers/api` as Cloudflare Worker `degenfeed-api`
-- CI pipeline, pre-commit hooks, and Makefile
+- Landing page live at `degenfeed.xyz` (served by the Next.js app via nginx)
+- **`apps/web` LIVE at `app.degenfeed.xyz`** — systemd standalone service (`degenfeed-web.service`, 127.0.0.1:3100) behind nginx + Cloudflare Tunnel
+- Feed API live via the self-hosted bridge (`degenfeed-bridge.service`, :8787) — Cloudflare Worker `degenfeed-api` RETIRED 2026-08-04
+- CI pipeline on Forgejo (`docker-x64` runner), pre-commit hooks, and Makefile
 - Protocol SDK packages: Nostr, Farcaster, Lens, Bluesky, Mastodon, Threads, RSS
 - Core packages: types, feed-core, ranking, ui, identity, auth, storage
 - `/news` news aggregation
@@ -37,7 +37,7 @@
 - RSS ingest improvements
 
 ## Acceptance
-- `app.degenfeed.xyz` renders a unified, ranked feed
+- `app.degenfeed.xyz` renders a unified, ranked feed ✅ (live via systemd)
 - Composer publishes to at least Nostr + Farcaster + Lens + Bluesky
-- CI green on every PR
-- `/health` returns 200 on both Pages and Worker
+- CI green on every PR (runner-label + gate fixes landed 2026-08-30)
+- `/health` returns 200 on both the app (:3100) and the bridge (:8787) ✅

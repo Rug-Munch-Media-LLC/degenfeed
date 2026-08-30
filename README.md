@@ -1,17 +1,16 @@
 # DegenFeed — The Web3 Social Universe
 
-[![CI](https://github.com/RugMunchMedia/degenfeed/actions/workflows/ci.yml/badge.svg)](https://github.com/RugMunchMedia/degenfeed/actions/workflows/ci.yml)
-[![Deploy](https://github.com/RugMunchMedia/degenfeed/actions/workflows/deploy.yml/badge.svg)](https://github.com/RugMunchMedia/degenfeed/actions/workflows/deploy.yml)
+[![CI](https://git.rugmunch.io/RugMunchMedia/degenfeed/badges/workflows/ci.yml/badge.svg)](https://git.rugmunch.io/RugMunchMedia/degenfeed/actions?workflow=ci.yml)
+[![Deploy](https://git.rugmunch.io/RugMunchMedia/degenfeed/badges/workflows/deploy.yml/badge.svg)](https://git.rugmunch.io/RugMunchMedia/degenfeed/actions?workflow=deploy.yml)
 [![Playwright E2E](https://img.shields.io/badge/E2E-Playwright-45ba4b?logo=playwright)](https://playwright.dev)
 [![Biome](https://img.shields.io/badge/linted%20with-Biome-60a5fa?logo=biome)](https://biomejs.dev)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178c6?logo=typescript)](https://www.typescriptlang.org)
 [![Next.js](https://img.shields.io/badge/Next.js-16-000000?logo=next.js)](https://nextjs.org)
-[![Cloudflare](https://img.shields.io/badge/edge-Cloudflare-F38020?logo=cloudflare)](https://cloudflare.com)
 [![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 
 **🌐 Live at [app.degenfeed.xyz](https://app.degenfeed.xyz) — no account required to browse**  
 **📖 Docs: [docs.degenfeed.xyz](https://docs.degenfeed.xyz)**  
-**🏠 Self-host: `docker compose up -d`**
+**🏠 Self-host: `docker compose up -d`** (production itself runs as a systemd standalone service — see [DEPLOYMENT.md](DEPLOYMENT.md))
 
 > *"DegenFeed exists to unify the fragmented decentralized social web. We don't own your content — we give you the tools to own it yourself."*
 
@@ -156,10 +155,11 @@
 │  redlib.degenfeed.xyz  │  rss-bridge.xyz     │  chat.degenfeed.xyz   │
 │  (Redlib)              │  (RSS-Bridge)       │  (Prosody XMPP)       │
 ├─────────────────────────────────────────────────────────────────────┤
-│                      EDGE LAYER (Cloudflare)                         │
-│  degenfeed.xyz (Worker — landing + API)                              │
-│  app.degenfeed.xyz (Pages — Next.js 16)                              │
-│  19 KV namespaces for cache, identity, coins, communities, etc.     │
+│                APP LAYER (self-hosted, systemd — LIVE)               │
+│  degenfeed.xyz + app.degenfeed.xyz (nginx)                           │
+│   → degenfeed-web.service   (Next.js 16 standalone, 127.0.0.1:3100)  │
+│   → degenfeed-bridge.service (feed API, :8787 — 11 providers)        │
+│  Cloudflare Workers/Pages: RETIRED 2026-08-04 (edge → self-hosted)   │
 ├─────────────────────────────────────────────────────────────────────┤
 │                      PACKAGES LAYER (43+)                            │
 │  Protocol SDKs   │  Feed Pipeline  │  Identity     │  Auth           │

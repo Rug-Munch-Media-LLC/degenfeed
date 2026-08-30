@@ -1,11 +1,23 @@
-# ── DegenFeed Deploy — Docker (self-hosted API, no Cloudflare Worker) ─────
-# On push to main:
-#   1. Build & push Docker image → deploy to server
-#   2. Smoke test all endpoints
+# ── DegenFeed Deploy — systemd standalone (production reality) ──────────
+# PRODUCTION TOPOLOGY (verified 2026-08-30):
+#   nginx → degenfeed-web.service (Next.js standalone, 127.0.0.1:3100)
+#         → degenfeed-bridge.service (feed API, 0.0.0.0:8787)
+#   The systemd unit runs FROM this repo's checkout:
+#     WorkingDirectory=/srv/work/repos/degenfeed-web/apps/web/.next/standalone/apps/web
+#   so "deploy" = update the checkout → rebuild → restart the unit.
 #
-# CF worker deploys (deploy-canary, deploy-web) are DISABLED 2026-08-04:
-# the API is now self-hosted at 127.0.0.1:3101 and the frontend proxies
-# /api/* via next.config rewrites + WORKER_URL (see apps/web/next.config.mjs).
+# The previous Docker path (docker/build-and-push-action@v6 — an action that
+# does not exist; ghcr.io push → `docker compose pull web`) deployed an image
+# nothing ran: the live compose file references a local `degenfeed:latest`
+# build and the service is systemd, not compose. That path is removed.
+#
+# REQUIRED SECRETS (Forgejo repo settings):
+#   DEPLOY_HOST, DEPLOY_USER, DEPLOY_SSH_KEY, (optional) DEPLOY_PORT
+# The SSH user needs write access to the repo checkout and sudo rights for
+# `systemctl restart degenfeed-web` (or a passwordless sudoers rule for it).
+#
+# [FOLLOW-UP — lead executes, not CI-first-run]: validate the sudoers rule and
+# run once via workflow_dispatch before relying on push-to-main deploys.
 name: Deploy
 
 on:
@@ -18,165 +30,39 @@ concurrency:
   group: deploy-${{ github.ref }}
   cancel-in-progress: true
 
-env:
-  REGISTRY: ghcr.io
-  IMAGE_NAME: degenfeed
-  REGISTRY_USER: cryptorugmunch
-
 jobs:
-  # ── Cloudflare Worker: Canary → Production ────────────────────
-  # DISABLED 2026-08-04: CF worker retired — API is self-hosted at
-  # 127.0.0.1:3101. Re-enable only if we go back to edge workers.
-  # deploy-canary:
-  #   if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-  #   runs-on: ubuntu-latest
-  #   environment:
-  #     name: canary
-  #     url: https://canary.degenfeed.xyz
-  #   steps:
-  #     - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-  #     - uses: pnpm/action-setup@v4
-  #       with:
-  #         version: 11.7.0
-  #     - uses: actions/setup-node@v4
-  #       with:
-  #         node-version: 22
-  #         cache: pnpm
-  #     - run: pnpm install --frozen-lockfile
-  #     - name: Typecheck worker
-  #       run: pnpm --filter @degenfeed/api-worker typecheck
-  #     - name: Test worker
-  #       run: pnpm --filter @degenfeed/api-worker test
-  #     - name: Build worker (dry-run)
-  #       run: pnpm --filter @degenfeed/api-worker build
-  #     - name: Deploy worker (canary)
-  #       uses: cloudflare/wrangler-action@v3
-  #       with:
-  #         apiToken: ${{ secrets.CF_API_TOKEN }}
-  #         accountId: ${{ secrets.CF_ACCOUNT_ID }}
-  #         workingDirectory: workers/api
-  #         command: deploy --env canary
-  #     - name: Smoke test canary
-  #       run: |
-  #         echo "=== Canary API health ==="
-  #         curl -sf --max-time 10 https://canary.degenfeed.xyz/api/health \
-  #           || (echo "FAIL: canary /api/health" && exit 1)
-  #         echo "PASS: canary /api/health"
-  #         echo "=== Canary feed endpoint ==="
-  #         curl -sf --max-time 15 https://canary.degenfeed.xyz/api/feed/home?limit=1 \
-  #           || (echo "FAIL: canary /api/feed/home" && exit 1)
-  #         echo "PASS: canary /api/feed/home"
-  #     - name: Promote to production
-  #       uses: cloudflare/wrangler-action@v3
-  #       with:
-  #         apiToken: ${{ secrets.CF_API_TOKEN }}
-  #         accountId: ${{ secrets.CF_ACCOUNT_ID }}
-  #         workingDirectory: workers/api
-  #         command: deploy
-  #     - name: Smoke test production
-  #       run: |
-  #         echo "=== Production API health ==="
-  #         curl -sf --max-time 10 https://degenfeed.xyz/api/health \
-  #           || (echo "FAIL: /api/health" && exit 1)
-  #         echo "PASS: /api/health"
-  #         echo "=== Feed endpoint ==="
-  #         curl -sf --max-time 15 https://degenfeed.xyz/api/feed/home?limit=1 \
-  #           || (echo "FAIL: /api/feed/home" && exit 1)
-  #         echo "PASS: /api/feed/home"
-
-  # ── Cloudflare Pages: Frontend deploy ────────────────────────
-  # DISABLED 2026-08-04: frontend is served from the Docker container
-  # (nginx → 127.0.0.1:3100), not Cloudflare Pages.
-  # deploy-web:
-  #   if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-  #   runs-on: ubuntu-latest
-  #   environment:
-  #     name: production
-  #     url: https://app.degenfeed.xyz
-  #   steps:
-  #     - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-  #     - uses: pnpm/action-setup@v4
-  #       with:
-  #         version: 11.7.0
-  #     - uses: actions/setup-node@v4
-  #       with:
-  #         node-version: 22
-  #         cache: pnpm
-  #     - run: pnpm install --frozen-lockfile
-  #     - run: pnpm --filter degenfeed pages:build
-  #     - name: Deploy to Cloudflare Pages
-  #       uses: cloudflare/wrangler-action@v3
-  #       with:
-  #         apiToken: ${{ secrets.CF_API_TOKEN }}
-  #         accountId: ${{ secrets.CF_ACCOUNT_ID }}
-  #         workingDirectory: apps/web
-  #         command: pages deploy .vercel/output/static --project-name degenfeed
-
-  # ── Docker: Build image & push to registry ────────────────────
-  docker-build:
+  # ── Deploy: update checkout → build → restart systemd unit ────
+  systemd-deploy:
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-    runs-on: ubuntu-latest
-    outputs:
-      image-tag: ${{ steps.meta.outputs.tags }}
-    steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-      - name: Log into registry
-        uses: docker/login-action@v3
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ env.REGISTRY_USER }}
-          password: ${{ secrets.REGISTRY_TOKEN }}
-      - name: Docker meta
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.REGISTRY_USER }}/${{ env.IMAGE_NAME }}
-          tags: |
-            type=sha,prefix=,format=short
-            type=ref,event=branch
-            type=semver,pattern={{version}}
-            type=raw,value=latest,enable={{is_default_branch}}
-      - name: Build and push
-        uses: docker/build-and-push-action@v6
-        with:
-          context: .
-          file: apps/web/Dockerfile
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-          build-args: |
-            NEXT_PUBLIC_ADMIN_WALLETS=${{ vars.NEXT_PUBLIC_ADMIN_WALLETS || '' }}
-            NEXT_PUBLIC_APP_URL=https://app.degenfeed.xyz
-            NEXT_PUBLIC_API_BASE=https://degenfeed.xyz
-            NEXT_PUBLIC_API_URL=https://degenfeed.xyz
-
-  # ── Deploy Docker to production server ────────────────────────
-  docker-deploy:
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-    runs-on: ubuntu-latest
-    needs: [docker-build]
+    runs-on: docker-x64
+    timeout-minutes: 30
     environment:
       name: production
       url: https://app.degenfeed.xyz
     steps:
-      - name: Deploy via SSH
+      - name: Deploy via SSH (git pull → build → systemctl restart)
         uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.DEPLOY_HOST }}
           port: ${{ secrets.DEPLOY_PORT || '22' }}
           username: ${{ secrets.DEPLOY_USER }}
           key: ${{ secrets.DEPLOY_SSH_KEY }}
+          script_stop: true
           script: |
-            set -e
-            cd /srv/degenfeed
-            echo "=== Pulling latest Docker image ==="
-            docker compose pull web
-            echo "=== Recreating web service ==="
-            docker compose up -d --remove-orphans web
+            set -euo pipefail
+            APP_DIR=/srv/work/repos/degenfeed-web
+            SERVICE=degenfeed-web
+            cd "$APP_DIR"
+            echo "=== Updating checkout to ${{ github.sha }} ==="
+            git fetch origin main
+            git checkout main
+            git reset --hard origin/main
+            echo "=== Installing dependencies (frozen lockfile) ==="
+            pnpm install --frozen-lockfile
+            echo "=== Building web app (standalone) ==="
+            pnpm --filter degenfeed build
+            echo "=== Restarting $SERVICE ==="
+            sudo systemctl restart "$SERVICE"
             echo "=== Waiting for health check ==="
             for i in $(seq 1 12); do
               if curl -sf --max-time 5 http://127.0.0.1:3100/api/health > /dev/null 2>&1; then
@@ -185,33 +71,39 @@ jobs:
               fi
               if [ "$i" -eq 12 ]; then
                 echo "Health check FAILED after 60s"
-                docker compose logs --tail=20 web
+                journalctl -u "$SERVICE" --no-pager -n 30
                 exit 1
               fi
               sleep 5
             done
-            echo "=== Cleaning up old images ==="
-            docker image prune -f --filter "until=24h"
 
   # ── Final smoke test against production ──────────────────────
   smoke-test:
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-    runs-on: ubuntu-latest
-    needs: [docker-deploy]
+    runs-on: docker-x64
+    timeout-minutes: 10
+    needs: [systemd-deploy]
     environment:
       name: production
       url: https://degenfeed.xyz
     steps:
       - name: Smoke test all endpoints
         run: |
-          echo "=== Self-hosted API health (via web proxy) ==="
-          curl -sf --max-time 10 https://degenfeed.xyz/api/health \
-            || (echo "FAIL: /api/health" && exit 1)
-          echo "PASS: /api/health"
-          echo "=== Feed endpoint ==="
-          curl -sf --max-time 15 https://degenfeed.xyz/api/feed/home?limit=1 \
-            || (echo "FAIL: /api/feed/home" && exit 1)
-          echo "PASS: /api/feed/home"
+          echo "=== App health (Next.js :3100 via nginx) ==="
+          curl -sf --max-time 10 https://app.degenfeed.xyz/api/health \
+            || (echo "FAIL: app /api/health" && exit 1)
+          echo "PASS: app /api/health"
+          echo "=== Feed endpoint routing (bridge :8787 via nginx) ==="
+          # The bridge requires Bearer BRIDGE_API_KEY on feed routes, so an
+          # UNAUTHENTICATED probe must return 401. 401/200 = nginx→bridge
+          # routing works; 502/000 = upstream broken (the old :3101 failure).
+          code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 15 \
+            "https://app.degenfeed.xyz/api/feed/home?limit=1")
+          if [ "$code" != "200" ] && [ "$code" != "401" ]; then
+            echo "FAIL: /api/feed/home returned $code (expected 200 or 401)"
+            exit 1
+          fi
+          echo "PASS: /api/feed/home routed (HTTP $code)"
           echo "=== Landing page ==="
           curl -sfL --max-time 10 https://degenfeed.xyz/ | grep -q "DegenFeed" \
             || (echo "FAIL: landing page" && exit 1)
@@ -225,8 +117,8 @@ jobs:
   # ── Notify on failure ────────────────────────────────────────
   notify-failure:
     if: failure()
-    runs-on: ubuntu-latest
-    needs: [docker-build, docker-deploy, smoke-test]
+    runs-on: docker-x64
+    needs: [systemd-deploy, smoke-test]
     steps:
       - name: Emit deploy failure
         run: |

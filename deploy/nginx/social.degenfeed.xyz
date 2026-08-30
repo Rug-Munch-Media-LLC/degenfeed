@@ -29,6 +29,13 @@ upstream degenfeed_elk {
     keepalive 32;
 }
 
+# DegenFeed feed API — the bridge (degenfeed-bridge.service).
+# This is the ONLY live feed server; GTS (:8082) is not currently running.
+upstream degenfeed_bridge {
+    server 127.0.0.1:8787 max_fails=3 fail_timeout=10s;
+    keepalive 32;
+}
+
 # ─── Common proxy settings ───────────────────────────────────────────────
 map $http_upgrade $gts_connection_upgrade {
     default  "upgrade";
@@ -94,6 +101,45 @@ server {
     # All paths below proxy to GTS on :8082 so Elk can call the API
     # and remote fediverse instances can reach ActivityPub endpoints.
     # ═══════════════════════════════════════════════════════════════════
+
+    # ─── DegenFeed feed API exception → bridge (:8787) ────────────────
+    # FIX 2026-08-30: /api/* previously fell through to GoToSocial (:8082),
+    # which is NOT running → 502 on every feed request. The live feed server
+    # is the bridge (degenfeed-bridge.service on :8787). These prefix/exact
+    # locations are longer matches than the generic `/api/` GTS block below,
+    # so nginx routes feed traffic here first. GTS keeps everything else.
+    location /api/feed {
+        proxy_pass http://degenfeed_bridge;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_read_timeout 60s;
+        proxy_buffering off;
+    }
+
+    location /api/rss {
+        proxy_pass http://degenfeed_bridge;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_read_timeout 60s;
+        proxy_buffering off;
+    }
+
+    # Exact match only — /api/health/protocols stays with GTS/app routes.
+    location = /api/health {
+        proxy_pass http://degenfeed_bridge;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_read_timeout 30s;
+    }
 
     # ─── Mastodon API (used by Elk frontend + federation) ─────────────
     location /api/ {

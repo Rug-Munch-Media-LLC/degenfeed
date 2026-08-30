@@ -1,7 +1,10 @@
 # ═══════════════════════════════════════════════════════════════════════════
-# api.degenfeed.xyz — DegenFeed API (degenfeed-api container :3101)
+# api.degenfeed.xyz — DegenFeed feed API (bridge, degenfeed-bridge.service :8787)
 # Created 2026-08-26: vhost was MISSING entirely — api hostname fell through
 # to the default server, causing Cloudflare 520 on every request.
+# FIX 2026-08-30: upstream was 127.0.0.1:3101 (degenfeed-api container —
+# retired, nothing listens there → 502). The live feed API is the bridge on
+# :8787. The Next.js app proxies to the same bridge via API_PROXY_TARGET.
 # ═══════════════════════════════════════════════════════════════════════════
 
 server {
@@ -28,7 +31,7 @@ server {
     # CORS handled by the API itself (ALLOWED_ORIGINS in wrangler/env)
 
     location / {
-        proxy_pass http://127.0.0.1:3101;
+        proxy_pass http://127.0.0.1:8787;
         proxy_http_version 1.1;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
