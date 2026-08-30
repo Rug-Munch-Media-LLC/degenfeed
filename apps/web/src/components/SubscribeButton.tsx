@@ -287,12 +287,15 @@ export function SubscribeButton({
       {isOpen && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
-          onClick={() => setIsOpen(false)}
+          onPointerDown={(e) => {
+            if (e.target === e.currentTarget) setIsOpen(false);
+          }}
         >
           <div
+            role="dialog"
+            aria-modal="true"
             className="w-full max-w-md rounded-2xl border p-6 shadow-2xl"
             style={{ backgroundColor: 'var(--color-bg)', borderColor: 'var(--color-glass-border)' }}
-            onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
             <div className="flex items-center justify-between mb-4">

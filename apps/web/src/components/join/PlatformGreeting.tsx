@@ -52,9 +52,8 @@ export function PlatformGreeting({ platform, compact = false, onDismiss }: Platf
     : `Welcome from ${cfg?.label ?? 'external platform'}`;
 
   return (
-    <div
+    <aside
       ref={bannerRef}
-      role="complementary"
       aria-live={isDegenFeed ? 'polite' : undefined}
       aria-label={ariaLabel}
       className={`
@@ -156,6 +155,6 @@ export function PlatformGreeting({ platform, compact = false, onDismiss }: Platf
           }
         }
       `}</style>
-    </div>
+    </aside>
   );
 }

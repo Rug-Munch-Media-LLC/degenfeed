@@ -279,11 +279,14 @@ function InviteModal({
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
-      onClick={onClose}
+      onPointerDown={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
     >
       <div
+        role="dialog"
+        aria-modal="true"
         className="bg-degen-900 border border-degen-700 rounded-2xl p-5 w-full max-w-sm mx-3 shadow-2xl"
-        onClick={(e) => e.stopPropagation()}
       >
         <h3 className="text-sm font-semibold mb-1">Invite to Room</h3>
         <p className="text-[11px] text-degen-400/60 mb-4">
@@ -729,7 +732,7 @@ export default function RoomPage() {
         {/* Active transports */}
         <div className="flex items-center gap-1 px-4 pb-2">
           {(Object.entries(room.transports) as Array<[RoomTransport, boolean]>)
-            .filter(([_, active]) => active)
+            .filter(([, active]) => active)
             .map(([transport]) => (
               <TransportBadge key={transport} transport={transport} />
             ))}
@@ -828,11 +831,12 @@ export default function RoomPage() {
       {showMembers && (
         <div
           className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm md:hidden"
-          onClick={() => setShowMembers(false)}
+          onPointerDown={() => setShowMembers(false)}
         >
           <div
+            role="dialog"
+            aria-modal="true"
             className="absolute right-0 top-0 bottom-0 w-72 bg-degen-900 border-l border-degen-700 shadow-2xl overflow-y-auto"
-            onClick={(e) => e.stopPropagation()}
           >
             <div className="p-4">
               <div className="flex items-center justify-between mb-4">

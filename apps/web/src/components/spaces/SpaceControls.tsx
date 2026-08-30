@@ -75,7 +75,7 @@ function HostControlsPanel({
       {showPanel && (
         <>
           {/* Backdrop */}
-          <div className="fixed inset-0 z-40" onClick={() => setShowPanel(false)} />
+          <div className="fixed inset-0 z-40" onPointerDown={() => setShowPanel(false)} />
           {/* Panel */}
           <div className="absolute bottom-full left-0 z-50 mb-2 w-72 rounded-2xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-3 shadow-2xl">
             <h3 className="mb-2.5 text-[10px] font-bold uppercase tracking-wider text-[var(--color-muted)]">

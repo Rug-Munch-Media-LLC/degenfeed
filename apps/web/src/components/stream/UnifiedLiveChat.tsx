@@ -140,8 +140,8 @@ function MessageBubble({
       className={`group relative flex items-start gap-2 px-3 py-1.5 transition-colors hover:bg-white/5 ${
         isLocal ? 'bg-degen-500/[0.03]' : ''
       } ${msg.isHighlighted ? 'bg-yellow-500/10 ring-1 ring-yellow-500/20' : ''}`}
-      onMouseEnter={() => setShowActions(true)}
-      onMouseLeave={() => setShowActions(false)}
+      onPointerEnter={() => setShowActions(true)}
+      onPointerLeave={() => setShowActions(false)}
     >
       {/* Avatar */}
       <div className="relative mt-0.5 shrink-0">
@@ -328,8 +328,8 @@ function ReactionPopover({
   const [open, setOpen] = useState(false);
 
   return (
-    <div className="relative" onMouseLeave={() => setOpen(false)}>
-      <div onClick={() => setOpen(!open)}>{children}</div>
+    <div className="relative" onPointerLeave={() => setOpen(false)}>
+      <div onPointerDown={() => setOpen(!open)}>{children}</div>
       {open && (
         <div className="absolute bottom-full right-0 mb-1 flex gap-0.5 rounded-lg border border-white/10 bg-gray-800 p-1 shadow-xl">
           {REACTION_EMOJIS.map((emoji) => (

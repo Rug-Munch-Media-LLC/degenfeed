@@ -145,6 +145,14 @@ function MiniAudioPlayer({
     audioRef.current.currentTime = pct * duration;
   };
 
+  const seekBy = (delta: number) => {
+    if (!audioRef.current || !duration) return;
+    audioRef.current.currentTime = Math.min(
+      duration,
+      Math.max(0, audioRef.current.currentTime + delta),
+    );
+  };
+
   if (!episode) return null;
 
   const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
@@ -171,8 +179,24 @@ function MiniAudioPlayer({
 
         {/* Progress bar */}
         <div
+          role="slider"
+          tabIndex={0}
+          aria-label="Seek"
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-valuenow={Math.round(progress)}
+          aria-valuetext={formatDuration(Math.floor(currentTime))}
           className="hidden h-1.5 w-40 cursor-pointer rounded-full bg-[var(--color-bg-tertiary)] sm:block"
           onClick={seek}
+          onKeyDown={(e) => {
+            const step = duration ? duration / 20 : 5;
+            if (e.key === 'ArrowRight') {
+              e.preventDefault();
+              seekBy(step);
+            } else if (e.key === 'ArrowLeft') {
+              seekBy(-step);
+            }
+          }}
         >
           <div
             className="h-full rounded-full bg-[var(--color-accent)] transition-all"

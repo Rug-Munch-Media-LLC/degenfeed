@@ -198,15 +198,18 @@ export function VisualFeedLayout() {
         <div
           ref={tipModalRef}
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
-          onClick={() => setShowTipModal(null)}
+          onPointerDown={(e) => {
+            if (e.target === e.currentTarget) setShowTipModal(null);
+          }}
         >
           <div
+            role="dialog"
+            aria-modal="true"
             className="mx-4 w-full max-w-md rounded-2xl p-6"
             style={{
               backgroundColor: 'var(--color-card-bg)',
               border: '1px solid var(--color-glass-border)',
             }}
-            onClick={(e) => e.stopPropagation()}
           >
             <div className="mb-4 flex items-center justify-between">
               <h2 className="text-base font-bold text-[var(--color-fg)]">

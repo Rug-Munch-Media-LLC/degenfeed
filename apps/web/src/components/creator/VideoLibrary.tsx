@@ -159,7 +159,7 @@ function VideoCard({
             </button>
             {showMenu && (
               <>
-                <div className="fixed inset-0 z-10" onClick={() => setShowMenu(false)} />
+                <div className="fixed inset-0 z-10" onPointerDown={() => setShowMenu(false)} />
                 <div className="absolute right-0 top-8 z-20 w-36 rounded-lg border border-[var(--color-border)] bg-[var(--color-card)] py-1 shadow-xl">
                   <button
                     type="button"

@@ -24,9 +24,10 @@ export interface CoinCardSimpleProps {
 
 export function CoinCardSimple({ coin, onClick }: CoinCardSimpleProps) {
   return (
-    <div
+    <button
+      type="button"
       onClick={onClick}
-      className="group relative cursor-pointer rounded-xl border border-white/10 bg-gradient-to-br from-gray-900 to-gray-800 p-4 transition-all duration-200 hover:border-degen-500/50 hover:shadow-lg hover:shadow-degen-500/10"
+      className="group relative block w-full cursor-pointer rounded-xl border border-white/10 bg-gradient-to-br from-gray-900 to-gray-800 p-4 text-left transition-all duration-200 hover:border-degen-500/50 hover:shadow-lg hover:shadow-degen-500/10"
     >
       {/* Title row */}
       <div className="mb-2 flex items-center justify-between">
@@ -102,6 +103,6 @@ export function CoinCardSimple({ coin, onClick }: CoinCardSimpleProps) {
           />
         </div>
       </div>
-    </div>
+    </button>
   );
 }

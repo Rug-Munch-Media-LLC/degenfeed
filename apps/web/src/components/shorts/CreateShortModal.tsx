@@ -632,7 +632,7 @@ export function CreateShortModal({ open, onClose, onCreated }: CreateShortModalP
             <p className="mb-2 text-xs font-medium text-white/60">Share your short</p>
             <div className="flex flex-wrap gap-1.5">
               {Object.entries(allResults)
-                .filter(([_, r]) => r.ok)
+                .filter(([, r]) => r.ok)
                 .map(([protocol]) => {
                   const meta = PROTOCOL_META[protocol as ShortProtocol];
                   if (!meta) return null;
@@ -703,7 +703,7 @@ export function CreateShortModal({ open, onClose, onCreated }: CreateShortModalP
             <p className="text-[10px] font-medium text-red-400/80">
               Some protocols failed to publish.{' '}
               {Object.entries(publishResults)
-                .filter(([_, r]) => !r.ok)
+                .filter(([, r]) => !r.ok)
                 .map(([protocol]) => PROTOCOL_META[protocol as ShortProtocol]?.label ?? protocol)
                 .join(', ')}{' '}
               — you can retry later from your shorts dashboard.
@@ -798,7 +798,7 @@ export function CreateShortModal({ open, onClose, onCreated }: CreateShortModalP
   return (
     <div
       className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/80 backdrop-blur-sm py-8"
-      onClick={(e) => {
+      onPointerDown={(e) => {
         if (e.target === e.currentTarget) {
           if (stage === 'form') {
             resetForm();
@@ -816,7 +816,6 @@ export function CreateShortModal({ open, onClose, onCreated }: CreateShortModalP
         className={`mx-4 w-full ${
           stage === 'publishing' || stage === 'done' ? 'max-w-md' : 'max-w-lg'
         } rounded-2xl border border-white/[0.08] bg-[#0d0d0d] p-6 shadow-2xl`}
-        onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div className="mb-4 flex items-center justify-between">

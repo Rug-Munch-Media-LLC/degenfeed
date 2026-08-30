@@ -318,11 +318,15 @@ function ProposalCard({
           </div>
 
           {/* Title */}
-          <h3
-            className="cursor-pointer text-sm font-semibold text-[var(--color-fg)] hover:text-degen-400"
-            onClick={() => setExpanded(!expanded)}
-          >
-            {proposal.title}
+          <h3 className="text-sm font-semibold">
+            <button
+              type="button"
+              className="cursor-pointer text-left font-semibold text-[var(--color-fg)] hover:text-degen-400"
+              onClick={() => setExpanded(!expanded)}
+              aria-expanded={expanded}
+            >
+              {proposal.title}
+            </button>
           </h3>
 
           {/* Creator + time */}

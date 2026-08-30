@@ -154,7 +154,7 @@ export function SpaceShare({ spaceId, title, hostName, isLive, scheduledAt }: Sp
       {/* Share menu */}
       {showShareMenu && (
         <>
-          <div className="fixed inset-0 z-40" onClick={() => setShowShareMenu(false)} />
+          <div className="fixed inset-0 z-40" onPointerDown={() => setShowShareMenu(false)} />
           <div className="absolute bottom-full right-0 z-50 mb-2 w-64 rounded-2xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-2 shadow-2xl">
             {/* Copy link */}
             <button

@@ -139,21 +139,16 @@ export default function LiveCommentFeed({
         className={`flex items-center justify-between border-b border-[var(--color-border)] px-3 py-2 ${
           isMobile ? 'collapsible-mobile-header' : ''
         }`}
-        onClick={() => {
-          if (isMobile) setCollapsed(!collapsed);
-        }}
-        onKeyDown={(e) => {
-          if (isMobile && (e.key === 'Enter' || e.key === ' ')) {
-            e.preventDefault();
-            setCollapsed(!collapsed);
-          }
-        }}
-        role="button"
-        tabIndex={isMobile ? 0 : undefined}
-        aria-label={collapsed ? 'Expand comments' : 'Collapse comments'}
-        aria-expanded={!collapsed}
       >
-        <div className="flex items-center gap-2">
+        <button
+          type="button"
+          className={`flex items-center gap-2 ${isMobile ? 'collapsible-mobile-header cursor-pointer' : ''}`}
+          onClick={() => {
+            if (isMobile) setCollapsed(!collapsed);
+          }}
+          aria-expanded={isMobile ? !collapsed : undefined}
+          aria-label={collapsed ? 'Expand comments' : 'Collapse comments'}
+        >
           <span className="relative flex h-2 w-2">
             <span
               className={`absolute inline-flex h-full w-full animate-ping rounded-full ${isConnected ? 'bg-degen-400' : 'bg-red-400'} opacity-75`}
@@ -166,7 +161,7 @@ export default function LiveCommentFeed({
             {isConnected ? 'LIVE' : 'RECONNECTING...'}
           </span>
           <span className="text-[11px] text-[var(--color-muted)]">{onlineCount} watching</span>
-        </div>
+        </button>
         <div className="flex items-center gap-2">
           {!compact && (
             <button

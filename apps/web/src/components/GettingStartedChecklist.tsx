@@ -178,11 +178,10 @@ export function GettingStartedChecklist({
   if (allDone && compact) return null;
 
   return (
-    <div
+    <section
       className={`rounded-2xl border border-[var(--color-glass-border)] bg-gradient-to-br from-degen-500/[0.03] to-transparent backdrop-blur-xl ${
         compact ? 'p-4' : 'p-6 sm:p-8'
       }`}
-      role="region"
       aria-label="Getting started checklist"
     >
       {allDone ? (
@@ -387,6 +386,6 @@ export function GettingStartedChecklist({
           )}
         </>
       )}
-    </div>
+    </section>
   );
 }

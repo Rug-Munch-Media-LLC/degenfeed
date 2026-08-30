@@ -15,11 +15,14 @@ export function ShareModal({ story, onClose }: { story: NewsStory; onClose: () =
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
-      onClick={onClose}
+      onPointerDown={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
     >
       <div
+        role="dialog"
+        aria-modal="true"
         className="mx-4 w-full max-w-sm rounded-xl border border-gray-700 bg-gray-900 p-6 shadow-2xl"
-        onClick={(e) => e.stopPropagation()}
       >
         <h3 className="mb-3 text-sm font-semibold text-white">Share</h3>
         <p className="mb-4 text-xs text-gray-400 line-clamp-1">{story.title}</p>

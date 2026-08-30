@@ -101,10 +101,7 @@ export function VibeScore({ score, onClose }: VibeScoreProps) {
   const tier = getVibeTier(score.total);
 
   return (
-    <div
-      className="w-56 rounded-xl border border-white/10 bg-black/80 p-3 backdrop-blur-xl shadow-2xl"
-      onClick={(e) => e.stopPropagation()}
-    >
+    <div className="w-56 rounded-xl border border-white/10 bg-black/80 p-3 backdrop-blur-xl shadow-2xl">
       {/* Header */}
       <div className="mb-3 flex items-center justify-between">
         <div className="flex items-center gap-2">

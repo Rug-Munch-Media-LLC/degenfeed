@@ -300,12 +300,11 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
           </span>
           <input
             ref={inputRef}
-            type="text"
+            type="search"
             value={query}
             onChange={(e) => handleChange(e.target.value)}
             placeholder="Search DegenFeed"
             className="input h-12 pl-12 pr-20 text-base rounded-2xl shadow-lg shadow-black/20"
-            role="searchbox"
             aria-label="Search posts, people, communities, and videos"
             autoComplete="off"
             enterKeyHint="search"

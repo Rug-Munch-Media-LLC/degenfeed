@@ -134,7 +134,7 @@ export function GoLiveFlow({ isOpen, onClose, onLiveStarted }: GoLiveFlowProps) 
   return (
     <div
       ref={overlayRef}
-      onClick={handleOverlayClick}
+      onPointerDown={handleOverlayClick}
       className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-sm sm:items-center animate-backdrop-in"
       role="dialog"
       aria-modal="true"

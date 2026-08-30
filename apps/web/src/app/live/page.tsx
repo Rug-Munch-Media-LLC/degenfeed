@@ -285,9 +285,8 @@ function FilterBar({
   return (
     <div className="mb-5 flex flex-wrap items-center gap-3">
       {/* Media Type Filter */}
-      <div
-        className="flex gap-1 rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-1"
-        role="group"
+      <fieldset
+        className="m-0 flex gap-1 rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-1"
         aria-label="Media type"
       >
         {[
@@ -298,8 +297,7 @@ function FilterBar({
           <button
             key={f.id}
             type="button"
-            role="radio"
-            aria-checked={activeMedia === f.id}
+            aria-pressed={activeMedia === f.id}
             onClick={() => onMediaChange(f.id)}
             className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-all ${
               activeMedia === f.id
@@ -311,12 +309,11 @@ function FilterBar({
             {f.label}
           </button>
         ))}
-      </div>
+      </fieldset>
 
       {/* Platform Filter — dynamic from sources with counts */}
-      <div
-        className="flex gap-1 rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-1 overflow-x-auto scrollbar-none"
-        role="group"
+      <fieldset
+        className="m-0 flex gap-1 rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-1 overflow-x-auto scrollbar-none"
         aria-label="Platform"
       >
         {platformTabs.map((f) => {
@@ -328,8 +325,7 @@ function FilterBar({
             <button
               key={f.id}
               type="button"
-              role="radio"
-              aria-checked={activePlatform === f.id}
+              aria-pressed={activePlatform === f.id}
               onClick={() => onPlatformChange(f.id)}
               className={`flex items-center gap-1.5 whitespace-nowrap rounded-lg px-3 py-1.5 text-xs font-medium transition-all ${
                 activePlatform === f.id
@@ -352,7 +348,7 @@ function FilterBar({
             </button>
           );
         })}
-      </div>
+      </fieldset>
     </div>
   );
 }

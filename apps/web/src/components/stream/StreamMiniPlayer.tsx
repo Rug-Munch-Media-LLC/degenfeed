@@ -16,11 +16,14 @@ export function StreamMiniPlayer({ title, onClose, onExpand }: StreamMiniPlayerP
   return (
     <div className="fixed bottom-4 right-4 z-50 w-72 overflow-hidden rounded-xl border border-white/10 bg-black shadow-2xl transition-all animate-slide-up">
       {/* Video area */}
-      <div
-        className="relative aspect-video bg-gradient-to-br from-degen-500/20 to-purple-600/20 cursor-pointer"
-        onClick={onExpand}
-      >
-        <div className="absolute inset-0 flex items-center justify-center">
+      <div className="relative aspect-video bg-gradient-to-br from-degen-500/20 to-purple-600/20">
+        <button
+          type="button"
+          onClick={onExpand}
+          aria-label="Expand mini player"
+          className="absolute inset-0 w-full cursor-pointer"
+        />
+        <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
           <svg
             width="24"
             height="24"
@@ -36,11 +39,8 @@ export function StreamMiniPlayer({ title, onClose, onExpand }: StreamMiniPlayerP
         {/* Close button */}
         <button
           type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            onClose();
-          }}
-          className="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-black/60 text-white/60 transition-colors hover:bg-black/80 hover:text-white"
+          onClick={onClose}
+          className="absolute right-1 top-1 z-10 flex h-6 w-6 items-center justify-center rounded-full bg-black/60 text-white/60 transition-colors hover:bg-black/80 hover:text-white"
           aria-label="Close mini player"
         >
           <svg

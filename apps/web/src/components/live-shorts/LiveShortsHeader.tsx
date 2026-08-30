@@ -56,11 +56,11 @@ function ProtocolPills({ protocols }: { protocols?: string[] }) {
   };
 
   return (
-    <div className="flex flex-wrap gap-1.5" role="list" aria-label="Active protocols">
+    <ul className="flex flex-wrap gap-1.5" aria-label="Active protocols">
       {protocols.map((p) => {
         const meta = protocolColors[p.toLowerCase()] ?? { label: p, color: '#888' };
         return (
-          <span
+          <li
             key={p}
             className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-medium backdrop-blur-sm"
             style={{
@@ -76,10 +76,10 @@ function ProtocolPills({ protocols }: { protocols?: string[] }) {
               aria-hidden="true"
             />
             {meta.label}
-          </span>
+          </li>
         );
       })}
-    </div>
+    </ul>
   );
 }
 

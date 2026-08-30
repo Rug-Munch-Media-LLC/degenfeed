@@ -159,7 +159,7 @@ export function StreamPlayer({
     return () => window.removeEventListener('keydown', handleKey);
   }, [togglePlay, toggleMute, handleFullscreen, toggleAudioOnly, cycleSpeed, enterPiP]);
 
-  const handleProgressClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+  const handleProgressClick = useCallback((e: { clientX: number }) => {
     if (!progressRef.current) return;
     const rect = progressRef.current.getBoundingClientRect();
     const x = e.clientX - rect.left;
@@ -167,12 +167,13 @@ export function StreamPlayer({
   }, []);
 
   return (
+    // biome-ignore lint/a11y/noStaticElementInteractions: video player gesture surface (hover controls + double-click fullscreen); all controls exposed via StreamOverlay buttons
     <div
       ref={playerRef}
       className="group relative w-full overflow-hidden bg-black focus:outline-none"
       style={{ aspectRatio: isTheater ? '21/9' : '16/9' }}
-      onMouseMove={showControlsTemporarily}
-      onMouseLeave={() => setShowControls(false)}
+      onPointerMove={showControlsTemporarily}
+      onPointerLeave={() => setShowControls(false)}
       onDoubleClick={handleFullscreen}
     >
       <VideoDisplay stream={stream} mode={settings.mode} />

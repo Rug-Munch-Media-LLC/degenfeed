@@ -532,7 +532,9 @@ export function ShortsPlayer({
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
       onWheel={handleWheel}
-      onClick={toggleOverlay}
+      onPointerDown={(e) => {
+        if (e.target === e.currentTarget) toggleOverlay();
+      }}
     >
       {/* Video Element */}
       <video
@@ -643,10 +645,7 @@ export function ShortsPlayer({
 
       {/* Overlay UI (shown on tap) */}
       {showOverlay && currentShort && (
-        <div
-          className="absolute inset-0 z-20 transition-opacity duration-300"
-          onClick={(e) => e.stopPropagation()}
-        >
+        <div className="absolute inset-0 z-20 transition-opacity duration-300">
           {/* Gradient fade at bottom */}
           <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
 

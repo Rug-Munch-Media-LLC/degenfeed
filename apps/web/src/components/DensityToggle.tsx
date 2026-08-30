@@ -16,10 +16,9 @@ const MODES: { id: DensityMode; label: string; icon: string; desc: string }[] = 
 
 export function DensityToggle({ value, onChange, color = 'var(--degen-500)' }: DensityToggleProps) {
   return (
-    <div
-      className="flex items-center gap-0.5 rounded-lg border p-0.5"
+    <fieldset
+      className="m-0 flex items-center gap-0.5 rounded-lg border p-0.5"
       style={{ borderColor: 'var(--color-glass-border)' }}
-      role="radiogroup"
       aria-label="Content density"
     >
       {MODES.map((mode) => {
@@ -42,8 +41,7 @@ export function DensityToggle({ value, onChange, color = 'var(--degen-500)' }: D
                   }
                 : undefined
             }
-            role="radio"
-            aria-checked={isActive}
+            aria-pressed={isActive}
             title={mode.desc}
             aria-label={`${mode.label} — ${mode.desc}`}
           >
@@ -52,7 +50,7 @@ export function DensityToggle({ value, onChange, color = 'var(--degen-500)' }: D
           </button>
         );
       })}
-    </div>
+    </fieldset>
   );
 }
 

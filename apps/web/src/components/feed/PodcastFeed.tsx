@@ -141,6 +141,12 @@ function EpisodeAudioPlayer({ src, title }: { src: string; title: string }) {
         </button>
         <div className="min-w-0 flex-1">
           <div
+            role="slider"
+            tabIndex={0}
+            aria-label="Seek"
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-valuenow={Math.round(progress)}
             className="h-1.5 w-full cursor-pointer rounded-full bg-[var(--color-bg-tertiary)]"
             onClick={(e) => {
               const audio = audioRef.current;
@@ -148,6 +154,17 @@ function EpisodeAudioPlayer({ src, title }: { src: string; title: string }) {
               const rect = e.currentTarget.getBoundingClientRect();
               const pct = (e.clientX - rect.left) / rect.width;
               audio.currentTime = pct * duration;
+            }}
+            onKeyDown={(e) => {
+              const audio = audioRef.current;
+              if (!audio) return;
+              const step = duration ? duration / 20 : 5;
+              if (e.key === 'ArrowRight') {
+                e.preventDefault();
+                audio.currentTime = Math.min(duration, audio.currentTime + step);
+              } else if (e.key === 'ArrowLeft') {
+                audio.currentTime = Math.max(0, audio.currentTime - step);
+              }
             }}
           >
             <div

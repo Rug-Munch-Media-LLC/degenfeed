@@ -132,9 +132,10 @@ export function GiftLeaderboard({
 
   if (compact) {
     return (
-      <div
-        className="rounded-xl border border-white/10 bg-gradient-to-b from-yellow-500/5 to-orange-500/5 p-3 transition-all hover:border-yellow-500/20"
+      <button
+        type="button"
         onClick={handleRefresh}
+        className="block w-full cursor-pointer rounded-xl border border-white/10 bg-gradient-to-b from-yellow-500/5 to-orange-500/5 p-3 text-left transition-all hover:border-yellow-500/20"
       >
         <div className="mb-2 flex items-center justify-between">
           <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-yellow-400">
@@ -177,7 +178,7 @@ export function GiftLeaderboard({
           <span>{uniqueGifters} gifters</span>
           <span>⚡ {totalSats.toLocaleString()} sats</span>
         </div>
-      </div>
+      </button>
     );
   }
 

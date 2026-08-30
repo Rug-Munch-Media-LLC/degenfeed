@@ -178,14 +178,15 @@ export const KeyboardShortcuts = memo(function KeyboardShortcuts({
     <div
       ref={overlayRef}
       className="fixed inset-0 z-[70] flex items-end justify-center bg-black/80 backdrop-blur-sm sm:items-center"
-      onClick={onClose}
+      onPointerDown={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
       aria-modal="true"
       aria-label="Keyboard shortcuts"
       role="dialog"
     >
       <div
         className="mx-4 w-full max-w-lg rounded-2xl border border-white/[0.06] bg-[var(--color-glass-bg)] shadow-2xl backdrop-blur-2xl sm:max-w-2xl"
-        onClick={(e) => e.stopPropagation()}
         style={{ maxHeight: '85vh' }}
       >
         {/* == Header == */}

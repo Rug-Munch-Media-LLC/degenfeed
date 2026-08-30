@@ -135,21 +135,13 @@ export function QuickTipButton({
     return (
       <div className="inline-flex items-center gap-0.5">
         {/* Currency selector */}
-        {/* biome-ignore lint/a11y/useKeyWithClickEvents: handled by button */}
-        <div
-          className="relative"
-          onClick={(e) => {
-            e.stopPropagation();
-            const el = e.currentTarget;
-            const next = el.querySelector('select') as HTMLSelectElement | null;
-            if (next) {
-              next.style.display = next.style.display === 'none' ? 'block' : 'none';
-            }
-          }}
-        >
+        <div className="relative">
           <button
             type="button"
-            onClick={() => handleQuickTip('0.001', selectedCurrency)}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleQuickTip('0.001', selectedCurrency);
+            }}
             disabled={sending}
             className="rounded-lg p-1.5 text-[var(--color-muted)] transition-colors hover:bg-degen-500/10 hover:text-degen-400 disabled:opacity-40"
             aria-label={`Quick tip ${recipientDisplayName} 0.001 ${selectedCurrency}`}

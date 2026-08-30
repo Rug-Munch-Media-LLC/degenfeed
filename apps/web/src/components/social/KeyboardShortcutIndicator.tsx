@@ -44,8 +44,8 @@ export function KeyboardShortcutIndicator() {
   return (
     <div
       className="fixed bottom-20 right-4 z-40"
-      onMouseEnter={() => setVisible(true)}
-      onMouseLeave={() => !expanded && setVisible(false)}
+      onPointerEnter={() => setVisible(true)}
+      onPointerLeave={() => !expanded && setVisible(false)}
     >
       <button
         type="button"

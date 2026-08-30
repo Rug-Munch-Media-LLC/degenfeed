@@ -417,11 +417,14 @@ function UpgradeModal({
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
-      onClick={onClose}
+      onPointerDown={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
     >
       <div
+        role="dialog"
+        aria-modal="true"
         className="w-full max-w-md rounded-2xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-6 shadow-2xl"
-        onClick={(e) => e.stopPropagation()}
       >
         <h2 className="text-xl font-bold text-[var(--color-fg)] mb-1">Upgrade to {config.name}</h2>
         <p className="text-sm text-[var(--color-muted)] mb-4">{config.description}</p>
@@ -799,11 +802,14 @@ export default function MembershipPage() {
       {showCancel && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
-          onClick={() => setShowCancel(false)}
+          onPointerDown={(e) => {
+            if (e.target === e.currentTarget) setShowCancel(false);
+          }}
         >
           <div
+            role="dialog"
+            aria-modal="true"
             className="w-full max-w-sm rounded-2xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-6 shadow-2xl"
-            onClick={(e) => e.stopPropagation()}
           >
             <h2 className="text-lg font-bold text-[var(--color-fg)] mb-2">Cancel Subscription?</h2>
             <p className="text-sm text-[var(--color-muted)] mb-4">
