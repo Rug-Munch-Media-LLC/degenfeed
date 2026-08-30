@@ -12,15 +12,17 @@ import {
 } from '@degenfeed/storage';
 import type { AuthTab } from '@degenfeed/ui';
 import dynamic from 'next/dynamic';
-import { type ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
+import {
+  type ComponentProps,
+  type ReactNode,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
 
 const SignInModal = dynamic(
   () => import('@degenfeed/ui').then((m) => ({ default: m.SignInModal })),
-  { ssr: false, loading: () => null },
-);
-
-const ComposeModal = dynamic(
-  () => import('@degenfeed/ui').then((m) => ({ default: m.ComposeModal })),
   { ssr: false, loading: () => null },
 );
 
@@ -41,15 +43,12 @@ import {
   useAuth,
   useAuthState,
 } from '../context/auth-context';
+import { EngageProvider, useEngageContext } from '../context/EngageContext';
+import { PublishProvider, usePublishContext } from '../context/PublishContext';
 import { useWallet, WalletProvider } from '../context/WalletContext';
-import { useCrossReply } from '../hooks/useCrossReply';
-import { useEngage } from '../hooks/useEngage';
 import { triggerOnboarding } from '../hooks/useOnboarding';
-import { usePublish } from '../hooks/usePublish';
-import { useScheduledPosts } from '../hooks/useScheduledPosts';
 import { useSolanaSignIn } from '../hooks/useSolanaSignIn';
 import { useWalletSignIn } from '../hooks/useWalletSignIn';
-import { publishNoteToNostr } from '../lib/nostr';
 import { addStoredWallet, getStoredWallets, type StoredWalletMeta } from '../lib/walletStorage';
 import { RegistrationPrompt } from './RegistrationPrompt';
 import { useToast } from './Toast';
@@ -72,19 +71,8 @@ function AuthCore({ children }: { children: ReactNode }) {
   const [signedInProtocols, setSignedInProtocols] = useState<Record<string, boolean>>({});
   const [tokens, setTokens] = useState<Record<string, string>>({});
   // == Multi-wallet state lives in the scoped WalletContext ========
-  const {
-    walletAddresses,
-    activeWalletIndex,
-    walletMeta,
-    walletAddress,
-    walletCount,
-    loadWallets,
-    attachWallet,
-    switchWallet,
-    addWallet,
-    removeWallet,
-    clearWallets,
-  } = useWallet();
+  const { walletAddresses, walletMeta, walletAddress, loadWallets, attachWallet, clearWallets } =
+    useWallet();
   // ==
   const [linkGtsUrl, setLinkGtsUrl] = useState<string | null>(null);
   const [nostrPublicId, setNostrPublicId] = useState<string | undefined>(undefined);
@@ -95,16 +83,6 @@ function AuthCore({ children }: { children: ReactNode }) {
   const [showSignIn, setShowSignIn] = useState(false);
   const [signInTab, setSignInTab] = useState<AuthTab>('signin');
   const [signInError, setSignInError] = useState<string | null>(null);
-  const [showCompose, setShowCompose] = useState(false);
-  const [composeReplyContext, setComposeReplyContext] = useState<ComposeReplyContext | undefined>(
-    undefined,
-  );
-  const {
-    scheduled: scheduledPosts,
-    schedulePost,
-    cancelSchedule,
-    publishNow,
-  } = useScheduledPosts();
 
   const { account: wagmiAddress, isConnected, availableWallets, chainId: evmChainId } = useWeb3();
   const { signInWithEthereum, signingIn: walletSigningIn } = useWalletSignIn();
@@ -496,12 +474,6 @@ function AuthCore({ children }: { children: ReactNode }) {
     [signInWithEthereum, refresh, signInWithSolana, showToast, evmChainId, attachWallet],
   );
 
-  const handlePublish = usePublish(tokens);
-
-  const handleCrossReply = useCrossReply(identities, walletAddress, primaryIdentity);
-
-  const handleEngage = useEngage(identities);
-
   const handleSignOut = useCallback(async () => {
     try {
       await betterSignOut();
@@ -568,13 +540,27 @@ function AuthCore({ children }: { children: ReactNode }) {
     setSignInTab('signup');
     setShowSignIn(true);
   }, []);
-  const openCompose = useCallback(() => {
-    setComposeReplyContext(undefined);
-    setShowCompose(true);
-  }, []);
-  const openComposeReply = useCallback((ctx: ComposeReplyContext) => {
-    setComposeReplyContext(ctx);
-    setShowCompose(true);
+  // ── Stable auth-only callbacks handed to AuthCoreInner (which runs INSIDE
+  // ── the scoped Engage + Publish providers and re-exports the legacy combined
+  // ── `useAuth()` action surface).
+  const authActions = useMemo(
+    () => ({
+      openSignIn,
+      openSignUp,
+      signIn: handleSignIn,
+      signOut: handleSignOut,
+      setPrimaryIdentity: handleSetPrimary,
+      unlinkIdentity: handleUnlink,
+      refresh,
+    }),
+    [openSignIn, openSignUp, handleSignIn, handleSignOut, handleSetPrimary, handleUnlink, refresh],
+  );
+
+  /** Compose modal → sign-in modal handoff (stable ref, used by PublishProvider). */
+  const handleOpenSignInFromCompose = useCallback(() => {
+    setSignInError(null);
+    setSignInTab('signin');
+    setShowSignIn(true);
   }, []);
 
   // ── Split contexts: state (rarely-changing identity) vs actions (stable callbacks) ──
@@ -607,24 +593,95 @@ function AuthCore({ children }: { children: ReactNode }) {
     ],
   );
 
+  const signInModalProps: ComponentProps<typeof SignInModal> = {
+    open: showSignIn,
+    onClose: () => {
+      setSignInError(null);
+      setShowSignIn(false);
+    },
+    onSignIn: handleSignIn,
+    walletSigningIn: walletSigningIn || solanaSigningIn,
+    availableWallets,
+    initialTab: signInTab,
+    onTabChange: setSignInTab,
+    busy: walletSigningIn || solanaSigningIn,
+    error: signInError ?? undefined,
+  };
+
+  return (
+    <AuthStateContext.Provider value={stateValue}>
+      <EngageProvider
+        identities={identities}
+        walletAddress={walletAddress}
+        primaryIdentity={primaryIdentity}
+      >
+        <PublishProvider tokens={tokens} onRequestSignIn={handleOpenSignInFromCompose}>
+          <AuthCoreInner
+            tokens={tokens}
+            ready={ready}
+            authActions={authActions}
+            signInModal={signInModalProps}
+          >
+            {children}
+          </AuthCoreInner>
+        </PublishProvider>
+      </EngageProvider>
+    </AuthStateContext.Provider>
+  );
+}
+
+/**
+ * Renders the legacy combined `useAuth()` action context. Lives INSIDE the
+ * scoped Engage + Publish providers so it can read their contexts and re-export
+ * `engage` / `crossReply` / `publish` / `openCompose` / `openComposeReply` on
+ * the old AuthActionContext surface — existing consumers keep working without
+ * changes, while identity/compose/engage state changes no longer re-render the
+ * whole app.
+ */
+function AuthCoreInner({
+  children,
+  tokens,
+  ready,
+  authActions,
+  signInModal,
+}: {
+  children: ReactNode;
+  tokens: Record<string, string>;
+  ready: boolean;
+  authActions: {
+    openSignIn: () => void;
+    openSignUp: () => void;
+    signIn: (protocol: string, credentials?: string | Record<string, string>) => Promise<void>;
+    signOut: () => Promise<void>;
+    setPrimaryIdentity: (id: string) => Promise<void>;
+    unlinkIdentity: (id: string) => Promise<void>;
+    refresh: () => Promise<void>;
+  };
+  signInModal: ComponentProps<typeof SignInModal>;
+}) {
+  const { engage, crossReply } = useEngageContext();
+  const { publish, openCompose, openComposeReply } = usePublishContext();
+  const { walletAddress, activeWalletIndex, walletCount, switchWallet, addWallet, removeWallet } =
+    useWallet();
+
   const actionValue = useMemo(
     () => ({
       tokens,
       activeWalletIndex,
       walletCount,
       ready,
-      openSignIn,
-      openSignUp,
-      signIn: handleSignIn,
+      openSignIn: authActions.openSignIn,
+      openSignUp: authActions.openSignUp,
+      signIn: authActions.signIn,
       openCompose,
       openComposeReply,
-      signOut: handleSignOut,
-      publish: handlePublish,
-      engage: handleEngage,
-      crossReply: handleCrossReply,
-      setPrimaryIdentity: handleSetPrimary,
-      unlinkIdentity: handleUnlink,
-      refresh,
+      signOut: authActions.signOut,
+      publish,
+      engage,
+      crossReply,
+      setPrimaryIdentity: authActions.setPrimaryIdentity,
+      unlinkIdentity: authActions.unlinkIdentity,
+      refresh: authActions.refresh,
       switchWallet,
       addWallet,
       removeWallet,
@@ -634,18 +691,12 @@ function AuthCore({ children }: { children: ReactNode }) {
       activeWalletIndex,
       walletCount,
       ready,
-      openSignIn,
-      openSignUp,
-      handleSignIn,
+      authActions,
       openCompose,
       openComposeReply,
-      handleSignOut,
-      handlePublish,
-      handleEngage,
-      handleCrossReply,
-      handleSetPrimary,
-      handleUnlink,
-      refresh,
+      publish,
+      engage,
+      crossReply,
       switchWallet,
       addWallet,
       removeWallet,
@@ -653,67 +704,13 @@ function AuthCore({ children }: { children: ReactNode }) {
   );
 
   return (
-    <AuthStateContext.Provider value={stateValue}>
-      <AuthActionContext.Provider value={actionValue}>
-        {children}
+    <AuthActionContext.Provider value={actionValue}>
+      {children}
 
-        <SignInModal
-          open={showSignIn}
-          onClose={() => {
-            setSignInError(null);
-            setShowSignIn(false);
-          }}
-          onSignIn={handleSignIn}
-          walletAddress={walletAddress}
-          walletSigningIn={walletSigningIn || solanaSigningIn}
-          availableWallets={availableWallets}
-          initialTab={signInTab}
-          onTabChange={setSignInTab}
-          busy={walletSigningIn || solanaSigningIn}
-          error={signInError ?? undefined}
-        />
+      <SignInModal {...signInModal} walletAddress={walletAddress} />
 
-        {/* Registration prompt — nudges anonymous browsers after a few pages */}
-        <RegistrationPrompt />
-
-        <ComposeModal
-          open={showCompose}
-          onClose={() => {
-            setShowCompose(false);
-            setComposeReplyContext(undefined);
-          }}
-          signedInProtocols={signedInProtocols}
-          onPublish={handlePublish}
-          replyContext={composeReplyContext}
-          onCrossReply={handleCrossReply}
-          onRequestSignIn={() => {
-            setShowCompose(false);
-            setSignInError(null);
-            setSignInTab('signin');
-            setShowSignIn(true);
-          }}
-          primaryIdentity={
-            primaryIdentity
-              ? {
-                  displayName: primaryIdentity.displayName,
-                  handle: primaryIdentity.handle,
-                  avatarUrl: primaryIdentity.avatarUrl,
-                }
-              : undefined
-          }
-          nostrBridgePublicId={nostrPublicId}
-          onNostrBridge={async (text) => {
-            if (!nostrPublicId) return;
-            await publishNoteToNostr({ text, publicId: nostrPublicId });
-          }}
-          onSchedule={(text, targets, scheduledAt) => schedulePost(text, targets, scheduledAt)}
-          scheduledPosts={scheduledPosts}
-          onCancelSchedule={(id) => cancelSchedule(id)}
-          onPublishScheduledNow={(id) => {
-            publishNow(id);
-          }}
-        />
-      </AuthActionContext.Provider>
-    </AuthStateContext.Provider>
+      {/* Registration prompt — nudges anonymous browsers after a few pages */}
+      <RegistrationPrompt />
+    </AuthActionContext.Provider>
   );
 }
