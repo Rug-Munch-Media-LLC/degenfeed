@@ -27,7 +27,7 @@ export function PieChart({
     .reduce(
       (acc, [key, val], i) => {
         const pct = (val / total) * 360;
-        const start = i === 0 ? 0 : acc.reduce((s, [_, p]) => s + p, 0);
+        const start = i === 0 ? 0 : acc.reduce((s, [, p]) => s + p, 0);
         const end = start + pct;
         acc.push([key, pct, start, end] as [string, number, number, number]);
         return acc;

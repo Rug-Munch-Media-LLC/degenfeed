@@ -84,7 +84,7 @@ export function useFeedLayout() {
       const identityId = primary?.id ?? 'anon';
       const existing = await getPreferences(identityId);
       const defaults = await getDefaultPreferences(identityId);
-      const merged = { ...defaults, ...(existing ?? {}), feedLayout: next };
+      const merged = { ...defaults, ...existing, feedLayout: next };
       await savePreferences(merged);
     } catch {
       /* ignore — offline or no session */

@@ -246,7 +246,7 @@ export function TelegramGroupEmbed({
                 `💵 <b>${symbol} Price</b>\n` +
                 `Price: <b>$${price.toFixed(6)}</b>\n` +
                 `24h: ${sign}${change.toFixed(2)}%\n` +
-                `MCap: $${(Number(coin.marketCap) ?? 0).toLocaleString()}`;
+                `MCap: $${Number(coin.marketCap ?? 0).toLocaleString()}`;
             } else {
               response = `❓ Could not fetch price for ${symbol}.`;
             }

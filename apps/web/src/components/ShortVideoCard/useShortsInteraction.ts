@@ -150,13 +150,15 @@ export function useShortsInteraction(
       onPlayStateChange?.(true);
       setTimeout(() => onPlayStateChange?.(false), 100);
     };
+    const onSeekBack = () => {};
+    const onSeekForward = () => {};
 
     window.addEventListener('shorts-toggle-mute', onMute);
     window.addEventListener('shorts-like-current', onLike);
     window.addEventListener('shorts-bookmark-current', onBookmark);
     window.addEventListener('shorts-toggle-overlay', onOverlay);
-    window.addEventListener('shorts-seek-back', () => {});
-    window.addEventListener('shorts-seek-forward', () => {});
+    window.addEventListener('shorts-seek-back', onSeekBack);
+    window.addEventListener('shorts-seek-forward', onSeekForward);
     window.addEventListener('shorts-double-tap-like', onDoubleTapLike);
     window.addEventListener('shorts-toggle-pause', onPauseToggle);
 
@@ -165,8 +167,8 @@ export function useShortsInteraction(
       window.removeEventListener('shorts-like-current', onLike);
       window.removeEventListener('shorts-bookmark-current', onBookmark);
       window.removeEventListener('shorts-toggle-overlay', onOverlay);
-      window.removeEventListener('shorts-seek-back', () => {});
-      window.removeEventListener('shorts-seek-forward', () => {});
+      window.removeEventListener('shorts-seek-back', onSeekBack);
+      window.removeEventListener('shorts-seek-forward', onSeekForward);
       window.removeEventListener('shorts-double-tap-like', onDoubleTapLike);
       window.removeEventListener('shorts-toggle-pause', onPauseToggle);
     };
