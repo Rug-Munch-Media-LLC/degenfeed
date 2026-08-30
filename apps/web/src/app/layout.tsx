@@ -69,9 +69,9 @@ export const metadata: Metadata = {
   applicationName: 'DegenFeed',
   category: 'social',
   icons: {
-    icon: '/avatar.jpg',
-    shortcut: '/avatar.jpg',
-    apple: '/avatar.jpg',
+    icon: '/favicon.png',
+    shortcut: '/favicon.png',
+    apple: '/favicon.png',
   },
   metadataBase: new URL('https://app.degenfeed.xyz'),
   title: {
