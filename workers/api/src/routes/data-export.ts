@@ -27,7 +27,6 @@ import {
   buildSolidPodExport,
   jsonToCsv,
 } from '../lib/data-portability';
-import { getBookmarks } from '../lib/rmi-client';
 import { log } from '../logger';
 import { ok, serverError } from '../response-helpers';
 import { requireSession } from '../session';
@@ -146,21 +145,12 @@ async function gatherAllUserData(
     );
   }
 
-  // ── BOOKMARKS — rmi-backend primary, KV fallback ─────────────
+  // ── BOOKMARKS — Cloudflare KV is the single store ─────────────
   tasks.push(
     (async () => {
-      try {
-        const postIds = await getBookmarks(env, walletLower);
-        if (postIds.length > 0 || env.USE_RMI_API === 'true') {
-          bookmarks = postIds;
-          return;
-        }
-      } catch {
-        /* API unavailable — fall through to KV */
-      }
       if (env.BOOKMARKS) {
         try {
-          const raw = await env.BOOKMARKS?.get(`bookmarks:${walletLower}`);
+          const raw = await env.BOOKMARKS.get(`bookmarks:${walletLower}`);
           if (raw) bookmarks = JSON.parse(raw);
         } catch {
           /* skip */

@@ -9,18 +9,17 @@ import { useEffect } from 'react';
 export function useLayoutCSS(): void {
   useEffect(() => {
     const layout = localStorage.getItem('df_layout') || 'default';
-    let cleanup: (() => void) | undefined;
 
     async function loadCSS() {
       switch (layout) {
         case 'compact':
-          (await import('../styles/layout-compact.module.css')).default;
+          await import('../styles/layout-compact.module.css');
           break;
         case 'media-grid':
-          (await import('../styles/layout-media-grid.module.css')).default;
+          await import('../styles/layout-media-grid.module.css');
           break;
         case 'reader':
-          (await import('../styles/layout-reader.module.css')).default;
+          await import('../styles/layout-reader.module.css');
           break;
         default:
           break;
@@ -30,9 +29,5 @@ export function useLayoutCSS(): void {
     loadCSS().catch(() => {
       /* CSS module not critical — layout degrades gracefully */
     });
-
-    return () => {
-      cleanup?.();
-    };
   }, []);
 }

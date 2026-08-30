@@ -17,9 +17,8 @@
  */
 
 import type { CrossProtocolIdentity } from '@degenfeed/utils';
-import { identityKey } from '@degenfeed/utils';
 import type { Env } from '../types';
-import { getIdentity, setIdentity } from './rmi-client';
+import { getIdentity, setIdentity } from './durable-store';
 
 // ─── Types ──────────────────────────────────────────────────────────────
 
@@ -124,22 +123,9 @@ export async function discoverIdentities(
     }
   }
 
-  // Fetch existing linked identities — rmi-backend first, KV as fallback
+  // Fetch existing linked identities from DegenFeed's OWN IDENTITIES KV.
   const alreadyLinked: string[] = [];
-  let existingIdentity: Record<string, unknown> | null = null;
-  try {
-    existingIdentity = await getIdentity(env, wallet);
-  } catch {
-    existingIdentity = null;
-  }
-  if (!existingIdentity && env.IDENTITIES) {
-    try {
-      const raw = await env.IDENTITIES.get(identityKey(wallet));
-      if (raw) existingIdentity = JSON.parse(raw) as Record<string, unknown>;
-    } catch {
-      // no existing record
-    }
-  }
+  const existingIdentity: Record<string, unknown> | null = await getIdentity(env, wallet);
   if (existingIdentity) {
     for (const key of Object.keys(existingIdentity)) {
       if (key !== 'walletAddress' && key !== 'linkedAt' && key !== 'lastVerified') {
@@ -937,22 +923,9 @@ export async function linkDiscoveredIdentities(
 ): Promise<{ linked: number; identities: CrossProtocolIdentity }> {
   const wallet = walletAddress.toLowerCase();
 
-  // Load existing identity record — rmi-backend first, KV as fallback
-  let existing: CrossProtocolIdentity | null = null;
-  try {
-    const identity = await getIdentity(env, wallet);
-    if (identity) existing = identity as unknown as CrossProtocolIdentity;
-  } catch {
-    // API unavailable — fall through to KV
-  }
-  if (!existing && env.IDENTITIES) {
-    try {
-      const raw = await env.IDENTITIES.get(identityKey(wallet));
-      if (raw) existing = JSON.parse(raw) as CrossProtocolIdentity;
-    } catch {
-      // no existing
-    }
-  }
+  // Load existing identity record from DegenFeed's OWN IDENTITIES KV.
+  const identity = await getIdentity(env, wallet);
+  const existing = (identity as CrossProtocolIdentity | null) ?? null;
 
   const now = Date.now();
   const updated: CrossProtocolIdentity = {
@@ -997,18 +970,11 @@ export async function linkDiscoveredIdentities(
   updated.lastVerified = now;
 
   if (linked > 0) {
-    // Primary: persist to rmi-backend. KV mirror stays warm for legacy readers.
-    let apiOk = false;
+    // Persist to DegenFeed's OWN IDENTITIES KV — single source of truth.
     try {
       await setIdentity(env, wallet, updated as unknown as Record<string, unknown>);
-      apiOk = true;
-    } catch {
-      apiOk = false;
-    }
-    try {
-      await env.IDENTITIES?.put(identityKey(wallet), JSON.stringify(updated));
     } catch (err) {
-      if (!apiOk) throw new Error(`Failed to store identities: ${String(err)}`);
+      throw new Error(`Failed to store identities: ${String(err)}`);
     }
   }
 

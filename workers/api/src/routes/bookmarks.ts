@@ -7,13 +7,12 @@
  * GET    /api/bookmarks/check    — Check if a post is bookmarked
  *
  * All endpoints require a valid session cookie.
- * Data is persisted in rmi-backend (/api/v1/bookmarks) with Cloudflare KV
- * (`bookmarks:{wallet_address}`) kept as a warm fallback when the API is
- * unreachable.
+ * Bookmarks are persisted ONLY to Cloudflare KV (`bookmarks:{wallet_address}`),
+ * a DegenFeed-owned store. DegenFeed no longer consults rmi-backend for
+ * bookmark data — the product is fully self-contained.
  */
 
 import { bookmarksKey } from '../kv-key-patterns';
-import { addBookmark, getApiKey, getBookmarks, removeBookmark } from '../lib/rmi-client';
 import { jsonResponse, noCacheJsonResponse } from '../response-helpers';
 import { requireSession } from '../session';
 import type { Env } from '../types';
@@ -30,37 +29,13 @@ interface BookmarkEntry {
   tags?: string[];
 }
 
-// ─── rmi-backend primary + KV fallback helpers ────────────────
-
-/** True when the rmi-backend persistent store is configured for this worker. */
-function rmiConfigured(env: Env): boolean {
-  return Boolean(getApiKey(env));
-}
+// ─── KV-only helpers (DegenFeed-owned store) ──────────────────
 
 /**
- * Read bookmarks — rmi-backend first, Cloudflare KV as fallback.
- * The backend only persists `post_id`, so API-sourced entries carry minimal
- * metadata (dfUri/protocol/title fall back to defaults). When the API
- * returns an empty list and USE_RMI_API is not set, we fall back to the rich
- * KV entries so pre-migration data stays visible.
+ * Read bookmarks from Cloudflare KV (the single, DegenFeed-owned store).
+ * Returns rich `BookmarkEntry` records. Never consults rmi-backend.
  */
-async function getBookmarksWithFallback(env: Env, address: string): Promise<BookmarkEntry[]> {
-  try {
-    const postIds = await getBookmarks(env, address);
-    if (postIds.length > 0 || env.USE_RMI_API === 'true') {
-      return postIds.map((postId) => ({
-        postId,
-        dfUri: '',
-        protocol: 'degenfeed',
-        title: postId,
-        authorName: 'Unknown',
-        savedAt: 0,
-      }));
-    }
-  } catch {
-    // API unavailable — fall through to KV
-  }
-
+async function getBookmarks(env: Env, address: string): Promise<BookmarkEntry[]> {
   if (env.BOOKMARKS) {
     try {
       const raw = await env.BOOKMARKS.get(bookmarksKey(address));
@@ -72,8 +47,8 @@ async function getBookmarksWithFallback(env: Env, address: string): Promise<Book
   return [];
 }
 
-/** Best-effort KV mirror so fallback reads stay warm and consistent. */
-async function writeBookmarksKv(
+/** Persist the full bookmark list to KV. */
+async function writeBookmarks(
   env: Env,
   address: string,
   bookmarks: BookmarkEntry[],
@@ -82,7 +57,7 @@ async function writeBookmarksKv(
   try {
     await env.BOOKMARKS.put(bookmarksKey(address), JSON.stringify(bookmarks));
   } catch {
-    // Non-critical mirror — API remains the source of truth.
+    // Non-critical write failure — surfaced as 500 by callers.
   }
 }
 
@@ -110,22 +85,20 @@ export async function handleBookmarkAdd(request: Request, env: Env): Promise<Res
       return jsonResponse({ error: 'postId, dfUri, and protocol are required' }, 400);
     }
 
-    if (!env.BOOKMARKS && !rmiConfigured(env)) {
+    if (!env.BOOKMARKS) {
       return jsonResponse({ error: 'Bookmarks storage not configured' }, 500);
     }
 
-    // Build the rich entry for the KV mirror (existing entries preserved).
+    // Build the rich entry for the KV store (existing entries preserved).
     const key = bookmarksKey(session.address);
     let bookmarks: BookmarkEntry[] = [];
 
-    if (env.BOOKMARKS) {
-      const existingRaw = await env.BOOKMARKS.get(key);
-      if (existingRaw) {
-        try {
-          bookmarks = JSON.parse(existingRaw) as BookmarkEntry[];
-        } catch {
-          bookmarks = [];
-        }
+    const existingRaw = await env.BOOKMARKS.get(key);
+    if (existingRaw) {
+      try {
+        bookmarks = JSON.parse(existingRaw) as BookmarkEntry[];
+      } catch {
+        bookmarks = [];
       }
     }
 
@@ -144,14 +117,7 @@ export async function handleBookmarkAdd(request: Request, env: Env): Promise<Res
 
     filtered.push(entry);
 
-    // Primary path: persist to rmi-backend. KV mirror stays warm below.
-    try {
-      await addBookmark(env, session.address, body.postId);
-    } catch {
-      // API unavailable — KV mirror below is the fallback persistence.
-    }
-
-    await writeBookmarksKv(env, session.address, filtered);
+    await writeBookmarks(env, session.address, filtered);
 
     return jsonResponse({ ok: true, bookmark: entry });
   } catch (err) {
@@ -162,9 +128,7 @@ export async function handleBookmarkAdd(request: Request, env: Env): Promise<Res
 
 /**
  * DELETE /api/bookmarks?id=... — Remove a bookmark by postId.
- * Removal is KV-authoritative today: [REVIEW] rmi-backend has no
- * DELETE /bookmarks endpoint, so removeBookmark() is a best-effort
- * forward-compatible call and the KV entry is always removed.
+ * KV is authoritative. No rmi-backend involvement.
  */
 export async function handleBookmarkRemove(request: Request, env: Env): Promise<Response> {
   const session = await requireSession(request, env);
@@ -175,20 +139,12 @@ export async function handleBookmarkRemove(request: Request, env: Env): Promise<
     return jsonResponse({ error: 'id query parameter required' }, 400);
   }
 
-  if (!env.BOOKMARKS && !rmiConfigured(env)) {
+  if (!env.BOOKMARKS) {
     return jsonResponse({ error: 'Bookmarks storage not configured' }, 500);
   }
 
-  // Primary path: attempt API removal (no-op until backend supports DELETE).
-  try {
-    await removeBookmark(env, session.address, postId);
-  } catch {
-    // ignore — fall back to KV removal below
-  }
-
-  // KV removal (authoritative today).
   const key = bookmarksKey(session.address);
-  const existingRaw = await env.BOOKMARKS?.get(key);
+  const existingRaw = await env.BOOKMARKS.get(key);
 
   if (!existingRaw) {
     return jsonResponse({ ok: true }); // Nothing to delete
@@ -199,9 +155,9 @@ export async function handleBookmarkRemove(request: Request, env: Env): Promise<
     const filtered = bookmarks.filter((b) => b.postId !== postId);
 
     if (filtered.length === 0) {
-      await env.BOOKMARKS?.delete(key);
+      await env.BOOKMARKS.delete(key);
     } else {
-      await env.BOOKMARKS?.put(key, JSON.stringify(filtered));
+      await env.BOOKMARKS.put(key, JSON.stringify(filtered));
     }
 
     return jsonResponse({ ok: true });
@@ -218,7 +174,7 @@ export async function handleBookmarkList(request: Request, env: Env): Promise<Re
   const session = await requireSession(request, env);
   if (session instanceof Response) return session;
 
-  const bookmarks = await getBookmarksWithFallback(env, session.address);
+  const bookmarks = await getBookmarks(env, session.address);
 
   // Optional sort
   const sort = new URL(request.url).searchParams.get('sort');
@@ -246,7 +202,7 @@ export async function handleBookmarkCheck(request: Request, env: Env): Promise<R
     return jsonResponse({ error: 'id query parameter required' }, 400);
   }
 
-  const bookmarks = await getBookmarksWithFallback(env, session.address);
+  const bookmarks = await getBookmarks(env, session.address);
   const found = bookmarks.some((b) => b.postId === postId);
   return noCacheJsonResponse({ bookmarked: found });
 }

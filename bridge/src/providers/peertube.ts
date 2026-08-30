@@ -133,7 +133,8 @@ export async function fetchPeerTubeCategories(): Promise<CategoryMap> {
   try {
     const res = await $fetch(`${PEERTUBE_BASE}/api/v1/videos/categories`, {
       headers: { 'User-Agent': 'DegenFeed-Bridge/0.1' },
-      signal: AbortSignal.timeout(4000),
+      // Local instance — fast-fail so a dead container doesn't stall the feed.
+      signal: AbortSignal.timeout(1500),
     });
     if (res.ok) {
       const raw = (await res.json()) as CategoryMap;
@@ -165,7 +166,8 @@ export async function fetchPeerTubeTrending(limit = 12): Promise<UnifiedPost[]> 
     const url = `${PEERTUBE_BASE}/api/v1/videos?count=${Math.min(limit, 50)}&sort=-trendingScore`;
     const res = await $fetch(url, {
       headers: { 'User-Agent': 'DegenFeed-Bridge/0.1' },
-      signal: AbortSignal.timeout(5000),
+      // Local instance — fast-fail (dead-local guard).
+      signal: AbortSignal.timeout(1500),
     });
     if (!res.ok) {
       // Fall back to view-count sort for instances without trendingScore
@@ -174,7 +176,8 @@ export async function fetchPeerTubeTrending(limit = 12): Promise<UnifiedPost[]> 
         `${PEERTUBE_BASE}/api/v1/videos?count=${Math.min(limit, 50)}&sort=-views`,
         {
           headers: { 'User-Agent': 'DegenFeed-Bridge/0.1' },
-          signal: AbortSignal.timeout(5000),
+          // Local instance — fast-fail (dead-local guard).
+          signal: AbortSignal.timeout(1500),
         },
       );
       if (!fallback.ok) return fetchFederatedTrending(limit);
@@ -232,7 +235,8 @@ export async function fetchPeerTubeChannels(limit = 20): Promise<PeerTubeChannel
     )}&sort=-followersCount`;
     const res = await $fetch(url, {
       headers: { 'User-Agent': 'DegenFeed-Bridge/0.1' },
-      signal: AbortSignal.timeout(5000),
+      // Local instance — fast-fail (dead-local guard).
+      signal: AbortSignal.timeout(1500),
     });
     if (!res.ok) return [];
     const data = (await res.json()) as {
@@ -425,7 +429,8 @@ export async function fetchPeerTubePosts(limit = 20): Promise<UnifiedPost[]> {
     const url = `${PEERTUBE_BASE}/api/v1/videos?count=${Math.min(limit, 50)}&sort=-publishedAt`;
     const res = await $fetch(url, {
       headers: { 'User-Agent': 'DegenFeed-Bridge/0.1' },
-      signal: AbortSignal.timeout(5000),
+      // Local instance — fast-fail (dead-local guard).
+      signal: AbortSignal.timeout(1500),
     });
 
     if (res.ok) {
@@ -522,7 +527,8 @@ export async function fetchPeerTubeLiveStreams(limit = 20): Promise<PeerTubeLive
     )}&sort=-publishedAt`;
     const res = await $fetch(url, {
       headers: { 'User-Agent': 'DegenFeed-Bridge/0.1' },
-      signal: AbortSignal.timeout(5000),
+      // Local instance — fast-fail (dead-local guard).
+      signal: AbortSignal.timeout(1500),
     });
 
     if (!res.ok) {

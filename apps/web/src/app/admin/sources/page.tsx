@@ -195,7 +195,7 @@ export default function AdminSourcesPage() {
         const d = (await statsRes.json()) as { stats: DiscoveryStats };
         setStats(d.stats);
       }
-    } catch (_e) {
+    } catch {
       // Non-critical, individual fetches handle their own errors
     }
   }, []);
@@ -311,7 +311,7 @@ export default function AdminSourcesPage() {
         showToast('Health check complete', 'success');
         await fetchAll();
       }
-    } catch (_e) {
+    } catch {
       showToast('Health check failed', 'error');
     }
   }, [fetchAll, showToast]);

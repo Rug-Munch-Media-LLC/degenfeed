@@ -180,7 +180,10 @@ async function fetchFromGts(limit: number): Promise<UnifiedPost[]> {
         redirect_uri: 'urn:ietf:wg:oauth:2.0:oob',
         scope: 'read:statuses read:accounts read:timelines',
       }),
-      signal: AbortSignal.timeout(5000),
+      // Dead-local fast-fail: the default GTS_BASE is the container-local
+      // loopback (127.0.0.1:8082) which may be down — don't stall the feed
+      // for the full 5s when it is; public instances run in parallel.
+      signal: AbortSignal.timeout(1500),
     });
 
     if (!tokenRes.ok) {
@@ -201,7 +204,8 @@ async function fetchFromGts(limit: number): Promise<UnifiedPost[]> {
 
     // Try without auth (some instances allow it)
     const res = await $fetch(`${GTS_BASE}/api/v1/timelines/public?local=true&limit=${limit}`, {
-      signal: AbortSignal.timeout(8000),
+      // Fast-fail on dead local container (same rationale as OAuth above).
+      signal: AbortSignal.timeout(1500),
     });
     if (res.ok) {
       const raw = (await res.json()) as MastodonStatus[];

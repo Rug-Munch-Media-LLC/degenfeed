@@ -220,7 +220,7 @@ export default function ShortCreator({ onClose, onSuccess }: ShortCreatorProps) 
       }, 1000);
 
       setStage('recording');
-    } catch (_e) {
+    } catch {
       setError('Failed to start recording.');
       stream.getTracks().forEach((t) => {
         t.stop();

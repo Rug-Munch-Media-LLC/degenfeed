@@ -52,7 +52,7 @@ export default function SpaceDetailPage({
             }
           }
         }
-      } catch (_e) {
+      } catch {
         if (!cancelled) setError('Failed to load space');
       } finally {
         if (!cancelled) setLoading(false);
