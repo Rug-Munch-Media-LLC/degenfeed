@@ -9,12 +9,12 @@
  * the storage layer later without changing this hook's contract).
  */
 
-import { useCallback, useRef, useState } from 'react';
 import type { UnifiedPost } from '@degenfeed/types';
+import { useCallback, useRef, useState } from 'react';
 import {
-  decayAlgoProfile,
   type AlgoEngagementAction,
   type AlgoProfile,
+  decayAlgoProfile,
   EMPTY_ALGO_PROFILE,
   loadAlgoProfile,
   recordAlgoEngagement,

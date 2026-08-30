@@ -4,8 +4,6 @@
 
 // Re-export existing hooks
 export { useAuth } from '../components/AuthProvider';
-export type { UseFeedDataOptions, UseFeedDataResult } from './feed/useFeedData';
-export { useFeedData } from './feed/useFeedData';
 export type { FeedFilterState, UseFeedFiltersResult } from './feed/useFeedFilters';
 export { useFeedFilters } from './feed/useFeedFilters';
 export { useCopyToClipboard } from './useCopyToClipboard';

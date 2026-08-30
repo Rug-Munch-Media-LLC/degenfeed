@@ -22,7 +22,7 @@ export async function POST(request: Request) {
 
     // Not yet implemented — see ROADMAP.md
     return NextResponse.json({ error: 'Tip creation coming soon', status: 501 }, { status: 501 });
-  } catch (_error) {
+  } catch {
     return NextResponse.json({ error: 'Invalid request body' }, { status: 400 });
   }
 }

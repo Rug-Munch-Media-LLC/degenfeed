@@ -65,7 +65,9 @@ export async function POST(request: NextRequest) {
 
     // Try to forward to worker/bridge
     const workerUrl =
-      process.env.WORKER_URL || process.env.NEXT_PUBLIC_WORKER_URL || 'http://host.docker.internal:3101';
+      process.env.WORKER_URL ||
+      process.env.NEXT_PUBLIC_WORKER_URL ||
+      'http://host.docker.internal:3101';
 
     try {
       const headers: Record<string, string> = { 'Content-Type': 'application/json' };
@@ -106,7 +108,7 @@ export async function POST(request: NextRequest) {
         authorId: authorId || 'anonymous',
       },
     });
-  } catch (_error) {
+  } catch {
     return NextResponse.json({ error: 'Invalid request body' }, { status: 400 });
   }
 }

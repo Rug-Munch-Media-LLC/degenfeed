@@ -44,7 +44,9 @@ export function SearchResultsContainer({
   const topics = useMemo(() => {
     const topicSet = new Set<string>();
     results.forEach((r) => {
-      r.niches?.forEach((n) => topicSet.add(n));
+      r.niches?.forEach((n) => {
+        topicSet.add(n);
+      });
     });
     return Array.from(topicSet).slice(0, 8);
   }, [results]);

@@ -89,7 +89,7 @@ export async function GET(request: NextRequest) {
       resolutionDepth: depth,
       resolutionSource: 'fallback',
     });
-  } catch (_error) {
+  } catch {
     return NextResponse.json({ error: 'Failed to resolve identity profile' }, { status: 500 });
   }
 }

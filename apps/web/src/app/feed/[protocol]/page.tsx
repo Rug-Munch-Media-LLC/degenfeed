@@ -14,7 +14,7 @@
 //
 
 import { use } from 'react';
-import { ProtocolFeedContent, normalizeSort } from './ProtocolFeedContent';
+import { normalizeSort, ProtocolFeedContent } from './ProtocolFeedContent';
 
 interface Props {
   params: Promise<{ protocol: string }>;

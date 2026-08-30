@@ -540,7 +540,6 @@ export default function ApiDocsPage() {
           </Link>
         </div>
       </section>
-
       {/* Authentication */}
       <H2 id="authentication">Authentication</H2>
       <p className="text-sm leading-relaxed text-[var(--color-muted)]">
@@ -551,7 +550,6 @@ export default function ApiDocsPage() {
         header:
       </p>
       <CodeBlock>{`Authorization: Bearer df_key_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx`}</CodeBlock>
-
       <H3 id="get-api-key">Getting an API key</H3>
       <p className="text-sm leading-relaxed text-[var(--color-muted)]">
         Generate an API key from your{' '}
@@ -586,7 +584,6 @@ export default function ApiDocsPage() {
           </tbody>
         </table>
       </div>
-
       <H3 id="scope-scope-errors">Error responses</H3>
       <p className="text-sm leading-relaxed text-[var(--color-muted)]">
         Invalid or missing API keys return 401. Keys without sufficient scope return 403.
@@ -596,7 +593,6 @@ export default function ApiDocsPage() {
 
 // 403 — Insufficient scope
 { "error": "Missing required scopes: write:tip" }`}</CodeBlock>
-
       {/* Rate Limiting */}
       <H2 id="rate-limiting">Rate Limiting</H2>
       <p className="text-sm leading-relaxed text-[var(--color-muted)]">
@@ -644,7 +640,6 @@ export default function ApiDocsPage() {
   "limit": 1000,
   "window": "1h"
 }`}</CodeBlock>
-
       <div className="my-8 rounded-lg border border-yellow-500/20 bg-yellow-500/5 p-4">
         <div className="flex gap-3">
           <span className="mt-0.5 flex-shrink-0 text-sm">⚠</span>
@@ -662,7 +657,6 @@ export default function ApiDocsPage() {
           </div>
         </div>
       </div>
-
       {/* Endpoints */}
       <H2 id="endpoints">Endpoints</H2>
       <p className="text-sm leading-relaxed text-[var(--color-muted)]">
@@ -672,7 +666,6 @@ export default function ApiDocsPage() {
         </code>
         . All responses return JSON. Timestamps are in milliseconds since Unix epoch.
       </p>
-
       {sectionOrder.map((section) => (
         <div key={section}>
           <H3 id={`section-${section}`}>{sectionLabels[section]}</H3>
@@ -743,10 +736,8 @@ export default function ApiDocsPage() {
             ))}
         </div>
       ))}
-
       {/* SDK Examples */}
       <H2 id="sdks">SDK Examples</H2>
-
       <H3 id="curl">curl</H3>
       <CodeBlock>{`# Get the trending feed
 curl -H "Authorization: Bearer df_key_..." \\
@@ -762,7 +753,6 @@ curl -H "Authorization: Bearer df_key_..." \\
 
 # Check protocol health (no auth required)
 curl "https://degenfeed.xyz/v1/health/protocols"`}</CodeBlock>
-
       <H3 id="javascript">JavaScript / TypeScript</H3>
       <CodeBlock>{`// Install: npm install @degenfeed/api-client
 import { DegenFeedClient } from '@degenfeed/api-client';
@@ -785,11 +775,11 @@ const results = await client.search.query('bitcoin');
 const identity = await client.identity.resolve('vitalik.eth');
 
 // console.log(feed.posts, results.results, identity.resolved);`}</CodeBlock>
-// 
-//       <CodeBlock>{`// Or use fetch directly
+      {/* */}
+      <CodeBlock>{`// Or use fetch directly
 // const API_KEY = 'df_key_...';
 // const BASE = 'https://degenfeed.xyz/v1';
-// 
+//
 // async function getFeed() {
 //   const res = await fetch(\`\${BASE}/feed/home?sort=hot&limit=10\`, {
 //     headers: { Authorization: \`Bearer \${API_KEY}\` },
@@ -804,7 +794,6 @@ async function searchIdentity(handle) {
   });
   return res.json();
 }`}</CodeBlock>
-
       <H3 id="python">Python</H3>
       <CodeBlock>{`# Install: pip install degenfeed-client
 from degenfeed import DegenFeedClient
@@ -821,7 +810,6 @@ results = client.search.query("bitcoin")
 identity = client.identity.resolve("vitalik.eth")
 
 print(feed, results, identity)`}</CodeBlock>
-
       <CodeBlock>{`# Or use httpx directly
 import httpx
 
@@ -844,7 +832,6 @@ def search_identity(handle: str):
         headers={"Authorization": f"Bearer {API_KEY}"},
     )
     return res.json()`}</CodeBlock>
-
       {/* Migration guide */}
       <H2 id="migration">Migration from v0 (legacy /api/)</H2>
       <p className="text-sm leading-relaxed text-[var(--color-muted)]">
@@ -878,7 +865,6 @@ def search_identity(handle: str):
           response headers on legacy routes for the migration deadline
         </li>
       </ol>
-
       <div className="mt-12 border-t border-[var(--color-glass-border)] pt-6 text-center">
         <p className="text-xs text-[var(--color-muted)]">
           Questions? Join our{' '}

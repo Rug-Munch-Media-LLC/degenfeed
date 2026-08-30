@@ -44,7 +44,15 @@ const NETWORK_PATTERNS = [
   /failed to fetch/i,
 ];
 
-const AUTH_PATTERNS = [/unauthorized/i, /401/i, /403/i, /forbidden/i, /not authorized/i, /session.*expired/i, /sign\s*in/i];
+const AUTH_PATTERNS = [
+  /unauthorized/i,
+  /401/i,
+  /403/i,
+  /forbidden/i,
+  /not authorized/i,
+  /session.*expired/i,
+  /sign\s*in/i,
+];
 
 const COPY: Record<Exclude<FeedErrorKind, 'auth'>, string> = {
   network: 'Connection lost. Check your connection and try again.',
@@ -55,10 +63,7 @@ const COPY: Record<Exclude<FeedErrorKind, 'auth'>, string> = {
 /**
  * Classify a thrown error (optionally with the HTTP status from a response).
  */
-export function classifyFeedError(
-  error: unknown,
-  status?: number,
-): ClassifiedFeedError {
+export function classifyFeedError(error: unknown, status?: number): ClassifiedFeedError {
   const message = error instanceof Error ? error.message : String(error ?? '');
 
   if (status === 401 || status === 403 || AUTH_PATTERNS.some((p) => p.test(message))) {

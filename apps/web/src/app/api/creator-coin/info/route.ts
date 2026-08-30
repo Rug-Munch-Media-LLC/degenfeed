@@ -44,10 +44,7 @@ function marketChartDays(timeframe: string): number {
  * Returns `[]` on failure — the UI must render an empty/error chart,
  * NOT synthetic random data.
  */
-async function fetchPriceHistory(
-  coinId: string,
-  timeframe: string,
-): Promise<PriceHistoryPoint[]> {
+async function fetchPriceHistory(coinId: string, timeframe: string): Promise<PriceHistoryPoint[]> {
   const days = marketChartDays(timeframe);
   const res = await fetch(
     `${COINGECKO_BASE}/coins/${coinId}/market_chart?vs_currency=usd&days=${days}&interval=daily`,

@@ -30,7 +30,13 @@ export async function POST(request: NextRequest) {
     const parsed = NostrPublishSchema.safeParse(rawBody);
     if (!parsed.success) {
       return NextResponse.json(
-        { error: { code: 'VALIDATION_ERROR', message: 'Validation failed', details: parsed.error.flatten() } },
+        {
+          error: {
+            code: 'VALIDATION_ERROR',
+            message: 'Validation failed',
+            details: parsed.error.flatten(),
+          },
+        },
         { status: 400 },
       );
     }
@@ -76,7 +82,9 @@ export async function POST(request: NextRequest) {
 
     // Proxy to bridge server for relay publishing
     const workerUrl =
-      process.env.WORKER_URL ?? process.env.NEXT_PUBLIC_WORKER_URL ?? 'http://host.docker.internal:3101';
+      process.env.WORKER_URL ??
+      process.env.NEXT_PUBLIC_WORKER_URL ??
+      'http://host.docker.internal:3101';
 
     const bridgeRes = await fetch(`${workerUrl}/api/nostr/publish`, {
       method: 'POST',

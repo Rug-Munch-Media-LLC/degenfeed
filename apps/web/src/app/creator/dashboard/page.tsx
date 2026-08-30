@@ -825,10 +825,49 @@ export default function CreatorDashboardPage() {
   const [coins] = useState<CoinSummary[]>([]);
   const [holders, setHolders] = useState<HolderEntry[]>([]);
   const [trades, setTrades] = useState<TradeEntry[]>([]);
-  const [revenue] = useState<RevenueData>({ totalRevenue: 0, creatorFees: 0, treasuryFees: 0, tipsReceived: 0, platformFees: 0, liquidityFees: 0, revenueByDay: [], feeBreakdown: { creator: { label: "", pct: 0, amount: 0 }, platform: { label: "", pct: 0, amount: 0 }, treasury: { label: "", pct: 0, amount: 0 }, liquidity: { label: "", pct: 0, amount: 0 } } });
-  const [vesting] = useState<VestingSchedule>({ totalLocked: 0, totalUnlocked: 0, unlockedPct: 0, schedule: [], nextUnlockDate: "", nextUnlockAmount: 0, cliffEndDate: "", vestingEndDate: "" });
-  const [supply] = useState<SupplyBreakdown>({ totalSupply: 0, circulating: 0, burned: 0, ownedByCreator: 0, ownedByTeam: 0, ownedByLP: 0, ownedByDAO: 0, ownedByCommunity: 0, ownedByBundled: 0 });
-  const [bundling] = useState<BundlingInfo>({ detected: false, bundledWallets: 0, totalBundledTokens: 0, bundlingPercentage: 0, riskLevel: "none" });
+  const [revenue] = useState<RevenueData>({
+    totalRevenue: 0,
+    creatorFees: 0,
+    treasuryFees: 0,
+    tipsReceived: 0,
+    platformFees: 0,
+    liquidityFees: 0,
+    revenueByDay: [],
+    feeBreakdown: {
+      creator: { label: '', pct: 0, amount: 0 },
+      platform: { label: '', pct: 0, amount: 0 },
+      treasury: { label: '', pct: 0, amount: 0 },
+      liquidity: { label: '', pct: 0, amount: 0 },
+    },
+  });
+  const [vesting] = useState<VestingSchedule>({
+    totalLocked: 0,
+    totalUnlocked: 0,
+    unlockedPct: 0,
+    schedule: [],
+    nextUnlockDate: '',
+    nextUnlockAmount: 0,
+    cliffEndDate: '',
+    vestingEndDate: '',
+  });
+  const [supply] = useState<SupplyBreakdown>({
+    totalSupply: 0,
+    circulating: 0,
+    burned: 0,
+    ownedByCreator: 0,
+    ownedByTeam: 0,
+    ownedByLP: 0,
+    ownedByDAO: 0,
+    ownedByCommunity: 0,
+    ownedByBundled: 0,
+  });
+  const [bundling] = useState<BundlingInfo>({
+    detected: false,
+    bundledWallets: 0,
+    totalBundledTokens: 0,
+    bundlingPercentage: 0,
+    riskLevel: 'none',
+  });
   const [audits] = useState<AuditEntry[]>([]);
 
   const selectedCoin = coins[selectedCoinIdx];

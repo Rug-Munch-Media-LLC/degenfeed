@@ -135,13 +135,7 @@ export function ProtocolEmptyState({ protocol, sort, onRetry }: ProtocolEmptySta
           onClick={onRetry}
           className="inline-flex min-h-[44px] items-center gap-1.5 rounded-lg border px-4 py-2 text-sm font-medium text-[var(--color-muted)] transition-colors hover:bg-[var(--color-overlay)] hover:text-[var(--color-fg)]"
         >
-          <svg
-            width="14"
-            height="14"
-            viewBox="0 0 16 16"
-            fill="none"
-            aria-hidden="true"
-          >
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
             <path
               d="M3 8a5 5 0 019.9-1"
               stroke="currentColor"

@@ -48,7 +48,7 @@ export async function POST(request: Request) {
       { error: 'Tip settings not yet available', status: 501 },
       { status: 501 },
     );
-  } catch (_error) {
+  } catch {
     return NextResponse.json({ error: 'Invalid request body' }, { status: 400 });
   }
 }

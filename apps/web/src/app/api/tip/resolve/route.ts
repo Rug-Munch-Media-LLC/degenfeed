@@ -207,7 +207,7 @@ export async function GET(request: NextRequest) {
     });
 
     return NextResponse.json({ methods });
-  } catch (_error) {
+  } catch {
     return NextResponse.json(
       { error: 'Failed to resolve tipping methods', methods: [] },
       { status: 500 },

@@ -31,7 +31,6 @@ interface ChatMessage {
 
 // === Mock messages (dev/fallback) ======================================
 
-
 // === Protocol badge colors ============================================
 
 const PROTOCOL_COLORS: Record<string, { label: string; color: string }> = {

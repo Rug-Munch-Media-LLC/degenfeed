@@ -89,7 +89,7 @@ export function ProtocolStatusSection({ walletAddress, isOwnProfile }: Props) {
         if (res.ok) {
           await fetchStatus(); // Refresh the status
         }
-      } catch (err) {
+      } catch {
         // alert(`Error: ${err instanceof Error ? err.message : 'Unknown'}`);
       } finally {
         setCreating(null);

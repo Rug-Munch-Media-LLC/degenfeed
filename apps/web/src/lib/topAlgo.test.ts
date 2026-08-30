@@ -1,6 +1,6 @@
 import type { UnifiedPost } from '@degenfeed/types';
 import { describe, expect, it } from 'vitest';
-import { EMPTY_ALGO_PROFILE, type AlgoProfile } from './algoProfile';
+import { type AlgoProfile, EMPTY_ALGO_PROFILE } from './algoProfile';
 import { DEFAULT_FEED_CONTROLS, type FeedControls } from './feedRanking';
 import {
   coldStartBoost,
@@ -82,7 +82,11 @@ describe('topAlgo — genre-aware freshness decay', () => {
 
   it('news decays faster than analysis for the same age', () => {
     const fourHoursAgo = NOW - 4 * 3_600_000;
-    const news = makePost({ id: 'n', text: 'BREAKING: price crash today', createdAt: fourHoursAgo });
+    const news = makePost({
+      id: 'n',
+      text: 'BREAKING: price crash today',
+      createdAt: fourHoursAgo,
+    });
     const analysis = makePost({
       id: 'a',
       text: 'An in-depth analysis explaining the protocol',
@@ -212,7 +216,9 @@ describe('topAlgo — serendipity injection', () => {
   }
 
   it('reserves a ~10% slice for unfamiliar content at the default slider', () => {
-    expect(serendipityFraction({ ...DEFAULT_FEED_CONTROLS.algorithm, familiarDiscover: 50 })).toBeCloseTo(0.1, 1);
+    expect(
+      serendipityFraction({ ...DEFAULT_FEED_CONTROLS.algorithm, familiarDiscover: 50 }),
+    ).toBeCloseTo(0.1, 1);
   });
 
   it('injects serendipitous posts into the ranked feed', () => {
@@ -314,9 +320,13 @@ describe('topAlgo — Recency ↔ Quality slider', () => {
   });
 
   it('recencyQuality=0 prefers fresh posts', () => {
-    const out = rankTopAlgo([oldHighQuality, freshLowQuality], controlsWith({ recencyQuality: 0 }), {
-      now: NOW,
-    });
+    const out = rankTopAlgo(
+      [oldHighQuality, freshLowQuality],
+      controlsWith({ recencyQuality: 0 }),
+      {
+        now: NOW,
+      },
+    );
     expect(out[0]?.id).toBe('fresh');
   });
 

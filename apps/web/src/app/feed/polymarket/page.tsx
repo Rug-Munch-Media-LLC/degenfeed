@@ -21,7 +21,13 @@ export const metadata: Metadata = {
   title: 'Polymarket Prediction Market Feed — Odds & Volume | DegenFeed',
   description:
     'Prediction market odds, trending markets and resolution status from Polymarket — crypto, politics & macro forecasts.',
-  keywords: ['polymarket feed', 'prediction markets', 'market odds', 'polymarket volume', 'crypto predictions'],
+  keywords: [
+    'polymarket feed',
+    'prediction markets',
+    'market odds',
+    'polymarket volume',
+    'crypto predictions',
+  ],
   openGraph: {
     title: 'Polymarket Prediction Markets — DegenFeed',
     description: 'Live prediction market odds and volume aggregated in your DegenFeed timeline.',

@@ -21,7 +21,6 @@ type SortMode = 'trending' | 'newest' | 'gainers' | 'marketcap' | 'volume';
 
 // ─── Mock Data Generator ──────────────────────────────────────────────
 
-
 // ─── Sort Functions ───────────────────────────────────────────────────
 
 function sortCoins(coins: CoinDisplayData[], mode: SortMode): CoinDisplayData[] {
