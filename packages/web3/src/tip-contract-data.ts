@@ -224,10 +224,9 @@ contract DegenFeedTips {
         string message
     );
 
-    // ── Receive (dumb ETH drop — no event) ─────────────────────────────
-    receive() external payable {
-        // Allow direct ETH sends for emergency recovery
-    }
+    // NOTE: no receive() — direct ETH transfers revert instead of being
+    // permanently trapped. Every satoshi must move through a tip function
+    // that emits TipSent and forwards to a recipient.
 
     // ── Tip: plain ETH ─────────────────────────────────────────────────
     /**
@@ -238,13 +237,14 @@ contract DegenFeedTips {
         require(msg.value > 0, "Tip amount must be > 0");
         require(recipient != address(0), "Invalid recipient");
 
-        (bool sent, ) = recipient.call{value: msg.value}("");
-        require(sent, "Failed to send tip");
-
+        // CEI: counters updated before the external call
         unchecked {
             totalTips++;
             totalEthTipped += msg.value;
         }
+
+        (bool sent, ) = recipient.call{value: msg.value}("");
+        require(sent, "Failed to send tip");
 
         emit TipSent(msg.sender, recipient, msg.value, "");
     }
@@ -262,13 +262,14 @@ contract DegenFeedTips {
         require(msg.value > 0, "Tip amount must be > 0");
         require(recipient != address(0), "Invalid recipient");
 
-        (bool sent, ) = recipient.call{value: msg.value}("");
-        require(sent, "Failed to send tip");
-
+        // CEI: counters updated before the external call
         unchecked {
             totalTips++;
             totalEthTipped += msg.value;
         }
+
+        (bool sent, ) = recipient.call{value: msg.value}("");
+        require(sent, "Failed to send tip");
 
         emit TipSent(msg.sender, recipient, msg.value, message);
     }
@@ -290,17 +291,18 @@ contract DegenFeedTips {
         uint256 recipientAmount = (msg.value * 90) / 100;
         uint256 communityAmount = msg.value - recipientAmount;
 
+        // CEI: counters updated before the external calls
+        unchecked {
+            totalTips++;
+            totalEthTipped += msg.value;
+        }
+
         (bool sent, ) = recipient.call{value: recipientAmount}("");
         require(sent, "Failed to send tip");
 
         if (communityAmount > 0) {
             (bool sent2, ) = community.call{value: communityAmount}("");
             require(sent2, "Failed to send community share");
-        }
-
-        unchecked {
-            totalTips++;
-            totalEthTipped += msg.value;
         }
 
         emit TipSent(msg.sender, recipient, recipientAmount, "");
@@ -331,13 +333,14 @@ contract DegenFeedTips {
             require(recipients[i] != address(0), "Invalid recipient in batch");
             require(amounts[i] > 0, "Zero amount in batch");
 
-            (bool sent, ) = recipients[i].call{value: amounts[i]}("");
-            require(sent, "Failed to send tip");
-
+            // CEI: counters updated before the external call
             unchecked {
                 totalTips++;
                 totalEthTipped += amounts[i];
             }
+
+            (bool sent, ) = recipients[i].call{value: amounts[i]}("");
+            require(sent, "Failed to send tip");
 
             emit TipSent(msg.sender, recipients[i], amounts[i], "");
         }
@@ -387,31 +390,52 @@ contract DegenFeedTips {
 `;
 
 // ─── Helper: encode function data for wallet requests ──────────────────────
+//
+// Selector provenance (verified 2026-08-30 with `cast sig` against the
+// TIP_CONTRACT_SOURCE ABI below — the previous values were fabricated and
+// made every tip revert):
+//   tip(address)                 → 0xac733ef7
+//   tipWithMessage(address,string) → 0x5b333fa4
+//   tipWithSplit(address,address)  → 0x8feb66d9
+//   batchTip(address[],uint256[])  → 0xdaf91250
+//   tipERC20(address,address,uint256) → 0x86463e09
+
+/** Left-pad a hex string (without 0x) to full 32-byte ABI word width. */
+function padWord(hex: string): string {
+  return hex.toLowerCase().padStart(64, '0');
+}
+
+/** Address → 32-byte ABI word (0x + 64 hex chars). */
+function addressWord(address: `0x${string}`): string {
+  return padWord(address.toLowerCase().replace(/^0x/, ''));
+}
 
 /**
  * Encode a `tip` call data for use with `eth_sendTransaction` via EIP-1193.
  */
 export function encodeTipData(recipient: `0x${string}`): `0x${string}` {
-  // function tip(address) → 0x1702e8f0 + padded address
-  const signature = '0x1702e8f0';
-  const padded = recipient.toLowerCase().replace('0x', '').padStart(64, '0') as `0x${string}`;
-  return `${signature}${padded}` as `0x${string}`;
+  // function tip(address) → 0xac733ef7 + padded address
+  const signature = '0xac733ef7';
+  return `${signature}${addressWord(recipient)}` as `0x${string}`;
 }
 
 /**
  * Encode a `tipWithMessage` call data.
+ *
+ * ABI layout: selector | address (32B) | offset to string (32B, 0x40) |
+ *             string byte length (32B) | UTF-8 bytes, zero-padded to 32B words.
  */
 export function encodeTipWithMessageData(recipient: `0x${string}`, message: string): `0x${string}` {
-  // function tipWithMessage(address,string)
-  // Static offset for address (32 bytes) + dynamic string
-  const signature = '0xcf02c46b';
-  const addrPad = recipient.toLowerCase().replace('0x', '').padStart(64, '0');
-  const msgHex = Array.from(new TextEncoder().encode(message))
+  const signature = '0x5b333fa4';
+  const addrPad = addressWord(recipient);
+  // ABI string length is the BYTE length, not the JS string length —
+  // multi-byte UTF-8 (emoji, CJK) previously produced corrupt calldata.
+  const msgBytes = new TextEncoder().encode(message);
+  const msgHex = Array.from(msgBytes)
     .map((b) => b.toString(16).padStart(2, '0'))
     .join('');
-  const msgData = msgHex.padEnd(64 * Math.ceil(msgHex.length / 64), '0');
-  // Actually, ABI encoding: address (32 bytes) + offset to string (32 bytes) + length (32 bytes) + data
-  const stringOffset = `${'0'.repeat(63)}40`; // 0x40 = 64 bytes offset for string
-  const stringLen = BigInt(message.length).toString(16).padStart(64, '0');
+  const msgData = msgHex.padEnd(64 * Math.ceil(Math.max(msgHex.length, 1) / 64), '0');
+  const stringOffset = padWord('40'); // 0x40 = 64 bytes offset for the dynamic string
+  const stringLen = BigInt(msgBytes.length).toString(16).padStart(64, '0');
   return `${signature}${addrPad}${stringOffset}${stringLen}${msgData}` as `0x${string}`;
 }

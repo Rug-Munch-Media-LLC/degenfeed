@@ -41,7 +41,8 @@ describe('billing', () => {
   });
 
   it('should record subscription on verify', async () => {
-    // Mock Solana RPC to return confirmed transaction status
+    // Mock Solana RPC: 1) signature confirmed, 2) tx pays the treasury the
+    // pro tier price (10 SOL) from the claiming account (fee payer).
     vi.mocked(globalThis.fetch).mockResolvedValueOnce(
       new Response(
         JSON.stringify({
@@ -52,21 +53,97 @@ describe('billing', () => {
         { status: 200, headers: { 'content-type': 'application/json' } },
       ),
     );
+    const account = 'So11111111111111111111111111111111111111112';
+    const treasury = '9WzDXwBbmkg8ZTbNMqUxvQRAyrZzDsGYdLVL9zYtAWWM';
+    vi.mocked(globalThis.fetch).mockResolvedValueOnce(
+      new Response(
+        JSON.stringify({
+          jsonrpc: '2.0',
+          result: {
+            transaction: { message: { accountKeys: [account, treasury] } },
+            meta: {
+              preBalances: [20_000_000_000, 5_000_000_000],
+              postBalances: [10_000_000_000, 15_000_000_000], // treasury +10 SOL
+            },
+          },
+          id: 1,
+        }),
+        { status: 200, headers: { 'content-type': 'application/json' } },
+      ),
+    );
     const req = new Request('http://localhost/api/billing/verify?tier=pro', {
       method: 'POST',
       body: JSON.stringify({
-        account: 'So11111111111111111111111111111111111111112',
+        account,
         signature: 'sig',
       }),
     });
     const res = await handleBillingVerify(req, {
       ...mockEnv,
       SOLANA_RPC_URL: 'https://api.mainnet-beta.solana.com',
+      BILLING_TREASURY_ADDRESS: treasury,
     });
     const body = (await res.json()) as { ok: boolean; tier: string };
     expect(res.status).toBe(200);
     expect(body.ok).toBe(true);
     expect(body.tier).toBe('pro');
+  });
+
+  it('should reject a transaction that underpays the treasury', async () => {
+    vi.mocked(globalThis.fetch).mockResolvedValueOnce(
+      new Response(
+        JSON.stringify({
+          jsonrpc: '2.0',
+          result: { value: [{ confirmationStatus: 'finalized' }] },
+          id: 1,
+        }),
+        { status: 200, headers: { 'content-type': 'application/json' } },
+      ),
+    );
+    const account = 'So11111111111111111111111111111111111111112';
+    const treasury = '9WzDXwBbmkg8ZTbNMqUxvQRAyrZzDsGYdLVL9zYtAWWM';
+    vi.mocked(globalThis.fetch).mockResolvedValueOnce(
+      new Response(
+        JSON.stringify({
+          jsonrpc: '2.0',
+          result: {
+            transaction: { message: { accountKeys: [account, treasury] } },
+            meta: {
+              preBalances: [20_000_000_000, 5_000_000_000],
+              postBalances: [19_999_999_999, 5_000_000_001], // treasury +1 lamport
+            },
+          },
+          id: 1,
+        }),
+        { status: 200, headers: { 'content-type': 'application/json' } },
+      ),
+    );
+    const req = new Request('http://localhost/api/billing/verify?tier=pro', {
+      method: 'POST',
+      body: JSON.stringify({ account, signature: 'sig2' }),
+    });
+    const res = await handleBillingVerify(req, {
+      ...mockEnv,
+      SOLANA_RPC_URL: 'https://api.mainnet-beta.solana.com',
+      BILLING_TREASURY_ADDRESS: treasury,
+    });
+    const body = (await res.json()) as { error: string; code?: string };
+    expect(res.status).toBe(402);
+    expect(body.code).toBe('PAYMENT_MISMATCH');
+  });
+
+  it('should refuse verification when billing is not configured', async () => {
+    const req = new Request('http://localhost/api/billing/verify?tier=pro', {
+      method: 'POST',
+      body: JSON.stringify({
+        account: 'So11111111111111111111111111111111111111112',
+        signature: 'sig3',
+      }),
+    });
+    const res = await handleBillingVerify(req, { ...mockEnv });
+    expect(res.status).toBe(503);
+    const body = (await res.json()) as { code?: string };
+    expect(body.code).toBe('NOT_CONFIGURED');
   });
 
   it('should return free status for unknown identity', async () => {

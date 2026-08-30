@@ -31,12 +31,16 @@ const TIER_PRICES: Record<SubscriptionTier, number> = {
   platinum: 25,
 };
 
-const TIER_PRICES_CENTS: Record<SubscriptionTier, number> = {
-  pro: 1000,
-  platinum: 2500,
-};
+const LAMPORTS_PER_SOL_BI = 1_000_000_000n;
 
-const PREMIUM_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
+/**
+ * SOL price per tier used for on-chain payment verification.
+ * (Cent pricing for the Stripe flow lives in @degenfeed/monetization.)
+ */
+const TIER_PRICES_LAMPORTS: Record<SubscriptionTier, bigint> = {
+  pro: 10n * LAMPORTS_PER_SOL_BI,
+  platinum: 25n * LAMPORTS_PER_SOL_BI,
+};
 
 function buildBlinkUrl(origin: string, tier: SubscriptionTier): string {
   return `${origin}/api/billing/checkout?tier=${tier}`;
@@ -105,6 +109,143 @@ async function verifySolanaTransaction(signature: string, rpcUrl: string): Promi
   }
 }
 
+interface SolanaTransactionResponse {
+  result?: {
+    transaction?: { message?: { accountKeys?: string[] } };
+    meta?: {
+      preBalances?: number[];
+      postBalances?: number[];
+      loadedAddresses?: { writable?: string[]; readonly?: string[] };
+    } | null;
+  } | null;
+}
+
+/**
+ * Fetch a confirmed transaction and verify it actually pays the platform
+ * treasury.
+ *
+ * Hardening (2026-08 audit): previously ANY confirmed Solana transaction —
+ * e.g. a 0.00001 SOL self-transfer — granted a paid tier, and the same
+ * signature could be replayed forever. Now the tx must:
+ *   1. be signed by (fee payer =) the claiming `account`,
+ *   2. credit the treasury at least the tier price in lamports,
+ *   3. never have been used for a grant before (replay fence).
+ */
+async function verifyTierPayment(
+  signature: string,
+  account: string,
+  requiredLamports: bigint,
+  rpcUrl: string,
+  treasury: string,
+  kv: KVNamespace | undefined,
+): Promise<{ ok: true } | { ok: false; status: number; error: string; code?: string }> {
+  // ── Replay fence: one signature, one grant, ever ────────────────────────
+  try {
+    const used = await kv?.get(`billing:used:${signature}`);
+    if (used) {
+      return {
+        ok: false,
+        status: 409,
+        error: 'Transaction signature already used for a subscription grant',
+        code: 'REPLAY_DETECTED',
+      };
+    }
+  } catch {
+    return {
+      ok: false,
+      status: 503,
+      error: 'Replay protection storage unavailable — verification refused',
+      code: 'STORE_UNAVAILABLE',
+    };
+  }
+
+  let data: SolanaTransactionResponse;
+  try {
+    const res = await fetch(rpcUrl, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        jsonrpc: '2.0',
+        id: 1,
+        method: 'getTransaction',
+        params: [signature, { encoding: 'json', maxSupportedTransactionVersion: 0 }],
+      }),
+      signal: AbortSignal.timeout(10_000),
+    });
+    if (!res.ok) {
+      return { ok: false, status: 502, error: 'Solana RPC unavailable' };
+    }
+    data = (await res.json()) as SolanaTransactionResponse;
+  } catch {
+    return { ok: false, status: 502, error: 'Solana RPC error' };
+  }
+
+  const tx = data?.result;
+  const staticKeys = tx?.transaction?.message?.accountKeys ?? [];
+  const loaded = [
+    ...(tx?.meta?.loadedAddresses?.writable ?? []),
+    ...(tx?.meta?.loadedAddresses?.readonly ?? []),
+  ];
+  const allKeys = [...staticKeys, ...loaded];
+  const pre = tx?.meta?.preBalances ?? [];
+  const post = tx?.meta?.postBalances ?? [];
+
+  if (allKeys.length === 0 || pre.length !== allKeys.length || post.length !== allKeys.length) {
+    return {
+      ok: false,
+      status: 402,
+      error: 'Transaction not found on-chain',
+      code: 'TX_NOT_FOUND',
+    };
+  }
+
+  // ── Bind signature → account: the claiming wallet must be the fee payer ──
+  if (allKeys[0] !== account) {
+    return {
+      ok: false,
+      status: 403,
+      error: 'Claiming account is not the fee payer of the payment transaction',
+      code: 'ACCOUNT_MISMATCH',
+    };
+  }
+
+  // ── Bind tx → treasury: the treasury must be credited the tier price ────
+  const treasuryIndex = allKeys.indexOf(treasury);
+  if (treasuryIndex === -1) {
+    return {
+      ok: false,
+      status: 402,
+      error: 'Transaction does not credit the platform treasury',
+      code: 'PAYMENT_MISMATCH',
+    };
+  }
+  const credited = BigInt(Math.max(0, (post[treasuryIndex] ?? 0) - (pre[treasuryIndex] ?? 0)));
+  if (credited < requiredLamports) {
+    return {
+      ok: false,
+      status: 402,
+      error: `Payment below tier price — treasury credited ${credited} lamports, required ${requiredLamports}`,
+      code: 'PAYMENT_MISMATCH',
+    };
+  }
+
+  // Consume the signature BEFORE granting (fail closed if storage errors).
+  try {
+    await kv?.put(`billing:used:${signature}`, JSON.stringify({ account, at: Date.now() }), {
+      expirationTtl: 60 * 60 * 24 * 90, // 90 days
+    });
+  } catch {
+    return {
+      ok: false,
+      status: 503,
+      error: 'Replay protection storage unavailable — verification refused',
+      code: 'STORE_UNAVAILABLE',
+    };
+  }
+
+  return { ok: true };
+}
+
 export async function handleBillingVerify(request: Request, env: Env): Promise<Response> {
   const url = new URL(request.url);
   const tier = sanitizeString(url.searchParams.get('tier'), 16) as SubscriptionTier;
@@ -128,8 +269,20 @@ export async function handleBillingVerify(request: Request, env: Env): Promise<R
     return jsonResponse({ error: 'Transaction signature required' }, 400);
   }
 
-  // Verify the transaction on-chain before granting subscription.
-  const rpcUrl = env.SOLANA_RPC_URL || 'https://api.mainnet-beta.solana.com';
+  const rpcUrl = env.SOLANA_RPC_URL;
+  const treasury = env.BILLING_TREASURY_ADDRESS;
+  if (!rpcUrl || !treasury || !isValidSolanaAddress(treasury)) {
+    return jsonResponse(
+      {
+        error:
+          'Payment verification not configured — set SOLANA_RPC_URL and BILLING_TREASURY_ADDRESS to enable on-chain tier grants',
+        code: 'NOT_CONFIGURED',
+      },
+      503,
+    );
+  }
+
+  // Verify the transaction is confirmed on-chain before anything else.
   const confirmed = await verifySolanaTransaction(signature, rpcUrl);
   if (!confirmed) {
     return jsonResponse(
@@ -138,6 +291,20 @@ export async function handleBillingVerify(request: Request, env: Env): Promise<R
       },
       402,
     );
+  }
+
+  // Verify the payment actually pays the treasury the tier price, from the
+  // claiming account, and has never been used before.
+  const payment = await verifyTierPayment(
+    signature,
+    account,
+    TIER_PRICES_LAMPORTS[tier],
+    rpcUrl,
+    treasury,
+    env.SUBSCRIPTIONS,
+  );
+  if (!payment.ok) {
+    return jsonResponse({ error: payment.error, code: payment.code }, payment.status);
   }
 
   const identityId = `solana:${account}`;
@@ -203,90 +370,25 @@ function premiumKey(address: string): string {
 
 // ─── NEW: POST /api/billing/subscribe — Create platform subscription ───
 
-export async function handleBillingSubscribe(request: Request, env: Env): Promise<Response> {
-  const session = await requireSession(request, env);
-  if (session instanceof Response) return session;
-
-  let body: { tier?: string; paymentMethod?: string; firstMonth?: boolean } = {};
-  try {
-    body = (await request.json()) as typeof body;
-  } catch {
-    return jsonResponse({ error: 'Invalid JSON' }, 400);
-  }
-
-  const tier = sanitizeString(body.tier, 16) as SubscriptionTier;
-  if (!tier || !(tier in TIER_PRICES)) {
-    return jsonResponse({ error: 'Invalid tier. Use pro or creator.' }, 400);
-  }
-
-  const paymentMethod = sanitizeString(body.paymentMethod, 32) || 'eth-base';
-  const firstMonth = Boolean(body.firstMonth);
-
-  const address = session.address.toLowerCase();
-  const identityId = session.chain ? `${session.chain}:${address}` : `evm:${address}`;
-  const now = Date.now();
-  const expiresAt = now + PREMIUM_TTL_MS;
-  const txHash = `sim_${now}_${address.slice(0, 8)}`;
-
-  // Check for existing active subscription
-  try {
-    const existingRaw = await env.SUBSCRIPTIONS?.get(premiumKey(address));
-    if (existingRaw) {
-      const existing = JSON.parse(existingRaw) as PlatformPremiumRecord;
-      if (existing.status === 'active' && existing.expiresAt > now) {
-        // Extend by one period rather than error
-        // (existing.expiresAt already > now, so add to that)
-        const record: PlatformPremiumRecord = {
-          ...existing,
-          expiresAt: existing.expiresAt + PREMIUM_TTL_MS,
-          status: 'active',
-          firstMonthPromo: firstMonth,
-          paymentMethod,
-          txHash,
-        };
-        await env.SUBSCRIPTIONS?.put(premiumKey(address), JSON.stringify(record));
-        return noCacheJsonResponse({
-          success: true,
-          tier,
-          expiresAt: record.expiresAt,
-          txHash,
-          status: 'active',
-        });
-      }
-    }
-  } catch {
-    /* KV operation failed -- non-critical, continue */
-  }
-
-  const amountCents = firstMonth && tier === 'pro' ? 1000 : TIER_PRICES_CENTS[tier];
-
-  const record: PlatformPremiumRecord = {
-    tier,
-    identityId,
-    expiresAt,
-    startedAt: now,
-    status: 'active',
-    firstMonthPromo: firstMonth && tier === 'pro',
-    nextBillingAmount: amountCents,
-    paymentMethod,
-    txHash,
-  };
-
-  try {
-    await env.SUBSCRIPTIONS?.put(premiumKey(address), JSON.stringify(record), {
-      expirationTtl: Math.ceil(PREMIUM_TTL_MS / 1000) + 86400, // 31 days
-    });
-  } catch {
-    return jsonResponse({ error: 'Storage unavailable' }, 500);
-  }
-
-  return noCacheJsonResponse({
-    success: true,
-    tier,
-    expiresAt,
-    txHash,
-    status: 'active',
-  });
+/**
+ * NOT IMPLEMENTED — honest fence.
+ *
+ * This handler previously granted pro/platinum for 30 days with NO payment at
+ * all, recording a fabricated `sim_<timestamp>` "txHash". Real subscription
+ * grants must flow through either:
+ *   - POST /api/billing/verify (on-chain SOL payment, now treasury-verified), or
+ *   - the Stripe integration in @degenfeed/monetization (webhook-verified).
+ * Until one of those is wired to this route, it refuses instead of granting.
+ */
+export async function handleBillingSubscribe(_request: Request, _env: Env): Promise<Response> {
+  return jsonResponse(
+    {
+      error:
+        'Subscription creation is not implemented — this endpoint previously granted paid tiers without any payment. Use /api/billing/verify with a confirmed on-chain payment to the platform treasury.',
+      code: 'NOT_IMPLEMENTED',
+    },
+    501,
+  );
 }
 
 // ─── NEW: POST /api/billing/cancel — Cancel platform subscription ──────

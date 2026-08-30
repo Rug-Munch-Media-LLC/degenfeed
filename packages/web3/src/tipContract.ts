@@ -150,10 +150,10 @@ export async function tipOnChain(options: TipOnChainOptions): Promise<TipResult>
   if (message) {
     data = encodeTipWithMessageData(recipient, message);
   } else if (communityAddress) {
-    // tipWithSplit: two addresses as consecutive params
-    const sig = '0xd8371571';
-    const addr1 = recipient.toLowerCase().replace('0x', '').padStart(64, '0');
-    const addr2 = communityAddress.toLowerCase().replace('0x', '').padStart(64, '0');
+    // tipWithSplit(address,address) — selector verified via `cast sig`
+    const sig = '0x8feb66d9';
+    const addr1 = recipient.toLowerCase().replace(/^0x/, '').padStart(64, '0');
+    const addr2 = communityAddress.toLowerCase().replace(/^0x/, '').padStart(64, '0');
     data = `${sig}${addr1}${addr2}` as `0x${string}`;
   } else {
     data = encodeTipData(recipient);
@@ -203,10 +203,19 @@ export async function getOnChainTips(
   //   topic0 = keccak("TipSent(address,address,uint256,string)")
   //   topic1 = from (indexed)
   //   topic2 = to (indexed)
-  const tipSentTopic = '0x4f2c9b2a0b7b0c9f6b4c5e6d7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6';
+  // topic0 verified 2026-08-30 via `cast sig-event "TipSent(address,address,uint256,string)"`
+  // (the previous value was fabricated and matched no real logs).
+  const tipSentTopic =
+    '0x47699a4a144a6ecb85d9f1d3f809cbb382de4ad771c46d73422dd419cebec465' as `0x${string}`;
 
   const fromBlock = options?.fromBlock ?? 0;
   const toBlock = options?.toBlock ?? 'latest';
+
+  // Address → 32-byte event topic ("0x" + 64 hex chars). The previous
+  // `padStart(66, '0x')` interleaved "0x" pairs into the topic and corrupted
+  // every filter, so no tip could ever be resolved.
+  const addressTopic = (addr: `0x${string}`): `0x${string}` =>
+    `0x${addr.toLowerCase().replace(/^0x/, '').padStart(64, '0')}` as `0x${string}`;
 
   // We need to query both directions: address as sender and as recipient
   const [sentLogs, receivedLogs] = await Promise.all([
@@ -217,7 +226,7 @@ export async function getOnChainTips(
           address: contractAddress,
           fromBlock: typeof fromBlock === 'number' ? `0x${fromBlock.toString(16)}` : '0x0',
           toBlock: toBlock === 'latest' ? 'latest' : `0x${(toBlock as number).toString(16)}`,
-          topics: [tipSentTopic, address.toLowerCase().padStart(66, '0x') as `0x${string}`, null],
+          topics: [tipSentTopic, addressTopic(address), null],
         },
       ],
     }) as Promise<LogEntry[]>,
@@ -228,7 +237,7 @@ export async function getOnChainTips(
           address: contractAddress,
           fromBlock: typeof fromBlock === 'number' ? `0x${fromBlock.toString(16)}` : '0x0',
           toBlock: toBlock === 'latest' ? 'latest' : `0x${(toBlock as number).toString(16)}`,
-          topics: [tipSentTopic, null, address.toLowerCase().padStart(66, '0x') as `0x${string}`],
+          topics: [tipSentTopic, null, addressTopic(address)],
         },
       ],
     }) as Promise<LogEntry[]>,

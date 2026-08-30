@@ -16,22 +16,15 @@
  * @see https://x402.org
  */
 
-import {
-  Connection,
-  LAMPORTS_PER_SOL,
-  PublicKey,
-  SystemProgram,
-  Transaction,
-} from '@solana/web3.js';
-import type { Env } from '../types';
-import { jsonResponse } from '../response-helpers';
-import { paymentRequired } from '../response-helpers';
+import { SystemProgram, Transaction } from '@solana/web3.js';
+import { jsonResponse, paymentRequired } from '../response-helpers';
 import {
   hasSuspiciousPayload,
   isValidAmount,
   isValidSolanaAddress,
   sanitizeString,
 } from '../sanitize';
+import type { Env } from '../types';
 import { recordUnifiedTip } from './unified-tip-core';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -124,7 +117,7 @@ function buildX402BlinkUrl(baseUrl: string, params: X402PaywallRequest): string 
 
 export function x402PaywallResponse(
   req: X402PaywallRequest,
-  env: Env,
+  _env: Env,
   baseUrl: string,
 ): X402PaywallResponse {
   const paymentId = `x402:${req.action}:${req.target}:${Date.now()}:${Math.random().toString(36).slice(2, 8)}`;
@@ -368,6 +361,130 @@ export async function handleX402Upgrade(request: Request, env: Env): Promise<Res
 
 // ─── 5. POST /api/x402/verify — Verify payment and grant access ──────────
 
+// ─── Verify-time crypto/RPC helpers ───────────────────────────────────────
+
+const X402_ACTION_SET: ReadonlySet<string> = new Set<X402Action>([
+  'tip',
+  'unlock',
+  'subscribe',
+  'upgrade',
+]);
+
+const B58_ALPHABET = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
+
+/** Base58-encode bytes (for turning a raw Ed25519 signature into a tx signature string). */
+function base58Encode(bytes: Uint8Array): string {
+  if (bytes.length === 0) return '';
+  const digits: number[] = [0];
+  for (let i = 0; i < bytes.length; i++) {
+    let carry = bytes[i] ?? 0;
+    for (let j = 0; j < digits.length; j++) {
+      carry += (digits[j] ?? 0) << 8;
+      digits[j] = carry % 58;
+      carry = Math.floor(carry / 58);
+    }
+    while (carry > 0) {
+      digits.push(carry % 58);
+      carry = Math.floor(carry / 58);
+    }
+  }
+  let out = '';
+  // Leading zero bytes encode as '1's (standard base58). A 64-byte Ed25519
+  // signature is never all-zero, but keep the encoding faithful anyway.
+  let k = 0;
+  while (k < bytes.length && bytes[k] === 0 && !(digits.length === 1 && digits[0] === 0)) {
+    out += '1';
+    k++;
+  }
+  for (let i = digits.length - 1; i >= 0; i--) out += B58_ALPHABET[digits[i] ?? 0];
+  return out;
+}
+
+async function sha256Hex(bytes: Uint8Array): Promise<string> {
+  const digest = await crypto.subtle.digest('SHA-256', bytes as unknown as ArrayBuffer);
+  return Array.from(new Uint8Array(digest))
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('');
+}
+
+/** Parse a decimal SOL amount into lamports (bigint) without float drift. */
+function solToLamports(amount: string): bigint {
+  const [whole = '0', frac = ''] = amount.trim().split('.');
+  const frac9 = (frac + '000000000').slice(0, 9);
+  return BigInt(whole || '0') * 1_000_000_000n + BigInt(frac9 || '0');
+}
+
+interface DecodedSystemTransfer {
+  destination: string; // base58
+  lamports: bigint;
+}
+
+/**
+ * Decode SystemProgram.transfer instructions (variant index 2, 12-byte data)
+ * from a legacy Solana transaction.
+ *
+ * @dev Only legacy `Transaction` payloads are decoded here — the blink flow
+ *      produces legacy transfers. Versioned (v0) messages with loaded
+ *      addresses are rejected by the strict decode and fail closed.
+ */
+function decodeSystemTransfers(tx: Transaction): DecodedSystemTransfer[] {
+  const transfers: DecodedSystemTransfer[] = [];
+  for (const ix of tx.instructions) {
+    if (!ix.programId.equals(SystemProgram.programId)) continue;
+    if (ix.keys.length < 2) continue;
+    // Copy into a plain Uint8Array (no Node Buffer dependency in Workers).
+    const data = Uint8Array.from(ix.data);
+    if (data.length !== 12) continue;
+    // 4-byte little-endian variant index; 2 = SystemProgram.transfer.
+    const variant =
+      (data[0] ?? 0) | ((data[1] ?? 0) << 8) | ((data[2] ?? 0) << 16) | ((data[3] ?? 0) << 24);
+    if (variant !== 2) continue;
+    // 8-byte little-endian lamports at offset 4.
+    let lamports = 0n;
+    for (let b = 11; b >= 4; b--) lamports = (lamports << 8n) | BigInt(data[b] ?? 0);
+    transfers.push({ destination: ix.keys[1]?.pubkey.toBase58() ?? '', lamports });
+  }
+  return transfers;
+}
+
+async function confirmSignatureOnChain(
+  signature: string,
+  rpcUrl: string,
+): Promise<{ ok: boolean; reason?: string }> {
+  try {
+    const res = await fetch(rpcUrl, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        jsonrpc: '2.0',
+        id: 1,
+        method: 'getSignatureStatuses',
+        params: [[signature], { searchTransactionHistory: true }],
+      }),
+      signal: AbortSignal.timeout(10_000),
+    });
+    if (!res.ok) return { ok: false, reason: 'Solana RPC unavailable' };
+    const data = (await res.json()) as {
+      result?: { value?: Array<{ confirmationStatus?: string; err?: unknown } | null> };
+    };
+    const status = data?.result?.value?.[0];
+    if (!status) {
+      return {
+        ok: false,
+        reason:
+          'Transaction not found on-chain — the payment must be submitted and confirmed before verification',
+      };
+    }
+    if (status.err) return { ok: false, reason: 'Transaction failed on-chain' };
+    if (status.confirmationStatus === 'confirmed' || status.confirmationStatus === 'finalized') {
+      return { ok: true };
+    }
+    return { ok: false, reason: 'Transaction not yet confirmed' };
+  } catch {
+    return { ok: false, reason: 'Solana RPC error' };
+  }
+}
+
 export async function handleX402EnhancedVerify(request: Request, env: Env): Promise<Response> {
   let body: {
     proof?: string;
@@ -393,13 +510,40 @@ export async function handleX402EnhancedVerify(request: Request, env: Env): Prom
   if (!proof) {
     return jsonResponse({ error: 'proof required' }, 400);
   }
+  // ── Bind the grant to a real action/target/amount triple ────────────────
+  // Previously only `proof` was required: unlock/subscribe/upgrade could be
+  // verified with no target at all, and the amount was whatever the client
+  // claimed with nothing cross-checked against the transaction.
+  if (!X402_ACTION_SET.has(action)) {
+    return jsonResponse({ error: 'Valid action required (tip|unlock|subscribe|upgrade)' }, 400);
+  }
+  if (!target || !isValidSolanaAddress(target)) {
+    return jsonResponse({ error: 'Valid target Solana address required' }, 400);
+  }
+  if (!isValidAmount(amount)) {
+    return jsonResponse({ error: 'Valid amount required' }, 400);
+  }
 
   try {
-    // Verify the Solana transaction signature
-    const bytes = Uint8Array.from(atob(proof), (c) => c.charCodeAt(0));
-    const tx = Transaction.from(bytes);
-    const ok = tx.verifySignatures();
+    const proofBytes = Uint8Array.from(atob(proof), (c) => c.charCodeAt(0));
 
+    // ── Idempotency: one proof, one grant (replay fence) ─────────────────
+    // The same signed transaction previously granted unlock/subscribe/upgrade
+    // repeatedly. Bind the fence to the proof hash AND the requested
+    // action/target so a proof can never be re-run for a different grant.
+    const proofHash = await sha256Hex(proofBytes);
+    const replayKey = `x402:proof:${proofHash}:${action}:${target}`;
+    const seen = await env.CACHE?.get(replayKey);
+    if (seen) {
+      return jsonResponse(
+        { error: 'Payment proof already used — replay rejected', code: 'REPLAY_DETECTED' },
+        409,
+      );
+    }
+
+    // Verify the Solana transaction signature
+    const tx = Transaction.from(proofBytes);
+    const ok = tx.verifySignatures();
     if (!ok) {
       return jsonResponse({ error: 'Invalid transaction signature' }, 400);
     }
@@ -410,24 +554,85 @@ export async function handleX402EnhancedVerify(request: Request, env: Env): Prom
       return jsonResponse({ error: 'Could not determine sender from transaction' }, 400);
     }
 
+    // ── On-chain confirmation ────────────────────────────────────────────
+    // A signed-but-never-submitted transaction used to pass verification.
+    const rpcUrl = env.SOLANA_RPC_URL;
+    if (!rpcUrl) {
+      return jsonResponse(
+        {
+          error:
+            'Payment verification not configured — set SOLANA_RPC_URL to enable on-chain confirmation',
+          code: 'NOT_CONFIGURED',
+        },
+        503,
+      );
+    }
+    const firstSig = tx.signatures?.[0]?.signature;
+    if (!firstSig) {
+      return jsonResponse({ error: 'Transaction has no signature to confirm' }, 400);
+    }
+    const txSignature = base58Encode(firstSig);
+    const confirmation = await confirmSignatureOnChain(txSignature, rpcUrl);
+    if (!confirmation.ok) {
+      return jsonResponse(
+        { error: confirmation.reason, code: 'PAYMENT_NOT_CONFIRMED', txSignature },
+        402,
+      );
+    }
+
+    // ── Payload binding: amount + recipient must exist IN the tx ─────────
+    const claimedLamports = solToLamports(amount);
+    const matchingTransfer = decodeSystemTransfers(tx).find(
+      (t) => t.destination === target && t.lamports >= claimedLamports,
+    );
+    if (!matchingTransfer) {
+      return jsonResponse(
+        {
+          error:
+            'Transaction does not contain a SystemProgram.transfer to the target for at least the claimed amount',
+          code: 'PAYMENT_MISMATCH',
+          txSignature,
+        },
+        400,
+      );
+    }
+
+    // All checks passed — consume the proof BEFORE granting anything.
+    try {
+      await env.CACHE?.put(
+        replayKey,
+        JSON.stringify({ action, target, feePayer, txSignature, paymentId, at: Date.now() }),
+        { expirationTtl: 60 * 60 * 24 }, // 24h replay window
+      );
+    } catch {
+      // KV unavailable: fail closed rather than risk double-grants.
+      return jsonResponse(
+        {
+          error: 'Replay protection storage unavailable — verification refused',
+          code: 'STORE_UNAVAILABLE',
+        },
+        503,
+      );
+    }
+
     // Generate result based on action type
     const result: X402VerifyResult = {
       ok: true,
       action,
-      target: target ?? 'unknown',
-      amount: amount ?? '0',
-      signature: tx.signatures?.[0]?.signature?.toString('hex') ?? '',
+      target,
+      amount,
+      signature: txSignature,
     };
 
     // Route through tipping ledger
-    if (action === 'tip' && target && amount) {
+    if (action === 'tip') {
       const amountNum = Number.parseFloat(amount);
       if (!Number.isNaN(amountNum) && amountNum > 0) {
         const solPrice = await fetchSolPriceX402(env);
         const amountUsd = Math.round(amountNum * solPrice * 100) / 100;
         const activity = await recordUnifiedTip(env, {
           platform: 'solana',
-          entityId: `x402:tip:${target}:${Date.now()}`,
+          entityId: `x402:tip:${target}:${txSignature.slice(0, 16)}`,
           entityType: 'post',
           amountUsd: Math.max(amountUsd, 0.01),
           fromUserId: feePayer,
@@ -453,6 +658,7 @@ export async function handleX402EnhancedVerify(request: Request, env: Env): Prom
             accessToken,
             contentId: target,
             grantedTo: feePayer,
+            txSignature,
             expiresAt: Date.now() + 86_400_000,
           }),
           { expirationTtl: 60 * 60 * 25 }, // 25h
@@ -481,6 +687,7 @@ export async function handleX402EnhancedVerify(request: Request, env: Env): Prom
             creator: target,
             active: true,
             expiresAt,
+            txSignature,
             lastPayment: Date.now(),
           }),
           { expirationTtl: 60 * 60 * 24 * 35 }, // 35 days
@@ -503,6 +710,7 @@ export async function handleX402EnhancedVerify(request: Request, env: Env): Prom
             upgradedAt: Date.now(),
             creator: target,
             subscriber: feePayer,
+            txSignature,
           }),
           { expirationTtl: 60 * 60 * 24 * 365 }, // 1 year
         );
@@ -576,7 +784,7 @@ export async function handleX402Status(request: Request, env: Env): Promise<Resp
 
 let _cachedSolPriceX402: { price: number; at: number } | null = null;
 
-async function fetchSolPriceX402(env: Env): Promise<number> {
+async function fetchSolPriceX402(_env: Env): Promise<number> {
   if (_cachedSolPriceX402 && Date.now() - _cachedSolPriceX402.at < 60_000) {
     return _cachedSolPriceX402.price;
   }

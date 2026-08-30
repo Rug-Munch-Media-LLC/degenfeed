@@ -120,7 +120,7 @@ describe('EVM Tip — Chain Selection & Contract Data', () => {
   it('encodes tip(address) with correct function selector', () => {
     const recipient = '0x1234567890abcdef1234567890abcdef12345678' as `0x${string}`;
     const encoded = encodeTipData(recipient);
-    expect(encoded).toMatch(/^0x1702e8f0/);
+    expect(encoded).toMatch(/^0xac733ef7/);
     expect(encoded.length).toBe(74); // 0x + 4 bytes selector + 32 bytes address
   });
 
@@ -128,7 +128,7 @@ describe('EVM Tip — Chain Selection & Contract Data', () => {
     const recipient = '0x1234567890abcdef1234567890abcdef12345678' as `0x${string}`;
     const message = 'gm degen!';
     const encoded = encodeTipWithMessageData(recipient, message);
-    expect(encoded).toMatch(/^0xcf02c46b/);
+    expect(encoded).toMatch(/^0x5b333fa4/);
     expect(encoded.toLowerCase()).toContain(Buffer.from(message).toString('hex'));
   });
 

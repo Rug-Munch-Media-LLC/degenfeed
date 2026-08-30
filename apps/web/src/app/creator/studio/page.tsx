@@ -17,6 +17,8 @@ import {
 export default function CreatorStudioPage() {
   const [step, setStep] = useState(0);
   const [form, setForm] = useState<CoinFormState>(INITIAL_STATE);
+  // Deployment errors are surfaced in the UI — never silently swallowed.
+  const [deployError, setDeployError] = useState<string | null>(null);
 
   const update = <K extends keyof CoinFormState>(key: K, value: CoinFormState[K]) => {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -47,10 +49,13 @@ export default function CreatorStudioPage() {
   const simulateDeploy = useCallback(async () => {
     update('deploying', true);
     update('deployProgress', 0);
+    setDeployError(null);
 
     try {
-      // Call the real deploy API
-      const res = await fetch('/api/coin/launch', {
+      // Call the deploy API. The route returns an honest 501 NOT_IMPLEMENTED
+      // until the platform factory contract + deployer key are configured —
+      // it never fabricates a contract address.
+      const res = await fetch('/api/creator-coin/deploy', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         credentials: 'include',
@@ -97,8 +102,9 @@ export default function CreatorStudioPage() {
       update('deployedAddress', data.coinAddress);
       update('txHash', data.txHash || data.coinAddress);
     } catch (err) {
-      // Deploy failed — never simulate a fake address; surface the error in the console
+      // Deploy failed — never simulate a fake address; surface the error.
       update('deploying', false);
+      setDeployError(err instanceof Error ? err.message : 'Deploy failed');
       console.error('Deploy failed:', err);
     }
   }, [form, update]);
@@ -107,7 +113,9 @@ export default function CreatorStudioPage() {
     if (form.daoDeploying) return;
     update('daoDeploying', true);
     update('daoDeployProgress', 0);
-    // Real DAO deploy via API — simulated deploy banned
+    setDeployError(null);
+    // Real DAO deploy via API — simulated deploy banned. The route returns an
+    // honest 501 NOT_IMPLEMENTED until DegenFeedDAOFactoryV2 is deployed.
     try {
       const res = await fetch('/api/dao/deploy', {
         method: 'POST',
@@ -123,6 +131,7 @@ export default function CreatorStudioPage() {
       update('daoTxHash', data.txHash);
     } catch (err) {
       update('daoDeploying', false);
+      setDeployError(err instanceof Error ? err.message : 'DAO deploy failed');
       console.error('DAO deploy failed:', err);
     }
   };
@@ -146,6 +155,15 @@ export default function CreatorStudioPage() {
       </div>
 
       <StepNavigation current={step} total={totalSteps} steps={stepLabels} />
+
+      {deployError && (
+        <div
+          role="alert"
+          className="mt-4 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-xs text-red-400"
+        >
+          <strong className="font-semibold">Deployment unavailable:</strong> {deployError}
+        </div>
+      )}
 
       {step === 0 && <StepBasics form={form} update={update} toggleTag={toggleTag} />}
       {step === 1 && <StepEconomics form={form} update={update} />}

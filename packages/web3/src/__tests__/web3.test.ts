@@ -88,7 +88,7 @@ describe('encodeTipData', () => {
     const encoded = encodeTipData(recipient as `0x${string}`);
 
     // First 4 bytes = function selector for tip(address)
-    expect(encoded).toMatch(/^0x1702e8f0/);
+    expect(encoded).toMatch(/^0xac733ef7/);
     // Should have 4 bytes selector + 32 bytes padded address = 72 hex chars + 0x prefix
     expect(encoded.length).toBe(74);
   });
@@ -115,7 +115,7 @@ describe('encodeTipWithMessageData', () => {
     const message = 'Hello, DegenFeed!';
     const encoded = encodeTipWithMessageData(recipient as `0x${string}`, message);
 
-    expect(encoded).toMatch(/^0xcf02c46b/);
+    expect(encoded).toMatch(/^0x5b333fa4/);
     expect(encoded.length).toBeGreaterThan(100);
   });
 
@@ -123,7 +123,7 @@ describe('encodeTipWithMessageData', () => {
     const recipient = '0x1234567890abcdef1234567890abcdef12345678';
     const encoded = encodeTipWithMessageData(recipient as `0x${string}`, '');
 
-    expect(encoded).toMatch(/^0xcf02c46b/);
+    expect(encoded).toMatch(/^0x5b333fa4/);
   });
 
   it('encodes long messages', () => {
@@ -131,7 +131,7 @@ describe('encodeTipWithMessageData', () => {
     const message = 'x'.repeat(100);
     const encoded = encodeTipWithMessageData(recipient as `0x${string}`, message);
 
-    expect(encoded).toMatch(/^0xcf02c46b/);
+    expect(encoded).toMatch(/^0x5b333fa4/);
     // String content should be hex-encoded
     const hexChars = message
       .split('')
@@ -224,7 +224,7 @@ describe('estimateTipGas — mock provider', () => {
       getTipContractAddress: vi
         .fn()
         .mockReturnValue('0x1234567890abcdef1234567890abcdef12345678' as `0x${string}`),
-      encodeTipData: vi.fn().mockReturnValue('0x1702e8f0' as `0x${string}`),
+      encodeTipData: vi.fn().mockReturnValue('0xac733ef7' as `0x${string}`),
       getTipChainConfig: vi.fn().mockReturnValue({
         name: 'Base',
         chainId: '0x2105',

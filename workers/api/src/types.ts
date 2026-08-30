@@ -48,6 +48,8 @@ export interface Env {
   /** Comma-separated list of allowed CORS origins for state-changing requests. */
   ALLOWED_ORIGINS?: string;
   SOLANA_RPC_URL?: string;
+  /** Platform treasury Solana address that billing tier payments must credit. */
+  BILLING_TREASURY_ADDRESS?: string;
   /** Ethereum RPC URL for transaction simulation */
   ETH_RPC_URL?: string;
   RMI_BACKEND_URL?: string;
