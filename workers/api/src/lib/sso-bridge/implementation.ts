@@ -5,15 +5,14 @@
  * Provides session management, identity provisioning, and cross-network activity tracking.
  *
  * Storage: SSO records (sessions, wallet state, export bundles, recovery
- * codes, activity feeds, last-active) are persisted to rmi-backend via the
- * generic /api/v1/sessions store (id → JSON blob with TTL), with the legacy
- * IDENTITIES KV namespace kept as a warm fallback when the API is down.
+ * codes, activity feeds, last-active) are persisted to DegenFeed's OWN
+ * IDENTITIES KV namespace (id → JSON blob with TTL). DegenFeed is fully
+ * self-contained here — it never consults rmi-backend for SSO state.
  */
 
 import { registerOnPlatform } from '@degenfeed/crossplatform-register';
 import type { Env } from '../../index';
 import { sealForWallet } from '../crypto-seal';
-import { getSession, setSession } from '../rmi-client';
 import {
   ALL_SSO_PROTOCOLS,
   SSO_PROTOCOL_MAP,
@@ -26,23 +25,14 @@ import {
 } from './constants';
 import type { SSOAccountState, SSOExportBundle, SSOSession, SSOWalletState } from './types';
 
-// ─── Persistent store helpers (rmi-backend primary, KV fallback) ──────
+// ─── Persistent store helpers (DegenFeed-owned IDENTITIES KV) ──────────
 //
-// SSO records are arbitrary-id key/value blobs. The rmi-backend /sessions
-// API is the closest persistent store (id → data with TTL), so SSO writes go
-// there as `{ value: <raw JSON string> }`; every read unwraps `data.value`.
-// The legacy IDENTITIES KV namespace remains the fallback when the API is
-// unreachable. KV access uses optional chaining because IDENTITIES is
-// unbound in local/dev environments.
+// SSO records are arbitrary-id key/value blobs. They persist to DegenFeed's
+// OWN IDENTITIES KV namespace — the single source of truth. KV access uses
+// optional chaining because IDENTITIES is unbound in local/dev environments.
+// An rmi-backend outage has no effect on DegenFeed's SSO state.
 
 async function ssoStoreGet(env: Env, id: string): Promise<string | null> {
-  try {
-    const data = await getSession(env, id);
-    const raw = data && typeof data.value === 'string' ? data.value : null;
-    if (raw !== null) return raw;
-  } catch {
-    // API unavailable — fall through to KV
-  }
   try {
     return (await env.IDENTITIES?.get(id)) ?? null;
   } catch {
@@ -52,14 +42,9 @@ async function ssoStoreGet(env: Env, id: string): Promise<string | null> {
 
 async function ssoStoreSet(env: Env, id: string, value: string, ttl?: number): Promise<void> {
   try {
-    await setSession(env, id, { value }, ttl ?? 86400);
-  } catch {
-    // API unavailable — KV below is the fallback persistence
-  }
-  try {
     await env.IDENTITIES?.put(id, value, ttl ? { expirationTtl: ttl } : undefined);
   } catch {
-    // Non-critical mirror
+    // Non-critical storage failure
   }
 }
 

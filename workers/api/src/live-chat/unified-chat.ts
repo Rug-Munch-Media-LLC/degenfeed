@@ -26,10 +26,6 @@
  */
 
 import type { Env } from '../index';
-import {
-  getChatHistory as rmiGetChatHistory,
-  sendChatMessage as rmiSendChatMessage,
-} from '../lib/rmi-client';
 import { broadcastToAll } from '../ws-broadcast';
 import { CHANNELS } from '../ws-channels';
 
@@ -361,15 +357,8 @@ export async function sendChatMessage(
     isDeleted: false,
   };
 
-  // Primary: persist to rmi-backend chat-history. KV below stays warm as
-  // the fallback store when the API is unreachable.
-  try {
-    await rmiSendChatMessage(env, msg.streamId, msg.userId, msg.message);
-  } catch {
-    // API unavailable — KV store below is the fallback persistence
-  }
-
-  // Store in KV (fallback / warm cache)
+  // Persist to DegenFeed's OWN KV (CACHE) — single source of truth for
+  // chat history. No rmi-backend involvement.
   await storeMessage(env, msg);
 
   // Store last-seen timestamp per protocol for polling
@@ -466,6 +455,9 @@ async function storeMessage(env: Env, msg: LiveChatMessage): Promise<void> {
 
 /**
  * Get chat messages for a stream.
+ *
+ * DegenFeed-owned KV (CACHE) is the single source of truth. No rmi-backend
+ * involvement — a rmi-backend outage cannot affect live chat.
  */
 export async function getChatMessages(
   env: Env,
@@ -473,30 +465,6 @@ export async function getChatMessages(
   limit = 50,
   before?: string,
 ): Promise<LiveChatMessage[]> {
-  // Primary: rmi-backend chat history
-  try {
-    const fromApi = await rmiGetChatHistory(env, streamId, limit);
-    if (fromApi.length > 0 || env.USE_RMI_API === 'true') {
-      // The backend stores { sender, content, created_at }; map onto the
-      // unified shape. Note: the API returns the most recent `limit`
-      // messages, so the `before` cursor cannot be applied to API results.
-      return fromApi.map((m) => ({
-        id: `rmi:${m.created_at}:${m.sender}:${m.content.slice(0, 8)}`,
-        streamId,
-        userId: m.sender,
-        displayName: m.sender,
-        message: m.content,
-        timestamp: Date.parse(m.created_at) || 0,
-        protocol: 'degenfeed' as ChatProtocol,
-        reactions: {},
-        isDeleted: false,
-      }));
-    }
-  } catch {
-    // API unavailable — fall through to KV
-  }
-
-  // KV fallback
   try {
     const key = chatMessagesKey(streamId);
     const raw = await env.CACHE?.get(key);

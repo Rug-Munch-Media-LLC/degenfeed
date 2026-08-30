@@ -17,6 +17,39 @@ import type { SchemaGuard, UnifiedPost } from '../server/types';
 
 const LEMMY_LOCAL = 'http://127.0.0.1:8536';
 
+/** Fast-fail timeout for local-container attempts (dead-local guard). */
+const LOCAL_TIMEOUT_MS = 1500;
+/** Default timeout for external instances — plenty for public Lemmy APIs. */
+const EXTERNAL_TIMEOUT_MS = 5000;
+
+let localUp: boolean | null = null;
+let localUpCheckedAt = 0;
+const LOCAL_PROBE_TTL_MS = 30_000;
+
+/**
+ * Quick reachability probe for the dead-local-container problem: when the
+ * self-hosted Lemmy container (127.0.0.1:8536) is down, skip it outright
+ * instead of burning 6 community + 6 RSS attempts on 5s timeouts before
+ * falling back to external instances. Cached for 30s so a healthy container
+ * isn't re-probed on every aggregation.
+ */
+async function isLocalLemmyUp(): Promise<boolean> {
+  if (localUp !== null && Date.now() - localUpCheckedAt < LOCAL_PROBE_TTL_MS) {
+    return localUp;
+  }
+  try {
+    const res = await globalThis.fetch(`${LEMMY_LOCAL}/api/v3/site`, {
+      headers: { 'User-Agent': 'DegenFeed-Bridge/0.1' },
+      signal: AbortSignal.timeout(LOCAL_TIMEOUT_MS),
+    });
+    localUp = res.ok;
+  } catch {
+    localUp = false;
+  }
+  localUpCheckedAt = Date.now();
+  return localUp;
+}
+
 /** Local DegenFeed communities */
 const LOCAL_COMMUNITIES = ['crypto', 'defi', 'nfts', 'tech', 'meme', 'web3'];
 
@@ -231,13 +264,14 @@ export async function fetchCommunityPosts(
   baseUrl: string,
   community: string,
   limit: number,
+  timeoutMs: number = EXTERNAL_TIMEOUT_MS,
 ): Promise<UnifiedPost[]> {
   try {
     const hostname = new URL(baseUrl).hostname;
     const url = `${baseUrl}/api/v3/post/list?community_name=${encodeURIComponent(community)}&sort=Hot&limit=${Math.min(limit, 20)}`;
     const res = await globalThis.fetch(url, {
       headers: { 'User-Agent': 'DegenFeed-Bridge/0.1' },
-      signal: AbortSignal.timeout(5000),
+      signal: AbortSignal.timeout(timeoutMs),
     });
     if (!res.ok) return [];
 
@@ -262,6 +296,7 @@ async function fetchRssFromInstance(
   baseUrl: string,
   community: string,
   limit: number,
+  timeoutMs: number = EXTERNAL_TIMEOUT_MS,
 ): Promise<UnifiedPost[]> {
   try {
     const hostname = new URL(baseUrl).hostname;
@@ -274,7 +309,7 @@ async function fetchRssFromInstance(
       try {
         const res = await globalThis.fetch(url, {
           headers: { 'User-Agent': 'DegenFeed-Bridge/0.1' },
-          signal: AbortSignal.timeout(5000),
+          signal: AbortSignal.timeout(timeoutMs),
         });
         if (res.ok) {
           xmlText = await res.text();
@@ -428,10 +463,16 @@ export async function fetchLemmyPosts(limit = 20): Promise<UnifiedPost[]> {
   }
   const all: UnifiedPost[] = [];
 
+  // Dead-local guard: skip the local container entirely when it is down so
+  // the feed falls through to external instances without 5s timeouts.
+  const localUp = await isLocalLemmyUp();
+
   // Fetch from local Lemmy communities via API
-  const localPromises = LOCAL_COMMUNITIES.map((comm) =>
-    fetchCommunityPosts(LEMMY_LOCAL, comm, Math.ceil(limit / LOCAL_COMMUNITIES.length)),
-  );
+  const localPromises = localUp
+    ? LOCAL_COMMUNITIES.map((comm) =>
+        fetchCommunityPosts(LEMMY_LOCAL, comm, Math.ceil(limit / LOCAL_COMMUNITIES.length), LOCAL_TIMEOUT_MS),
+      )
+    : [];
 
   const localResults = await Promise.allSettled(localPromises);
   for (const r of localResults) {
@@ -441,9 +482,9 @@ export async function fetchLemmyPosts(limit = 20): Promise<UnifiedPost[]> {
   }
 
   // Also fetch from local RSS feeds (complementary to API)
-  if (all.length < limit) {
+  if (all.length < limit && localUp) {
     const rssPromises = LOCAL_COMMUNITIES.map((comm) =>
-      fetchRssFromInstance(LEMMY_LOCAL, comm, Math.ceil(limit / LOCAL_COMMUNITIES.length)),
+      fetchRssFromInstance(LEMMY_LOCAL, comm, Math.ceil(limit / LOCAL_COMMUNITIES.length), LOCAL_TIMEOUT_MS),
     );
     const rssResults = await Promise.allSettled(rssPromises);
     for (const r of rssResults) {

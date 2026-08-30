@@ -44,6 +44,41 @@ function isLocalInstance(): boolean {
   }
 }
 
+/** Headless external fallback when the configured local instance is down. */
+const PIXELFED_EXTERNAL_FALLBACK = 'https://pixelfed.social';
+
+let _effectiveBase: string | null = null;
+
+/**
+ * Dead-local fast-fail: when PIXELFED_BASE_URL points at the local container
+ * (bridge/.env currently configures 127.0.0.1:8096) and that container is
+ * down, resolve to a public Pixelfed instance so the provider never burns
+ * multi-second timeouts on a dead loopback. Result cached for the process
+ * lifetime — the local container coming back requires a bridge restart
+ * (same tradeoff as other cached local probes in this codebase).
+ */
+async function effectiveBaseUrl(): Promise<string> {
+  if (_effectiveBase) return _effectiveBase;
+  if (!isLocalInstance()) {
+    _effectiveBase = PIXELFED_BASE_URL;
+    return _effectiveBase;
+  }
+  try {
+    const res = await globalThis.fetch(`${PIXELFED_BASE_URL}/api/v1/instance`, {
+      headers: { 'User-Agent': 'DegenFeed-Bridge/0.1' },
+      signal: AbortSignal.timeout(1500),
+    });
+    if (res.ok) {
+      _effectiveBase = PIXELFED_BASE_URL;
+      return _effectiveBase;
+    }
+  } catch {
+    // Local unreachable — fall through to external fallback below.
+  }
+  _effectiveBase = PIXELFED_EXTERNAL_FALLBACK;
+  return _effectiveBase;
+}
+
 /** Known local accounts on our self-hosted Pixelfed instance. */
 const LOCAL_ACCOUNTS = [
   { id: '986303183066632193', username: 'photos_admin' },
@@ -93,29 +128,33 @@ export const schema: SchemaGuard = {
   contentType: 'image',
 };
 
-function toUnified(status: import('@degenfeed/pixelfed-sdk').PixelfedStatus): UnifiedPost {
+function toUnified(status: import('@degenfeed/pixelfed-sdk').PixelfedStatus, base: string): UnifiedPost {
   // normalizePixelfedPost returns the shared @degenfeed/types UnifiedPost whose
   // author.keys is a richer object (fid?: number, etc.). The bridge's narrower
   // UnifiedPost requires keys: Record<string, string | undefined>. Pixelfed
   // accounts are built with keys: {} (see accountToIdentity), so the runtime
   // shape is compatible — cast only, never remap data.
-  const post = normalizePixelfedPost(status, PIXELFED_BASE_URL) as unknown as UnifiedPost;
+  const post = normalizePixelfedPost(status, base) as unknown as UnifiedPost;
   post.contentType = status.media_attachments?.some((m) => m.type === 'video') ? 'video' : 'image';
   return post;
 }
 
 export async function fetchPixelfedPosts(limit = 20): Promise<UnifiedPost[]> {
   const accessToken = process.env.PIXELFED_ACCESS_TOKEN;
+  // Resolve the base once — falls back to a public instance when the
+  // configured local container is unreachable (dead-local fast-fail).
+  const base = await effectiveBaseUrl();
+  const localReachable = base === PIXELFED_BASE_URL;
   const all: UnifiedPost[] = [];
 
   // ── 1. Delegated adapter: local timeline + federated instances + hashtags ──
   try {
     const { PixelfedProvider } = await getAdapter();
     const provider = new PixelfedProvider({
-      instanceUrl: PIXELFED_BASE_URL,
+      instanceUrl: base,
       accessToken,
     });
-    const result = await provider.fetchFeed({ timeoutMs: 10000 });
+    const result = await provider.fetchFeed({ timeoutMs: 5000 });
     if (result.posts?.length) all.push(...(result.posts as unknown as UnifiedPost[]));
   } catch {
     // console.log(`[bridge] Pixelfed adapter error: ${(err as Error).message}`);
@@ -124,11 +163,11 @@ export async function fetchPixelfedPosts(limit = 20): Promise<UnifiedPost[]> {
   // ── 2. Account-statuses for known local accounts ──
   // Only meaningful when pointed at our own instance — the hardcoded local
   // account IDs do not exist on public instances, so skip them headlessly.
-  const accountResults = isLocalInstance()
+  const accountResults = localReachable
     ? await Promise.allSettled(
         LOCAL_ACCOUNTS.map(async (acct) => {
-          const statuses = await getAccountPosts(PIXELFED_BASE_URL, acct.id, limit, accessToken);
-          return statuses.map(toUnified);
+          const statuses = await getAccountPosts(base, acct.id, limit, accessToken);
+          return statuses.map((s) => toUnified(s, base));
         }),
       )
     : [];
@@ -138,13 +177,13 @@ export async function fetchPixelfedPosts(limit = 20): Promise<UnifiedPost[]> {
 
   // ── 3. Local public timeline (media-only first) ──
   try {
-    const statuses = await getPublicTimeline(PIXELFED_BASE_URL, {
+    const statuses = await getPublicTimeline(base, {
       limit: Math.min(limit, 40),
       onlyMedia: true,
       local: true,
       accessToken,
     });
-    all.push(...statuses.map(toUnified));
+    all.push(...statuses.map((s) => toUnified(s, base)));
   } catch {
     // console.log(`[bridge] Pixelfed local timeline error: ${(err as Error).message}`);
   }
@@ -152,8 +191,8 @@ export async function fetchPixelfedPosts(limit = 20): Promise<UnifiedPost[]> {
   // ── 4. Hashtag timelines on the local instance (best-effort) ──
   const tagResults = await Promise.allSettled(
     HASHTAGS.slice(0, 8).map(async (tag) => {
-      const statuses = await getTagTimeline(PIXELFED_BASE_URL, tag, 5, accessToken);
-      return statuses.map(toUnified);
+      const statuses = await getTagTimeline(base, tag, 5, accessToken);
+      return statuses.map((s) => toUnified(s, base));
     }),
   );
   for (const r of tagResults) {

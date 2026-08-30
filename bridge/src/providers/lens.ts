@@ -247,7 +247,10 @@ async function fetchPosts(limit: number): Promise<UnifiedPost[]> {
   try {
     const res = await $fetch(url, {
       headers: { 'User-Agent': 'DegenFeed-Bridge/0.1' },
-      signal: AbortSignal.timeout(5000),
+      // Dead-local fast-fail: the default LENS_INDEXER_URL is the
+      // container-local loopback (127.0.0.1:8099) which may be down — fail
+      // in 1.5s so the external Lens GraphQL fallback serves quickly.
+      signal: AbortSignal.timeout(1500),
     });
 
     if (!res.ok) {

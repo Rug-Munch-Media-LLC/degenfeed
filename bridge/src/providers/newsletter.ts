@@ -406,7 +406,9 @@ async function fetchMirrorBridge(limit: number): Promise<UnifiedPost[]> {
   try {
     const res = await globalThis.fetch(`${MIRROR_BRIDGE_URL}/api/mirror/articles?limit=${limit}`, {
       headers: { 'User-Agent': USER_AGENT },
-      signal: AbortSignal.timeout(5000),
+      // Dead-local fast-fail: the mirror-bridge container (default
+      // 127.0.0.1:8240) is frequently down — don't stall the feed 5s.
+      signal: AbortSignal.timeout(1500),
     });
     if (!res.ok) {
       // console.log(`[newsletter] mirror-bridge: HTTP ${res.status}`);
@@ -570,7 +572,9 @@ async function fetchParagraphBridge(limit: number): Promise<UnifiedPost[]> {
       `${PARAGRAPH_BRIDGE_URL}/api/paragraph/posts?limit=${limit}`,
       {
         headers: { 'User-Agent': USER_AGENT },
-        signal: AbortSignal.timeout(4000),
+        // Dead-local fast-fail: paragraph-bridge container (default
+        // 127.0.0.1:8241) is frequently down — don't stall the feed 4s.
+        signal: AbortSignal.timeout(1500),
       },
     );
     if (!res.ok) {
