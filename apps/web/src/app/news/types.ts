@@ -7,6 +7,7 @@ export interface NewsSourceMeta {
   name: string;
   tier: number;
   credibility: number;
+  category?: string;
 }
 
 export interface SentimentResult {
@@ -65,6 +66,15 @@ export interface NewsStory {
     depthMatch: number;
     total: number;
   };
+  // Ground News-style rating fields (mirror of components/news types —
+  // the bridge/worker attach these from SOURCE_BIAS_SCORE et al.)
+  bias?: 'left' | 'center-left' | 'center' | 'center-right' | 'right';
+  /** Numeric bias score from SOURCE_BIAS_SCORE: -1.0 (left) .. +1.0 (right). */
+  biasScore?: number;
+  sentimentScore?: number; // -100 to +100
+  factualRating?: 'high' | 'medium' | 'low' | 'unrated';
+  sourceTier?: number; // 1-3
+  ratingConfidence?: number; // 0-1
 }
 
 export interface NewsMeta {
@@ -84,4 +94,6 @@ export interface NewsMeta {
     count: number;
     avgConfidence: number;
   }>;
+  /** 3-bucket bias distribution computed from SOURCE_BIAS_SCORE. */
+  biasDistribution?: { left: number; center: number; right: number };
 }

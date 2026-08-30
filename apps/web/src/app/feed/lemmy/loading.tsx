@@ -1,5 +1,5 @@
-import { PageSkeleton } from '@/components/PageSkeleton';
+import { ProtocolFeedSkeleton } from '@/components/feed/ProtocolFeedSkeleton';
 
 export default function Loading() {
-  return <PageSkeleton />;
+  return <ProtocolFeedSkeleton protocol="lemmy" />;
 }

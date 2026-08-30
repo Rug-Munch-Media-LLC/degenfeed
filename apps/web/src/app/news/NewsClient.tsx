@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { NewsMeta, NewsStory, StoryCluster } from '../../components/news';
 import {
   getReadingList,
@@ -16,6 +16,87 @@ import {
   StorySkeleton,
   toggleReadingList,
 } from '../../components/news';
+
+/**
+ * Bias-aware story shape. The worker attaches `biasScore` (the numeric
+ * SOURCE_BIAS_SCORE value, -1.0..+1.0) to every story; the shared
+ * NewsStory type in components/news predates it, so read it via a local
+ * intersection so the news page can surface the Ground News-style rating
+ * without touching the shared component library.
+ */
+type BiasAwareStory = NewsStory & { biasScore?: number };
+
+type BiasDistribution = { left: number; center: number; right: number };
+
+interface BiasSummary {
+  left: number;
+  center: number;
+  right: number;
+  total: number;
+  avgScore: number | null;
+  hasRated: boolean;
+}
+
+/** Map a 5-point bias label to the 3-bucket distribution. */
+function biasBucket(bias: string | undefined): 'left' | 'center' | 'right' {
+  if (bias === 'left' || bias === 'center-left') return 'left';
+  if (bias === 'right' || bias === 'center-right') return 'right';
+  return 'center';
+}
+
+function summarizeBias(
+  stories: NewsStory[],
+  metaDistribution: BiasDistribution | undefined,
+): BiasSummary {
+  const counts = { left: 0, center: 0, right: 0 };
+  let scored = 0;
+  let scoreSum = 0;
+  for (const s of stories) {
+    counts[biasBucket(s.bias)] += 1;
+    const score = (s as BiasAwareStory).biasScore;
+    if (typeof score === 'number' && Number.isFinite(score)) {
+      scored += 1;
+      scoreSum += score;
+    }
+  }
+  const localTotal = counts.left + counts.center + counts.right;
+  const hasRated = stories.some((s) => s.bias) || scored > 0;
+  const distTotal = metaDistribution
+    ? metaDistribution.left + metaDistribution.center + metaDistribution.right
+    : 0;
+
+  if (metaDistribution && distTotal > 0) {
+    return {
+      left: metaDistribution.left,
+      center: metaDistribution.center,
+      right: metaDistribution.right,
+      total: distTotal,
+      avgScore: scored > 0 ? scoreSum / scored : null,
+      hasRated,
+    };
+  }
+  return {
+    left: counts.left,
+    center: counts.center,
+    right: counts.right,
+    total: localTotal,
+    avgScore: scored > 0 ? scoreSum / scored : null,
+    hasRated,
+  };
+}
+
+function biasLeanLabel(avg: number | null): { label: string; color: string } {
+  if (avg == null) return { label: 'Unrated', color: '#6b7280' };
+  if (avg <= -0.25) return { label: 'Left-leaning', color: '#dc2626' };
+  if (avg >= 0.25) return { label: 'Right-leaning', color: '#2563eb' };
+  return { label: 'Center-leaning', color: '#6b7280' };
+}
+
+function formatBiasScore(avg: number | null): string {
+  if (avg == null) return '—';
+  const v = avg.toFixed(2);
+  return avg > 0 ? `+${v}` : v;
+}
 
 interface NewsClientProps {
   initialStories?: NewsStory[];
@@ -155,6 +236,16 @@ export default function NewsClient({
   const featured = stories.find((s) => s.isBreaking) || stories[0];
   const rest = stories.filter((s) => s.id !== featured?.id) || [];
 
+  // ── Source bias summary (Ground News-style, powered by SOURCE_BIAS_SCORE) ──
+  const bias = useMemo<BiasSummary>(() => {
+    const metaDist = (meta as (NewsMeta & { biasDistribution?: BiasDistribution }) | null)
+      ?.biasDistribution;
+    return summarizeBias(stories, metaDist);
+  }, [stories, meta]);
+  const lean = biasLeanLabel(bias.avgScore);
+  const pct = (n: number) => (bias.total > 0 ? Math.round((n / bias.total) * 100) : 0);
+  const showBiasMeter = bias.hasRated && bias.total > 0;
+
   return (
     <div className="mx-auto max-w-7xl px-4 py-6">
       <div className="mb-6">
@@ -181,6 +272,65 @@ export default function NewsClient({
           </div>
         </div>
         <SentimentBar sentiment={meta?.sentiment} />
+        {/* Ground News-style source bias meter — distribution + average score
+            computed from the worker's SOURCE_BIAS_SCORE / biasDistribution. */}
+        {showBiasMeter && (
+          <div className="mb-4 rounded-xl border border-gray-800/80 bg-gradient-to-b from-gray-900/90 to-gray-950/90 p-4">
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <h2 className="text-xs font-bold uppercase tracking-wider text-gray-300">
+                  Source Bias
+                </h2>
+                <span className="rounded-full bg-purple-500/10 px-2 py-0.5 text-[9px] font-medium text-purple-400 ring-1 ring-purple-500/20">
+                  Better than Ground News
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="rounded-md bg-gray-800/80 px-2 py-0.5 font-mono text-[10px] font-semibold tabular-nums text-gray-300">
+                  Avg {formatBiasScore(bias.avgScore)}
+                </span>
+                <span
+                  className="rounded-md px-2 py-0.5 text-[10px] font-semibold ring-1 ring-white/10"
+                  style={{ color: lean.color, backgroundColor: `${lean.color}15` }}
+                >
+                  {lean.label}
+                </span>
+              </div>
+            </div>
+
+            {/* Three-segment bias bar */}
+            <div
+              className="flex h-2 w-full overflow-hidden rounded-full"
+              role="img"
+              aria-label={`Source bias: ${pct(bias.left)}% left, ${pct(bias.center)}% center, ${pct(bias.right)}% right`}
+            >
+              <div
+                className="h-full"
+                style={{ width: `${pct(bias.left)}%`, backgroundColor: '#dc2626' }}
+              />
+              <div
+                className="h-full"
+                style={{ width: `${pct(bias.center)}%`, backgroundColor: '#4b5563' }}
+              />
+              <div
+                className="h-full"
+                style={{ width: `${pct(bias.right)}%`, backgroundColor: '#2563eb' }}
+              />
+            </div>
+
+            <div className="mt-2 flex items-center justify-between text-[10px] font-medium">
+              <span className="text-red-400">Left {pct(bias.left)}%</span>
+              <span className="text-gray-500">Center {pct(bias.center)}%</span>
+              <span className="text-blue-400">Right {pct(bias.right)}%</span>
+            </div>
+
+            <p className="mt-2 text-[10px] leading-relaxed text-gray-500">
+              {bias.total} rated source{bias.total === 1 ? '' : 's'} · numeric bias score −1.0
+              (left) to +1.0 (right), 0 = neutral — weighted from each outlet&apos;s editorial
+              coverage.
+            </p>
+          </div>
+        )}
         <NewsTrendingBar stories={stories} />
         {newAvailable && (
           <button

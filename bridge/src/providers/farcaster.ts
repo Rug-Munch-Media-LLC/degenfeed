@@ -28,7 +28,8 @@ import type { SchemaGuard, UnifiedPost } from '../server/types';
 
 // ─── Configuration ────────────────────────────────────────────────────────
 
-const HUBBLE_BASE = process.env.HUBBLE_URL || 'http://127.0.0.1:2281';
+const HUBBLE_BASE =
+  process.env.FARCASTER_HUB_URL || process.env.HUBBLE_URL || 'http://127.0.0.1:2281';
 const HUBBLE_ALT_BASE = process.env.HUBBLE_ALT_URL || 'http://hubble.degenfeed.xyz:2281';
 
 /** Maximum number of FIDs to scan per fetch cycle */
