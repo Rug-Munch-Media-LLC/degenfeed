@@ -12,7 +12,7 @@ import {
   ScrollToTop,
 } from '@degenfeed/ui';
 import dynamic from 'next/dynamic';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAuth } from '../../components/AuthProvider';
 import { CryptoRugMunchHeader } from '../../components/brand/CryptoRugMunchHeader';
 import { FeedComposer } from '../../components/FeedComposer';
@@ -41,21 +41,24 @@ import { FEED_PRESETS } from '../../components/feed/feedPresets';
 import { PullToRefresh } from '../../components/feed/PullToRefresh';
 import { GettingStartedChecklist } from '../../components/GettingStartedChecklist';
 import { GuidedTour } from '../../components/GuidedTour';
-import { PostContextMenu } from '../../components/PostContextMenu';
+import { PostContextMenu, useContextMenu } from '../../components/PostContextMenu';
 import { useAnnouncer } from '../../components/ScreenReaderAnnouncer';
 import { useAlgorithmProfile } from '../../hooks/useAlgorithmProfile';
 import { useEdgeSwipeBack } from '../../hooks/useEdgeSwipeBack';
 import { useFeedControls } from '../../hooks/useFeedControls';
 import { useFeedLayout } from '../../hooks/useFeedLayout';
+import { useFeedPoller } from '../../hooks/useFeedPoller';
 import { useFeedPosition } from '../../hooks/useFeedPosition';
 import { useHapticFeedback } from '../../hooks/useHapticFeedback';
 import { useNotifications } from '../../hooks/useNotifications';
+import { useReadingProgress } from '../../hooks/useReadingProgress';
 import { useRealtimeFeed } from '../../hooks/useRealtimeFeed';
 import { useReturningUser } from '../../hooks/useReturningUser';
 import { useSwipeTabs } from '../../hooks/useSwipeTabs';
 import type { FeedControls as FeedControlsState } from '../../lib/feedRanking';
 import { fetchWithSwr, getCached } from '../../lib/fetchWithCache';
 import { rankTopAlgo } from '../../lib/topAlgo';
+import { useInitialFeed } from './components/InitialFeedContext';
 import { ReadingProgressBar } from './components/ReadingProgressBar';
 import { ShareSheet } from './components/ShareSheet';
 
@@ -126,39 +129,27 @@ export default function FeedPage() {
   const isAdmin = walletAddress ? ADMIN_WALLETS.has(walletAddress.toLowerCase()) : false;
 
   const [activeTab, setActiveTab] = useState<Tab>('for-you');
-  const [posts, setPosts] = useState<UnifiedPost[]>([]);
-  // Start in 'loading' (skeleton) so a cold client fetch never shows a blank
-  // feed. The effect below swaps in the server-rendered #feed-initial-data as
-  // soon as it runs (immediately after hydration), then fetchFeed refreshes.
-  const [state, setState] = useState<'loading' | 'loaded' | 'empty' | 'error'>('loading');
-  // True while a full (non-checkOnly) feed fetch is in flight. When posts
+  // Server-rendered initial posts arrive via InitialFeedProvider (feed/layout.tsx
+  // fetches them with a bounded 1.6s budget). Using them as the useState seed
+  // means the very first SSR + hydration render already shows content — no
+  // skeleton flash, no post-hydration DOM swap.
+  const initialPosts = useInitialFeed();
+  const [posts, setPosts] = useState<UnifiedPost[]>(initialPosts);
+  const [state, setState] = useState<'loading' | 'loaded' | 'empty' | 'error'>(
+    initialPosts.length > 0 ? 'loaded' : 'loading',
+  );
+  // True while a full feed fetch is in flight. When posts
   // already exist we keep showing them (SWR stale-while-revalidate) and just
   // surface a subtle "Loading fresh content…" indicator instead of wiping the
   // timeline or flashing skeletons over content.
   const [refreshing, setRefreshing] = useState(false);
 
-  // After mount, check for server-side preloaded feed data and start in loaded state.
-  useEffect(() => {
-    try {
-      const el = document.getElementById('feed-initial-data');
-      if (el && el.textContent) {
-        const initial = JSON.parse(el.textContent);
-        if (Array.isArray(initial) && initial.length > 0) {
-          setPosts(initial);
-          setState('loaded');
-          return;
-        }
-      }
-    } catch {
-      /* ignore */
-    }
-    // No preloaded data — let fetchFeed handle it
-  }, []);
   const [error, setError] = useState<string>();
   const [tipPost, setTipPost] = useState<UnifiedPost | null>(null);
   const [feedMeta, setFeedMeta] = useState<FeedMeta>({});
   const [hideLowQuality, setHideLowQuality] = useState(false);
-  const [hideThreshold, _setHideThreshold] = useState(1.0);
+  // Fixed quality threshold — surfaced in the fetch URL when hideLowQuality is on.
+  const hideThreshold = 1.0;
   const [allowNonCrypto, setAllowNonCrypto] = useState(false);
   const [recencyWeight, setRecencyWeight] = useState(1.0);
   const [engagementWeight, setEngagementWeight] = useState(1.0);
@@ -188,7 +179,8 @@ export default function FeedPage() {
   const algoProfileRef = useRef(algoProfile);
   algoProfileRef.current = algoProfile;
   const hasSignedIn = ready && Object.values(signedInProtocols).some(Boolean);
-  const { unreadCount } = useNotifications(hasSignedIn);
+  const { unreadCount, notifications, fetchNotifications, markRead, markAllRead } =
+    useNotifications();
   const { layout, setLayout, isCompact } = useFeedLayout();
   const feedContainerRef = useRef<HTMLDivElement>(null);
   useFeedPosition(feedContainerRef);
@@ -247,28 +239,20 @@ export default function FeedPage() {
   }, []);
 
   const [topicWeights, setTopicWeights] = useState<Record<string, number>>({});
-  const [_showFeedInfo, _setShowFeedInfo] = useState(false);
   const [showTuner, setShowTuner] = useState(false);
-  const [newAvailable, setNewAvailable] = useState(false);
   // Infinite scroll pagination: page N is requested with ?page=N and appended
   // (deduped) to the timeline. hasMore comes from the API meta.
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
-  const lastPostIdRef = useRef('');
   const [feedMixConfig, setFeedMixConfig] = useState<FeedMixConfig>(() => loadFeedMixConfig());
   const [savedMixes, setSavedMixes] = useState<SavedMix[]>(() => loadSavedMixes());
   const debounceRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const tuneTopicWeightsDebounce = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
-  const intervalRef = useRef<ReturnType<typeof setInterval> | undefined>(undefined);
   const [showComposer, setShowComposer] = useState(false);
-  const [_visiblePostIds, _setVisiblePostIds] = useState<Set<string>>(new Set());
-  const [_jumpedToPostId, _setJumpedToPostId] = useState<string | null>(null);
-  const [readingProgress, _setReadingProgress] = useState(0);
   const [popupPost, setPopupPost] = useState<UnifiedPost | null>(null);
-  const [_showWhyCard, _setShowWhyCard] = useState(false);
-  const [_feedHealthOpen, _setFeedHealthOpen] = useState(false);
-  const [_isPublishing, _setIsPublishing] = useState(false);
+  // Reading progress through the feed timeline — drives the top progress bar.
+  const readingProgress = useReadingProgress('feed-scroll-container');
   const { announce } = useAnnouncer();
   const announcerRef = useRef<ReturnType<typeof useAnnouncer>['announce'] | null>(null);
   announcerRef.current = announce;
@@ -413,8 +397,9 @@ export default function FeedPage() {
     };
   }, [patchFeedControls]);
 
-  const [contextMenuPostId, setContextMenuPostId] = useState<string | null>(null);
-  const [_contextMenuPos, _setContextMenuPos] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  // Right-click context menu — real cursor position tracked by useContextMenu;
+  // PostContextMenu handles outside-click + Escape closing internally.
+  const { contextMenu, handleContextMenu, closeContextMenu } = useContextMenu();
 
   const toggleHideLowQuality = useCallback(() => {
     setHideLowQuality((p) => {
@@ -425,107 +410,104 @@ export default function FeedPage() {
   }, [persistPrefs]);
 
   // Memoized feed content to optimize re-renders
-  const memoizedFeed = useMemo(() => posts, [posts]);
-
-  useEffect(() => {
-    if (contextMenuPostId) {
-      const handler = (e: MouseEvent) => {
-        if (!(e.target as HTMLElement)?.closest('.context-menu')) setContextMenuPostId(null);
-      };
-      document.addEventListener('mousedown', handler);
-      return () => document.removeEventListener('mousedown', handler);
-    }
-    return undefined;
-  }, [contextMenuPostId]);
-
-  // useViewportPrefetch(posts, (post) => post);
-  // useHoverPrefetch(posts, (post) => post);
-
   const announceFeed = useCallback((msg: string, priority?: 'polite' | 'assertive') => {
     announcerRef.current?.(msg, priority);
   }, []);
 
+  // Build the unified-feed URL for a given page. Shared by the main fetch and
+  // the background poller so both hit the same effective feed.
+  const buildFeedUrl = useCallback(
+    (pageNum: number) => {
+      const endpoint = '/api/feed/unified';
+      const url = new URL(endpoint, window.location.origin);
+      // Fixed 50-post pages; ?page=N advances the cursor (offset pagination
+      // implemented on the api-server + bridge).
+      url.searchParams.set('limit', '50');
+      url.searchParams.set('page', String(pageNum));
+      // Only send an explicit `protocols` filter when the user has chosen
+      // one. With no filter, the worker aggregates EVERY registered
+      // protocol (68+) into the master unified feed instead of a small
+      // hard-coded subset.
+      if (controls.protocols.length > 0) {
+        url.searchParams.set('protocols', controls.protocols.join(','));
+      }
+      // User-controlled feed params — forwarded to the bridge feed endpoint.
+      // The bridge honors protocols/limit today; the rest are applied
+      // client-side and ready for server-side adoption.
+      url.searchParams.set('sort', controls.sort);
+      url.searchParams.set('time', controls.timeRange);
+      if (controls.contentTypes.length > 0)
+        url.searchParams.set('contentType', controls.contentTypes.join(','));
+      if (controls.niches.length > 0) url.searchParams.set('niches', controls.niches.join(','));
+      if (controls.algorithm.recencyQuality !== 50)
+        url.searchParams.set('recencyQuality', String(controls.algorithm.recencyQuality));
+      if (controls.algorithm.engagementDiversity !== 50)
+        url.searchParams.set('engagementDiversity', String(controls.algorithm.engagementDiversity));
+      if (controls.algorithm.protocolDiversity !== 50)
+        url.searchParams.set('protocolDiversity', String(controls.algorithm.protocolDiversity));
+      if (controls.algorithm.familiarDiscover !== 50)
+        url.searchParams.set('familiarDiscover', String(controls.algorithm.familiarDiscover));
+      if (controls.algorithm.creatorSize !== 50)
+        url.searchParams.set('creatorSize', String(controls.algorithm.creatorSize));
+      if (activeTab === 'following') url.searchParams.set('filter', 'following');
+      if (hideLowQuality) {
+        url.searchParams.set('hideLowQuality', 'true');
+        url.searchParams.set('hideLowQualityThreshold', String(hideThreshold));
+      }
+      if (allowNonCrypto) url.searchParams.set('allowNonCrypto', 'true');
+      if (showOriginalContent) url.searchParams.set('showOriginalContent', 'true');
+      if (minEngagement > 0) url.searchParams.set('minEngagement', String(minEngagement));
+      if (maxPerNiche < 5) url.searchParams.set('maxPerNiche', String(maxPerNiche));
+      if (recencyWeight !== 1) url.searchParams.set('recencyWeight', String(recencyWeight));
+      if (engagementWeight !== 1)
+        url.searchParams.set('engagementWeight', String(engagementWeight));
+      const tw = encodeTopicWeights(topicWeights);
+      if (tw) url.searchParams.set('topic_weights', tw);
+      if (algorithmTransparent) url.searchParams.set('algorithmTransparent', 'true');
+      if (freshnessPreference !== 50)
+        url.searchParams.set('freshness', String(freshnessPreference));
+      if (creatorDiversity !== 5)
+        url.searchParams.set('creatorDiversity', String(creatorDiversity));
+      if (exploreRatio !== 30) url.searchParams.set('exploreRatio', String(exploreRatio));
+      if (activePreset) url.searchParams.set('preset', activePreset);
+      return url;
+    },
+    [
+      controls,
+      activeTab,
+      hideLowQuality,
+      allowNonCrypto,
+      showOriginalContent,
+      minEngagement,
+      maxPerNiche,
+      recencyWeight,
+      engagementWeight,
+      topicWeights,
+      algorithmTransparent,
+      freshnessPreference,
+      creatorDiversity,
+      exploreRatio,
+      activePreset,
+    ],
+  );
+
   const fetchFeed = useCallback(
-    async (checkOnly = false, pageNum = 1, append = false) => {
+    async (pageNum = 1, append = false) => {
       // Skip hard loading state when content already exists — page keeps
       // showing the current timeline while revalidating in the background.
       // Only the very first load (no posts yet) falls back to the skeleton.
       // Append-mode (infinite scroll) shows the sentinel spinner instead.
-      if (!checkOnly && !append) setRefreshing(true);
+      if (!append) setRefreshing(true);
       try {
         // Try the unified cross-protocol timeline first. Anonymous and
         // signed-in users read the same aggregated feed; personalization is
         // applied client-side below via rankTopAlgo. If the bridge worker is
         // stale and returns an empty/error payload, fetchFeed falls back to
         // per-protocol feeds below.
-        const endpoint = '/api/feed/unified';
-        const controlsKey = [
-          controls.sort,
-          controls.protocols.join('|') || 'all',
-          controls.timeRange,
-          controls.contentTypes.join('|') || 'any',
-          controls.niches.join('|') || 'any',
-          controls.algorithm.recencyQuality,
-          controls.algorithm.engagementDiversity,
-          controls.algorithm.protocolDiversity,
-          controls.algorithm.familiarDiscover,
-          controls.algorithm.creatorSize,
-        ].join('_');
-        const cacheKey = `feed_${hasSignedIn ? 'signed' : 'anon'}_${activeTab}_${controlsKey}_${pageNum}_${hideLowQuality}_${allowNonCrypto}_${showOriginalContent}_${minEngagement}_${maxPerNiche}_${recencyWeight}_${engagementWeight}_${freshnessPreference}_${creatorDiversity}_${exploreRatio}_${algorithmTransparent}_${activePreset ?? 'none'}`;
-        const url = new URL(endpoint, window.location.origin);
-        // Fixed 50-post pages; ?page=N advances the cursor (offset pagination
-        // implemented on the api-server + bridge).
-        url.searchParams.set('limit', '50');
-        url.searchParams.set('page', String(pageNum));
-        // Only send an explicit `protocols` filter when the user has chosen
-        // one. With no filter, the worker aggregates EVERY registered
-        // protocol (68+) into the master unified feed instead of a small
-        // hard-coded subset.
-        if (controls.protocols.length > 0) {
-          url.searchParams.set('protocols', controls.protocols.join(','));
-        }
-        // User-controlled feed params — forwarded to the bridge feed endpoint.
-        // The bridge honors protocols/limit today; the rest are applied
-        // client-side and ready for server-side adoption.
-        url.searchParams.set('sort', controls.sort);
-        url.searchParams.set('time', controls.timeRange);
-        if (controls.contentTypes.length > 0)
-          url.searchParams.set('contentType', controls.contentTypes.join(','));
-        if (controls.niches.length > 0) url.searchParams.set('niches', controls.niches.join(','));
-        if (controls.algorithm.recencyQuality !== 50)
-          url.searchParams.set('recencyQuality', String(controls.algorithm.recencyQuality));
-        if (controls.algorithm.engagementDiversity !== 50)
-          url.searchParams.set(
-            'engagementDiversity',
-            String(controls.algorithm.engagementDiversity),
-          );
-        if (controls.algorithm.protocolDiversity !== 50)
-          url.searchParams.set('protocolDiversity', String(controls.algorithm.protocolDiversity));
-        if (controls.algorithm.familiarDiscover !== 50)
-          url.searchParams.set('familiarDiscover', String(controls.algorithm.familiarDiscover));
-        if (controls.algorithm.creatorSize !== 50)
-          url.searchParams.set('creatorSize', String(controls.algorithm.creatorSize));
-        if (activeTab === 'following') url.searchParams.set('filter', 'following');
-        if (hideLowQuality) {
-          url.searchParams.set('hideLowQuality', 'true');
-          url.searchParams.set('hideLowQualityThreshold', String(hideThreshold));
-        }
-        if (allowNonCrypto) url.searchParams.set('allowNonCrypto', 'true');
-        if (showOriginalContent) url.searchParams.set('showOriginalContent', 'true');
-        if (minEngagement > 0) url.searchParams.set('minEngagement', String(minEngagement));
-        if (maxPerNiche < 5) url.searchParams.set('maxPerNiche', String(maxPerNiche));
-        if (recencyWeight !== 1) url.searchParams.set('recencyWeight', String(recencyWeight));
-        if (engagementWeight !== 1)
-          url.searchParams.set('engagementWeight', String(engagementWeight));
-        const tw = encodeTopicWeights(topicWeights);
-        if (tw) url.searchParams.set('topic_weights', tw);
-        if (algorithmTransparent) url.searchParams.set('algorithmTransparent', 'true');
-        if (freshnessPreference !== 50)
-          url.searchParams.set('freshness', String(freshnessPreference));
-        if (creatorDiversity !== 5)
-          url.searchParams.set('creatorDiversity', String(creatorDiversity));
-        if (exploreRatio !== 30) url.searchParams.set('exploreRatio', String(exploreRatio));
-        if (activePreset) url.searchParams.set('preset', activePreset);
+        // The SWR cache key is derived from the full query string (built by
+        // buildFeedUrl), so every control/preference change gets its own bucket.
+        const url = buildFeedUrl(pageNum);
+        const cacheKey = `feed_${hasSignedIn ? 'signed' : 'anon'}_${activeTab}_${pageNum}_${url.searchParams.toString()}`;
 
         // Try the unified feed first. If it returns empty or errors (e.g. a
         // stale bridge worker), fall back to fetching each protocol
@@ -624,13 +606,6 @@ export default function FeedPage() {
           protocolWeights,
         });
 
-        if (checkOnly && feed.length > 0 && feed[0]?.id !== lastPostIdRef.current) {
-          setNewAvailable(true);
-          return;
-        }
-        if (feed.length > 0) {
-          lastPostIdRef.current = (feed[0]?.id as string) ?? '';
-        }
         const nextHasMore = feedMetaData.hasMore ?? feed.length >= 50;
         if (append) {
           // Infinite scroll: merge the next page at the end, deduping by id.
@@ -659,11 +634,11 @@ export default function FeedPage() {
         } else {
           setError(undefined);
         }
-        if (!checkOnly && !append && feed.length > 0)
+        if (!append && feed.length > 0)
           announceFeed(`${feed.length} posts loaded${swrFromCache ? ' (cached)' : ''}`, 'polite');
       } catch (err) {
         setLoadingMore(false);
-        if (!checkOnly && !append) {
+        if (!append) {
           const cached = getCached<{ data?: UnifiedPost[]; meta?: FeedMeta }>(`feed_${activeTab}`);
           if (cached && (cached.data ?? []).length > 0) {
             setPosts(cached.data ?? []);
@@ -676,30 +651,22 @@ export default function FeedPage() {
           }
         }
       } finally {
-        if (!checkOnly && !append) setRefreshing(false);
+        if (!append) setRefreshing(false);
       }
     },
-    [
-      activeTab,
-      hasSignedIn,
-      hideLowQuality,
-      hideThreshold,
-      allowNonCrypto,
-      showOriginalContent,
-      minEngagement,
-      maxPerNiche,
-      recencyWeight,
-      engagementWeight,
-      controls,
-      topicWeights,
-      algorithmTransparent,
-      freshnessPreference,
-      creatorDiversity,
-      exploreRatio,
-      activePreset,
-      announceFeed,
-    ],
+    [activeTab, hasSignedIn, feedMixConfig, controls, buildFeedUrl, announceFeed],
   );
+
+  // ── Background polling (useFeedPoller) ──
+  // Replaces the old hand-rolled setInterval: polls page 1 of the same
+  // effective feed, detects newly-arrived post ids, and pauses while the tab
+  // is hidden (resumes with an immediate poll on return).
+  const pollFeed = useCallback(async () => {
+    const res = await fetch(buildFeedUrl(1).toString(), { credentials: 'include' });
+    const data = (await res.json()) as { data?: UnifiedPost[] };
+    return data.data ?? [];
+  }, [buildFeedUrl]);
+  const feedPoller = useFeedPoller(pollFeed, 60000);
 
   /** Load the next page of posts (infinite scroll / "Load more" button). */
   const loadMore = useCallback(() => {
@@ -707,15 +674,15 @@ export default function FeedPage() {
     setLoadingMore(true);
     const next = page + 1;
     setPage(next);
-    void fetchFeed(false, next, true);
+    void fetchFeed(next, true);
   }, [loadingMore, hasMore, state, page, fetchFeed]);
 
   const refreshNow = useCallback(() => {
-    setNewAvailable(false);
+    feedPoller.refresh();
     setPage(1);
     setHasMore(true);
-    fetchFeed(false, 1);
-  }, [fetchFeed]);
+    fetchFeed(1);
+  }, [fetchFeed, feedPoller]);
 
   // Composing requires auth — anonymous visitors are prompted to sign in
   // instead of hitting a dead-end composer with no connected protocols.
@@ -775,13 +742,6 @@ export default function FeedPage() {
     fetchFeed();
   }, [fetchFeed]);
 
-  useEffect(() => {
-    intervalRef.current = setInterval(() => fetchFeed(true), 60000);
-    return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current);
-    };
-  }, [fetchFeed]);
-
   // No auth gate: the unified feed is public and renders for ALL users
   // (logged in or not). Auth is only required for posting/engaging, which is
   // handled by FeedAuthBanner (above), handleComposeClick, and handleEngage.
@@ -789,7 +749,12 @@ export default function FeedPage() {
     <ErrorBoundary>
       <ReadingProgressBar progress={readingProgress} />
       <PullToRefresh onRefresh={refreshNow} disabled={state === 'loading'}>
-        <div ref={feedContainerRef} className="mx-auto max-w-2xl px-4 py-6" {...swipeHandlers}>
+        <div
+          ref={feedContainerRef}
+          id="feed-scroll-container"
+          className="mx-auto max-w-2xl px-4 py-6"
+          {...swipeHandlers}
+        >
           {/* @CryptoRugMunch profile header — brands this feed as part of the Rug Munch Intelligence platform */}
           <CryptoRugMunchHeader />
           {isAdmin && (
@@ -842,10 +807,11 @@ export default function FeedPage() {
             />
             <div className="flex items-center gap-2">
               <NotificationBell
-                notifications={[]}
+                notifications={notifications}
                 unreadCount={unreadCount}
-                onFetch={() => {}}
-                onMarkRead={() => {}}
+                onFetch={fetchNotifications}
+                onMarkRead={markRead}
+                onMarkAllRead={markAllRead}
               />
               <FeedLayoutSwitcher current={layout} onChange={setLayout} />
               <button
@@ -923,9 +889,9 @@ export default function FeedPage() {
           )}
 
           {/* Polling new posts banner (fallback) */}
-          {newAvailable && realtimeFeed.newPostCount === 0 && (
+          {feedPoller.newPostCount > 0 && realtimeFeed.newPostCount === 0 && (
             <div className="mb-4">
-              <FeedNewPostsBanner count={posts.length} onRefresh={refreshNow} />
+              <FeedNewPostsBanner count={feedPoller.newPostCount} onRefresh={refreshNow} />
             </div>
           )}
 
@@ -957,16 +923,16 @@ export default function FeedPage() {
             </div>
           )}
           {state === 'empty' && (
-            <FeedEmptyState activeTab={activeTab} onRefresh={() => fetchFeed(false)} />
+            <FeedEmptyState activeTab={activeTab} onRefresh={() => fetchFeed()} />
           )}
           {state === 'error' && (
-            <FeedErrorState error={error || 'Unknown error'} onRetry={() => fetchFeed(false)} />
+            <FeedErrorState error={error || 'Unknown error'} onRetry={() => fetchFeed()} />
           )}
 
           {state === 'loaded' && (
             <>
               <div className="stagger-enter">
-                {memoizedFeed.map((post, i) => (
+                {posts.map((post, i) => (
                   <div
                     key={post.id}
                     className="relative"
@@ -977,6 +943,7 @@ export default function FeedPage() {
                         post={post}
                         onEngage={handleEngage}
                         onWhyThisPost={setWhyPost}
+                        onContextMenu={handleContextMenu}
                         mediaPriority={i < 3}
                       />
                     </PostCardGuard>
@@ -990,26 +957,32 @@ export default function FeedPage() {
                   </button>
                 </div>
               )}
-              {/* Context menu */}
-              {contextMenuPostId && (
+              {/* Context menu — positioned at the right-click cursor via useContextMenu */}
+              {contextMenu && (
                 <PostContextMenu
-                  postId={contextMenuPostId ?? ''}
-                  onClose={() => setContextMenuPostId(null)}
-                  open={!!contextMenuPostId}
-                  position={{ x: 0, y: 0 }}
+                  postId={contextMenu.postId}
+                  postUrl={contextMenu.postUrl}
+                  open
+                  position={contextMenu.position}
+                  onClose={closeContextMenu}
                 />
               )}
 
               {/* Algorithm transparency — "Why this?" on every post */}
               {whyPost && (
+                // biome-ignore lint/a11y/noStaticElementInteractions: modal backdrop — click-to-dismiss is the affordance; keyboard users dismiss via the Escape onKeyDown below and the dialog's close button
                 <div
                   className="fixed inset-0 z-[95] flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm"
                   onClick={() => setWhyPost(null)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Escape') setWhyPost(null);
+                  }}
                   role="presentation"
                 >
                   <div
                     className="w-full max-w-md"
                     onClick={(e) => e.stopPropagation()}
+                    onKeyDown={(e) => e.stopPropagation()}
                     role="dialog"
                     aria-modal="true"
                     aria-label="Why this post?"
@@ -1083,7 +1056,6 @@ export default function FeedPage() {
           )}
 
           <ScrollToTop />
-          {/* biome-ignore lint/a11y/useKeyWithClickEvents: screen-reader announcer */}
           <div
             ref={announcerRef as React.Ref<HTMLDivElement>}
             className="sr-only"

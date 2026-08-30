@@ -80,9 +80,8 @@ export function ProtocolPostMeta({ post, onEngage, onReply }: ProtocolPostMetaPr
   }
 
   return (
-    <div
+    <fieldset
       className="mb-3 flex flex-wrap items-center gap-x-3 gap-y-1.5 px-4"
-      role="group"
       aria-label={`${info.label} post details`}
     >
       {/* Protocol-native metadata chips */}
@@ -189,6 +188,6 @@ export function ProtocolPostMeta({ post, onEngage, onReply }: ProtocolPostMetaPr
           </a>
         )}
       </div>
-    </div>
+    </fieldset>
   );
 }
