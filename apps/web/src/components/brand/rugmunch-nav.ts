@@ -4,7 +4,7 @@
  * RugMunch platform navigation — mirrors rmi-frontend/src/components/layout/
  * SidebarLayout.tsx (the rugmunch.io left-hand nav) exactly: same groups,
  * same items, same labels, same ordering. This makes feed.rugmunch.io read as
- * one product with the rest of the RugMunch platform.
+ * a sub-page of the Rug Munch Intelligence platform.
  *
  * NOTE on hrefs: rugmunch.io serves these routes via rmi-frontend (a separate
  * SPA from this feed). degenfeed-web does NOT implement /scanner, /rugcharts,

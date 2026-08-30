@@ -515,7 +515,7 @@ export const LeftSidebar = memo(function LeftSidebar({
     );
   };
 
-  /* ── RugMunch platform nav (mirrors rugmunch.io's sidebar) ───────── */
+  /* ── Rug Munch Intelligence platform nav (mirrors rugmunch.io's sidebar) ── */
 
   const renderRugMunchNav = () => {
     return RUGMUNCH_NAV.map((group) => (
