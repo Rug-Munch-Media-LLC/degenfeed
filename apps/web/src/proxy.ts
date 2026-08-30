@@ -32,7 +32,7 @@
  */
 
 import { type NextRequest, NextResponse } from 'next/server';
-import { extractJwtFromRequest, isJwt, type JwtClaims, verifyRmiJwt } from '@/lib/jwt-auth';
+import { type DfJwtClaims, extractJwtFromRequest, isJwt, verifyDfJwt } from '@/lib/jwt-auth';
 import {
   adminLimiter,
   authLimiter,
@@ -388,17 +388,18 @@ async function handleApiRoute(
   const cookieHeader = request.headers.get('cookie');
 
   let payload: SessionPayload | null = null;
-  let jwtClaims: JwtClaims | null = null;
 
-  // Try JWT from rmi-backend first
-  const rmiToken = cookieHeader ? extractJwtFromRequest(request) : null;
-  if (rmiToken && isJwt(rmiToken)) {
-    jwtClaims = await verifyRmiJwt(rmiToken);
-    if (jwtClaims) {
+  // Optional: accept a DegenFeed-issued JWT (Bearer header or df_token cookie).
+  // This is DegenFeed's OWN token — never an rmi-backend token. Non-blocking:
+  // if the token is absent or invalid we fall through to the wallet session.
+  const dfToken = extractJwtFromRequest(request);
+  if (dfToken && isJwt(dfToken)) {
+    const dfClaims: DfJwtClaims | null = await verifyDfJwt(dfToken);
+    if (dfClaims) {
       payload = {
-        address: jwtClaims.wallet ?? `rmi:${jwtClaims.id}`,
+        address: dfClaims.address,
         chain: 'ethereum',
-        exp: Date.now() + 3600000,
+        exp: dfClaims.exp * 1000,
         nonce: '',
       };
     }
