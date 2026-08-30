@@ -16,7 +16,7 @@ import type { SchemaGuard, UnifiedPost } from '../server/types';
 
 const $fetch = globalThis.fetch;
 
-const PEERTUBE_BASE = 'http://127.0.0.1:9011';
+const PEERTUBE_BASE = process.env.PEERTUBE_BASE_URL || 'http://127.0.0.1:9011';
 
 /**
  * Federated PeerTube instances used to supplement the local VOD feed.
@@ -152,7 +152,9 @@ export async function fetchPeerTubeCategories(): Promise<CategoryMap> {
 /**
  * Fetch the most-viewed / trending PeerTube videos from the local instance.
  * PeerTube supports `sort=-trendingScore` on recent versions; fall back to
- * `-views` when the sort key is not supported.
+ * `-views` when the sort key is not supported. Headless fallback: when the
+ * primary base is unreachable/empty, pull trending videos from public
+ * federated instances so the route never depends on a local container.
  */
 export async function fetchPeerTubeTrending(limit = 12): Promise<UnifiedPost[]> {
   if (!checkRateLimit('peertube', { maxRequests: 50, windowMs: 60_000 })) {
@@ -175,16 +177,43 @@ export async function fetchPeerTubeTrending(limit = 12): Promise<UnifiedPost[]> 
           signal: AbortSignal.timeout(5000),
         },
       );
-      if (!fallback.ok) return [];
+      if (!fallback.ok) return fetchFederatedTrending(limit);
       const data = (await fallback.json()) as PeerTubeResponse;
-      return (data.data ?? []).slice(0, limit).map(videoToPost);
+      return (data.data ?? []).slice(0, limit).map((video) => videoToPost(video, PEERTUBE_BASE));
     }
     const data = (await res.json()) as PeerTubeResponse;
-    return (data.data ?? []).slice(0, limit).map(videoToPost);
+    if (!data.data || data.data.length === 0) return fetchFederatedTrending(limit);
+    return (data.data ?? []).slice(0, limit).map((video) => videoToPost(video, PEERTUBE_BASE));
   } catch {
     // console.log(`[bridge] PeerTube trending: error - ${(err as Error).message}`);
-    return [];
+    return fetchFederatedTrending(limit);
   }
+}
+
+/** Trending videos from public federated instances (headless fallback). */
+async function fetchFederatedTrending(limit: number): Promise<UnifiedPost[]> {
+  const share = Math.max(2, Math.ceil(limit / PEERTUBE_FEDERATED.length));
+  const settled = await Promise.allSettled(
+    PEERTUBE_FEDERATED.map(async (instance) => {
+      try {
+        const url = `${instance}/api/v1/videos?count=${Math.min(share, 50)}&sort=-trendingScore`;
+        const res = await $fetch(url, {
+          headers: { 'User-Agent': 'DegenFeed-Bridge/0.1' },
+          signal: AbortSignal.timeout(5000),
+        });
+        if (!res.ok) return [] as UnifiedPost[];
+        const data = (await res.json()) as PeerTubeResponse;
+        return (data.data ?? []).slice(0, share).map((video) => videoToPost(video, instance));
+      } catch {
+        return [] as UnifiedPost[];
+      }
+    }),
+  );
+  const posts: UnifiedPost[] = [];
+  for (const r of settled) {
+    if (r.status === 'fulfilled') posts.push(...r.value);
+  }
+  return posts.slice(0, limit);
 }
 
 /**
@@ -260,16 +289,22 @@ export function formatViews(views: number): string {
   return String(views);
 }
 
-/** Best available thumbnail: prefer previewPath (higher res) over thumbnailPath. */
-export function videoThumbnailUrl(video: PeerTubeVideo): string {
+/** Best available thumbnail: prefer previewPath (higher res) over thumbnailPath.
+ * `sourceBase` is the instance the video was fetched from — for federated
+ * videos the relative thumbnail paths belong to THAT instance, not the
+ * (possibly dead) primary base. */
+export function videoThumbnailUrl(
+  video: PeerTubeVideo,
+  sourceBase: string = PEERTUBE_BASE,
+): string {
   const path = video.previewPath || video.thumbnailPath;
-  return path ? `${PEERTUBE_BASE}${path}` : '';
+  return path ? `${sourceBase}${path}` : '';
 }
 
 /** Full inline-player embed URL for a PeerTube video. */
-export function videoEmbedUrl(video: PeerTubeVideo): string {
-  if (video.embedPath) return `${PEERTUBE_BASE}${video.embedPath}`;
-  return `${PEERTUBE_BASE}/videos/embed/${video.uuid}`;
+export function videoEmbedUrl(video: PeerTubeVideo, sourceBase: string = PEERTUBE_BASE): string {
+  if (video.embedPath) return `${sourceBase}${video.embedPath}`;
+  return `${sourceBase}/videos/embed/${video.uuid}`;
 }
 
 export function guessNiches(text: string, name: string): string[] {
@@ -293,7 +328,7 @@ export function guessNiches(text: string, name: string): string[] {
 
 // ─── Mapping ─────────────────────────────────────────────────────────
 
-export function videoToPost(video: PeerTubeVideo): UnifiedPost {
+export function videoToPost(video: PeerTubeVideo, sourceBase: string = PEERTUBE_BASE): UnifiedPost {
   const account = video.account || video.channel;
   const authorName = account?.displayName || account?.name || 'PeerTube';
   const authorUrl = account?.url || '';
@@ -303,9 +338,9 @@ export function videoToPost(video: PeerTubeVideo): UnifiedPost {
   const createdAt = video.publishedAt
     ? new Date(video.publishedAt).getTime()
     : new Date(video.createdAt).getTime();
-  const videoUrl = video.url || `${PEERTUBE_BASE}/videos/watch/${video.uuid}`;
-  const thumbnailUrl = videoThumbnailUrl(video);
-  const embedUrl = videoEmbedUrl(video);
+  const videoUrl = video.url || `${sourceBase}/videos/watch/${video.uuid}`;
+  const thumbnailUrl = videoThumbnailUrl(video, sourceBase);
+  const embedUrl = videoEmbedUrl(video, sourceBase);
   const categoryLabel = video.category?.label || 'Unknown';
 
   return {
@@ -317,7 +352,7 @@ export function videoToPost(video: PeerTubeVideo): UnifiedPost {
       handles: { rss: authorName },
       displayName: authorName,
       bio: '',
-      avatarUrl: avatarPath ? `${PEERTUBE_BASE}${avatarPath}` : '',
+      avatarUrl: avatarPath ? `${sourceBase}${avatarPath}` : '',
       followerCount: 0,
       followingCount: 0,
       links: authorUrl ? [{ label: 'channel', url: authorUrl }] : [],
@@ -430,7 +465,11 @@ export async function fetchPeerTubePosts(limit = 20): Promise<UnifiedPost[]> {
           });
           if (!res.ok) return [] as UnifiedPost[];
           const data = (await res.json()) as PeerTubeResponse;
-          return (data.data ?? []).slice(0, federatedShare).map(videoToPost);
+          // Resolve relative thumbnail/avatar/embed paths against the
+          // instance the video actually came from.
+          return (data.data ?? [])
+            .slice(0, federatedShare)
+            .map((video) => videoToPost(video, instance));
         } catch {
           return [] as UnifiedPost[];
         }

@@ -1,20 +1,23 @@
 /**
- * Lens Protocol Provider — Self-hosted Lens Indexer
+ * Lens Protocol Provider — Self-hosted Lens Indexer + external API fallback
  *
  * Rate Limit: 50 requests/minute (GraphQL API via local indexer)
  *
- * Reads Lens publications from our local Lens indexer (port 8088) instead of
- * the external api.lens.xyz GraphQL API.
- *
- * This gives DegenFeed ownership of its Lens data — no dependency on
- * the public Lens API for reads.
+ * Reads Lens publications from our local Lens indexer (port 8099) first,
+ * then falls back to the external Lens GraphQL API (api.lens.xyz /
+ * api-v2.lens.dev, overridable via LENS_API_URL) when the indexer is
+ * unreachable or returns nothing — so the feed stays populated with real
+ * Lens content even with NO local indexer container running (headless).
  *
  * The local indexer runs at /path/to/degenfeed/lens-indexer/ and polls
  * api.lens.xyz every 30s, storing results in SQLite.
  *
- * Endpoint: http://127.0.0.1:8088/api/publications
+ * Endpoint: http://127.0.0.1:8099/api/publications
+ * (port overridable via LENS_INDEXER_URL; deploy docs confirm 8099 —
+ * the indexer is proxied as lens.degenfeed.xyz)
  */
 
+import { FALLBACK_LENS_URLS } from '@degenfeed/lens-sdk';
 import { filterFreshPosts } from '../lib/freshness';
 import { checkRateLimit } from '../rate-limiter';
 import type { SchemaGuard, UnifiedPost } from '../server/types';
@@ -24,6 +27,10 @@ const $fetch = globalThis.fetch;
 // ─── Configuration ────────────────────────────────────────────────────
 
 const LENS_INDEXER_URL = process.env.LENS_INDEXER_URL || 'http://127.0.0.1:8099';
+
+/** External Lens GraphQL API — used when the local indexer is unavailable. */
+const LENS_API_URL =
+  process.env.LENS_API_URL || FALLBACK_LENS_URLS[0] || 'https://api.lens.xyz/graphql';
 
 // ─── Interface ────────────────────────────────────────────────────────
 
@@ -245,14 +252,14 @@ async function fetchPosts(limit: number): Promise<UnifiedPost[]> {
 
     if (!res.ok) {
       console.warn(`[bridge] Lens Indexer: HTTP ${res.status} ${res.statusText}`);
-      return [];
+      return fetchExternalLensPosts(limit);
     }
 
     const data = (await res.json()) as IndexerResponse;
 
     if (!data.data || data.data.length === 0) {
       console.warn('[bridge] Lens Indexer: No publications returned');
-      return [];
+      return fetchExternalLensPosts(limit);
     }
 
     const selected = selectTrendingMix(data.data, limit);
@@ -273,8 +280,137 @@ async function fetchPosts(limit: number): Promise<UnifiedPost[]> {
       '[bridge] Lens Indexer: Error fetching posts:',
       err instanceof Error ? err.message : err,
     );
-    return [];
+    // Headless fallback: external Lens GraphQL API when the local indexer
+    // is down (no local container dependency).
+    return fetchExternalLensPosts(limit);
   }
+}
+
+// ─── External Lens GraphQL API (headless fallback) ────────────────────
+
+/**
+ * External Lens API publication shape (2026 api.lens.xyz / api-v2.lens.dev).
+ * Matches the proven selection used by @degenfeed/feed-providers LensProvider.
+ */
+interface ExternalLensAccount {
+  address?: string;
+  username?: { localName?: string };
+  metadata?: { name?: string | null; bio?: string | null; picture?: string | null };
+}
+
+interface ExternalLensPost {
+  id: string;
+  timestamp?: string;
+  metadata?: {
+    content?: string | null;
+    image?: { item?: string | null } | null;
+    video?: { item?: string | null } | null;
+  };
+  author?: ExternalLensAccount;
+  stats?: { reactions?: number; comments?: number; reposts?: number; quotes?: number };
+}
+
+/** POST a GraphQL query to an external Lens API endpoint. */
+async function lensGql(
+  url: string,
+  query: string,
+  variables?: Record<string, unknown>,
+): Promise<unknown> {
+  const res = await $fetch(url, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', 'user-agent': 'DegenFeed-Bridge/0.1' },
+    body: JSON.stringify({ query, variables }),
+    signal: AbortSignal.timeout(8000),
+  });
+  if (!res.ok) throw new Error(`Lens API HTTP ${res.status}`);
+  const json = (await res.json()) as { data?: unknown; errors?: Array<{ message?: string }> };
+  if (json.errors?.length) throw new Error(`Lens API: ${json.errors[0]?.message ?? 'unknown'}`);
+  return json.data;
+}
+
+function mapExternalLensPost(pub: ExternalLensPost): UnifiedPost | null {
+  const content = pub.metadata?.content || '';
+  if (!content.trim()) return null;
+  const addr = pub.author?.address ?? 'unknown';
+  const handle = pub.author?.username?.localName ?? null;
+  const embeds: Array<{ kind: string; url: string; meta?: Record<string, unknown> }> = [];
+  if (pub.metadata?.image?.item) embeds.push({ kind: 'image', url: pub.metadata.image.item });
+  if (pub.metadata?.video?.item) embeds.push({ kind: 'video', url: pub.metadata.video.item });
+  return {
+    id: `lens:${pub.id}`,
+    protocol: 'lens',
+    author: {
+      id: `lens:${addr}`,
+      primary: { protocol: 'lens', id: addr },
+      handles: { lens: handle ?? addr },
+      displayName: pub.author?.metadata?.name || handle || addr.slice(0, 10),
+      bio: pub.author?.metadata?.bio || '',
+      avatarUrl: pub.author?.metadata?.picture || '',
+      followerCount: 0,
+      followingCount: 0,
+      links: [],
+      url: handle ? `https://hey.xyz/u/${handle}` : `https://hey.xyz/u/${addr}`,
+      keys: { address: addr },
+    },
+    text: content,
+    embeds,
+    contentType: pub.metadata?.video?.item ? 'video' : pub.metadata?.image?.item ? 'image' : 'text',
+    createdAt: pub.timestamp ? new Date(pub.timestamp).getTime() : Date.now(),
+    metrics: {
+      likes: pub.stats?.reactions ?? 0,
+      reposts: pub.stats?.reposts ?? 0,
+      replies: pub.stats?.comments ?? 0,
+      quotes: pub.stats?.quotes ?? 0,
+    },
+    engagement: {
+      viewerLiked: false,
+      viewerReposted: false,
+      viewerBookmarked: false,
+      raw: {
+        likes: pub.stats?.reactions ?? 0,
+        reposts: pub.stats?.reposts ?? 0,
+        replies: pub.stats?.comments ?? 0,
+        quotes: pub.stats?.quotes ?? 0,
+      },
+    },
+    raw: pub,
+    niches: guessNiches(content),
+  };
+}
+
+/**
+ * Fetch Lens publications directly from the external Lens GraphQL API.
+ * Used only as the headless fallback when the local indexer is down/empty.
+ * Strategy: the ML explore feed (50 fresh/viral publications) — no local
+ * container required. Curated-account fetching is intentionally omitted
+ * here (the local indexer handles that when present); explore alone keeps
+ * the feed real and populated headlessly.
+ */
+async function fetchExternalLensPosts(limit: number): Promise<UnifiedPost[]> {
+  const EXPLORE_QUERY =
+    'query{mlPostsExplore(request:{pageSize:FIFTY}){items{__typename ... on Post{id timestamp metadata{... on TextOnlyMetadata{content} ... on ImageMetadata{content image{item}} ... on VideoMetadata{content video{item}} ... on LinkMetadata{content} ... on ArticleMetadata{content}} author{address username{localName} metadata{name bio picture}} stats{reactions comments reposts quotes collects}}}}}';
+
+  try {
+    const explore = (await lensGql(LENS_API_URL, EXPLORE_QUERY)) as {
+      mlPostsExplore?: { items?: ExternalLensPost[] };
+    };
+    const items = explore?.mlPostsExplore?.items ?? [];
+    const posts: UnifiedPost[] = [];
+    for (const pub of items) {
+      const post = mapExternalLensPost(pub);
+      if (post) posts.push(post);
+    }
+    if (posts.length > 0) {
+      return filterFreshPosts(posts).slice(0, limit);
+    }
+  } catch (err) {
+    console.warn(
+      '[bridge] Lens external explore failed:',
+      err instanceof Error ? err.message : err,
+    );
+  }
+
+  return [];
 }
 
 // ─── Main export ──────────────────────────────────────────────────────

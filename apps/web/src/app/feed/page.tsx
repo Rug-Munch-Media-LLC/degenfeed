@@ -27,6 +27,7 @@ import {
   saveFeedMixConfig,
   saveSavedMixes,
 } from '../../components/FeedTuner';
+import { ConnectedNetworks } from '../../components/feed/ConnectedNetworks';
 import { FeedControls } from '../../components/feed/FeedControls';
 import { FeedFilterBar, FeedTabBar } from '../../components/feed/FeedFilterBar';
 import {
@@ -795,6 +796,9 @@ export default function FeedPage() {
                   : 'Connecting…'}
             </span>
           </div>
+
+          {/* Network ownership — the user's linked federated/social identities */}
+          <ConnectedNetworks />
 
           <div className="mb-4 flex items-center justify-between">
             <FeedTabBar

@@ -21,7 +21,11 @@ import type { SchemaGuard, UnifiedPost } from '../server/types';
 
 const $fetch = globalThis.fetch;
 
-const GTS_BASE = 'http://127.0.0.1:8082';
+// Prefer the externally-reachable GTS/Mastodon origin when configured
+// (GTS_BASE_URL in bridge/.env → social.degenfeed.xyz). Falls back to the
+// container-local default only so deployments without the env var still
+// degrade to the public-instance fetch below instead of a dead loopback.
+const GTS_BASE = process.env.GTS_BASE_URL || 'http://127.0.0.1:8082';
 
 /** Public Mastodon instances that serve public timeline without auth */
 const PUBLIC_INSTANCES = [
