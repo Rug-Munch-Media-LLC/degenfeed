@@ -25,8 +25,6 @@
  *   7. http://localhost:8787 (default — the bridge, the only live feed server)
  */
 
-import { createHash } from 'node:crypto';
-
 function resolveWorkerUrl(): string {
   return (
     process.env.WORKER_URL ??
@@ -62,27 +60,39 @@ const proxyCache = new Map<string, ProxyCacheEntry>();
  * request the same URL but MUST NOT share a cached feed entry (fixes
  * cross-user feed leakage for user-scoped for-you/following feeds).
  * Hashed so raw session material never appears in cache keys or logs.
+ *
+ * Uses Web Crypto (crypto.subtle) so this module stays runtime-agnostic:
+ * it is imported by both nodejs and edge routes. Falls back to a
+ * non-crypto FNV-1a hash (32-bit) if subtle is unavailable — never throws,
+ * safe on any runtime.
  */
-function userScopeHash(request: Request): string {
+async function userScopeHash(request: Request): Promise<string> {
   const auth = request.headers.get('authorization') ?? '';
   const cookie = request.headers.get('cookie') ?? '';
   if (!auth && !cookie) return 'anon';
+  const material = `${auth}\n${cookie}`;
   try {
-    return createHash('sha256').update(`${auth}\n${cookie}`).digest('hex').slice(0, 16);
+    const subtle = globalThis.crypto?.subtle;
+    if (!subtle) throw new Error('crypto.subtle unavailable');
+    const digest = await subtle.digest('SHA-256', new TextEncoder().encode(material));
+    return Array.from(new Uint8Array(digest))
+      .map((b) => b.toString(16).padStart(2, '0'))
+      .join('')
+      .slice(0, 16);
   } catch {
     // Non-crypto FNV-1a fallback (32-bit) — never throws, safe on any runtime.
     let h = 0x811c9dc5;
-    const s = `${auth}\n${cookie}`;
-    for (let i = 0; i < s.length; i += 1) {
-      h ^= s.charCodeAt(i);
+    for (let i = 0; i < material.length; i += 1) {
+      h ^= material.charCodeAt(i);
       h = Math.imul(h, 0x01000193);
     }
     return `fnv${(h >>> 0).toString(16)}`;
   }
 }
 
-function proxyCacheKey(workerPath: string, url: URL, request: Request): string {
-  return `${workerPath}${url.search}|u=${userScopeHash(request)}`;
+async function proxyCacheKey(workerPath: string, url: URL, request: Request): Promise<string> {
+  const scope = await userScopeHash(request);
+  return `${workerPath}${url.search}|u=${scope}`;
 }
 
 /** Drop expired entries and, if still at capacity, evict the soonest-expiring one. */
@@ -146,7 +156,7 @@ export async function proxyGet(workerPath: string, request: Request): Promise<Re
   const url = new URL(request.url);
   const cacheable = !request.headers.get('authorization');
 
-  const key = proxyCacheKey(workerPath, url, request);
+  const key = await proxyCacheKey(workerPath, url, request);
 
   // Serve from cache if fresh
   if (cacheable) {
