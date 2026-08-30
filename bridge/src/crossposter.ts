@@ -377,7 +377,7 @@ const TRANSFORMS: Record<string, TransformFunction> = {
       return { success: false, error: 'No video embed to announce' };
     }
 
-    const duration = videoEmbed.meta?.duration || 0;
+    const duration = Number(videoEmbed.meta?.duration) || 0;
     const durationStr = duration > 0 ? ` (${Math.floor(duration / 60)}m ${duration % 60}s)` : '';
 
     return {
@@ -494,7 +494,7 @@ const TRANSFORMS: Record<string, TransformFunction> = {
   'podcast-nostr': (post: UnifiedPost): TransformResult => {
     const audioEmbed = post.embeds.find((e) => e.kind === 'audio' || e.kind === 'video');
     const audioUrl = audioEmbed?.url || '';
-    const duration = audioEmbed?.meta?.duration || 0;
+    const duration = Number(audioEmbed?.meta?.duration) || 0;
     const durStr = duration > 0 ? ` (${Math.floor(Number(duration) / 60)}m)` : '';
 
     const episodeUrl = post.embeds.find((e) => e.meta?.type === 'episode')?.url || '';
@@ -779,10 +779,8 @@ async function publishToFarcaster(_payload: unknown): Promise<boolean> {
       return true;
     }
 
-    const errBody = await res.text().catch(() => '');
-    // console.log(`[crossposter] ✗ Farcaster: HTTP ${res.status} ${errBody.slice(0, 200)}`);
     return false;
-  } catch (err) {
+  } catch {
     // console.log(`[crossposter] ✗ Farcaster error: ${(err as Error).message}`);
     return false;
   }
@@ -830,10 +828,8 @@ async function publishToLens(_payload: unknown): Promise<boolean> {
       return true;
     }
 
-    const errBody = await res.text().catch(() => '');
-    // console.log(`[crossposter] ✗ Lens: HTTP ${res.status} ${errBody.slice(0, 200)}`);
     return false;
-  } catch (err) {
+  } catch {
     // console.log(`[crossposter] ✗ Lens error: ${(err as Error).message}`);
     return false;
   }
@@ -919,7 +915,7 @@ async function publishToPixelfed(_payload: unknown): Promise<boolean> {
     }
     // console.log(`[crossposter] ✗ Pixelfed: ${result.error}`);
     return false;
-  } catch (err) {
+  } catch {
     // console.log(`[crossposter] ✗ Pixelfed error: ${(err as Error).message}`);
     return false;
   }
@@ -955,7 +951,7 @@ async function publishToWriteFreely(_payload: unknown): Promise<boolean> {
     }
     // console.log(`[crossposter] ✗ WriteFreely: ${result.error}`);
     return false;
-  } catch (err) {
+  } catch {
     // console.log(`[crossposter] ✗ WriteFreely error: ${(err as Error).message}`);
     return false;
   }
@@ -1022,7 +1018,7 @@ async function fetchLatestGtsPost(): Promise<UnifiedPost | null> {
 
     if (!raw.length) return null;
 
-    const s = raw[0];
+    const s = raw[0]!;
     return {
       id: `mastodon:${s.id}@social.degenfeed.xyz`,
       protocol: 'mastodon',
@@ -1055,7 +1051,7 @@ async function fetchLatestGtsPost(): Promise<UnifiedPost | null> {
       raw: s,
       niches: [],
     };
-  } catch (err) {
+  } catch {
     // console.log('[crossposter] GTS fetch error:', (err as Error).message);
     return null;
   }
@@ -1086,7 +1082,7 @@ async function fetchLatestPixelfedPost(): Promise<UnifiedPost | null> {
 
     if (!raw.length) return null;
 
-    const s = raw[0];
+    const s = raw[0]!;
     return {
       id: `pixelfed:${s.id}@photos.degenfeed.xyz`,
       protocol: 'pixelfed',
@@ -1119,7 +1115,7 @@ async function fetchLatestPixelfedPost(): Promise<UnifiedPost | null> {
       raw: s,
       niches: [],
     };
-  } catch (err) {
+  } catch {
     // console.log('[crossposter] Pixelfed fetch error:', (err as Error).message);
     return null;
   }
@@ -1144,7 +1140,7 @@ async function fetchLatestLemmyPost(): Promise<UnifiedPost | null> {
 
     if (!data.posts?.length) return null;
 
-    const pv = data.posts[0];
+    const pv = data.posts[0]!;
     return {
       id: `lemmy:${pv.post.id}`,
       protocol: 'lemmy',
@@ -1528,7 +1524,7 @@ export async function crossPost(
       const latencyMs = Date.now() - startTime;
 
       if (publishOk) {
-        results.push({ success: true, target, latencyMs });
+        results.push({ success: true, target, latencyMs, retryable: false });
         failureTracker.recordSuccess(config.id, target);
         // console.log(`[crossposter] ✓ ${config.id} → ${target} (${latencyMs}ms): ${post.id}`);
       } else {
@@ -1590,18 +1586,17 @@ async function pollSource(config: CrossPairConfig): Promise<void> {
       return;
     }
 
-    const { success, results } = await crossPost(post, config);
+    const { success } = await crossPost(post, config);
 
     if (success) {
       lastSeenIds.set(config.id, post.id);
-      // console.log(`[crossposter] ${config.id}: all targets succeeded (${results.length})`);
+      // console.log(`[crossposter] ${config.id}: all targets succeeded`);
     } else {
-      const failures = results.filter((r) => !r.success);
       //       console.log(
-      //         `[crossposter] ${config.id}: ${failures.length}/${results.length} targets failed`,
+      //         `[crossposter] ${config.id}: some targets failed`,
       //       );
     }
-  } catch (err) {
+  } catch {
     // console.log(`[crossposter] ${config.id}: poll error - ${(err as Error).message}`);
   }
 }
@@ -1668,9 +1663,9 @@ export function getCrossPosterStats(configs?: CrossPairConfig[]): PairStats[] {
  * Stop all cross-poster timers.
  */
 export function stopCrossPoster(timers: Map<string, NodeJS.Timeout>): void {
-  for (const [id, timer] of timers) {
+  for (const [_id, timer] of timers) {
     clearInterval(timer);
-    // console.log(`[crossposter] ${id}: stopped`);
+    // console.log(`[crossposter] ${_id}: stopped`);
   }
   timers.clear();
 }
