@@ -143,7 +143,7 @@ async function fetchFromInstance(instance: string, limit: number): Promise<Unifi
         niches: guessNiches(text, track.tags),
       };
     });
-  } catch (err) {
+  } catch {
     // console.log(`[bridge] Funkwhale error (${instance}): ${(err as Error).message}`);
     return [];
   }

@@ -59,19 +59,6 @@ interface CCGraphQLResponse {
 
 // ─── Helpers ──────────────────────────────────────────────────────────
 
-function _guessNiches(text: string): string[] {
-  const niches: string[] = [];
-  const lower = text.toLowerCase();
-  if (/\b(btc|bitcoin|eth|ethereum|sol|solana|crypto|defi|nft|web3|blockchain)\b/.test(lower))
-    niches.push('crypto');
-  if (/\b(ai |artificial|intelligence|llm|agent|machine learning)\b/.test(lower)) niches.push('ai');
-  if (/\b(tech|technology|code|programming|software|startup)\b/.test(lower)) niches.push('tech');
-  if (/\b(nft|art|collectible|mint|essence)\b/.test(lower)) niches.push('nft');
-  if (/\b(sec|regulation|congress|etf)\b/.test(lower)) niches.push('regulation');
-  if (niches.length === 0) niches.push('web3');
-  return niches;
-}
-
 async function graphQLQuery(query: string): Promise<CCGraphQLResponse> {
   try {
     const res = await $fetch(CC_GRAPHQL, {
@@ -85,7 +72,7 @@ async function graphQLQuery(query: string): Promise<CCGraphQLResponse> {
     });
     if (!res.ok) return {};
     return (await res.json()) as CCGraphQLResponse;
-  } catch (err) {
+  } catch {
     // console.log(`[bridge] CyberConnect GraphQL error: ${(err as Error).message}`);
     return {};
   }

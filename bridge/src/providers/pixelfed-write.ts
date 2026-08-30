@@ -106,33 +106,15 @@ export async function uploadMedia(
   filename: string,
   description?: string,
 ): Promise<{ ok: boolean; mediaId?: string; error?: string }> {
-  const boundary = `----FormBoundary${Math.random().toString(36).slice(2, 10)}`;
-  const CRLF = '\r\n';
   const mimeType = filename.endsWith('.png')
     ? 'image/png'
     : filename.endsWith('.gif')
       ? 'image/gif'
       : 'image/jpeg';
 
-  // Build multipart body manually
-  let body = '';
-  body += `--${boundary}${CRLF}`;
-  body += `Content-Disposition: form-data; name="file"; filename="${filename}"${CRLF}`;
-  body += `Content-Type: ${mimeType}${CRLF}${CRLF}`;
-
-  const textEncoder = new TextEncoder();
-  const _prefix = textEncoder.encode(body);
-  const _suffix = textEncoder.encode(`${CRLF}--${boundary}${CRLF}`);
-
-  if (description) {
-    const _descPart = `Content-Disposition: form-data; name="description"${CRLF}${CRLF}${description}${CRLF}--${boundary}--${CRLF}`;
-    // We can't easily construct this with raw bytes and string intermixed
-    // Let's use a simpler approach: fetch with FormData-like body
-  }
-
   // Use native Fetch's FormData support
   const formData = new FormData();
-  const blob = new Blob([imageBuffer], { type: mimeType });
+  const blob = new Blob([imageBuffer as BlobPart], { type: mimeType });
   formData.append('file', blob, filename);
   if (description) {
     formData.append('description', description);
@@ -238,7 +220,7 @@ export async function publishUnifiedPost(post: UnifiedPost): Promise<PixelfedPub
   const uploadedIds: string[] = [];
 
   for (let i = 0; i < Math.min(imageEmbeds.length, 4); i++) {
-    const embed = imageEmbeds[i];
+    const embed = imageEmbeds[i]!;
     try {
       // Download the image
       const imgRes = await fetch(embed.url, { signal: AbortSignal.timeout(10000) });
@@ -262,7 +244,7 @@ export async function publishUnifiedPost(post: UnifiedPost): Promise<PixelfedPub
       } else {
         // console.log(`[pixelfed-write] ✗ Media upload failed: ${uploadResult.error}`);
       }
-    } catch (err) {
+    } catch {
       // console.log(`[pixelfed-write] ✗ Image fetch/upload failed: ${(err as Error).message}`);
     }
   }

@@ -253,7 +253,7 @@ async function fetchFromChannel(source: TelegramSource, limit: number): Promise<
       .slice(0, limit);
 
     return messages.map((m) => messageToPost(m, source));
-  } catch (err) {
+  } catch {
     // console.log(`[bridge] Telegram fetch error (${source.chatId}): ${(err as Error).message}`);
     return [];
   }

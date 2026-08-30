@@ -125,7 +125,7 @@ export class FederationHub {
   async discoverIdentity(
     username: string,
     gtsId: string,
-    gtsAccessToken?: string,
+    _gtsAccessToken?: string,
   ): Promise<FediverseIdentity> {
     const gtsHandle = `@${username}@${this.config.gtsHost}`;
     const cached = this.identityCache.get(gtsHandle);

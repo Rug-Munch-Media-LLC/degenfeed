@@ -1,3 +1,18 @@
+import { analyzeNewsSentiment } from '../../lib/sentiment';
+import type { UnifiedPost } from '../../server/types';
+import { sourceBias, sourceFactuality } from './rss-bias';
+import { extractPriceImpact } from './rss-content';
+import { extractLinkUrl } from './rss-dedup';
+import {
+  extractFeaturedImage,
+  extractLargestImage,
+  extractOpenGraphImage,
+  parseFeedXml,
+} from './rss-parser';
+import type { FeedSource } from './types';
+
+const USER_AGENT = 'DegenFeed-Bridge/0.2 (RSS Aggregator)';
+
 // ─── OpenGraph Image Cache ────────────────────────────────────────────
 // Extracted article images are cached in-memory so the bridge doesn't
 // re-fetch every article page on every 5-minute feed cycle. Positive hits
@@ -83,7 +98,7 @@ export function setPostImage(post: UnifiedPost, image: string): void {
   raw.image = image;
   const idx = post.embeds.findIndex((e) => e.kind === 'image');
   if (idx >= 0) {
-    post.embeds[idx] = { kind: 'image', url: image, meta: post.embeds[idx].meta };
+    post.embeds[idx] = { kind: 'image', url: image, meta: post.embeds[idx]!.meta };
   } else {
     post.embeds.push({ kind: 'image', url: image });
   }
@@ -342,7 +357,7 @@ async function fetchSingleFeed(feed: FeedSource, limit: number): Promise<Unified
         contentType: isPodcast ? 'podcast' : 'link',
       };
     });
-  } catch (err) {
+  } catch {
     // console.log(`[rss] ${feed.label}: error — ${err instanceof Error ? err.message : 'unknown'}`);
     return [];
   }
@@ -453,7 +468,7 @@ async function fetchBeehiivFeed(feed: FeedSource, limit: number): Promise<Unifie
 /**
  * Route a feed to its appropriate fetcher based on platform.
  */
-async function fetchFeed(feed: FeedSource, limit: number): Promise<UnifiedPost[]> {
+export async function fetchFeed(feed: FeedSource, limit: number): Promise<UnifiedPost[]> {
   switch (feed.platform) {
     case 'substack':
       return fetchSubstackFeed(feed, limit);

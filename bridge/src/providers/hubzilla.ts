@@ -28,7 +28,7 @@ export async function fetchHubzillaPosts(limit = 20): Promise<UnifiedPost[]> {
   try {
     const { fetchHubzillaPosts: adapterFetch } = await getAdapter();
     return adapterFetch(limit);
-  } catch (err) {
+  } catch {
     // console.log(`[bridge] Hubzilla error: ${(err as Error).message}`);
     return [];
   }

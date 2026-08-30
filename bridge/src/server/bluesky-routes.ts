@@ -74,10 +74,6 @@ const PDS_PUBLIC_URL = process.env.PDS_PUBLIC_URL || 'https://pds.degenfeed.xyz'
 
 // ─── Constants ───────────────────────────────────────────────────────
 
-const BLUESKY_KV_PREFIX = 'bsky:';
-const RECOVERY_KEY_HINTS = 'bsky:recovery:hints';
-const WALLET_LINKS = 'bsky:wallet:links';
-
 // ─── Response Helpers ────────────────────────────────────────────────
 
 function jsonOk(res: http.ServerResponse, data: unknown) {
@@ -190,12 +186,6 @@ export async function handleBlueskyRoute(
       });
 
       // Store recovery key hint (never store the raw key in plaintext)
-      const hintPayload = JSON.stringify({
-        did: result.did,
-        hint: `Recovery key for ${result.handle}`,
-        prefix: result.recoveryKey?.slice(0, 8), // First 8 chars only — enough to identify
-        createdAt: new Date().toISOString(),
-      });
 
       return (
         jsonCreated(res, {
@@ -346,7 +336,7 @@ export async function handleBlueskyRoute(
       try {
         const health = await client.healthCheck();
         return jsonOk(res, { ok: true, data: health }), true;
-      } catch (err) {
+      } catch {
         return jsonError(res, 503, 'PDS_UNREACHABLE', 'PDS is not responding'), true;
       }
     }
@@ -430,7 +420,7 @@ export async function handleBlueskyRoute(
       try {
         const profile = await pdsClient.getProfile(actor || (await getProfile(jwt)));
         return jsonOk(res, { ok: true, data: profile }), true;
-      } catch (err) {
+      } catch {
         return jsonError(res, 404, 'PROFILE_NOT_FOUND', 'Profile not found'), true;
       }
     }
@@ -447,7 +437,7 @@ export async function handleBlueskyRoute(
           description,
         });
         return jsonOk(res, { ok: true, data: { message: 'Profile updated' } }), true;
-      } catch (err) {
+      } catch {
         return jsonError(res, 400, 'PROFILE_UPDATE_FAILED', 'Failed to update profile'), true;
       }
     }
@@ -1100,7 +1090,7 @@ async function getProfile(jwt: string): Promise<string> {
   try {
     const parts = jwt.split('.');
     if (parts.length === 3) {
-      const payload = JSON.parse(atob(parts[1]));
+      const payload = JSON.parse(atob(parts[1]!));
       return payload.sub || payload.did || '';
     }
   } catch {

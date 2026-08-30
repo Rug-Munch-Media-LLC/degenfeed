@@ -306,7 +306,7 @@ async function fetchChannelVideos(
     const xml = await res.text();
     if (!xml || xml.length < 200 || xml.includes('Error 404')) return [];
     return parseYouTubeFeed(xml, channel.channelId, channel.name).slice(0, limit);
-  } catch (err) {
+  } catch {
     //     console.log(
     //       `[youtube] ${channel.name}: fetch error: ${err instanceof Error ? err.message : String(err)}`,
     //     );

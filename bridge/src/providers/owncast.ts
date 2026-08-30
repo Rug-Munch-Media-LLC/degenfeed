@@ -334,10 +334,6 @@ export async function fetchOwncastSchedule(
       signal: AbortSignal.timeout(3000),
     });
     if (infoRes.ok) {
-      const info = (await infoRes.json()) as OwncastServerInfo & {
-        streamTitle?: string;
-      };
-      const title = info.streamTitle || info.name || 'Scheduled Stream';
       // No explicit schedule data — return empty rather than fabricate times.
       // console.log('[bridge] Owncast schedule: no schedule endpoint, using empty schedule');
       return schedule;

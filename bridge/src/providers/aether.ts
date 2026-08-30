@@ -155,13 +155,11 @@ function aetherPostToPost(post: AetherPost, relaySource: string): UnifiedPost {
       keys: { aetherPubkey: post.author?.publicKey || '' },
     },
     text,
-    embeds: [
-      ...(post.media || []).map((m) => ({
-        kind: (m.type === 'video' ? 'video' : 'image') as 'image' | 'video',
-        url: m.url,
-        meta: { width: m.width, height: m.height },
-      })),
-    ],
+    embeds: (post.media || []).map((m) => ({
+      kind: (m.type === 'video' ? 'video' : 'image') as 'image' | 'video',
+      url: m.url,
+      meta: { width: m.width, height: m.height },
+    })),
     contentType: text.length > 500 ? 'article' : 'text',
     createdAt: post.createdAt,
     metrics: {
@@ -209,7 +207,7 @@ async function fetchFromNode(baseUrl: string, limit: number): Promise<UnifiedPos
       .filter((p) => !p.hasExpired)
       .slice(0, limit)
       .map((p) => aetherPostToPost(p, baseUrl));
-  } catch (err) {
+  } catch {
     // console.log(`[bridge] Aether node error (${baseUrl}): ${(err as Error).message}`);
     return [];
   }

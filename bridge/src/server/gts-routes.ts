@@ -21,7 +21,6 @@
  */
 
 import type http from 'node:http';
-import { GtSClient } from '@degenfeed/mastodon-sdk';
 import { federationHub } from './federation-hub';
 import {
   discoverPopularCommunities,
@@ -31,12 +30,7 @@ import {
   lookupFediverseAccount,
   searchFediverseAccounts,
 } from './fediverse-discovery';
-import {
-  authenticateUser,
-  getClientCredentialsToken,
-  registerGtsApp,
-  verifyToken,
-} from './gts-oauth';
+import { authenticateUser, verifyToken } from './gts-oauth';
 import { provisionMeshAccounts } from './sso-routes';
 
 // ─── Config ─────────────────────────────────────────────────────────
@@ -64,17 +58,6 @@ function jsonError(res: http.ServerResponse, status: number, code: string, messa
  * Get an app-level access token for server-to-server operations.
  * Falls back to env vars if available.
  */
-async function getAppToken(): Promise<string | null> {
-  if (GTS_CLIENT_ID && GTS_CLIENT_SECRET) {
-    try {
-      const token = await getClientCredentialsToken(GTS_CLIENT_ID, GTS_CLIENT_SECRET);
-      return token.access_token;
-    } catch {
-      return null;
-    }
-  }
-  return null;
-}
 
 // ─── Route Handlers ─────────────────────────────────────────────────
 
@@ -271,7 +254,7 @@ async function handleGtsRegister(
       email,
       ['mastodon'],
     )
-      .then(({ results, summary }) => {
+      .then(() => {
         //         console.log(
         //           `[gts-routes] Post-register provisioning for ${username}: ${summary.ok} ok, ${summary.failed} failed, ${summary.skipped} skipped`,
         //         );
@@ -776,7 +759,7 @@ function extractBearerToken(req: http.IncomingMessage): string | null {
   const auth = req.headers.authorization;
   if (!auth) return null;
   const match = auth.match(/^Bearer\s+(.+)$/i);
-  return match ? match[1] : null;
+  return match ? match[1]! : null;
 }
 
 /**
@@ -802,7 +785,7 @@ async function fetchAllPages(baseUrl: string, token: string): Promise<any[]> {
         const linkHeader = res.headers.get('link');
         if (linkHeader) {
           const nextMatch = linkHeader.match(/<([^>]+)>\s*;\s*rel="next"/);
-          url = nextMatch ? nextMatch[1] : '';
+          url = nextMatch ? nextMatch[1]! : '';
         } else {
           url = '';
         }

@@ -59,10 +59,14 @@ export async function getAvatarForDid(did: string): Promise<string> {
 /** Enrich an array of posts whose authors came from non-hydrated sources. */
 export async function enrichMissingAvatars(posts: UnifiedPost[]): Promise<UnifiedPost[]> {
   if (posts.length === 0) return posts;
-  const missing = posts.filter((p) => !p.author.avatarUrl && p.author.primary?.protocol === 'bluesky');
+  const missing = posts.filter(
+    (p) => !p.author.avatarUrl && p.author.primary?.protocol === 'bluesky',
+  );
   if (missing.length === 0) return posts;
   const results = await Promise.allSettled(
-    missing.map((p) => getAvatarForDid(p.author.primary?.id || p.author.id.replace(/^bluesky:/, ''))),
+    missing.map((p) =>
+      getAvatarForDid(p.author.primary?.id || p.author.id.replace(/^bluesky:/, '')),
+    ),
   );
   results.forEach((r, i) => {
     if (r.status === 'fulfilled' && r.value) missing[i]!.author.avatarUrl = r.value;
@@ -322,7 +326,7 @@ async function fetchFromPds(limit: number): Promise<UnifiedPost[]> {
 
     // console.log(`[bluesky] PDS: ${allPosts.length} posts from local PDS`);
     return allPosts.slice(0, limit);
-  } catch (err) {
+  } catch {
     // console.log(`[bluesky] PDS error: ${(err as Error).message}`);
     return [];
   }

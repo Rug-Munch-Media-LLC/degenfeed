@@ -16,7 +16,6 @@ import type { SchemaGuard, UnifiedPost } from '../server/types';
 const $fetch = globalThis.fetch;
 
 const LBRY_API = 'https://api.lbry.tv/api/v1/proxy';
-const _LBRY_OMBERR = 'https://api.lbry.tv/api/v1/omber';
 
 // ─── Types ─────────────────────────────────────────────────────────────
 
@@ -66,18 +65,6 @@ interface LBRYClaim {
   supportAmount: string;
   trendingGroup?: string;
   trendingMix?: number;
-}
-
-interface LBRYResponse<T> {
-  success: boolean;
-  error?: string;
-  data?: T;
-}
-
-interface LBRYSearchResult {
-  items: LBRYClaim[];
-  totalPages: number;
-  total: number;
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────
@@ -134,7 +121,6 @@ function claimToPost(claim: LBRYClaim): UnifiedPost {
     val.streamType === 'video' ? 'video' : val.streamType === 'audio' ? 'video' : 'video';
 
   const lbryUrl = `https://odysee.com/${claim.name}:${claim.claimId}`;
-  const _embedUrl = thumbnailUrl || lbryUrl;
 
   return {
     id: `lbry:${claim.claimId}`,
@@ -225,7 +211,7 @@ async function fetchTrending(limit: number): Promise<UnifiedPost[]> {
 
     if (!result?.items) return [];
     return result.items.map(claimToPost);
-  } catch (err) {
+  } catch {
     // console.log(`[bridge] LBRY trending error: ${(err as Error).message}`);
     return [];
   }
@@ -242,7 +228,7 @@ async function fetchRecent(limit: number): Promise<UnifiedPost[]> {
 
     if (!result?.items) return [];
     return result.items.map(claimToPost);
-  } catch (err) {
+  } catch {
     // console.log(`[bridge] LBRY recent error: ${(err as Error).message}`);
     return [];
   }
@@ -260,7 +246,7 @@ async function fetchCryptoRelated(limit: number): Promise<UnifiedPost[]> {
 
     if (!result?.items) return [];
     return result.items.map(claimToPost);
-  } catch (err) {
+  } catch {
     // console.log(`[bridge] LBRY crypto search error: ${(err as Error).message}`);
     return [];
   }

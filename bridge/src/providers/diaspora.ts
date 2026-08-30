@@ -67,7 +67,7 @@ function parseDiasporaId(id: string): string {
 
 function extractAuthorInfo(author: { name: string; uri?: string }) {
   const name = author.name || 'Unknown';
-  const uri = (author as any).uri || author.uri || '';
+  const uri = author.uri || '';
   const handle = uri.replace(/^https?:\/\//, '').replace(/\/?$/, '');
   const username = name.toLowerCase().replace(/\s+/g, '_');
   return { name, handle, uri, username };

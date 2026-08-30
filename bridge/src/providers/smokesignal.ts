@@ -161,8 +161,6 @@ function pdsRecordToUnifiedEvent(record: PDSRecord, _pdsUrl: string): UnifiedEve
     if (!name || !startsAt) return null;
 
     let address: string | undefined;
-    let _lat: number | undefined;
-    let _lng: number | undefined;
     if (location) {
       // Location can be a string "City, Place" or an object with address/lat/lng
       if (typeof location === 'string') {
@@ -262,28 +260,6 @@ function apiEventToUnifiedEvent(apiEvent: SmokeSignalAPIEvent): UnifiedEvent | n
 /**
  * Fetch Smoke Signal events from the AT Protocol PDS via direct XRPC calls.
  */
-async function _fetchFromPDS(limit: number): Promise<UnifiedEvent[]> {
-  try {
-    const collection = 'events.smokesignal.event';
-    const records = await fetchRecordsFromPDS(PDS_URLS[0], collection, limit);
-
-    const events: UnifiedEvent[] = [];
-    for (const record of records) {
-      const event = pdsRecordToUnifiedEvent(record, PDS_URLS[0]);
-      if (event) {
-        events.push(event);
-        if (events.length >= limit) break;
-      }
-    }
-
-    // console.log(`[smokesignal] PDS: ${events.length} events`);
-    return events;
-  } catch (err) {
-    // console.log(`[smokesignal] PDS fetch error: ${(err as Error).message}`);
-    return [];
-  }
-}
-
 /**
  * Fetch Smoke Signal events from the direct API.
  */
@@ -316,7 +292,7 @@ async function fetchFromAPI(limit: number): Promise<UnifiedEvent[]> {
 
     // console.log(`[smokesignal] API: ${events.length} events`);
     return events;
-  } catch (err) {
+  } catch {
     // console.log(`[smokesignal] API fetch error: ${(err as Error).message}`);
     return [];
   }

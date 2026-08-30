@@ -19,7 +19,7 @@
  * timeline. The token is read from PIXELFED_ACCESS_TOKEN (bridge/.env) and
  * passed through to the provider by the SDK.
  */
-import type { SchemaGuard, UnifiedPost } from '../server/types';
+
 import {
   getAccountPosts,
   getPublicTimeline,
@@ -27,6 +27,7 @@ import {
   normalizePixelfedPost,
   PIXELFED_LOCAL_INSTANCE,
 } from '@degenfeed/pixelfed-sdk';
+import type { SchemaGuard, UnifiedPost } from '../server/types';
 
 const PIXELFED_BASE_URL = process.env.PIXELFED_BASE_URL || PIXELFED_LOCAL_INSTANCE;
 
@@ -98,7 +99,7 @@ export async function fetchPixelfedPosts(limit = 20): Promise<UnifiedPost[]> {
     });
     const result = await provider.fetchFeed({ timeoutMs: 10000 });
     if (result.posts?.length) all.push(...result.posts);
-  } catch (err) {
+  } catch {
     // console.log(`[bridge] Pixelfed adapter error: ${(err as Error).message}`);
   }
 
@@ -124,7 +125,7 @@ export async function fetchPixelfedPosts(limit = 20): Promise<UnifiedPost[]> {
       accessToken,
     });
     all.push(...statuses.map(toUnified));
-  } catch (err) {
+  } catch {
     // console.log(`[bridge] Pixelfed local timeline error: ${(err as Error).message}`);
   }
 

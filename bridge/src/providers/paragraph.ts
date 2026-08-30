@@ -258,24 +258,6 @@ async function fetchTrending(limit: number): Promise<UnifiedPost[]> {
   }
 }
 
-async function _fetchByPublication(publicationSlug: string, limit: number): Promise<UnifiedPost[]> {
-  try {
-    const res = await apiFetch<ParagraphApiResponse<ParagraphPost[]> | ParagraphFeedResponse>(
-      `/v1/publications/slug/${publicationSlug}/posts?limit=${Math.min(limit, 20)}`,
-    );
-    if (!res) return [];
-
-    const posts =
-      (res as ParagraphFeedResponse).posts ||
-      (res as ParagraphApiResponse<ParagraphPost[]>).data ||
-      [];
-    if (!Array.isArray(posts)) return [];
-    return posts.slice(0, limit).map(paragraphPostToPost);
-  } catch {
-    return [];
-  }
-}
-
 async function fetchExplore(limit: number): Promise<UnifiedPost[]> {
   try {
     // Use discover endpoint if available
@@ -323,16 +305,16 @@ async function fetchPublicationRss(slug: string, limit: number): Promise<Unified
     const pMatches = xml.matchAll(itemRe);
     for (const pMatch of pMatches) {
       if (posts.length >= limit) break;
-      const item = pMatch[1];
+      const item = pMatch[1]!;
       const titleMatch = item.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
       const linkMatch = item.match(/<link[^>]*>([\s\S]*?)<\/link>/i);
       const dateMatch = item.match(/<pubDate[^>]*>([\s\S]*?)<\/pubDate>/i);
       const descMatch = item.match(/<description[^>]*>([\s\S]*?)<\/description>/i);
 
-      const title = titleMatch ? stripHtml(titleMatch[1]) : 'Paragraph Article';
-      const link = linkMatch ? linkMatch[1] : '';
-      const text = `${title}\n\n${descMatch ? stripHtml(descMatch[1]).slice(0, 500) : ''}`.trim();
-      const createdAt = dateMatch ? new Date(dateMatch[1]).getTime() : Date.now();
+      const title = titleMatch ? stripHtml(titleMatch[1]!) : 'Paragraph Article';
+      const link = linkMatch ? linkMatch[1]! : '';
+      const text = `${title}\n\n${descMatch ? stripHtml(descMatch[1]!).slice(0, 500) : ''}`.trim();
+      const createdAt = dateMatch ? new Date(dateMatch[1]!).getTime() : Date.now();
       const articleId = link.split('/').pop() || `idx-${idx}`;
 
       posts.push({

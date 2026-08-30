@@ -26,7 +26,7 @@ export async function fetchPubliiPosts(limit = 20): Promise<UnifiedPost[]> {
   try {
     const { fetchPubliiPosts: adapterFetch } = await getAdapter();
     return adapterFetch(limit);
-  } catch (err) {
+  } catch {
     // console.log(`[bridge] Publii error: ${(err as Error).message}`);
     return [];
   }

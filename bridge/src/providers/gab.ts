@@ -127,14 +127,7 @@ export function guessNiches(text: string): string[] {
 }
 
 /** Curated active Gab accounts (verified to return items via RSS-Bridge 2026-08-06). */
-const CURATED_USERS = [
-  'gab',
-  'jackposobiec',
-  'robcary',
-  'robertbridges',
-  'mikecoudrey',
-  'news',
-];
+const CURATED_USERS = ['gab', 'jackposobiec', 'robcary', 'robertbridges', 'mikecoudrey', 'news'];
 
 // ─── Map Gab post to UnifiedPost ────────────────────────────────────────
 

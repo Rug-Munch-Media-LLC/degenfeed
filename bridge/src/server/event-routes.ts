@@ -28,13 +28,12 @@ import {
   runSyncCycle,
   syncRSVP,
 } from '../event-bridge';
-import { fetchMobilizonPosts, mobilizonEventToUnified } from '../providers/mobilizon';
 import {
   createSmokeSignalEvent,
   fetchSmokeSignalEvents,
   rsvpToEvent,
 } from '../providers/smokesignal';
-import type { CreateEventInput, UnifiedEvent } from './types';
+import type { UnifiedEvent } from './types';
 
 // ─── Helpers ──────────────────────────────────────────────────────────
 
@@ -64,7 +63,7 @@ function getBody(req: http.IncomingMessage): Promise<Record<string, unknown>> {
       try {
         const raw = Buffer.concat(chunks).toString('utf8');
         resolve(raw ? JSON.parse(raw) : {});
-      } catch (err) {
+      } catch {
         reject(new Error('Invalid JSON body'));
       }
     });
@@ -307,7 +306,6 @@ async function handleCreateEvent(_url: URL, req: http.IncomingMessage, res: http
     // Publish to Nostr (NIP-52 calendar event)
     if (publishTo.includes('nostr')) {
       try {
-        const nostrRelayUrl = process.env.NOSTR_RELAY_URL || 'ws://127.0.0.1:8085';
         // NIP-52: kind 31922 — calendar event
         const nostrEvent = {
           kind: 31922,
@@ -360,7 +358,7 @@ async function handleCreateEvent(_url: URL, req: http.IncomingMessage, res: http
       isOnline: (input.isOnline as boolean) || !input.location,
       tags: (input.tags as string[]) || [],
       status: 'confirmed',
-      visibility: (input.visibility as string) || 'public',
+      visibility: (input.visibility as 'public' | 'unlisted' | 'private') || 'public',
       categories: [],
       createdAt: Date.now(),
       raw: { input, results },
@@ -507,7 +505,6 @@ async function handleBridgeStatus(_url: URL, _req: http.IncomingMessage, res: ht
  * GET /api/events/:id — Single event detail.
  */
 async function handleSingleEvent(url: URL, _req: http.IncomingMessage, res: http.ServerResponse) {
-  const params = getQueryParams(url);
   const pathParts = url.pathname.split('/').filter(Boolean);
   const eventId = pathParts[pathParts.length - 1];
 
@@ -674,7 +671,7 @@ export async function handleEventRoute(
         'sync',
         'bridge',
       ];
-      const firstSegment = subPath.split('/')[1];
+      const firstSegment = subPath.split('/')[1]!;
       if (!knownSubs.includes(firstSegment)) {
         if (method === 'GET') {
           await handleSingleEvent(

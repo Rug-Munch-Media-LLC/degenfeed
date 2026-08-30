@@ -37,7 +37,7 @@ async function parseFeedXML(xml: string): Promise<BandcampItem[]> {
   const itemRegex = /<item>([\s\S]*?)<\/item>/g;
   const xmlMatches = xml.matchAll(itemRegex);
   for (const match of xmlMatches) {
-    const ix = match[1];
+    const ix = match[1]!;
     const title = ix.match(/<title><!\[CDATA\[(.*?)\]\]><\/title>|<title>(.*?)<\/title>/);
     const link = ix.match(/<link>(.*?)<\/link>/);
     const pubDate = ix.match(/<pubDate>(.*?)<\/pubDate>/);

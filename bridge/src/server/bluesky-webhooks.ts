@@ -62,8 +62,8 @@ export function verifyWebhookSignature(
     const parts = signatureHeader.split(',');
     if (parts.length < 2) return false;
 
-    const timestampPart = parts[0].trim();
-    const sigPart = parts[1].trim();
+    const timestampPart = parts[0]!.trim();
+    const sigPart = parts[1]!.trim();
 
     const timestamp = timestampPart.split('=')[1];
     const signature = sigPart.split('=')[1];
@@ -71,7 +71,7 @@ export function verifyWebhookSignature(
     const expected = createHmac('sha256', secret).update(`${timestamp}.${payload}`).digest('hex');
 
     // Constant-time comparison to prevent timing attacks
-    return timingSafeEqual(Buffer.from(expected), Buffer.from(signature));
+    return timingSafeEqual(Buffer.from(expected), Buffer.from(signature!));
   } catch {
     return false;
   }

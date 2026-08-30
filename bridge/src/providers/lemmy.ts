@@ -15,8 +15,6 @@ import { filterFreshPosts } from '../lib/freshness';
 import { checkRateLimit } from '../rate-limiter';
 import type { SchemaGuard, UnifiedPost } from '../server/types';
 
-const _$fetch = globalThis.fetch;
-
 const LEMMY_LOCAL = 'http://127.0.0.1:8536';
 
 /** Local DegenFeed communities */
@@ -298,7 +296,7 @@ async function fetchRssFromInstance(
       let match: RegExpExecArray | null;
       // biome-ignore lint/suspicious/noAssignInExpressions: standard regex loop pattern
       while ((match = entryRegex.exec(xmlText)) !== null && posts.length < limit) {
-        const entry = match[1];
+        const entry = match[1]!;
         const title = extractXmlValue(entry, 'title');
         const link = extractXmlAttr(entry, 'link', 'href') || extractXmlValue(entry, 'id');
         const published = extractXmlValue(entry, 'published') || extractXmlValue(entry, 'updated');
@@ -344,7 +342,7 @@ async function fetchRssFromInstance(
       let match: RegExpExecArray | null;
       // biome-ignore lint/suspicious/noAssignInExpressions: standard regex loop pattern
       while ((match = itemRegex.exec(xmlText)) !== null && posts.length < limit) {
-        const item = match[1];
+        const item = match[1]!;
         const title = extractXmlValue(item, 'title');
         const link = extractXmlValue(item, 'link');
         const pubDate = extractXmlValue(item, 'pubDate');
@@ -401,14 +399,14 @@ function extractXmlValue(xml: string, tag: string): string {
   const match = regex.exec(xml);
   if (!match) return '';
   // Strip CDATA
-  return match[1].replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, '$1').trim();
+  return match[1]!.replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, '$1').trim();
 }
 
 /** Extract XML attribute value */
 function extractXmlAttr(xml: string, tag: string, attr: string): string {
   const regex = new RegExp(`<${tag}[^>]*${attr}=["']([^"']*)["']`, 'i');
   const match = regex.exec(xml);
-  return match ? match[1].trim() : '';
+  return match ? match[1]!.trim() : '';
 }
 
 // ─── Main ────────────────────────────────────────────────────────────
@@ -436,11 +434,9 @@ export async function fetchLemmyPosts(limit = 20): Promise<UnifiedPost[]> {
   );
 
   const localResults = await Promise.allSettled(localPromises);
-  let localCount = 0;
   for (const r of localResults) {
     if (r.status === 'fulfilled') {
       all.push(...r.value);
-      localCount += r.value.length;
     }
   }
 

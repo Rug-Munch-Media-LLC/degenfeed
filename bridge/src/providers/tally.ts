@@ -145,7 +145,7 @@ async function graphQLQuery<T>(
     });
     if (!res.ok) return {};
     return (await res.json()) as GraphQLResponse<T>;
-  } catch (err) {
+  } catch {
     // console.log(`[bridge] Tally GraphQL error: ${(err as Error).message}`);
     return {};
   }
@@ -182,8 +182,6 @@ function tallyProposalToPost(proposal: TallyProposal): UnifiedPost | null {
   }
 
   const text = `🏛️ [${govName}] ${title}\n\n${statusLabel}${voteLine}\n\n${description.slice(0, 300)}`;
-
-  const _tokenSymbol = proposal.governance?.tokens?.[0]?.symbol || '';
 
   return {
     id: `tally:${proposal.id}`,

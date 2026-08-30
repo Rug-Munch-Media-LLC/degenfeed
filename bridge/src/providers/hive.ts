@@ -22,20 +22,8 @@ import type { SchemaGuard, UnifiedPost } from '../server/types';
 const $fetch = globalThis.fetch;
 
 const HIVE_API = process.env.HIVE_API_URL || 'https://api.hive.blog';
-const _HIVE_ENGINE_API = 'https://api.hive-engine.com/rpc/contracts';
 
 // ─── Types ─────────────────────────────────────────────────────────────
-
-interface HiveAccount {
-  name: string;
-  display_name?: string;
-  about?: string;
-  website?: string;
-  profile_image?: string;
-  cover_image?: string;
-  post_count: number;
-  reputation: number;
-}
 
 interface HivePostJsonMetadata {
   tags?: string[];
@@ -203,17 +191,8 @@ function hivePostToPost(post: HivePost): UnifiedPost {
     ? `${post.title}\n\n${stripHtml(post.body).slice(0, 1000)}`.trim()
     : stripHtml(post.body).slice(0, 1000).trim();
   const reputation = parseReputation(post.author_reputation);
-
-  // Parse payout
-  let _payoutValue = 0;
-  try {
-    _payoutValue =
-      parseFloat(post.total_payout_value || '0') + parseFloat(post.curator_payout_value || '0');
-  } catch {
-    // ignore
-  }
-
   const embeds: Array<{ kind: string; url: string; meta?: Record<string, unknown> }> = [];
+
   for (const img of images.slice(0, 5)) {
     if (img?.startsWith('http')) {
       embeds.push({ kind: 'image', url: img });
@@ -322,7 +301,7 @@ async function fetchTrending(limit: number, tag: string = ''): Promise<UnifiedPo
     const posts = (result as HiveRankedPostResponse)?.posts;
     if (!Array.isArray(posts)) return [];
     return posts.slice(0, limit).map(hivePostToPost);
-  } catch (err) {
+  } catch {
     // console.log(`[bridge] Hive trending error: ${(err as Error).message}`);
     return [];
   }

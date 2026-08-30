@@ -28,7 +28,7 @@ export async function fetchSublinksPosts(limit = 20): Promise<UnifiedPost[]> {
   try {
     const { fetchSublinksPosts: adapterFetch } = await getAdapter();
     return adapterFetch(limit);
-  } catch (err) {
+  } catch {
     // console.log(`[bridge] Sublinks error: ${(err as Error).message}`);
     return [];
   }

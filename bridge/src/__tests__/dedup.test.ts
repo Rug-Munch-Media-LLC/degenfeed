@@ -9,13 +9,8 @@
  */
 
 import { describe, expect, it } from 'vitest';
+import { deduplicateFeed, engagementScore, normalizeDedupText, urlKey } from '../lib/dedup';
 import type { UnifiedPost } from '../server/types';
-import {
-  deduplicateFeed,
-  engagementScore,
-  normalizeDedupText,
-  urlKey,
-} from '../lib/dedup';
 
 function post(
   id: string,
@@ -104,22 +99,36 @@ describe('engagementScore', () => {
 
 describe('deduplicateFeed', () => {
   it('collapses same-text cross-protocol copies, keeping highest engagement', () => {
-    const low = post('nostr:1', { protocol: 'nostr', likes: 2, text: 'Same headline about token launch' });
-    const high = post('farcaster:1', { protocol: 'farcaster', likes: 120, text: 'Same headline about token launch' });
+    const low = post('nostr:1', {
+      protocol: 'nostr',
+      likes: 2,
+      text: 'Same headline about token launch',
+    });
+    const high = post('farcaster:1', {
+      protocol: 'farcaster',
+      likes: 120,
+      text: 'Same headline about token launch',
+    });
     const result = deduplicateFeed([low, high]);
 
     expect(result).toHaveLength(1);
-    expect(result[0].id).toBe('farcaster:1');
+    expect(result[0]!.id).toBe('farcaster:1');
     expect(low.crossPostOf).toBe('farcaster:1');
   });
 
   it('groups by embed URL when text is short or missing', () => {
-    const a = post('nostr:url', { text: 'check this', embeds: [{ kind: 'link', url: 'https://example.com/story/1' }] });
-    const b = post('rss:url', { text: '', embeds: [{ kind: 'link', url: 'https://www.example.com/story/1/?ref=x' }] });
+    const a = post('nostr:url', {
+      text: 'check this',
+      embeds: [{ kind: 'link', url: 'https://example.com/story/1' }],
+    });
+    const b = post('rss:url', {
+      text: '',
+      embeds: [{ kind: 'link', url: 'https://www.example.com/story/1/?ref=x' }],
+    });
     const result = deduplicateFeed([a, b]);
 
     expect(result).toHaveLength(1);
-    expect(result[0].id).toBe('nostr:url');
+    expect(result[0]!.id).toBe('nostr:url');
     expect(b.crossPostOf).toBe('nostr:url');
   });
 
@@ -139,9 +148,9 @@ describe('deduplicateFeed', () => {
 
     expect(result).toHaveLength(1);
     for (const dup of [a, b, c]) {
-      if (dup.id !== result[0].id) expect(dup.crossPostOf).toBe(result[0].id);
+      if (dup.id !== result[0]!.id) expect(dup.crossPostOf).toBe(result[0]!.id);
     }
-    expect(result[0].crossPostOf).toBeUndefined();
+    expect(result[0]!.crossPostOf).toBeUndefined();
   });
 
   it('preserves input order of canonical posts', () => {

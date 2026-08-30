@@ -123,9 +123,7 @@ export function statusToPost(s: MastodonStatus, instanceHost: string): UnifiedPo
       followerCount: acct.followers_count || 0,
       followingCount: acct.following_count || 0,
       links: [],
-      url: handle.includes('@')
-        ? `https://${handle.split('@')[1]}/@${handle.split('@')[0]}`
-        : '',
+      url: handle.includes('@') ? `https://${handle.split('@')[1]}/@${handle.split('@')[0]}` : '',
       keys: {},
     },
     text,
@@ -205,7 +203,7 @@ async function fetchFromGts(limit: number): Promise<UnifiedPost[]> {
       const raw = (await res.json()) as MastodonStatus[];
       return raw.map((s) => statusToPost(s, 'social.degenfeed.xyz'));
     }
-  } catch (err) {
+  } catch {
     // console.log('[bridge] GTS: fetch error:', (err as Error).message);
   }
 

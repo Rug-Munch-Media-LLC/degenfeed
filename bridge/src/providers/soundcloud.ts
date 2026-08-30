@@ -101,7 +101,7 @@ async function parseFeedXML(xml: string): Promise<SoundCloudRSSItem[]> {
   const itemRegex = /<item>([\s\S]*?)<\/item>/g;
   const xmlMatches = xml.matchAll(itemRegex);
   for (const match of xmlMatches) {
-    const itemXml = match[1];
+    const itemXml = match[1]!;
     const title = itemXml.match(/<title><!\[CDATA\[(.*?)\]\]><\/title>|<title>(.*?)<\/title>/);
     const link = itemXml.match(/<link>(.*?)<\/link>/);
     const pubDate = itemXml.match(/<pubDate>(.*?)<\/pubDate>/);

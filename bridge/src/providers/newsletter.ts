@@ -381,7 +381,7 @@ async function fetchRssSource(src: NewsletterSource, limit: number): Promise<Uni
         return toUnifiedPost(src, n);
       })
       .filter(Boolean);
-  } catch (err) {
+  } catch {
     //     console.log(
     //       `[newsletter] ${src.name}: error — ${err instanceof Error ? err.message : 'unknown'}`,
     //     );
@@ -452,7 +452,7 @@ async function fetchMirrorBridge(limit: number): Promise<UnifiedPost[]> {
         );
       })
       .filter(Boolean);
-  } catch (err) {
+  } catch {
     //     console.log(
     //       `[newsletter] mirror-bridge: error — ${err instanceof Error ? err.message : 'unknown'}`,
     //     );
@@ -607,7 +607,7 @@ async function fetchParagraphBridge(limit: number): Promise<UnifiedPost[]> {
         );
       })
       .filter(Boolean);
-  } catch (err) {
+  } catch {
     //     console.log(
     //       `[newsletter] paragraph-bridge: error — ${err instanceof Error ? err.message : 'unknown'}`,
     //     );
@@ -723,17 +723,14 @@ export async function fetchNewsletterPosts(limit = 30): Promise<UnifiedPost[]> {
   ]);
 
   const all: UnifiedPost[] = [];
-  let failed = 0;
   for (const r of results) {
     if (r.status === 'fulfilled') all.push(...r.value);
-    else failed++;
   }
 
   // Freshness: discard posts published outside the FEED_MAX_AGE_HOURS
   // window (48h) BEFORE the fuzzy cross-platform dedup.
   const fresh = filterFreshPosts(all);
   const deduped = deduplicateNewsletterPosts(fresh, limit);
-  const platforms = new Set(deduped.map(newsletterPlatformOf));
   //   console.log(
   //     `[newsletter] ${deduped.length} posts from ${rssSources.length} RSS sources + mirror-bridge + paragraph-api across ${platforms.size} platforms (${failed} fetch groups failed)`,
   //   );

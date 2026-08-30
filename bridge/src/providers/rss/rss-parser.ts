@@ -61,14 +61,14 @@ export function extractMetadata(html: string): {
   if (!html) return meta;
 
   const descMatch = html.match(/<meta[^>]+name=["']description["'][^>]+content=["']([^"']+)["']/i);
-  if (descMatch) meta.description = stripHtml(descMatch[1]).slice(0, 500);
+  if (descMatch) meta.description = stripHtml(descMatch[1]!).slice(0, 500);
 
   const authorMatch = html.match(/<meta[^>]+name=["']author["'][^>]+content=["']([^"']+)["']/i);
-  if (authorMatch) meta.authorName = stripHtml(authorMatch[1]);
+  if (authorMatch) meta.authorName = stripHtml(authorMatch[1]!);
 
   const keywordsMatch = html.match(/<meta[^>]+name=["']keywords["'][^>]+content=["']([^"']+)["']/i);
   if (keywordsMatch) {
-    meta.keywords = keywordsMatch[1].split(',').map((k) => k.trim().toLowerCase());
+    meta.keywords = keywordsMatch[1]!.split(',').map((k) => k.trim().toLowerCase());
   }
 
   return meta;
@@ -299,7 +299,7 @@ export function parseFeedXml(xml: string): {
   let m: RegExpExecArray | null;
   // biome-ignore lint/suspicious/noAssignInExpressions: regex exec loop
   while ((m = entryRe.exec(xml)) !== null) {
-    const e = m[1];
+    const e = m[1]!;
     const item = parseAtomEntry(e);
     if (item) result.push(item);
   }
@@ -309,15 +309,15 @@ export function parseFeedXml(xml: string): {
     const itemRe = /<item[\s>]([\s\S]*?)<\/item>/gi;
     // biome-ignore lint/suspicious/noAssignInExpressions: regex exec loop
     while ((m = itemRe.exec(xml)) !== null) {
-      const e = m[1];
+      const e = m[1]!;
       const item = parseRssItem(e);
       if (item) result.push(item);
     }
   }
 
   return {
-    title: feedTitleMatch ? stripHtml(feedTitleMatch[1]).trim() : undefined,
-    description: feedDescMatch ? stripHtml(feedDescMatch[1]).trim().slice(0, 500) : undefined,
+    title: feedTitleMatch ? stripHtml(feedTitleMatch[1]!).trim() : undefined,
+    description: feedDescMatch ? stripHtml(feedDescMatch[1]!).trim().slice(0, 500) : undefined,
     link: feedLinkMatch?.[1],
     image: feedImageMatch?.[1] ? stripHtml(feedImageMatch[1]).trim() : undefined,
     items: result,
@@ -326,18 +326,18 @@ export function parseFeedXml(xml: string): {
 
 function parseAtomEntry(e: string): ParsedFeedItem | null {
   const titleMatch = e.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
-  const title = titleMatch ? stripHtml(titleMatch[1]).trim() : '';
+  const title = titleMatch ? stripHtml(titleMatch[1]!).trim() : '';
   if (!title) return null;
 
   // Link - try href attribute first, then content
   const linkMatch = e.match(/<link[^>]+href=["']([^"']+)["']/i);
   const linkAltMatch = e.match(/<link[^>]*>([\s\S]*?)<\/link>/i);
-  const link = linkMatch?.[1] || (linkAltMatch ? stripHtml(linkAltMatch[1]) : '');
+  const link = linkMatch?.[1] || (linkAltMatch ? stripHtml(linkAltMatch[1]!) : '');
 
   const updatedMatch = e.match(/<updated[^>]*>([\s\S]*?)<\/updated>/i);
   const publishedMatch = e.match(/<published[^>]*>([\s\S]*?)<\/published>/i);
-  const publishedAt = publishedMatch ? new Date(publishedMatch[1]).getTime() : Date.now();
-  const updatedAt = updatedMatch ? new Date(updatedMatch[1]).getTime() : publishedAt;
+  const publishedAt = publishedMatch ? new Date(publishedMatch[1]!).getTime() : Date.now();
+  const updatedAt = updatedMatch ? new Date(updatedMatch[1]!).getTime() : publishedAt;
 
   const contentMatch = e.match(/<content[^>]*>([\s\S]*?)<\/content>/i);
   const summaryMatch = e.match(/<summary[^>]*>([\s\S]*?)<\/summary>/i);
@@ -346,7 +346,7 @@ function parseAtomEntry(e: string): ParsedFeedItem | null {
 
   const descriptionMatch = e.match(/<summary[^>]*>([\s\S]*?)<\/summary>/i);
   const description = descriptionMatch
-    ? stripHtml(descriptionMatch[1]).slice(0, 500)
+    ? stripHtml(descriptionMatch[1]!).slice(0, 500)
     : contentText.slice(0, 500);
 
   const authorNameMatch = e.match(
@@ -355,14 +355,14 @@ function parseAtomEntry(e: string): ParsedFeedItem | null {
   const authorUriMatch = e.match(/<author>[\s\S]*?<uri[^>]*>([\s\S]*?)<\/uri>[\s\S]*?<\/author>/i);
 
   const categoryMatches = [...e.matchAll(/<category[^>]+term=["']([^"']+)["']/gi)];
-  const categories = categoryMatches.map((cm) => cm[1].toLowerCase());
+  const categories = categoryMatches.map((cm) => cm[1]!.toLowerCase());
 
   const enclosures = extractEnclosures(e);
   const featuredImage =
     extractFeaturedImage(contentHtml) || extractMediaImage(e) || enclosures[0]?.url;
 
   const idMatch = e.match(/<id[^>]*>([\s\S]*?)<\/id>/i);
-  const id = idMatch ? stripHtml(idMatch[1]) : `entry:${title}:${publishedAt}`;
+  const id = idMatch ? stripHtml(idMatch[1]!) : `entry:${title}:${publishedAt}`;
 
   return {
     title,
@@ -372,8 +372,8 @@ function parseAtomEntry(e: string): ParsedFeedItem | null {
     description,
     publishedAt: Number.isNaN(publishedAt) ? Date.now() : publishedAt,
     updatedAt: Number.isNaN(updatedAt) ? Date.now() : updatedAt,
-    authorName: authorNameMatch ? stripHtml(authorNameMatch[1]) : undefined,
-    authorLink: authorUriMatch ? stripHtml(authorUriMatch[1]) : undefined,
+    authorName: authorNameMatch ? stripHtml(authorNameMatch[1]!) : undefined,
+    authorLink: authorUriMatch ? stripHtml(authorUriMatch[1]!) : undefined,
     featuredImage,
     categories,
     enclosures,
@@ -384,11 +384,11 @@ function parseAtomEntry(e: string): ParsedFeedItem | null {
 
 function parseRssItem(e: string): ParsedFeedItem | null {
   const titleMatch = e.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
-  const title = titleMatch ? stripHtml(titleMatch[1]).trim() : '';
+  const title = titleMatch ? stripHtml(titleMatch[1]!).trim() : '';
   if (!title) return null;
 
   const linkMatch = e.match(/<link[^>]*>([\s\S]*?)<\/link>/i);
-  const link = linkMatch ? stripHtml(linkMatch[1]).trim() : '';
+  const link = linkMatch ? stripHtml(linkMatch[1]!).trim() : '';
 
   const descMatch = e.match(/<description[^>]*>([\s\S]*?)<\/description>/i);
   // Description in RSS may be CDATA-wrapped with HTML
@@ -404,14 +404,14 @@ function parseRssItem(e: string): ParsedFeedItem | null {
   const dcCreatorMatch = e.match(/<dc:creator[^>]*>([\s\S]*?)<\/dc:creator>/i);
 
   const categoryMatches = [...e.matchAll(/<category[^>]*>([\s\S]*?)<\/category>/gi)];
-  const categories = categoryMatches.map((cm) => stripHtml(cm[1]).toLowerCase()).filter(Boolean);
+  const categories = categoryMatches.map((cm) => stripHtml(cm[1]!).toLowerCase()).filter(Boolean);
 
   const enclosures = extractEnclosures(e);
   const featuredImage =
     extractFeaturedImage(contentHtml) || extractMediaImage(e) || enclosures[0]?.url;
 
   const guidMatch = e.match(/<guid[^>]*>([\s\S]*?)<\/guid>/i);
-  const id = guidMatch ? stripHtml(guidMatch[1]) : `rss:${title}:${publishedAt}`;
+  const id = guidMatch ? stripHtml(guidMatch[1]!) : `rss:${title}:${publishedAt}`;
 
   return {
     title,
@@ -422,9 +422,9 @@ function parseRssItem(e: string): ParsedFeedItem | null {
     publishedAt: Number.isNaN(publishedAt) ? Date.now() : publishedAt,
     updatedAt: Number.isNaN(publishedAt) ? Date.now() : publishedAt,
     authorName: authorMatch
-      ? stripHtml(authorMatch[1])
+      ? stripHtml(authorMatch[1]!)
       : dcCreatorMatch
-        ? stripHtml(dcCreatorMatch[1])
+        ? stripHtml(dcCreatorMatch[1]!)
         : undefined,
     featuredImage,
     categories,

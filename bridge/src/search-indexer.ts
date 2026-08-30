@@ -401,7 +401,6 @@ async function fullIndex(): Promise<{ count: number; errors: number }> {
     }
   }
 
-  const elapsed = ((Date.now() - start) / 1000).toFixed(1);
   // console.log(`[indexer] Full index: ${indexed} documents in ${elapsed}s (${errors} errors)`);
 
   indexCount = indexed;
@@ -455,7 +454,6 @@ async function incrementalIndex(): Promise<{ count: number; errors: number }> {
     }
   }
 
-  const elapsed = ((Date.now() - start) / 1000).toFixed(1);
   // console.log(`[indexer] Incremental index: ${indexed} docs in ${elapsed}s`);
 
   indexCount += indexed;
@@ -539,7 +537,7 @@ export async function startIndexer(): Promise<void> {
 
     isRunning = true;
     try {
-      const result = await incrementalIndex();
+      await incrementalIndex();
       //       console.log(
       //         `[indexer] Cycle complete. ${result.count} new docs indexed. Next in ${INTERVAL_MS / 1000}s.`,
       //       );

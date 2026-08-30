@@ -164,7 +164,7 @@ async function graphQLQuery(query: string): Promise<GraphQLResponse> {
     });
     if (!res.ok) return {};
     return (await res.json()) as GraphQLResponse;
-  } catch (err) {
+  } catch {
     // console.log(`[bridge] Subsocial GraphQL error: ${(err as Error).message}`);
     return {};
   }

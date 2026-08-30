@@ -159,7 +159,7 @@ async function fetchDiscoverFeed(limit: number): Promise<UnifiedPost[]> {
     const feed = (await res.json()) as MicroblogFeed;
     const items = feed.items || [];
     return items.slice(0, limit).map((i) => microblogItemToPost(i, 'discover'));
-  } catch (err) {
+  } catch {
     // console.log(`[bridge] Micro.blog discover error: ${(err as Error).message}`);
     return [];
   }

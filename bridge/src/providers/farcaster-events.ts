@@ -18,15 +18,6 @@ const $fetch = globalThis.fetch;
 const HUBBLE_BASE = process.env.HUBBLE_URL || 'http://127.0.0.1:2281';
 
 // Event-related Farcaster channels (these are real channel IDs on Farcaster)
-const _EVENT_CHANNELS = [
-  'events',
-  'meetups',
-  'conferences',
-  'hackathons',
-  'crypto-events',
-  'ethereum-events',
-  'solana-events',
-];
 
 const EVENT_KEYWORDS = [
   'event',
@@ -176,8 +167,6 @@ function farcasterFrameToUnifiedEvent(frame: FarcasterEventFrame): UnifiedEvent 
       frame.eventUrl ||
       frame.embeds[0]?.url ||
       `https://warpcast.com/~/conversations/${frame.hash}`;
-    const _eventDate =
-      frame.eventDate || new Date(frame.timestamp * 1000).toISOString().split('T')[0];
 
     // Try to parse a date from frame text
     const beginsOn = frame.eventDate

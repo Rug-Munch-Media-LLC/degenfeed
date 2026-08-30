@@ -22,7 +22,6 @@ const $fetch = globalThis.fetch;
 // ─── Constants ─────────────────────────────────────────────────────────
 
 const ORBIS_API = 'https://orbis.club/api';
-const _CERAMIC_NODE = process.env.CERAMIC_NODE_URL || 'http://127.0.0.1:5102';
 
 // ─── Types ─────────────────────────────────────────────────────────────
 
@@ -88,7 +87,9 @@ function orbisPostToUnified(post: OrbisPost): UnifiedPost {
   const body = post.content?.body || post.content?.data || post.content?.title || '';
   const title = post.content?.title || '';
   const text = title ? `${title}\n\n${body}` : body;
-  const creator = post.creator_details?.profile || post.creator_details?.metadata;
+  const creator = (post.creator_details?.profile || post.creator_details?.metadata) as
+    | { displayName?: string; username?: string; pfp?: string; description?: string }
+    | undefined;
   const displayName =
     creator?.displayName ||
     creator?.username ||
@@ -154,7 +155,7 @@ async function fetchFromOrbisApi(limit: number): Promise<UnifiedPost[]> {
     const posts = data.data || [];
     if (!Array.isArray(posts)) return [];
     return posts.slice(0, limit).map(orbisPostToUnified);
-  } catch (err) {
+  } catch {
     // console.log(`[bridge] Orbis API error: ${(err as Error).message}`);
     return [];
   }

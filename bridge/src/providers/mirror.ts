@@ -316,7 +316,7 @@ async function fetchRecentPosts(limit: number): Promise<UnifiedPost[]> {
       posts.push(mirrorPostToPost(post));
     }
     return posts.slice(0, limit);
-  } catch (err) {
+  } catch {
     // console.log(`[bridge] Mirror Arweave error: ${(err as Error).message}`);
     return [];
   }

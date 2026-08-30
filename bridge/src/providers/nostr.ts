@@ -14,8 +14,6 @@ import { npubDecode } from '@degenfeed/nostr-sdk';
 import { checkRateLimit } from '../rate-limiter';
 import type { SchemaGuard, UnifiedPost } from '../server/types';
 
-const _$fetch = globalThis.fetch;
-
 /**
  * Our relay + public relays.
  *
@@ -669,7 +667,7 @@ export async function fetchNostrPosts(limit = 20): Promise<UnifiedPost[]> {
 
   const posts = unique.map((ev) => {
     const profile = getProfile(ev.pubkey);
-    return eventToPost(ev, RELAYS[0].url, profile);
+    return eventToPost(ev, RELAYS[0]!.url, profile);
   });
 
   //   console.log(

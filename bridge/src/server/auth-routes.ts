@@ -1065,7 +1065,8 @@ export async function handleAuthRoute(
     }
     // Wrong method for a known auth path — handled to avoid falling through
     // to the catch-all stub with a fake 200.
-    return jsonError(res, 405, 'METHOD_NOT_ALLOWED', `Method ${method} not allowed for ${path}`);
+    jsonError(res, 405, 'METHOD_NOT_ALLOWED', `Method ${method} not allowed for ${path}`);
+    return false;
   }
 
   return false;

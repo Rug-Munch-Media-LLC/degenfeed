@@ -26,7 +26,6 @@ const $fetch = globalThis.fetch;
 
 // ─── Known public SOGS instances ──────────────────────────────────────
 // Session open group servers are self-hosted; these are well-known public ones.
-const _SOGS_INSTANCES = ['https://sogs.session.foundation', 'https://discuss.oxen.io'];
 
 // ─── Crypto/tech focused open rooms on public SOGS ────────────────────
 interface RoomConfig {
@@ -201,7 +200,7 @@ async function fetchRoomMessages(room: RoomConfig, limit: number): Promise<Unifi
       .map((m: SOGSMessage) => sogsMessageToPost(m, room, roomInfo))
       .filter((p: UnifiedPost | null): p is UnifiedPost => p !== null)
       .slice(0, limit);
-  } catch (err) {
+  } catch {
     //     console.log(
     //       `[bridge] Session room error (${room.room}@${room.instance}): ${(err as Error).message}`,
     //     );
@@ -271,7 +270,6 @@ export const schema: SchemaGuard = {
 
 export async function fetchSessionPosts(limit = 20): Promise<UnifiedPost[]> {
   const perRoom = Math.max(3, Math.ceil(limit / CURATED_ROOMS.length));
-  const _roomLimit = Math.max(1, Math.ceil(perRoom * 0.3));
 
   const results = await Promise.allSettled(
     CURATED_ROOMS.map(async (room) => {

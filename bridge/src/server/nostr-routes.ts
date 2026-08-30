@@ -18,13 +18,9 @@ import type http from 'node:http';
 
 const OUR_RELAY_WS = process.env.NOSTR_RELAY_WS || 'ws://127.0.0.1:8085';
 const OUR_RELAY_WSS = process.env.NOSTR_RELAY_WSS || 'wss://nostr.degenfeed.xyz';
-const _DEGENFEED_NPUB =
-  process.env.DEGENFEED_NOSTR_NPUB ||
-  '0307fc061381e9a4d66111a67fd863e2e7d3ce70bfb01146192015a80df6bbf';
 const NIP05_DOMAIN = process.env.NIP05_DOMAIN || 'nostr.degenfeed.xyz';
 const DEGENFEED_NOSTR_NSEC =
   process.env.DEGENFEED_NOSTR_NSEC || process.env.NOSTR_PRIVATE_KEY_HEX || '';
-const _API_KEY = process.env.NOSTR_API_KEY || '';
 
 // ─── In-Memory KV Store ─────────────────────────────────────────────────
 // Maps npub hex -> { username, nip05, registeredAt, profile }

@@ -242,7 +242,7 @@ async function fetchFromInstance(source: MobilizonSource, limit: number): Promis
       .filter((e: MobilizonEvent) => e.status === 'confirmed' || e.status === 'published')
       .slice(0, limit)
       .map((e: MobilizonEvent) => eventToPost(e, source));
-  } catch (err) {
+  } catch {
     // console.log(`[bridge] Mobilizon GraphQL error (${source.instance}): ${(err as Error).message}`);
     return [];
   }

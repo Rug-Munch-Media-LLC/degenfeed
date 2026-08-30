@@ -46,19 +46,16 @@ const CURATED_BLOGS: BlogSource[] = [
   { alias: 'tedomum', instance: 'https://write.tedomum.net', displayName: 'Tedomum Blog' },
   // WriteFreely project blog — real instance-level RSS at /feed/ (verified
   // 200, 2026-08-06). Serves project news + release posts.
-  { alias: 'writefreely', instance: 'https://blog.writefreely.org', displayName: 'WriteFreely Project' },
+  {
+    alias: 'writefreely',
+    instance: 'https://blog.writefreely.org',
+    displayName: 'WriteFreely Project',
+  },
   // paper.wf — federated WriteFreely instance (verified reachable 2026-08-06).
   { alias: 'blog', instance: 'https://paper.wf', displayName: 'Paper.wf Blog' },
   // quil.pm — requested WriteFreely instance; NXDOMAIN as of 2026-08-06, kept
   // for when the domain returns (provider degrades gracefully on fetch error).
   { alias: 'quil', instance: 'https://quil.pm', displayName: 'Quil.pm' },
-];
-
-const _PUBLIC_INSTANCES = [
-  'https://write.as',
-  'https://blog.writefreely.org',
-  'https://write.tedomum.net',
-  'https://paper.wf',
 ];
 
 // ─── Types ─────────────────────────────────────────────────────────────
@@ -256,7 +253,7 @@ async function fetchBlogPosts(blog: BlogSource, limit: number): Promise<UnifiedP
       if (items.length < 10) break;
     }
     return all;
-  } catch (err) {
+  } catch {
     // console.log(`[bridge] WriteFreely REST error (${blog.alias}): ${(err as Error).message}`);
     return all;
   }
@@ -288,9 +285,7 @@ async function fetchRssFallback(blog: BlogSource, limit: number): Promise<Unifie
         xml = body;
         break;
       }
-    } catch {
-      continue;
-    }
+    } catch {}
   }
   if (!xml) return [];
   const items = parseRssItems(xml);
@@ -346,7 +341,7 @@ export async function fetchWriteFreelyPosts(limit = 20): Promise<UnifiedPost[]> 
   // feed surfaces content from across the fediverse, not just our own blog.
   // The local DegenFeed collection (69+ posts) is the reliable safety net
   // that tops up any shortfall and guarantees a non-empty feed.
-  const localBlog = CURATED_BLOGS[0];
+  const localBlog = CURATED_BLOGS[0]!;
   const remoteBlogs = CURATED_BLOGS.slice(1);
   // Give remote blogs a real share: half the requested posts, split across
   // all remote sources (min 3 each so small instances still contribute).

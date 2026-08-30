@@ -11,6 +11,10 @@ export interface UnifiedIdentity {
   followingCount: number;
   links: { label: string; url: string }[];
   keys: Record<string, string | undefined>;
+  /** Canonical profile URL on the native protocol. */
+  url?: string;
+  /** Verified badge flag (set by providers that surface it, e.g. Deso/PieFed). */
+  verified?: boolean | Array<{ protocol?: string; badge?: string }>;
 }
 
 export interface UnifiedPost {
@@ -33,15 +37,21 @@ export interface UnifiedPost {
     viewerLiked: boolean;
     viewerReposted: boolean;
     viewerBookmarked: boolean;
-    raw: { likes: number; reposts: number; replies: number; quotes: number };
+    raw: { likes: number; reposts: number; replies: number; quotes: number; views?: number };
   };
   raw: unknown;
   niches: string[];
   contentType?: string;
+  /** Fediverse community / group the post was published to (set by providers). */
+  community?: Record<string, unknown>;
   /** Parent post id for reply threading */
   parentId?: string;
   /** Root post id for thread tracking */
   rootId?: string;
+  /** Native-protocol parent event id (set by providers, e.g. Nostr calendar). */
+  parentNativeId?: string;
+  /** Native-protocol root event id (set by providers, e.g. Nostr calendar). */
+  rootNativeId?: string;
   /** DegenFeed unified URI (df://protocol:rkey) for cross-protocol replies */
   dfUri?: string;
   /** Canonical URL on the native protocol (bsky.app post link) */

@@ -263,7 +263,6 @@ export class FeedResponseCache {
    */
   private reportMemory(): void {
     const mem = process.memoryUsage();
-    const stats = this.getStats();
     //     console.log(
     //       `[response-cache] rss=${Math.round(mem.rss / 1024 / 1024)}MB ` +
     //       `heap=${Math.round(mem.heapUsed / 1024 / 1024)}/${Math.round(mem.heapTotal / 1024 / 1024)}MB ` +

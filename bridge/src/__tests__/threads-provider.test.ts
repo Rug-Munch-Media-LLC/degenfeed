@@ -107,7 +107,7 @@ describe('Threads provider — parseProfileHtml', () => {
   it('parses legacy __NEXT_DATA__ threads shape', () => {
     const posts = parseProfileHtml(legacyNextDataHtml(), 'ethereum');
     expect(posts.length).toBeGreaterThan(0);
-    const p = posts[0];
+    const p = posts[0]!;
     expect(p.id).toBe('1001');
     expect(p.user?.username).toBe('ethereum');
     expect(p.like_count).toBe(42);
@@ -118,7 +118,7 @@ describe('Threads provider — parseProfileHtml', () => {
   it('parses modern application/json blob thread_items shape', () => {
     const posts = parseProfileHtml(blobHtml(), 'solana');
     expect(posts.length).toBe(1);
-    const p = posts[0];
+    const p = posts[0]!;
     expect(p.id).toBe('2001');
     expect(p.user?.username).toBe('solana');
     expect(p.video_versions?.[0]?.url).toBe('https://cdn/video.mp4');
@@ -136,9 +136,13 @@ describe('Threads provider — parseProfileHtml', () => {
   it('deduplicates posts found by multiple strategies', () => {
     // Same post id in both __NEXT_DATA__ and a blob → one result
     const nextData = JSON.stringify({
-      props: { pageProps: { threads: [{ threads: [{ id: 'dup1', user: { pk: '1' }, taken_at: 100 }] }] } },
+      props: {
+        pageProps: { threads: [{ threads: [{ id: 'dup1', user: { pk: '1' }, taken_at: 100 }] }] },
+      },
     });
-    const blob = JSON.stringify({ thread_items: [{ post: { id: 'dup1', user: { pk: '1' }, taken_at: 100 } }] });
+    const blob = JSON.stringify({
+      thread_items: [{ post: { id: 'dup1', user: { pk: '1' }, taken_at: 100 } }],
+    });
     const html = `<script id="__NEXT_DATA__">${nextData}</script><script type="application/json">${blob}</script>`;
     const posts = parseProfileHtml(html, 'dupe');
     expect(posts.filter((p) => p.id === 'dup1')).toHaveLength(1);

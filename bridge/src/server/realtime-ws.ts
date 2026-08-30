@@ -77,7 +77,7 @@ export function attachRealtimeWebSocket(server: http.Server): void {
 
   wss.on('connection', (ws: WebSocket) => {
     const liveProtocols = Object.keys(PROVIDERS).filter(
-      (key) => PROVIDERS[key].category !== 'infrastructure',
+      (key) => PROVIDERS[key]?.category !== 'infrastructure',
     );
 
     ws.send(

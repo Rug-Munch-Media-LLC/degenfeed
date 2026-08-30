@@ -97,11 +97,6 @@ interface MatrixMessagesResponse {
   end: string;
 }
 
-interface MatrixRoomName {
-  name?: string;
-  room_id: string;
-}
-
 // ─── Helpers ──────────────────────────────────────────────────────────
 
 function guessMatrixNiches(text: string, roomName?: string): string[] {
@@ -142,10 +137,6 @@ function guessMatrixNiches(text: string, roomName?: string): string[] {
 
 function matrixUserToHandle(sender: string): string {
   return sender.startsWith('@') ? sender.split(':')[0]?.replace('@', '') || sender : sender;
-}
-
-function _matrixUserToId(sender: string): string {
-  return sender;
 }
 
 function extractMatrixContent(event: MatrixEvent): string {
@@ -255,7 +246,7 @@ async function fetchFromRoom(source: MatrixSource, limit: number): Promise<Unifi
       })
       .slice(0, limit)
       .map((e) => eventToPost(e, source));
-  } catch (err) {
+  } catch {
     // console.log(`[bridge] Matrix fetch error (${source.roomId}): ${(err as Error).message}`);
     return [];
   }

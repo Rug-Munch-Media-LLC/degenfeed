@@ -28,7 +28,7 @@ export async function fetchStreamsPosts(limit = 20): Promise<UnifiedPost[]> {
   try {
     const { fetchStreamsPosts: adapterFetch } = await getAdapter();
     return adapterFetch(limit);
-  } catch (err) {
+  } catch {
     // console.log(`[bridge] Streams error: ${(err as Error).message}`);
     return [];
   }
