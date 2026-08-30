@@ -37,7 +37,6 @@ services:
       - "127.0.0.1:3100:3000"
     env_file: .env
     networks:
-      - rmi_network
       - degenfeed_default
     deploy:
       resources:
@@ -86,8 +85,6 @@ services:
       retries: 3
 
 networks:
-  rmi_network:
-    external: true
   degenfeed_default:
     external: true
 

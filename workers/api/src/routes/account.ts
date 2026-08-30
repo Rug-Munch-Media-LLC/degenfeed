@@ -7,7 +7,6 @@
  * Both require a valid session cookie.
  */
 
-import { getBookmarks } from '../lib/rmi-client';
 import { noCacheJsonResponse } from '../response-helpers';
 import { requireSession } from '../session';
 import type { Env } from '../types';
@@ -57,18 +56,10 @@ export async function handleAccountExport(request: Request, env: Env): Promise<R
     }
   }
 
-  // Bookmarks — rmi-backend primary, KV fallback
+  // Bookmarks — Cloudflare KV is the single store (DegenFeed-owned)
   {
     let bookmarks: unknown = null;
-    try {
-      const postIds = await getBookmarks(env, session.address);
-      if (postIds.length > 0 || env.USE_RMI_API === 'true') {
-        bookmarks = postIds;
-      }
-    } catch {
-      /* API unavailable -- fall through to KV */
-    }
-    if (bookmarks === null && env.BOOKMARKS) {
+    if (env.BOOKMARKS) {
       try {
         const raw = await env.BOOKMARKS.get(`bookmarks:${session.address}`);
         if (raw) bookmarks = JSON.parse(raw);
