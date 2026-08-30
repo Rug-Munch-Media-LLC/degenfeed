@@ -479,7 +479,7 @@ export default function DigitalRightsPage() {
         const data = (await bundleRes.json()) as { data: PortableBundle };
         setPortableBundle(data.data ?? null);
       }
-    } catch (_err) {
+    } catch {
       showToast('error', 'Failed to load rights data');
     } finally {
       setLoading(false);

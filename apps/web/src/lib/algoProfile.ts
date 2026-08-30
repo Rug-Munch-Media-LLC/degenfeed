@@ -134,10 +134,10 @@ export function recordAlgoEngagement(
 
   // Creator affinity — positive signals only, most-recent-first FIFO.
   if (weight > 0.15 && post.author?.id) {
-    next.creators = [
-      post.author.id,
-      ...next.creators.filter((id) => id !== post.author.id),
-    ].slice(0, MAX_CREATORS);
+    next.creators = [post.author.id, ...next.creators.filter((id) => id !== post.author.id)].slice(
+      0,
+      MAX_CREATORS,
+    );
   }
 
   next.updatedAt = Date.now();

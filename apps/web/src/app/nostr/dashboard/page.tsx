@@ -176,7 +176,7 @@ export default function NostrDashboardPage() {
       } else {
         // alert(`❌ ${data.error?.message || 'Failed'}`);
       }
-    } catch (err) {
+    } catch {
       // alert(`❌ Error: ${(err as Error).message}`);
     }
   }, [nsecStored, getSdk]);

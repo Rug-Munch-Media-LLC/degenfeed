@@ -45,8 +45,6 @@ import { useActiveLiveShorts } from '../../components/live-shorts/useLiveShorts'
 
 // === Mock data for upcoming and recent sections =======================
 
-
-
 // === Horizontal row component for upcoming/recent ====================
 
 function LiveShortMiniCard({ session }: { session: LiveShortSession }) {

@@ -75,7 +75,7 @@ async function handleResponse<T>(response: Response): Promise<ApiResponse<T>> {
       return data as unknown as ApiResponse<T>;
     }
     return { success: true, data };
-  } catch (_err) {
+  } catch {
     return { success: false, error: 'Failed to parse response JSON' };
   }
 }

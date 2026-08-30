@@ -3,9 +3,9 @@
 import { TIP_CHAIN_CONFIG, tipOnChain } from '@degenfeed/web3';
 import { QRCodeSVG } from 'qrcode.react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { SPL_TOKEN_MINTS, type SplTokenSymbol } from '../lib/solana-spl';
 import type { TipPostContext } from '../hooks/useTip';
 import { useTip } from '../hooks/useTip';
+import { SPL_TOKEN_MINTS, type SplTokenSymbol } from '../lib/solana-spl';
 import { useAnnouncer } from './ScreenReaderAnnouncer';
 import { useSolana } from './SolanaProvider';
 import { useWeb3 } from './Web3Provider';
@@ -293,9 +293,7 @@ export function TipModal({
         const { signature } = await signAndSendTransaction(
           intent.intent.to,
           Number.parseFloat(amount),
-          solanaToken === 'SOL'
-            ? undefined
-            : { mint: SPL_TOKEN_MINTS[solanaToken].address },
+          solanaToken === 'SOL' ? undefined : { mint: SPL_TOKEN_MINTS[solanaToken].address },
         );
         setTipStatus('sent', signature);
         window.dispatchEvent(

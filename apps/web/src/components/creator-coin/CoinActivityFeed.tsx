@@ -184,7 +184,6 @@ const FILTER_TABS: Array<{ type: ActivityType | 'all'; label: string }> = [
 
 // ─── Mock Data Generator ───────────────────────────────────────────────────
 
-
 // ─── Main Component ────────────────────────────────────────────────────────
 
 export function CoinActivityFeed({

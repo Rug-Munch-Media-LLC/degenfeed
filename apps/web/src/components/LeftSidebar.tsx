@@ -601,7 +601,7 @@ export const LeftSidebar = memo(function LeftSidebar({
           />
           {!collapsed && (
             <span className="text-xl font-bold tracking-tight" style={{ color: 'var(--color-fg)' }}>
-              Crypto Rug Muncher
+              DegenFeed
             </span>
           )}
         </Link>

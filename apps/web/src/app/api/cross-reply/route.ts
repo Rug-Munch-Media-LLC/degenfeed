@@ -54,7 +54,9 @@ export async function POST(request: NextRequest) {
 
     // Forward to bridge worker
     const workerUrl =
-      process.env.WORKER_URL || process.env.NEXT_PUBLIC_WORKER_URL || 'http://host.docker.internal:3101';
+      process.env.WORKER_URL ||
+      process.env.NEXT_PUBLIC_WORKER_URL ||
+      'http://host.docker.internal:3101';
 
     try {
       const headers: Record<string, string> = { 'Content-Type': 'application/json' };

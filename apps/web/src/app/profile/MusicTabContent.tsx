@@ -71,10 +71,13 @@ export default function MusicTabContent({ creatorId, artistName }: MusicTabConte
                 ? String((raw.album as Record<string, unknown>).title || '')
                 : undefined,
               audioUrl: upload ? String(upload.audio_file || '') : '',
-              coverUrl: (epArtist?.cover as Record<string, unknown>)?.urls
+              coverUrl: (epArtist?.cover as Record<string, unknown> | undefined)?.urls
                 ? String(
-                    ((epArtist?.cover as Record<string, unknown>)?.urls as Record<string, unknown>)
-                      .original || '',
+                    (
+                      (epArtist?.cover as Record<string, unknown> | undefined)?.urls as
+                        | Record<string, unknown>
+                        | undefined
+                    )?.original || '',
                   )
                 : undefined,
               duration: upload ? Number(upload.duration || 0) : 0,

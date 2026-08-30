@@ -34,7 +34,9 @@ export async function GET(request: NextRequest) {
 
     // Direct fetch to bridge
     const workerUrl =
-      process.env.WORKER_URL || process.env.NEXT_PUBLIC_WORKER_URL || 'http://host.docker.internal:3101';
+      process.env.WORKER_URL ||
+      process.env.NEXT_PUBLIC_WORKER_URL ||
+      'http://host.docker.internal:3101';
 
     const bridgeRes = await fetch(
       `${workerUrl}/api/notifications?limit=${encodeURIComponent(limit)}${walletParam}`,
@@ -57,7 +59,7 @@ export async function GET(request: NextRequest) {
       notifications: [],
       meta: { total: 0, unread: 0, protocols: [] },
     });
-  } catch (_err) {
+  } catch {
     return NextResponse.json({
       notifications: [],
       meta: { total: 0, unread: 0, protocols: [] },
