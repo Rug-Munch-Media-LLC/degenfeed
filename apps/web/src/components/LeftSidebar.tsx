@@ -791,13 +791,13 @@ export const LeftSidebar = memo(function LeftSidebar({
             {/* Divider */}
             <div className="my-2 border-t border-[var(--color-glass-border)]" />
 
-            {/* ── RugMunch platform shell — same left-hand nav as rugmunch.io ── */}
+            {/* ── Rug Munch Intelligence platform shell — same left-hand nav as rugmunch.io */}
             <div className="mb-2">
               <div
                 className="mt-1 mb-2 flex items-center gap-1 px-3 text-[9px] font-bold uppercase tracking-[0.14em]"
                 style={{ color: 'var(--color-accent)' }}
               >
-                RugMunch Platform
+                Rug Munch Intelligence
               </div>
               {renderRugMunchNav()}
             </div>
