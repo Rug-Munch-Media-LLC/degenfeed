@@ -59,8 +59,11 @@ jobs:
             git reset --hard origin/main
             echo "=== Installing dependencies (frozen lockfile) ==="
             pnpm install --frozen-lockfile
-            echo "=== Building web app (standalone) ==="
-            pnpm --filter degenfeed build
+            echo "=== Building web app (standalone + static assets) ==="
+            # Next.js standalone does NOT copy public/ or .next/static — the
+            # script copies both into the standalone dir before restart (see
+            # deploy/build-standalone.sh for the manual one-liner equivalent).
+            bash deploy/build-standalone.sh
             echo "=== Restarting $SERVICE ==="
             sudo systemctl restart "$SERVICE"
             echo "=== Waiting for health check ==="

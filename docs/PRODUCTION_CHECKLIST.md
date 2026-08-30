@@ -12,7 +12,7 @@
 | # | Check | Status | Details |
 |---|-------|--------|---------|
 | 1.1 | `.forgejo/workflows/ci.yml` exists | ✅ | Lint, stylelint, typecheck, test, e2e, a11y, build, Lighthouse, security (gitleaks), links (lychee) — **156 lines, solid** |
-| 1.2 | Build produces artifacts | ✅ | `pnpm --filter degenfeed-web build` + `pnpm --filter @degenfeed/api-worker build` |
+| 1.2 | Build produces artifacts | ✅ | `pnpm --filter degenfeed build` + `pnpm --filter @degenfeed/api-worker build` |
 | 1.3 | Security scanning in CI | ✅ | gitleaks on full repo, lychee for broken links |
 | 1.4 | Deployment pipeline | ✅ | `.forgejo/workflows/deploy.yml` — canary → smoke → promote → production, plus `workflow_dispatch` for manual promote |
 | 1.5 | Preview deployments | ✅ | PR builds deploy to `preview.degenfeed.xyz` via Cloudflare Pages + Workers |

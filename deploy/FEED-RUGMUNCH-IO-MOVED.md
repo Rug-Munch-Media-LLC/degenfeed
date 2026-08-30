@@ -1,6 +1,6 @@
 # feed.rugmunch.io — MOVED to rmi-frontend
 
-**This directory was removed from degenfeed-web on 2026-08-30.**
+**This directory was removed from the degenfeed repo on 2026-08-30.**
 
 The static shell for `feed.rugmunch.io` (`index.html` + `/data/posts.json` at
 runtime) now lives in **rmi-frontend**:
@@ -12,7 +12,7 @@ runtime) now lives in **rmi-frontend**:
 ## Why
 
 `feed.rugmunch.io` is a **rugmunch.io subdomain** and must be owned by the
-rmi-frontend repo (Rug Munch Intelligence brand), not degenfeed-web
+rmi-frontend repo (Rug Munch Intelligence brand), not degenfeed
 (DegenFeed brand). One site = one frontend repo. See
 `/srv/work/repos/standards/SITE_OWNERSHIP.md` for the canonical map.
 

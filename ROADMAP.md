@@ -7,6 +7,7 @@
 - Turborepo + pnpm workspace structure (`apps/*`, `packages/*`, `workers/*`)
 - Landing page live at `degenfeed.xyz` (served by the Next.js app via nginx)
 - **`apps/web` LIVE at `app.degenfeed.xyz`** — systemd standalone service (`degenfeed-web.service`, 127.0.0.1:3100) behind nginx + Cloudflare Tunnel
+- **Standalone static assets fixed** — `deploy/build-standalone.sh` copies `public/` + `.next/static` into the standalone dir (was missing → no images/logos)
 - Feed API live via the self-hosted bridge (`degenfeed-bridge.service`, :8787) — Cloudflare Worker `degenfeed-api` RETIRED 2026-08-04
 - CI pipeline on Forgejo (`docker-x64` runner), pre-commit hooks, and Makefile
 - Protocol SDK packages: Nostr, Farcaster, Lens, Bluesky, Mastodon, Threads, RSS
@@ -35,6 +36,7 @@
 - MeiliSearch-backed global search
 - Notifications via GotoSocial
 - RSS ingest improvements
+- **Bring up Mastodon stack** (`social.degenfeed.xyz`): build `degenfeed/gotosocial` image (Dockerfile or upstream switch), join Elk to `degenfeed_default` network
 
 ## Acceptance
 - `app.degenfeed.xyz` renders a unified, ranked feed ✅ (live via systemd)

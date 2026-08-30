@@ -1,36 +1,69 @@
 # DegenFeed Web — Deployment Guide
 
-**Status:** canonical  
+**Status:** canonical
 **Last updated:** 2026-08-30
 
 > ## ⚠️ CURRENT TRUTH (2026-08-30) — read this first
 >
 > **Production is a systemd standalone service, NOT Cloudflare and NOT Docker Compose.**
 >
-> | Component | Mechanism | Endpoint |
+> ### Real 4-domain architecture
+>
+> | Domain | Role | Mechanism |
 > |---|---|---|
-> | Web app (`apps/web`) | `degenfeed-web.service` — Next.js 16 standalone, runs from this repo's checkout (`apps/web/.next/standalone`) | 127.0.0.1:3100 |
-> | Feed API (bridge) | `degenfeed-bridge.service` | :8787 |
-> | TLS / routing | nginx (`deploy/nginx/*.conf` versioned here) → Cloudflare Tunnel | degenfeed.xyz / app.degenfeed.xyz |
+> | `degenfeed.xyz` | Landing page (app `/`) | `degenfeed-web.service` (Next.js 16 standalone), 127.0.0.1:3100 |
+> | `app.degenfeed.xyz` | The app | same `degenfeed-web.service` (nginx routes / → lander, app host → app) |
+> | `social.degenfeed.xyz` | Mastodon | Elk (web client) + GoToSocial (server) on the `degenfeed_default` Docker network |
+> | `api.degenfeed.xyz` | Feed API bridge | `degenfeed-bridge.service`, :8787 |
+> | TLS / routing | nginx (`deploy/nginx/*.conf` versioned here) → Cloudflare Tunnel | all 4 domains |
 >
 > **Cloudflare Workers + Pages are RETIRED (2026-08-04).** The `workers/api`
 > Worker and Pages frontend no longer serve production traffic; the app
 > proxies bridge-owned `/api/feed*` routes to the bridge itself
 > (`API_PROXY_TARGET`, default `http://localhost:8787`).
 >
-> **Deploy = update checkout → build → restart the unit** (automated by
-> `.forgejo/workflows/deploy.yml` on push to main; requires `DEPLOY_HOST`,
-> `DEPLOY_USER`, `DEPLOY_SSH_KEY` Forgejo secrets + passwordless sudo for
-> `systemctl restart degenfeed-web`):
+> **⚠️ GoToSocial image is MISSING.** `social.degenfeed.xyz` requires the
+> `degenfeed/gotosocial:latest` image, which does not exist yet — it needs a
+> Dockerfile (or a switch to an upstream image, e.g.
+> `superseriousbusiness/gotosocial:latest`) plus a rebuild on the `degenfeed_default`
+> Docker network that Elk also requires. Until then the Mastodon stack is down.
+>
+> **⚠️ Static assets are NOT part of the standalone output.** Next.js
+> `output: "standalone"` requires manually copying `apps/web/public` and
+> `apps/web/.next/static` into the standalone dir — without them the live app
+> serves no images/logos. `deploy/build-standalone.sh` does this (wired into
+> `.forgejo/workflows/deploy.yml`). The old claim that the unit's ExecStartPre
+> re-links these is FALSE — there is no ExecStartPre; the copies are deploy-time
+> only.
+>
+> **Deploy = update checkout → build → copy static → restart the unit**
+> (automated by `.forgejo/workflows/deploy.yml` on push to main; requires
+> `DEPLOY_HOST`, `DEPLOY_USER`, `DEPLOY_SSH_KEY` Forgejo secrets + passwordless
+> sudo for `systemctl restart degenfeed-web`):
 >
 > ```bash
 > cd /srv/work/repos/degenfeed-web
 > git fetch origin main && git reset --hard origin/main
 > pnpm install --frozen-lockfile
-> pnpm --filter degenfeed build
-> sudo systemctl restart degenfeed-web   # ExecStartPre re-links public/ + .next/static
+> bash deploy/build-standalone.sh            # build + copy public/ + .next/static
+> sudo systemctl restart degenfeed-web
 > curl -sf http://127.0.0.1:3100/api/health
 > ```
+>
+> Manual one-liner equivalent (build + copy, no restart):
+> ```bash
+> pnpm --filter degenfeed build \
+>   && rm -rf apps/web/.next/standalone/apps/web/public \
+>   && cp -r apps/web/public apps/web/.next/standalone/apps/web/public \
+>   && mkdir -p apps/web/.next/standalone/apps/web/.next \
+>   && rm -rf apps/web/.next/standalone/apps/web/.next/static \
+>   && cp -r apps/web/.next/static apps/web/.next/standalone/apps/web/.next/static
+> ```
+>
+> **Repo naming note:** the production checkout directory is `degenfeed-web`
+> (`/srv/work/repos/degenfeed-web`) but the git repo / package scope is
+> `degenfeed` (`pnpm --filter degenfeed build`). They are the SAME repo — do not
+> create a second checkout.
 >
 > The Cloudflare Workers/Pages sections below are **historical reference
 > only** — kept for the KV/secrets inventory and in case the edge path is
@@ -347,13 +380,21 @@ anchor verify $PROGRAM_ID --provider.cluster mainnet
 
 All services run as Docker containers on [HOST-1] (netcup). See `infra/` for compose files.
 
-### GoToSocial (ActivityPub)
+### GoToSocial + Elk (ActivityPub / Mastodon) — `social.degenfeed.xyz`
+
+> **STATUS 2026-08-30: DOWN.** The compose stack references
+> `degenfeed/gotosocial:latest`, which does NOT exist. A Dockerfile (or a
+> switch to an upstream image, e.g. `superseriousbusiness/gotosocial:latest`)
+> and a rebuild are required before the Mastodon stack can come up. Elk (the
+> web client) must join the same `degenfeed_default` Docker network as
+> GoToSocial.
 
 ```yaml
 # docker-compose.gotosocial.yml — see infra/
 services:
   gotosocial:
-    image: superseriousbusiness/gotosocial:latest
+    image: degenfeed/gotosocial:latest   # ← MISSING — needs Dockerfile or upstream image
+    networks: [degenfeed_default]
     ports:
       - "8080:8080"
     volumes:
@@ -363,6 +404,14 @@ services:
       GTS_PORT: 8080
       GTS_PROTOCOL: https
       GTS_DB_TYPE: sqlite
+  elk:
+    image: elk/elk:latest                # Mastodon web client
+    networks: [degenfeed_default]
+    environment:
+      MASTODON_URL: https://social.degenfeed.xyz
+networks:
+  degenfeed_default:
+    external: true
 ```
 
 Configuration: Create OAuth app at `social.degenfeed.xyz/admin/oauth-apps` → set `GTS_CLIENT_ID` and `GTS_CLIENT_SECRET`.
