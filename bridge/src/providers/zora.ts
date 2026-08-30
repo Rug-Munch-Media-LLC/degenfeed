@@ -150,7 +150,10 @@ async function fetchFromIndexer<T>(path: string, limit: number): Promise<T[]> {
   try {
     const res = await fetch(url, {
       headers: { 'User-Agent': 'DegenFeed-Bridge/0.1' },
-      signal: AbortSignal.timeout(5000),
+      // Dead-local fast-fail: the default ZORA_INDEXER_URL is the
+      // container-local loopback (127.0.0.1:8091) which is frequently down —
+      // fail in 1.5s so external fallbacks serve instead of a 5s stall.
+      signal: AbortSignal.timeout(1500),
     });
 
     if (!res.ok) {

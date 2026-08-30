@@ -9,7 +9,7 @@ describe('@degenfeed/lens-sdk', () => {
 
   it('should export LENS_API_URL constant', async () => {
     const { LENS_API_URL } = await import('./index');
-    expect(LENS_API_URL).toContain('lens.dev');
+    expect(LENS_API_URL).toContain('api.lens.xyz');
   });
 
   it('should reject query with invalid API', async () => {

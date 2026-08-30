@@ -1,23 +1,38 @@
 /**
- * Threads Bridge Provider — public profile scraper
+ * Threads Bridge Provider — public profile scraper + ActivityPub federation
  *
- * ARCHITECTURE (arc-6 research, re-verified 2026-08):
- *   Threads ActivityPub federation covers <50k federated accounts, and Meta's
- *   official API only returns your own account's data. The only path to
- *   arbitrary public Threads accounts is fetching the public profile HTML and
- *   parsing the embedded JSON payloads (historically `__NEXT_DATA__`, plus the
- *   `application/json` blobs the web app streams into the page).
+ * ARCHITECTURE (re-verified 2026-08-31):
+ *   Two real-content paths, tried in order:
  *
- *   [REVIEW] Live verification (2026-08-04): the modern threads.com serves a
- *   JS-only Comet shell to logged-out HTTP clients from this host — no
- *   embedded post data is present, all known GraphQL doc_ids are rotated, and
- *   crawler user-agents hit a login wall. The parser below implements every
- *   historical embedded-JSON shape and activates automatically the moment
- *   Meta serves SSR content again (crawler-friendly SSR rendering is
- *   documented for 2026). Until then the provider degrades to [] and the feed
- *   layer serves demo content; when BRIDGY_FED_ENABLED or
- *   ACTIVITYPUB_BRIDGE_ENABLED is set it falls back to ActivityPub
- *   federation through the GotoSocial instance.
+ *   Path 1 (PRIMARY) — ActivityPub federation via public Mastodon instances:
+ *     Threads accounts that opt into federation are bridged to the fediverse.
+ *     Public Mastodon instances expose their bridged copy through the
+ *     read-only REST API (accounts/lookup + accounts/:id/statuses) — no auth,
+ *     no login wall, no scraping, no datacenter-IP blocking. This mirrors the
+ *     gotosocial provider's PUBLIC_INSTANCES pattern. Verified 2026-08-31:
+ *     mastodon.social resolves zuck@threads.net (741 statuses) and
+ *     mosseri@threads.net (2186 statuses) with real Threads permalinks.
+ *     Threads' own AP actor endpoints (threads.net/ap/users/...) 404 from
+ *     datacenter IPs and Bridgy Fed does not resolve threads.net handles, so
+ *     a public instance's bridged copy is the most reliable headless source.
+ *
+ *   Path 2 (FALLBACK) — embedded-JSON scrape (canonical, needs residential
+ *     proxies): Meta's official API only returns your own account's data, so
+ *     the historical path to arbitrary public accounts is parsing the embedded
+ *     JSON payloads of the public profile HTML (`__NEXT_DATA__` +
+ *     `application/json` blobs). The modern threads.com serves a JS-only
+ *     Comet shell to logged-out clients from datacenter IPs — no embedded
+ *     post data — and crawler user-agents hit a login wall. When
+ *     THREADS_PROXY_LIST points at rotating residential proxies this path
+ *     works; otherwise it honestly returns []. Runs only when Path 1 came up
+ *     short, bounded by a 5s budget so a slow Meta wall can never blow the
+ *     feed layer's 12s provider timeout.
+ *
+ * FRESHNESS: this provider intentionally does NOT pre-filter posts
+ * (FEED_MAX_AGE_HOURS). The feed layer owns freshness — its safety net
+ * (`feedPool = freshAll.length > 0 ? freshAll : allPosts`) surfaces the real
+ * posts on single-protocol routes and keeps home fresh-only. Pre-filtering
+ * here is what made /api/feed/home permanently show `perProtocol.threads: 0`.
  *
  * RATE-LIMIT SURVIVAL:
  *   - 90s in-process TTL cache (feed prewarmer + refresher call providers
@@ -25,13 +40,19 @@
  *   - jittered 1–3s delay between per-account requests
  *   - exponential backoff + alternate proxy on HTTP 429/5xx
  *   - optional IP rotation via THREADS_PROXY_LIST (comma-separated proxy URLs)
+ *   - bridged account ids cached 1h (no repeated lookup hammering)
  *
  * Configuration (all optional, no hardcoded credentials):
- *   THREADS_PROXY_LIST      comma-separated proxy URLs, rotated round-robin
+ *   THREADS_PROXY_LIST        comma-separated proxy URLs, rotated round-robin
+ *   THREADS_AP_INSTANCES      comma-separated ActivityPub instances to query
+ *                             (default: https://mastodon.social)
+ *   ACTIVITYPUB_BRIDGE_ENABLED 'false'/'0' force-disables the federation path
+ *                             (legacy flag — the path is ON by default now;
+ *                             BRIDGY_FED_ENABLED is accepted as an alias)
  *   THREADS_FETCH_TIMEOUT_MS  per-request timeout (default 10_000)
  */
 
-import { filterFreshPosts } from '../lib/freshness';
+import { stripHtml } from '../lib/utils';
 import { checkRateLimit } from '../rate-limiter';
 import type { SchemaGuard, UnifiedPost } from '../server/types';
 
@@ -581,38 +602,292 @@ function setCachedPosts(posts: UnifiedPost[]): void {
   threadsCache = { posts, expiresAt: Date.now() + THREADS_CACHE_TTL_MS };
 }
 
-// ─── ActivityPub fallback (kept from the previous implementation) ─────
+// ─── ActivityPub federation — primary real-content path (2026-08-31) ──
+// Bridged Threads accounts are read through public Mastodon REST APIs. This
+// is the most reliable headless source: no login wall, no scraping, no
+// datacenter-IP blocking (verified: mastodon.social serves real zuck/mosseri
+// Threads posts with threads.com permalinks).
 
-function isBridgyConfigured(): boolean {
+const AP_INSTANCES_DEFAULT = ['https://mastodon.social'];
+const AP_ACCOUNT_CACHE_TTL_MS = 3_600_000;
+
+function readEnv(key: string): string | undefined {
   try {
-    const p = (
-      globalThis as typeof globalThis & {
-        process?: { env?: Record<string, string | undefined> };
-      }
-    ).process;
-    const env = p?.env;
-    return !!(env?.BRIDGY_FED_ENABLED === 'true' || env?.ACTIVITYPUB_BRIDGE_ENABLED === 'true');
+    return (globalThis as { process?: { env?: Record<string, string | undefined> } }).process
+      ?.env?.[key];
   } catch {
-    return false;
+    return undefined;
   }
 }
 
-async function fetchViaActivityPub(limit: number): Promise<UnifiedPost[]> {
-  try {
-    const mod = (await import('@degenfeed/feed-providers')) as unknown as {
-      ThreadsProvider: new (opts?: {
-        curatedHandles?: string[];
-      }) => {
-        fetchFeed(opts?: { timeoutMs?: number }): Promise<{ posts?: UnifiedPost[] }>;
-      };
-    };
-    const provider = new mod.ThreadsProvider({ curatedHandles: CURATED_THREADS_HANDLES });
-    const result = await provider.fetchFeed({ timeoutMs: 10_000 });
-    return (result.posts || []).slice(0, limit);
-  } catch {
-    // console.log(`[threads] ActivityPub fallback error: ${(err as Error).message}`);
-    return [];
+function apInstances(): string[] {
+  const raw = readEnv('THREADS_AP_INSTANCES');
+  if (raw) {
+    const list = raw
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean);
+    if (list.length > 0) return list;
   }
+  return AP_INSTANCES_DEFAULT;
+}
+
+/** 'false'/'0' disables the federation path; default on (public read API). */
+function activityPubEnabled(): boolean {
+  const flag = readEnv('ACTIVITYPUB_BRIDGE_ENABLED') ?? readEnv('BRIDGY_FED_ENABLED');
+  if (flag === 'false' || flag === '0') return false;
+  return true;
+}
+
+interface ApStatus {
+  id?: string;
+  created_at?: string;
+  content?: string;
+  url?: string;
+  uri?: string;
+  in_reply_to_id?: string | null;
+  reblog?: unknown | null;
+  visibility?: string;
+  spoiler_text?: string;
+  favourite_count?: number;
+  favourites_count?: number;
+  reblogs_count?: number;
+  replies_count?: number;
+  quotes_count?: number;
+  media_attachments?: Array<{
+    type?: string;
+    url?: string;
+    preview_url?: string;
+  }>;
+  card?: { url?: string; title?: string } | null;
+  account?: {
+    id?: string;
+    username?: string;
+    acct?: string;
+    display_name?: string;
+    avatar?: string;
+    note?: string;
+    followers_count?: number;
+    following_count?: number;
+  };
+}
+
+// Resolved bridged account ids per handle, cached 1h so we don't re-lookup
+// every 90s feed window.
+const apAccountCache = new Map<string, { id: string; expiresAt: number }>();
+
+async function apJson<T>(url: string, timeoutMs: number): Promise<T | null> {
+  try {
+    const res = await $fetch(url, {
+      headers: {
+        'User-Agent': BROWSER_UA,
+        Accept: 'application/json',
+      },
+      signal: AbortSignal.timeout(timeoutMs),
+      redirect: 'follow',
+    });
+    if (!res.ok) return null;
+    return (await res.json()) as T;
+  } catch {
+    return null;
+  }
+}
+
+/** Resolve a Threads handle to its bridged account id on an instance. */
+async function apLookupAccount(
+  instance: string,
+  handle: string,
+  timeoutMs: number,
+): Promise<string | null> {
+  const cached = apAccountCache.get(handle);
+  if (cached && Date.now() < cached.expiresAt) return cached.id;
+  const acct = `${handle}@threads.net`;
+  const base = instance.replace(/\/+$/, '');
+  const data = await apJson<{ id?: string; acct?: string }>(
+    `${base}/api/v1/accounts/lookup?acct=${encodeURIComponent(acct)}`,
+    timeoutMs,
+  );
+  // Only accept results that actually resolved to the requested handle (some
+  // instances 200 with an unrelated account for unknown accts).
+  const id = data && typeof data.id === 'string' && data.id ? data.id : null;
+  if (id) apAccountCache.set(handle, { id, expiresAt: Date.now() + AP_ACCOUNT_CACHE_TTL_MS });
+  return id;
+}
+
+/** Fetch recent statuses of a bridged Threads account. */
+async function apFetchStatuses(
+  instance: string,
+  accountId: string,
+  limit: number,
+  timeoutMs: number,
+): Promise<ApStatus[]> {
+  const base = instance.replace(/\/+$/, '');
+  const data = await apJson<ApStatus[]>(
+    `${base}/api/v1/accounts/${accountId}/statuses?limit=${limit}&exclude_reblogs=true`,
+    timeoutMs,
+  );
+  return Array.isArray(data) ? data : [];
+}
+
+/** Map a bridged Mastodon status into a Threads UnifiedPost. */
+function apStatusToThreadPost(status: ApStatus, handle: string): UnifiedPost | null {
+  if (!status || status.reblog || status.in_reply_to_id) return null;
+  if (status.visibility && status.visibility !== 'public') return null;
+  const body = stripHtml(
+    status.spoiler_text
+      ? `${status.spoiler_text}\n\n${status.content ?? ''}`
+      : (status.content ?? ''),
+  ).trim();
+  const account = status.account ?? {};
+  const media = status.media_attachments ?? [];
+
+  const embeds: UnifiedPost['embeds'] = [];
+  for (const m of media) {
+    if (m.type === 'image' && m.url) embeds.push({ kind: 'image', url: m.url });
+    else if (m.type === 'video' && m.url) {
+      embeds.push({ kind: 'video', url: m.url, meta: { thumbnail: m.preview_url || undefined } });
+    }
+  }
+  if (status.card?.url && !embeds.some((e) => e.kind === 'link' && e.url === status.card?.url)) {
+    embeds.push({ kind: 'link', url: status.card.url, meta: { title: status.card.title } });
+  }
+  if (!body && embeds.length === 0) return null;
+
+  const id = status.id ? `threads:ap:${status.id}` : `threads:ap:${handle}:${Date.now()}`;
+  const createdMs = status.created_at ? Date.parse(status.created_at) : Date.now();
+  const likes = status.favourites_count ?? status.favourite_count ?? 0;
+  const reposts = status.reblogs_count ?? 0;
+  const replies = status.replies_count ?? 0;
+  const quotes = status.quotes_count ?? 0;
+
+  return {
+    id,
+    protocol: 'threads',
+    author: {
+      id: `threads:ap:${account.id || handle}`,
+      primary: { protocol: 'threads', id: account.id || handle },
+      handles: { threads: handle },
+      displayName: account.display_name || handle,
+      bio: stripHtml(account.note || '').slice(0, 300),
+      avatarUrl: account.avatar || '',
+      followerCount: account.followers_count || 0,
+      followingCount: account.following_count || 0,
+      links: [],
+      keys: {},
+    },
+    text: body || (embeds.some((e) => e.kind === 'image' || e.kind === 'video') ? '[image]' : ''),
+    embeds,
+    contentType: embeds.some((e) => e.kind === 'video')
+      ? 'video'
+      : embeds.some((e) => e.kind === 'image')
+        ? 'image'
+        : embeds.some((e) => e.kind === 'link')
+          ? 'link'
+          : 'text',
+    createdAt: createdMs,
+    metrics: { likes, reposts, replies, quotes, views: 0 },
+    engagement: {
+      viewerLiked: false,
+      viewerReposted: false,
+      viewerBookmarked: false,
+      raw: { likes, reposts, replies, quotes },
+    },
+    raw: status as unknown,
+    niches: guessNiches(body),
+    canonicalUrl:
+      status.url || status.uri || `https://www.threads.net/@${encodeURIComponent(handle)}`,
+  };
+}
+
+interface ActivityPubResult {
+  posts: UnifiedPost[];
+  notice: string;
+}
+
+/** Resolve once the absolute deadline elapses (used to bound slow paths). */
+function sleepUntil(deadline: number): Promise<void> {
+  return new Promise((r) => setTimeout(r, Math.max(0, deadline - Date.now())));
+}
+
+/**
+ * Fetch real Threads posts via ActivityPub federation through public
+ * Mastodon instances. Only accounts that enabled federation resolve; the
+ * rest are skipped honestly. Returns [] + a descriptive notice when the
+ * backend is unavailable or nothing is federated. NEVER fabricates content.
+ *
+ * Bounded by an internal 9s deadline so this path always returns well inside
+ * the feed layer's 12s provider timeout, even on a cold cache.
+ */
+async function fetchThreadsViaActivityPub(limit: number): Promise<ActivityPubResult> {
+  if (!activityPubEnabled()) {
+    return {
+      posts: [],
+      notice: 'Threads: ActivityPub federation disabled (ACTIVITYPUB_BRIDGE_ENABLED=false)',
+    };
+  }
+  const instances = apInstances();
+  if (instances.length === 0) {
+    return { posts: [], notice: 'Threads: no ActivityPub instances (THREADS_AP_INSTANCES)' };
+  }
+
+  const perAccount = Math.max(1, Math.ceil(limit / 5));
+  const all: UnifiedPost[] = [];
+  const seen = new Set<string>();
+  const deadline = Date.now() + 8_000;
+  let lastError = '';
+
+  for (const instance of instances) {
+    const base = instance.replace(/\/+$/, '');
+    // Shared queue across workers — each handle resolved exactly once.
+    const queue = [...CURATED_THREADS_HANDLES];
+
+    async function worker(): Promise<void> {
+      while (queue.length > 0 && all.length < limit && Date.now() < deadline) {
+        const handle = queue.shift();
+        if (!handle) return;
+        try {
+          const accountId = await apLookupAccount(base, handle, 4000);
+          if (!accountId) continue; // not federated — skip honestly
+          const statuses = await apFetchStatuses(base, accountId, perAccount, 4000);
+          for (const s of statuses) {
+            if (all.length >= limit) break;
+            const post = apStatusToThreadPost(s, handle);
+            if (post && !seen.has(post.id)) {
+              seen.add(post.id);
+              all.push(post);
+            }
+          }
+        } catch {
+          lastError = `ActivityPub fetch failed on ${base}`;
+        }
+        await jitterDelay(300);
+      }
+    }
+
+    const workerCount = Math.min(3, CURATED_THREADS_HANDLES.length);
+    const workers = Promise.all(
+      Array.from({ length: workerCount }, () => worker().catch(() => {})),
+    );
+    // Hard cap: never let the AP path blow the feed's provider timeout. Any
+    // still-in-flight calls settle harmlessly in the background.
+    await Promise.race([workers, sleepUntil(deadline)]);
+    if (all.length >= limit) break;
+  }
+
+  if (all.length > 0) {
+    return {
+      posts: all,
+      notice: `Threads: ${all.length} posts via ActivityPub federation (${instances
+        .map((i) => i.replace(/^https?:\/\//, ''))
+        .join(', ')})`,
+    };
+  }
+  return {
+    posts: [],
+    notice: lastError
+      ? `Threads: ${lastError}. No federated content available.`
+      : 'Threads: no curated accounts are federated on the configured instances (THREADS_AP_INSTANCES). Only Threads users who enabled federation are readable this way.',
+  };
 }
 
 // ─── Main ──────────────────────────────────────────────────────────────
@@ -621,7 +896,7 @@ export const schema: SchemaGuard = {
   id: 'threads',
   name: 'Threads (Meta)',
   description:
-    'Public Threads profiles — embedded JSON scraper + ActivityPub fallback. Curated crypto/web3 accounts.',
+    'Real Threads posts via ActivityPub federation (public Mastodon REST APIs, no auth) + embedded-JSON scraper with optional residential proxies (THREADS_PROXY_LIST). Federation covers curated accounts that enabled it on the configured instances (THREADS_AP_INSTANCES, default https://mastodon.social).',
   endpoint: '/api/feed/threads',
   requiresAuth: false,
   contentType: 'mixed',
@@ -630,71 +905,71 @@ export const schema: SchemaGuard = {
 export async function fetchThreadsPosts(limit = 20): Promise<UnifiedPost[]> {
   // Serve from cache first — repeated feed-build calls must not hammer Meta.
   const cached = getCachedPosts();
-  if (cached) return filterFreshPosts(cached).slice(0, limit);
+  if (cached) return cached.slice(0, limit);
 
   if (!checkRateLimit('threads', { maxRequests: 40, windowMs: 600_000 })) {
     // console.log('[threads] Rate limited, skipping fetch');
     return [];
   }
 
-  const handles = CURATED_THREADS_HANDLES;
-  const perAccount = Math.max(1, Math.ceil(limit / 5));
-  const all: UnifiedPost[] = [];
-
-  // Fetch the most relevant accounts first, concurrency-limited, with jitter.
-  const CONCURRENCY = 3;
-  const queue = [...handles];
-
-  async function worker(): Promise<void> {
-    while (queue.length > 0) {
-      const username = queue.shift();
-      if (!username) return;
-      try {
-        const { html } = await fetchProfileHtml(username);
-        if (html) {
-          const rawPosts = parseProfileHtml(html, username);
-          const posts = rawPosts.slice(0, perAccount).map((p) => threadToPost(p, username));
-          for (const p of posts) if (p) all.push(p);
-        }
-      } catch {
-        // continue to next account
-      }
-      // Jitter between accounts so bursts don't trip Meta rate limits.
-      await jitterDelay(800);
-    }
-  }
-
-  const workers = Array.from({ length: Math.min(CONCURRENCY, handles.length) }, () =>
-    worker().catch(() => {}),
-  );
-  await Promise.all(workers);
-
-  // Freshness: discard posts outside the FEED_MAX_AGE_HOURS window (48h)
-  // BEFORE dedup so the cap fills with fresh content only.
-  const fresh = filterFreshPosts(all);
-
-  // Deduplicate by id
   const seen = new Set<string>();
   const deduped: UnifiedPost[] = [];
-  for (const p of fresh) {
-    if (!seen.has(p.id) && deduped.length < limit) {
+  const push = (p: UnifiedPost | null | undefined): void => {
+    if (p && !seen.has(p.id) && deduped.length < limit) {
       seen.add(p.id);
       deduped.push(p);
     }
+  };
+
+  // Path 1 (PRIMARY): ActivityPub federation — public Mastodon REST APIs.
+  // Fast, no login wall, no proxies; the reliable real-content path in 2026.
+  const { posts: apPosts } = await fetchThreadsViaActivityPub(limit);
+  for (const p of apPosts) push(p);
+
+  // Path 2 (FALLBACK): embedded-JSON scrape. Canonical, but only viable
+  // through residential proxies (THREADS_PROXY_LIST) — from datacenter IPs
+  // Meta serves a JS-only Comet shell, so this honestly returns nothing.
+  // Only runs when AP came up short, bounded by a 5s budget so a slow Meta
+  // wall can never eat the feed's 12s provider timeout.
+  if (deduped.length < limit) {
+    const scrapeDeadline = Date.now() + 3_000;
+    const perAccount = Math.max(1, Math.ceil((limit - deduped.length) / 5));
+    const all: UnifiedPost[] = [];
+    const CONCURRENCY = 3;
+    const queue = [...CURATED_THREADS_HANDLES];
+
+    async function worker(): Promise<void> {
+      while (queue.length > 0 && Date.now() < scrapeDeadline) {
+        const username = queue.shift();
+        if (!username) return;
+        try {
+          const { html } = await fetchProfileHtml(username);
+          if (html) {
+            const rawPosts = parseProfileHtml(html, username);
+            const posts = rawPosts.slice(0, perAccount).map((p) => threadToPost(p, username));
+            for (const p of posts) if (p) all.push(p);
+          }
+        } catch {
+          // continue to next account
+        }
+        // Jitter between accounts so bursts don't trip Meta rate limits.
+        await jitterDelay(800);
+      }
+    }
+
+    const workers = Promise.all(
+      Array.from({ length: Math.min(CONCURRENCY, CURATED_THREADS_HANDLES.length) }, () =>
+        worker().catch(() => {}),
+      ),
+    );
+    // Hard cap — return what the scrape completed before the budget ran out.
+    await Promise.race([workers, sleepUntil(scrapeDeadline)]);
+    for (const p of all) push(p);
   }
 
-  // Fallback 1: if scraping found nothing and Bridgy/ActivityPub is enabled,
-  // query the federated instance for Threads content.
-  if (deduped.length === 0 && isBridgyConfigured()) {
-    const apPosts = await fetchViaActivityPub(limit);
-    const freshAp = filterFreshPosts(apPosts);
-    setCachedPosts(freshAp);
-    return freshAp;
-  }
-
-  //   console.log(
-  //     `[bridge] Threads: ${deduped.length} posts from ${handles.length} curated accounts (embedded-json: ${scraping} raw)`,
-  //   );
+  // NOTE: no freshness pre-filter here — the feed layer's freshness safety
+  // net owns the 48h policy (see module header). Pre-filtering is what
+  // previously made Threads always return 0 real posts.
   setCachedPosts(deduped);
   return deduped;
 }

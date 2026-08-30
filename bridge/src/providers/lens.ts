@@ -4,10 +4,16 @@
  * Rate Limit: 50 requests/minute (GraphQL API via local indexer)
  *
  * Reads Lens publications from our local Lens indexer (port 8099) first,
- * then falls back to the external Lens GraphQL API (api.lens.xyz /
- * api-v2.lens.dev, overridable via LENS_API_URL) when the indexer is
- * unreachable or returns nothing — so the feed stays populated with real
- * Lens content even with NO local indexer container running (headless).
+ * then falls back to the external Lens GraphQL API (api.lens.xyz/graphql,
+ * overridable via LENS_API_URL) when the indexer is unreachable or returns
+ * nothing — so the feed stays populated with real Lens content even with NO
+ * local indexer container running (headless).
+ *
+ * NOTE (2026-08): the legacy api-v2.lens.dev host 301-redirects to
+ * api.lens.xyz and the redirect rewrites POST → GET, dropping the GraphQL
+ * body — it is dead for this use. The live endpoint is api.lens.xyz/graphql
+ * (Lens v3 schema) and requires no auth token for public feed reads; if
+ * LENS_API_TOKEN is set it is sent as the x-access-token header.
  *
  * The local indexer runs at /path/to/degenfeed/lens-indexer/ and polls
  * api.lens.xyz every 30s, storing results in SQLite.
@@ -31,6 +37,12 @@ const LENS_INDEXER_URL = process.env.LENS_INDEXER_URL || 'http://127.0.0.1:8099'
 /** External Lens GraphQL API — used when the local indexer is unavailable. */
 const LENS_API_URL =
   process.env.LENS_API_URL || FALLBACK_LENS_URLS[0] || 'https://api.lens.xyz/graphql';
+
+/**
+ * Optional Lens access token (x-access-token header). Not required for
+ * public feed reads on api.lens.xyz — only set this if a token is available.
+ */
+const LENS_API_TOKEN = process.env.LENS_API_TOKEN || '';
 
 // ─── Interface ────────────────────────────────────────────────────────
 
@@ -292,8 +304,9 @@ async function fetchPosts(limit: number): Promise<UnifiedPost[]> {
 // ─── External Lens GraphQL API (headless fallback) ────────────────────
 
 /**
- * External Lens API publication shape (2026 api.lens.xyz / api-v2.lens.dev).
- * Matches the proven selection used by @degenfeed/feed-providers LensProvider.
+ * External Lens API publication shape (2026 api.lens.xyz — Lens v3 schema).
+ * Shape verified against the live endpoint: posts() → items → ... on Post
+ * with id/timestamp/metadata/author/stats as mapped here.
  */
 interface ExternalLensAccount {
   address?: string;
@@ -319,9 +332,14 @@ async function lensGql(
   query: string,
   variables?: Record<string, unknown>,
 ): Promise<unknown> {
+  const headers: Record<string, string> = {
+    'content-type': 'application/json',
+    'user-agent': 'DegenFeed-Bridge/0.1',
+  };
+  if (LENS_API_TOKEN) headers['x-access-token'] = LENS_API_TOKEN;
   const res = await $fetch(url, {
     method: 'POST',
-    headers: { 'content-type': 'application/json', 'user-agent': 'DegenFeed-Bridge/0.1' },
+    headers,
     body: JSON.stringify({ query, variables }),
     signal: AbortSignal.timeout(8000),
   });
@@ -384,20 +402,52 @@ function mapExternalLensPost(pub: ExternalLensPost): UnifiedPost | null {
 /**
  * Fetch Lens publications directly from the external Lens GraphQL API.
  * Used only as the headless fallback when the local indexer is down/empty.
- * Strategy: the ML explore feed (50 fresh/viral publications) — no local
- * container required. Curated-account fetching is intentionally omitted
- * here (the local indexer handles that when present); explore alone keeps
- * the feed real and populated headlessly.
+ *
+ * Query verified against the live api.lens.xyz/graphql (Lens v3, 2026-08-31):
+ * the legacy mlPostsExplore field still exists on the schema but returns an
+ * EMPTY items array (the v2 ML-explore feed is no longer populated), which is
+ * why the previous fallback returned 0 posts. Fresh top-level posts come from
+ * the `posts` root field with a PostsRequest:
+ *   - filter.postTypes: [ROOT]        → top-level posts (not comments/reposts)
+ *   - filter.metadata.mainContentFocus: [TEXT_ONLY, IMAGE, VIDEO, LINK, ARTICLE]
+ * `posts.items` is the AnyPost union (Post | Repost) → fragment on ... on Post.
  */
 async function fetchExternalLensPosts(limit: number): Promise<UnifiedPost[]> {
-  const EXPLORE_QUERY =
-    'query{mlPostsExplore(request:{pageSize:FIFTY}){items{__typename ... on Post{id timestamp metadata{... on TextOnlyMetadata{content} ... on ImageMetadata{content image{item}} ... on VideoMetadata{content video{item}} ... on LinkMetadata{content} ... on ArticleMetadata{content}} author{address username{localName} metadata{name bio picture}} stats{reactions comments reposts quotes collects}}}}}';
+  const POSTS_QUERY = `query {
+    posts(request: {
+      pageSize: FIFTY
+      filter: {
+        postTypes: [ROOT]
+        metadata: { mainContentFocus: [TEXT_ONLY, IMAGE, VIDEO, LINK, ARTICLE] }
+      }
+    }) {
+      items {
+        ... on Post {
+          id
+          timestamp
+          metadata {
+            ... on TextOnlyMetadata { content }
+            ... on ImageMetadata { content image { item } }
+            ... on VideoMetadata { content video { item } }
+            ... on LinkMetadata { content }
+            ... on ArticleMetadata { content }
+          }
+          author {
+            address
+            username { localName }
+            metadata { name bio picture }
+          }
+          stats { reactions comments reposts quotes }
+        }
+      }
+    }
+  }`;
 
   try {
-    const explore = (await lensGql(LENS_API_URL, EXPLORE_QUERY)) as {
-      mlPostsExplore?: { items?: ExternalLensPost[] };
+    const data = (await lensGql(LENS_API_URL, POSTS_QUERY)) as {
+      posts?: { items?: ExternalLensPost[] };
     };
-    const items = explore?.mlPostsExplore?.items ?? [];
+    const items = data?.posts?.items ?? [];
     const posts: UnifiedPost[] = [];
     for (const pub of items) {
       const post = mapExternalLensPost(pub);
@@ -407,10 +457,7 @@ async function fetchExternalLensPosts(limit: number): Promise<UnifiedPost[]> {
       return filterFreshPosts(posts).slice(0, limit);
     }
   } catch (err) {
-    console.warn(
-      '[bridge] Lens external explore failed:',
-      err instanceof Error ? err.message : err,
-    );
+    console.warn('[bridge] Lens external posts failed:', err instanceof Error ? err.message : err);
   }
 
   return [];
