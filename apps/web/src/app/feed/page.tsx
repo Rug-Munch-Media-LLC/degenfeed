@@ -14,7 +14,6 @@ import {
 import dynamic from 'next/dynamic';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAuth } from '../../components/AuthProvider';
-import { CryptoRugMunchHeader } from '../../components/brand/CryptoRugMunchHeader';
 import { FeedComposer } from '../../components/FeedComposer';
 import { FeedLayoutSwitcher } from '../../components/FeedLayoutSwitcher';
 import type { FeedMixConfig, SavedMix } from '../../components/FeedTuner';
@@ -755,8 +754,6 @@ export default function FeedPage() {
           className="mx-auto max-w-2xl px-4 py-6"
           {...swipeHandlers}
         >
-          {/* @CryptoRugMunch profile header — brands this feed as part of the Rug Munch Intelligence platform */}
-          <CryptoRugMunchHeader />
           {isAdmin && (
             <div className="mb-2 rounded-lg bg-amber-500/10 px-3 py-1.5 text-center text-[10px] text-amber-400">
               Admin mode
