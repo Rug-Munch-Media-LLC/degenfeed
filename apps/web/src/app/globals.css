@@ -3,7 +3,32 @@
 @tailwind utilities;
 
 /* ═══════════════════════════════════════════════════════════════
- * BASE LAYER — Design tokens are in design-tokens.css
+ * TOKEN ARCHITECTURE — READ BEFORE ADDING CSS VARIABLES
+ *
+ * CANONICAL RUNTIME TOKENS: `src/styles/design-tokens.css`
+ *   Imported by `src/app/layout.tsx`. Single source of truth for every
+ *   `--color-*`, `--space-*`, `--radius-*`, `--shadow-*`, `--duration-*`,
+ *   `--z-*`, `--degen-*` (rgb-triplet) variable used at runtime. It carries
+ *   four theme blocks: dark (default), cyberpunk preset, light, light+cyberpunk.
+ *   This file (globals.css) intentionally defines ZERO variables — it only
+ *   consumes tokens. Do not add `:root { --… }` blocks here.
+ *
+ * GENERATED STYLE-DICTIONARY OUTPUT: `design/output/css/variables.css`
+ *   Auto-generated from `design/tokens/*.json` via style-dictionary
+ *   (`design/config.json`). NOT imported by the app — currently dead output
+ *   and STALE. Known conflicts with the canonical layer (do NOT "reconcile"
+ *   by importing it without regenerating + reconciling `design/tokens`):
+ *   - `--color-protocol-nostr`: generated #8e30eb vs canonical #8b5cf6
+ *   - `--radius-sm`: generated 0.125rem vs canonical 0.375rem (whole scale differs)
+ *   - `--shadow-sm/md/lg/xl`: generated Tailwind-default blacks vs canonical
+ *     dark-theme-elevated blacks
+ *   - `--color-degen-*`: generated hex GREEN palette vs canonical `--degen-*`
+ *     rgb-triplet BLUE palette consumed by Tailwind via `rgb(var(--degen-500))`
+ *   - `--font-family-sans`: generated Inter-only vs canonical Syne/Plus Jakarta
+ *
+ * RECONCILIATION RULE: to revive the style-dictionary pipeline, first update
+ *   `design/tokens/*.json` to match `design-tokens.css` values, regenerate,
+ *   then swap the import in `layout.tsx`. Until then `design-tokens.css` wins.
  * ═══════════════════════════════════════════════════════════════ */
 
 /* ── CSS Feature Queries: Grid/Flexbox Fallbacks ── */

@@ -1,5 +1,18 @@
 'use client';
 
+/*
+ * RSC SPLIT ASSESSMENT (2026-08-30 audit follow-up): deferred.
+ * Every structural branch below is pathname-reactive (left-sidebar visibility,
+ * main width/padding classes, right-rail conditions) via usePathname(), and
+ * all chrome children (SkipLinks, OfflineBanner, BottomNav, Left/RightSidebar)
+ * are already 'use client'. A server Shell would need headers() — opting every
+ * page into dynamic rendering — or a conditional-island restructure with
+ * hydration-mismatch risk. The only truly static markup is the aurora/noise
+ * backdrop divs (~100 bytes). Page `children` already stream as RSC through
+ * this boundary, so no content is duplicated as client JS today.
+ * Revisit only alongside a deliberate layout-architecture pass.
+ */
+
 import { ScrollToTop } from '@degenfeed/ui';
 import dynamic from 'next/dynamic';
 import Image from 'next/image';
