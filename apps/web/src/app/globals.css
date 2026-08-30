@@ -13,6 +13,13 @@
  *   This file (globals.css) intentionally defines ZERO variables — it only
  *   consumes tokens. Do not add `:root { --… }` blocks here.
  *
+ * RECONCILIATION AUDIT (2026-08-30): verified via `grep -E '^\s*--' globals.css`
+ *   → zero custom-property definitions; every `var(--…)` reference resolves to
+ *   design-tokens.css, an inline style set by a component (e.g. `--stagger-i`,
+ *   `--protocol-color`), or a safe inline fallback (e.g. `var(--gap-sm, …)`).
+ *   `--gap-sm` / `--gap-md` were added to design-tokens.css (Spacing section)
+ *   so `.btn`'s `var(--gap-sm)` no longer depends on its fallback value.
+ *
  * GENERATED STYLE-DICTIONARY OUTPUT: `design/output/css/variables.css`
  *   Auto-generated from `design/tokens/*.json` via style-dictionary
  *   (`design/config.json`). NOT imported by the app — currently dead output

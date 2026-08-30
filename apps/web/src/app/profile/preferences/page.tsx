@@ -45,7 +45,7 @@ export default function PreferencesPage() {
       setIdentityId(id);
       const existing = await getPreferences(id);
       const defaults = await getDefaultPreferences(id);
-      if (!cancelled) setPrefs({ ...defaults, ...(existing ?? {}) });
+      if (!cancelled) setPrefs({ ...defaults, ...existing });
     }
     load();
     return () => {
@@ -314,7 +314,7 @@ export default function PreferencesPage() {
               <select
                 value={currentPreset}
                 onChange={(e) => {
-                  const newPresets = { ...(prefs.protocolPresets ?? {}), [p]: e.target.value };
+                  const newPresets = { ...prefs.protocolPresets, [p]: e.target.value };
                   update({ protocolPresets: newPresets });
                 }}
                 className="rounded-md border border-[var(--color-border)] bg-[var(--color-bg)] px-2 py-1 text-xs text-[var(--color-muted)] focus:outline-none focus:ring-1 focus:ring-degen-500"
@@ -339,7 +339,7 @@ export default function PreferencesPage() {
             onClick={() => update({ feedLayout: 'comfortable' })}
             className={`relative rounded-xl border-2 p-4 text-left transition-all ${
               prefs.feedLayout === 'comfortable'
-                ? 'border-degen-500 bg-degen-500/10 shadow-[0_0_12px_rgba(34,197,94,0.15)]'
+                ? 'border-degen-500 bg-degen-500/10 shadow-[0_0_12px_var(--color-accent-glow)]'
                 : 'border-[var(--color-border)] bg-[var(--color-muted)] hover:border-degen-500/30'
             }`}
             aria-pressed={prefs.feedLayout === 'comfortable'}
@@ -371,7 +371,7 @@ export default function PreferencesPage() {
             onClick={() => update({ feedLayout: 'compact' })}
             className={`relative rounded-xl border-2 p-4 text-left transition-all ${
               prefs.feedLayout === 'compact'
-                ? 'border-degen-500 bg-degen-500/10 shadow-[0_0_12px_rgba(34,197,94,0.15)]'
+                ? 'border-degen-500 bg-degen-500/10 shadow-[0_0_12px_var(--color-accent-glow)]'
                 : 'border-[var(--color-border)] bg-[var(--color-muted)] hover:border-degen-500/30'
             }`}
             aria-pressed={prefs.feedLayout === 'compact'}
