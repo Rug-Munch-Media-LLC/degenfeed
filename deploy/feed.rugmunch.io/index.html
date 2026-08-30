@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>@cryptorugmunch — Feed</title>
+<meta name="description" content="Crypto security intelligence, daily market reports, and on-chain analysis from Rug Munch Media.">
+<meta property="og:title" content="@cryptorugmunch — Feed">
+<meta property="og:description" content="Crypto security intelligence, daily market reports, and on-chain analysis.">
+<meta property="og:image" content="https://rugmunch.io/logo.png">
+<meta name="theme-color" content="#000000">
+<link rel="icon" href="https://rugmunch.io/favicon.ico">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#000;--surface:#080808;--surface-raised:#0f0f0f;--border:#1a1a1a;--fg:#e7e9ea;--fg-muted:#71767b;--fg-dim:#3c3c3c;--accent:#00ff41;--accent-dim:#00cc33;--blue:#1d9bf0;--pink:#f91880;--font:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+body{background:var(--bg);color:var(--fg);font-family:var(--font);-webkit-font-smoothing:antialiased;line-height:1.5}
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline}
+.container{max-width:600px;margin:0 auto;border-left:1px solid var(--border);border-right:1px solid var(--border);min-height:100vh}
+/* ── Profile Header ── */
+.profile-header{padding:12px 16px;border-bottom:1px solid var(--border);background:var(--surface)}
+.profile-header .back-row{display:flex;align-items:center;gap:24px;margin-bottom:12px;padding:4px 0}
+.profile-header .back-row .logo{width:36px;height:36px;border-radius:50%;object-fit:cover}
+.profile-header .back-row h1{font-size:20px;font-weight:700;line-height:1.2}
+.profile-header .back-row h1 small{display:block;font-size:13px;font-weight:400;color:var(--fg-muted)}
+.cover{height:120px;background:linear-gradient(135deg,#0a3a0a,#001a00);border-radius:0;margin:0 -16px;width:calc(100% + 32px)}
+.profile-row{display:flex;justify-content:space-between;align-items:flex-start;padding:0 16px;margin-top:-48px;position:relative}
+.avatar-wrap{width:96px;height:96px;border-radius:50%;border:4px solid var(--bg);overflow:hidden;background:var(--surface)}
+.avatar-wrap img{width:100%;height:100%;object-fit:cover}
+.profile-info{padding:4px 16px 12px}
+.profile-info .name{font-size:18px;font-weight:700;line-height:1.2}
+.profile-info .handle{font-size:14px;color:var(--fg-muted)}
+.profile-info .bio{font-size:15px;margin-top:8px;line-height:1.4}
+.profile-info .meta{font-size:14px;color:var(--fg-muted);margin-top:8px;display:flex;gap:16px;flex-wrap:wrap}
+.profile-info .meta span{white-space:nowrap}
+.profile-info .meta strong{color:var(--fg)}
+.profile-stats{display:flex;gap:20px;padding:4px 16px 12px;font-size:14px}
+.profile-stats span{cursor:pointer}
+.profile-stats span:hover{text-decoration:underline}
+.profile-stats strong{color:var(--fg)}
+.profile-stats .label{color:var(--fg-muted)}
+/* ── Tabs ── */
+.tabs{display:flex;border-bottom:1px solid var(--border);background:var(--surface);position:sticky;top:0;z-index:10}
+.tab{flex:1;text-align:center;padding:16px 0;font-size:15px;font-weight:500;color:var(--fg-muted);cursor:pointer;position:relative;transition:background .15s}
+.tab:hover{background:var(--surface-raised)}
+.tab.active{color:var(--fg);font-weight:700}
+.tab.active::after{content:'';position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:56px;height:4px;background:var(--accent);border-radius:2px}
+/* ── Post ── */
+.post{padding:12px 16px;border-bottom:1px solid var(--border);transition:background .15s;display:flex;gap:12px}
+.post:hover{background:var(--surface-raised)}
+.post-avatar{flex-shrink:0;width:40px;height:40px;border-radius:50%;overflow:hidden;background:var(--surface)}
+.post-avatar img{width:100%;height:100%;object-fit:cover}
+.post-body{flex:1;min-width:0}
+.post-header{display:flex;align-items:baseline;gap:4px;font-size:15px;flex-wrap:wrap}
+.post-header .name{font-weight:700;white-space:nowrap}
+.post-header .handle{color:var(--fg-muted);white-space:nowrap}
+.post-header .sep{color:var(--fg-dim);margin:0 2px}
+.post-header .time{color:var(--fg-muted);font-size:14px;white-space:nowrap}
+.post-header .time:hover{text-decoration:underline;cursor:pointer}
+.post-content{font-size:15px;line-height:1.5;margin-top:4px;word-wrap:break-word;overflow-wrap:break-word}
+.post-content p{margin-bottom:8px}
+.post-content p:last-child{margin-bottom:0}
+.post-content a{color:var(--accent)}
+.post-content a:hover{text-decoration:underline}
+.post-content .post-meta-tag{display:inline-block;padding:2px 8px;border-radius:4px;font-size:12px;font-weight:600;margin-bottom:8px}
+.post-content .post-meta-tag.briefing{background:var(--accent-dim);color:#000}
+.post-content .post-meta-tag.news{background:var(--blue);color:#fff}
+.post-content .post-meta-tag.micro{background:var(--pink);color:#fff}
+.post-content .post-meta-tag.announcement{background:#8b5cf6;color:#fff}
+.post-content .post-meta-tag.exploit{background:#e11d48;color:#fff}
+.post-content .post-meta-tag.scan{background:#d97706;color:#fff}
+.post-content img{max-width:100%;border-radius:16px;margin-top:8px;border:1px solid var(--border)}
+.post-actions{display:flex;justify-content:space-between;max-width:400px;margin-top:8px}
+.post-actions button{background:none;border:none;color:var(--fg-muted);cursor:pointer;display:flex;align-items:center;gap:4px;font-size:14px;padding:4px 8px;border-radius:4px;transition:all .15s}
+.post-actions button:hover{background:rgba(0,255,65,0.1);color:var(--accent)}
+.post-actions button.like:hover{color:var(--pink);background:rgba(249,24,128,0.1)}
+.post-actions button.share:hover{color:var(--blue);background:rgba(29,155,240,0.1)}
+.post-actions .icon{font-size:16px;line-height:1}
+/* ── Sticky Briefing Banner ── */
+.briefing-banner{background:linear-gradient(135deg,#001a00,#002200);border-bottom:1px solid var(--accent-dim);padding:12px 16px;display:flex;align-items:center;gap:12px;cursor:pointer;transition:background .15s}
+.briefing-banner:hover{background:linear-gradient(135deg,#002a00,#003300)}
+.briefing-banner .icon{font-size:28px;flex-shrink:0}
+.briefing-banner .text{flex:1}
+.briefing-banner .text .title{font-weight:700;font-size:15px;color:var(--accent)}
+.briefing-banner .text .sub{font-size:13px;color:var(--fg-muted);margin-top:2px}
+.briefing-banner .arrow{font-size:20px;color:var(--accent)}
+/* ── Loading / Error / Empty ── */
+.loading,.error,.empty{text-align:center;padding:48px 16px;color:var(--fg-muted)}
+.loading .spinner{display:inline-block;width:24px;height:24px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;margin-bottom:12px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.error{color:#f91880}
+.error .retry-btn{display:inline-block;margin-top:8px;padding:8px 20px;background:var(--accent);color:#000;border:none;border-radius:20px;font-weight:700;cursor:pointer}
+.error .retry-btn:hover{background:var(--accent-dim)}
+/* ── Footer ── */
+.site-footer{text-align:center;padding:24px 16px;font-size:13px;color:var(--fg-dim);border-top:1px solid var(--border)}
+.site-footer a{color:var(--fg-muted)}
+.site-footer a:hover{color:var(--accent)}
+/* ── Responsive ── */
+@media(max-width:600px){.container{border:none}.cover{height:100px}}
+</style>
+</head>
+<body>
+<div class="container" id="app">
+  <!-- Profile Header -->
+  <div class="profile-header">
+    <div class="back-row">
+      <img class="logo" src="https://rugmunch.io/logo.png" alt="Rug Munch">
+      <h1>@cryptorugmunch<small>Feed</small></h1>
+    </div>
+  </div>
+  <div class="cover"></div>
+  <div class="profile-row">
+    <div class="avatar-wrap">
+      <img src="https://rugmunch.io/logo.png" alt="Crypto Rug Muncher">
+    </div>
+  </div>
+  <div class="profile-info">
+    <div class="name">Crypto Rug Muncher</div>
+    <div class="handle">@cryptorugmunch</div>
+    <div class="bio">Crypto security platform. Real-time scam detection, cross-chain forensics, AI-powered investigation. 🛡️ Free. No signup. MCP-native.</div>
+    <div class="meta">
+      <span>📍 <a href="https://rugmunch.io">rugmunch.io</a></span>
+      <span>🔗 <a href="https://blog.rugmunch.io">blog</a></span>
+    </div>
+  </div>
+  <div class="profile-stats">
+    <span id="post-count"><strong>0</strong> <span class="label">Posts</span></span>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <div class="tab active" data-tab="all">All</div>
+    <div class="tab" data-tab="daily">Daily Rug Report</div>
+    <div class="tab" data-tab="security">Security</div>
+    <div class="tab" data-tab="baddies">Baddies</div>
+  </div>
+
+  <!-- Feed -->
+  <div id="feed"></div>
+
+  <!-- Footer -->
+  <div class="site-footer">
+    <a href="https://rugmunch.io">RugMunch.io</a> · <a href="https://blog.rugmunch.io">Blog</a> · <a href="https://t.me/rmialerts">Telegram</a><br>
+    Mirrored from <a href="https://t.me/cryptorugmunch">@cryptorugmunch</a> · <a href="/data/posts.json">posts.json</a>
+  </div>
+</div>
+
+<script>
+const POSTS_API = '/data/posts.json';
+const PROFILE = {
+  name: 'Crypto Rug Muncher',
+  handle: '@cryptorugmunch',
+  avatar: 'https://rugmunch.io/logo.png',
+  bio: 'Crypto security platform. Real-time scam detection, cross-chain forensics, AI-powered investigation. 🛡️ Free. No signup. MCP-native.',
+  website: 'https://rugmunch.io'
+};
+
+// ── kind → section / badge mapping (mirrored content) ──
+const KIND_META = {
+  'market-summary':       { section: 'daily',   label: '📋 Daily Rug Report', cls: 'briefing' },
+  'exploit':              { section: 'security', label: '🚨 Exploit',          cls: 'exploit' },
+  'alert':                { section: 'security', label: '🚨 Alert',            cls: 'exploit' },
+  'scan':                 { section: 'security', label: '🔍 Scan',             cls: 'scan' },
+  'scammer_warning':      { section: 'baddies',  label: '🚫 KOL Warning',      cls: 'announcement' },
+  'shill_evidence':       { section: 'baddies',  label: '🚫 Shill Evidence',   cls: 'announcement' },
+  'shill_watch':          { section: 'baddies',  label: '👀 Shill Watch',      cls: 'announcement' },
+  'kol_trade':            { section: 'baddies',  label: '🪙 KOL Trade',        cls: 'micro' },
+  'whale_move':           { section: 'baddies',  label: '🐋 Whale Move',       cls: 'micro' },
+  'story':                { section: 'all',      label: '📖 Story',            cls: 'news' },
+  'quality':              { section: 'all',      label: '⭐ Quality',          cls: 'news' },
+  'alpha':                { section: 'all',      label: '⚡ Alpha',            cls: 'briefing' },
+  'early_entry':          { section: 'all',      label: '⚡ Early Entry',      cls: 'briefing' }
+};
+const KIND_DEFAULT = { section: 'all', label: '💬 Post', cls: 'news' };
+
+function kindMeta(kind) { return KIND_META[kind] || KIND_DEFAULT; }
+
+let allPosts = [];
+let currentTab = 'all';
+
+function timeAgo(dateStr) {
+  const d = new Date(dateStr);
+  const now = new Date();
+  const diff = Math.floor((now - d) / 1000);
+  if (!Number.isFinite(diff)) return '';
+  if (diff < 0) return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  if (diff < 60) return `${diff}s`;
+  if (diff < 3600) return `${Math.floor(diff/60)}m`;
+  if (diff < 86400) return `${Math.floor(diff/3600)}h`;
+  if (diff < 604800) return `${Math.floor(diff/86400)}d`;
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+
+function formatDate(dateStr) {
+  const d = new Date(dateStr);
+  if (!Number.isFinite(d.getTime())) return '';
+  return d.toLocaleDateString('en-US', {
+    weekday: 'short', month: 'short', day: 'numeric',
+    hour: '2-digit', minute: '2-digit'
+  });
+}
+
+function escapeHtml(text) {
+  if (!text) return '';
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+// Telegram-style text → HTML: linkify URLs, preserve line breaks.
+function renderText(text) {
+  if (!text) return '';
+  const esc = escapeHtml(text);
+  const linked = esc.replace(
+    /(https?:\/\/[^\s<]+)/g,
+    '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>'
+  );
+  return linked.replace(/\n/g, '<br>');
+}
+
+function isPostInTab(post, tab) {
+  if (tab === 'all') return true;
+  const meta = kindMeta(post.kind);
+  if (tab === 'daily') return meta.section === 'daily';
+  if (tab === 'security') return meta.section === 'security';
+  if (tab === 'baddies') return meta.section === 'baddies';
+  return true;
+}
+
+function sourceLink(post) {
+  const src = (post.source || '').trim();
+  if (!src) return '';
+  if (/^https?:\/\//i.test(src)) {
+    return `<a href="${escapeHtml(src)}" target="_blank" rel="noopener noreferrer">Source</a>`;
+  }
+  // A bare handle/ref — treat as a textual attribution, not a URL.
+  return `<span>Source: ${escapeHtml(src)}</span>`;
+}
+
+function renderPost(post) {
+  const meta = kindMeta(post.kind);
+  const ts = post.ts || post.created_at || '';
+  const time = timeAgo(ts);
+  const fullDate = formatDate(ts);
+  const body = renderText(post.text);
+  const src = sourceLink(post);
+
+  return `
+    <div class="post">
+      <div class="post-avatar"><img src="${PROFILE.avatar}" alt=""></div>
+      <div class="post-body">
+        <div class="post-header">
+          <span class="name">${escapeHtml(PROFILE.name)}</span>
+          <span class="handle">${PROFILE.handle}</span>
+          <span class="sep">·</span>
+          <span class="time" title="${fullDate}">${time}</span>
+        </div>
+        <div class="post-content">
+          <span class="post-meta-tag ${meta.cls}">${meta.label}</span>
+          ${body}
+          ${src ? `<div style="font-size:13px;margin-top:8px;color:var(--fg-muted)">🔗 ${src}</div>` : ''}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+async function fetchPosts() {
+  const resp = await fetch(POSTS_API, { cache: 'no-store' });
+  if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+  const data = await resp.json();
+  // Accept the canonical top-level array, and tolerate a {"posts": []} wrapper
+  // (the seeded store was once a dict) so we are resilient to either shape.
+  return Array.isArray(data) ? data : (Array.isArray(data?.posts) ? data.posts : []);
+}
+
+function renderFeed() {
+  const feed = document.getElementById('feed');
+  const filtered = allPosts.filter(p => isPostInTab(p, currentTab));
+  const sorted = [...filtered].sort((a, b) =>
+    new Date(b.ts || b.created_at || 0) - new Date(a.ts || a.created_at || 0)
+  );
+
+  if (sorted.length === 0) {
+    feed.innerHTML = '<div class="empty">Nothing to see yet — check back later.</div>';
+    return;
+  }
+
+  feed.innerHTML = sorted.map(renderPost).join('');
+}
+
+async function loadFeed() {
+  const feed = document.getElementById('feed');
+  feed.innerHTML = '<div class="loading"><div class="spinner"></div><div>Loading posts...</div></div>';
+
+  try {
+    allPosts = await fetchPosts();
+    document.getElementById('post-count').innerHTML = `<strong>${allPosts.length}</strong> <span class="label">Posts</span>`;
+    renderFeed();
+  } catch (e) {
+    feed.innerHTML = `<div class="error">
+      <div>⚠️ Failed to load feed</div>
+      <div style="font-size:13px;margin-top:4px;color:var(--fg-muted)">${e.message}</div>
+      <button class="retry-btn" onclick="loadFeed()">Retry</button>
+    </div>`;
+  }
+}
+
+// Tab switching
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    currentTab = tab.dataset.tab;
+    renderFeed();
+  });
+});
+
+// Load on page ready
+document.addEventListener('DOMContentLoaded', loadFeed);
+</script>
+</body>
+</html>
