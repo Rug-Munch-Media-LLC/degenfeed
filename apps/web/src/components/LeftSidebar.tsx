@@ -8,6 +8,7 @@ import { memo, useEffect, useMemo, useState } from 'react';
 import { useNotifications } from '../hooks/useNotifications';
 import { useProtocolConnections } from '../hooks/useProtocolConnections';
 import { useAuth } from './AuthProvider';
+import { RUGMUNCH_NAV, RUGMUNCH_ORIGIN } from './brand/rugmunch-nav';
 import { DegenChatLogo } from './DegenChatBrand';
 import { useToast } from './Toast';
 import { UnifiedComposerButton } from './UnifiedComposerButton';
@@ -514,6 +515,54 @@ export const LeftSidebar = memo(function LeftSidebar({
     );
   };
 
+  /* ── RugMunch platform nav (mirrors rugmunch.io's sidebar) ───────── */
+
+  const renderRugMunchNav = () => {
+    return RUGMUNCH_NAV.map((group) => (
+      <div key={group.title} className="mb-1">
+        <button
+          type="button"
+          className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-[10px] font-semibold uppercase tracking-wider transition-colors hover:bg-[var(--color-overlay)]"
+          style={{ color: 'var(--color-muted)' }}
+          aria-disabled="true"
+        >
+          <span className="flex-1 text-left">{group.title}</span>
+        </button>
+        <div className="space-y-0.5 px-1">
+          {group.items.map((item) => {
+            const href = item.external ? `${RUGMUNCH_ORIGIN}${item.to}` : item.to;
+            const active = !item.external && isFeatureActive(item.to);
+            return (
+              <Link
+                key={`${group.title}-${item.label}`}
+                href={href}
+                onClick={handleClick}
+                className={`sidebar-nav-item ${active ? 'sidebar-nav-active' : ''}`}
+                aria-current={active ? 'page' : undefined}
+              >
+                <span className="sidebar-nav-icon flex h-6 w-6 items-center justify-center rounded-lg text-xs font-bold">
+                  {item.label.slice(0, 1)}
+                </span>
+                <span className="sidebar-nav-label">{item.label}</span>
+                {item.external && (
+                  <span
+                    role="img"
+                    aria-label="Opens on rugmunch.io"
+                    title="Opens on rugmunch.io"
+                    className="ml-auto text-[9px]"
+                    style={{ color: 'var(--color-muted)' }}
+                  >
+                    ↗
+                  </span>
+                )}
+              </Link>
+            );
+          })}
+        </div>
+      </div>
+    ));
+  };
+
   const renderSection = (sid: SectionId) => {
     const meta = SECTION_META[sid];
     const isCollapsed = isSectionCollapsed(sid);
@@ -565,7 +614,7 @@ export const LeftSidebar = memo(function LeftSidebar({
           aria-label="DegenFeed Home"
         >
           <Image
-            src="/degenfeedlogo.png"
+            src="/avatar.jpg"
             alt=""
             width={collapsed ? 28 : 32}
             height={collapsed ? 28 : 32}
@@ -573,7 +622,7 @@ export const LeftSidebar = memo(function LeftSidebar({
           />
           {!collapsed && (
             <span className="text-xl font-bold tracking-tight" style={{ color: 'var(--color-fg)' }}>
-              DegenFeed
+              Crypto Rug Muncher
             </span>
           )}
         </Link>
@@ -738,6 +787,20 @@ export const LeftSidebar = memo(function LeftSidebar({
                 ⌘K
               </kbd>
             </button>
+
+            {/* Divider */}
+            <div className="my-2 border-t border-[var(--color-glass-border)]" />
+
+            {/* ── RugMunch platform shell — same left-hand nav as rugmunch.io ── */}
+            <div className="mb-2">
+              <div
+                className="mt-1 mb-2 flex items-center gap-1 px-3 text-[9px] font-bold uppercase tracking-[0.14em]"
+                style={{ color: 'var(--color-accent)' }}
+              >
+                RugMunch Platform
+              </div>
+              {renderRugMunchNav()}
+            </div>
 
             {/* Divider */}
             <div className="my-2 border-t border-[var(--color-glass-border)]" />
