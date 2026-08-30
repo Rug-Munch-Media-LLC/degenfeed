@@ -22,6 +22,10 @@
 # Networks:
 #   stoat_network — internal communication between Stoat services
 #   degenfeed_network — shared with DegenFeed for unified chat bridging
+#
+# REQUIRED ENV (compose .env file — values from gopass, never committed):
+#   STOAT_DB_PASSWORD   — Postgres password (no default; compose fails without)
+#   STOAT_SECRET_KEY    — backend secret key (no default; compose fails without)
 
 services:
   # ─── Postgres (Stoat Backend DB) ───────────────────────────────────────
@@ -32,9 +36,12 @@ services:
     volumes:
       - stoat_pgdata:/var/lib/postgresql/data
     environment:
+      # SECURITY (2026-08-30): no default password. Compose fails fast unless
+      # STOAT_DB_PASSWORD is set — provision it via the compose .env file with
+      # the value from gopass (never commit the real value).
       POSTGRES_DB: stoat
       POSTGRES_USER: stoat
-      POSTGRES_PASSWORD: ${STOAT_DB_PASSWORD:-stoat_changeme}
+      POSTGRES_PASSWORD: ${STOAT_DB_PASSWORD:?STOAT_DB_PASSWORD is required - set it in .env from gopass}
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U stoat"]
       interval: 10s
@@ -56,8 +63,8 @@ services:
       stoat-db:
         condition: service_healthy
     environment:
-      DATABASE_URL: postgres://stoat:${STOAT_DB_PASSWORD:-stoat_changeme}@stoat-db:5432/stoat
-      SECRET_KEY: ${STOAT_SECRET_KEY:-stoat_secret_key_change_in_production}
+      DATABASE_URL: postgres://stoat:${STOAT_DB_PASSWORD:?STOAT_DB_PASSWORD is required - set it in .env from gopass}@stoat-db:5432/stoat
+      SECRET_KEY: ${STOAT_SECRET_KEY:?STOAT_SECRET_KEY is required - set it in .env from gopass}
       NOSTR_RELAYS: ${NOSTR_RELAYS:-wss://relay.damus.io,wss://nos.lol,wss://relay.primal.net,wss://relay.groups.nip29.com}
       # NIP-29 Group relay for group chat
       NIP29_RELAY: ${NIP29_RELAY:-wss://relay.groups.nip29.com}

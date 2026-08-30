@@ -83,8 +83,15 @@ ci: ## Full CI pipeline (lint + typecheck + test + build)
 audit: ## Dependency audit with pnpm
 	pnpm audit
 
-rollback: ## Rollback Cloudflare Worker and Pages deployments to previous versions
-	@./scripts/deploy/rollback.sh $(ARGS)
+rollback: ## Rollback production web app to the previous git commit (systemd)
+	@echo "Rolling back degenfeed-web.service to the previous commit..."
+	cd /srv/work/repos/degenfeed-web \
+		&& git reset --hard HEAD~1 \
+		&& pnpm install --frozen-lockfile \
+		&& pnpm --filter degenfeed build \
+		&& sudo systemctl restart degenfeed-web
+	@echo "Verify: curl -sf http://127.0.0.1:3100/api/health"
+	@echo "(Cloudflare Worker/Pages rollback retired 2026-08-04 — see DEPLOYMENT.md)"
 
 clean: ## Remove build artifacts + dependencies
 	rm -rf dist .next .vite .turbo .biome-cache coverage

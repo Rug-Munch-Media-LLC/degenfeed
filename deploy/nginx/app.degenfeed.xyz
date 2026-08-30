@@ -1,0 +1,104 @@
+# ═══════════════════════════════════════════════════════════════════════════
+# app.degenfeed.xyz — DegenFeed Next.js app (degenfeed-web.service :3100)
+#
+# Versioned into the repo 2026-08-30 (previously only lived in
+# /srv/degenfeed/nginx/ + /etc/nginx/sites-enabled/).
+#
+# PRODUCTION TOPOLOGY:
+#   Browser → nginx (this file) → degenfeed-web.service  (Next.js standalone,
+#   127.0.0.1:3100) which proxies bridge-owned API routes itself via
+#   API_PROXY_TARGET (default http://localhost:8787 = degenfeed-bridge.service).
+#
+# FIX 2026-08-30: /api/(feed|rss)/, =/api/health and /v1|health previously
+# proxied to 127.0.0.1:3101 (degenfeed-api container — RETIRED, nothing
+# listens there → 502 on every feed request). They now go straight to the
+# bridge on :8787, matching what the app's own proxy targets.
+#
+# LIVE-DEPLOY STEPS (lead — do NOT run from CI):
+#   1. cp deploy/nginx/app.degenfeed.xyz /srv/degenfeed/nginx/app.degenfeed.xyz.conf
+#   2. ln -sf /srv/degenfeed/nginx/app.degenfeed.xyz.conf /etc/nginx/sites-enabled/app.degenfeed.xyz
+#   3. nginx -t && systemctl reload nginx
+# ═══════════════════════════════════════════════════════════════════════════
+
+server {
+    listen 80;
+    listen [::]:80;
+    listen 443 ssl;
+    listen [::]:443 ssl;
+    server_name app.degenfeed.xyz;
+
+    ssl_certificate /etc/ssl/certs/degenfeed-origin-ca.pem;
+    ssl_certificate_key /etc/ssl/private/degenfeed-origin.key;
+    ssl_protocols TLSv1.2 TLSv1.3;
+
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+    # SECURITY (2026-08-03): bumped to fleet standard (2y + includeSubDomains).
+    # CSP intentionally NOT added here — the Next.js app (proxy.ts) sends its
+    # own nonce-based CSP; a second header-level CSP would conflict.
+    add_header Strict-Transport-Security "max-age=63072000; includeSubDomains; preload" always;
+    add_header Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=(), usb=(), midi=(), sync-xhr=(), magnetometer=(), gyroscope=(), fullscreen=(self), display-capture=()" always;
+
+    # ─── Feed API → bridge (degenfeed-bridge.service :8787) ──────────────
+    # [REVIEW] NOT a blanket /api/* redirect: the Next.js app at :3100 owns
+    # ~150 real /api/* routes (admin, identity, auth, creator, moderation,
+    # spaces, messages, etc.). Only bridge-owned prefixes are routed here.
+    #
+    # GET /api/feed/:protocol → bridge   (e.g. /api/feed/nostr)
+    # GET /api/feed/unified   → bridge
+    # GET /api/health         → bridge
+    # GET /api/rss/sources    → bridge
+    # /v1/* and /health       → bridge (alternate bridge prefixes)
+    location ~ ^/api/(feed|rss)/ {
+        proxy_pass http://127.0.0.1:8787;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_read_timeout 60s;
+    }
+
+    # Exact /api/health → bridge. NOT a prefix match: /api/health/protocols
+    # is a Next.js route (shapes bridge /api/feed/health with fallback).
+    location = /api/health {
+        proxy_pass http://127.0.0.1:8787;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_read_timeout 30s;
+    }
+
+    # Bridge alternate prefixes: /v1/feed/*, /v1/auth, /v1/bookmarks, /health
+    location ~ ^/(v1/|health) {
+        proxy_pass http://127.0.0.1:8787;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_read_timeout 30s;
+    }
+
+    # Everything else → Next.js app (degenfeed-web.service :3100).
+    location / {
+        # App serves its own layout/navigation — no sub_filter injection here.
+        # Gzip restored to default (on); Accept-Encoding header no longer stripped.
+        proxy_pass http://127.0.0.1:3100;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_read_timeout 30s;
+    }
+
+    access_log /var/log/nginx/app.degenfeed.xyz.access.log;
+    error_log /var/log/nginx/app.degenfeed.xyz.error.log warn;
+    http2 on;
+}

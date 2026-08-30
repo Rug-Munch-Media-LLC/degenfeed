@@ -1,4 +1,15 @@
 # DegenFeed Web — Docker Compose
+#
+# ⚠️ NOT the production deploy path (2026-08-30): production is the systemd
+# standalone service `degenfeed-web.service` (127.0.0.1:3100) fed from this
+# repo checkout — see .forgejo/workflows/deploy.yml + DEPLOYMENT.md. This
+# compose file is kept for container-based environments / self-hosters.
+#
+# [REVIEW] apps/web/Dockerfile runs `pnpm install --no-frozen-lockfile`
+# (line 22) — builds are not lockfile-pinned and can drift from pnpm-lock.yaml.
+# Fix belongs in apps/web/Dockerfile (apps/web owners): use
+# `pnpm install --frozen-lockfile`. Tracked in TODO.md.
+#
 # Build: docker compose build
 # Start: docker compose up -d
 # Stop:  docker compose down

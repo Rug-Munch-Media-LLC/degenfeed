@@ -7,8 +7,8 @@
     "dev": "wrangler dev",
     "dev:node": "tsx src/serve.ts",
     "start:node": "node --import tsx src/serve.ts",
-    "build": "echo 'Cloudflare deploy not available in CI \u2014 skipping wrangler deploy'",
-    "deploy": "wrangler deploy",
+    "build": "wrangler deploy --dry-run --outdir dist",
+    "deploy": "wrangler deploy --var POSTIZ_API_KEY:${POSTIZ_API_KEY:?POSTIZ_API_KEY env var is required (gopass) - do not rely on the wrangler.toml placeholder}",
     "typecheck": "tsc --noEmit",
     "lint": "biome check src/",
     "test": "vitest run"
