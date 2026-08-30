@@ -1,15 +1,30 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+
+afterEach(() => {
+  vi.unstubAllEnvs();
+  vi.resetModules();
+});
 
 describe('@degenfeed/farcaster-sdk', () => {
-  it('should export HubClient class', async () => {
+  it('should construct HubClient from an explicit URL', async () => {
     const { HubClient } = await import('./index');
-    const client = new HubClient();
+    const client = new HubClient('https://hub.example.com');
     expect(client).toBeInstanceOf(HubClient);
   });
 
-  it('should export DEFAULT_HUB_URL constant', async () => {
+  it('should resolve DEFAULT_HUB_URL from FARCASTER_HUB_URL (no localhost default)', async () => {
+    vi.stubEnv('FARCASTER_HUB_URL', 'https://hub-from-env.example.com:2281');
+    vi.resetModules();
     const { DEFAULT_HUB_URL } = await import('./index');
-    expect(DEFAULT_HUB_URL).toContain('2281');
+    expect(DEFAULT_HUB_URL).toBe('https://hub-from-env.example.com:2281');
+  });
+
+  it('should throw when no hub URL is configured (no silent localhost fallback)', async () => {
+    vi.stubEnv('FARCASTER_HUB_URL', '');
+    vi.stubEnv('NEXT_PUBLIC_FARCASTER_HUB_URL', '');
+    vi.resetModules();
+    const { HubClient } = await import('./index');
+    expect(() => new HubClient()).toThrow(/not configured/);
   });
 
   it('should export curated FIDs', async () => {
@@ -76,9 +91,7 @@ describe('@degenfeed/farcaster-sdk', () => {
     });
     expect(result.ok).toBe(true);
     const bytes = new Uint8Array(
-      ((result.messageHex as string).match(/.{1,2}/g) ?? []).map((b) =>
-        Number.parseInt(b, 16),
-      ),
+      ((result.messageHex as string).match(/.{1,2}/g) ?? []).map((b) => Number.parseInt(b, 16)),
     );
 
     // Parse the TOP-LEVEL Message fields only (skip nested payloads).
@@ -112,9 +125,7 @@ describe('@degenfeed/farcaster-sdk', () => {
     });
     expect(result.ok).toBe(true);
     const bytes = new Uint8Array(
-      ((result.messageHex as string).match(/.{1,2}/g) ?? []).map((b) =>
-        Number.parseInt(b, 16),
-      ),
+      ((result.messageHex as string).match(/.{1,2}/g) ?? []).map((b) => Number.parseInt(b, 16)),
     );
     // MessageData.field 3 is the timestamp varint.
     const top = parseTopLevel(bytes);

@@ -16,7 +16,7 @@ import {
   PublicKey,
   SYSVAR_RENT_PUBKEY,
   SystemProgram,
-  Transaction,
+  type Transaction,
   VersionedTransaction,
 } from '@solana/web3.js';
 import type {
@@ -35,17 +35,35 @@ import type {
  *
  * CONTRACTS NOT DEPLOYED — the Anchor program source lives at
  * `src/solana/program/programs/degenfeed-creator-token/` but has NOT been
- * deployed to any cluster. The default address below is a placeholder.
- * Set `SOLANA_PROGRAM_ID` (env var) to the real program ID after:
+ * deployed to any cluster. There is deliberately NO default program ID:
+ * the former placeholder (`DFCCrTn1111…`) was a fabricated address that
+ * PDA derivations were silently computed against.
+ *
+ * Resolution is lazy so that importing this module never throws. Callers
+ * must check `isSolanaProgramConfigured()` (or catch) before deriving
+ * PDAs or constructing a client. Set `SOLANA_PROGRAM_ID` after:
  *   anchor deploy --provider.cluster devnet
  */
-export const PROGRAM_ID = (() => {
-  const fromEnv = process.env.SOLANA_PROGRAM_ID;
-  if (fromEnv && fromEnv.trim().length > 0) {
-    return new PublicKey(fromEnv.trim());
+export const SOLANA_PROGRAM_ID_ENV = 'SOLANA_PROGRAM_ID';
+
+let cachedProgramId: PublicKey | null = null;
+
+export function isSolanaProgramConfigured(): boolean {
+  return Boolean(process.env.SOLANA_PROGRAM_ID?.trim());
+}
+
+/** Resolve the program ID from env. Throws a descriptive error when unset. */
+export function getProgramId(): PublicKey {
+  if (cachedProgramId) return cachedProgramId;
+  const fromEnv = process.env.SOLANA_PROGRAM_ID?.trim();
+  if (!fromEnv) {
+    throw new Error(
+      'Solana creator-coin program is not configured — set the SOLANA_PROGRAM_ID env var to the deployed program address. Contracts are not deployed; no default program ID is provided.',
+    );
   }
-  return new PublicKey('DFCCrTn111111111111111111111111111111111111');
-})();
+  cachedProgramId = new PublicKey(fromEnv);
+  return cachedProgramId;
+}
 
 const SEED_TOKEN_STATE = new TextEncoder().encode('token-state');
 const SEED_TOKEN_MINT = new TextEncoder().encode('token-mint');
@@ -60,30 +78,33 @@ const SEED_PLATFORM_FEE = new TextEncoder().encode('platform-fee-vault');
 export function deriveTokenState(creator: PublicKey, tokenSeed: bigint): [PublicKey, number] {
   const buf = new Uint8Array(8);
   new DataView(buf.buffer).setBigUint64(0, tokenSeed, true);
-  return PublicKey.findProgramAddressSync([SEED_TOKEN_STATE, creator.toBytes(), buf], PROGRAM_ID);
+  return PublicKey.findProgramAddressSync(
+    [SEED_TOKEN_STATE, creator.toBytes(), buf],
+    getProgramId(),
+  );
 }
 
 export function deriveTokenMint(tokenState: PublicKey): [PublicKey, number] {
-  return PublicKey.findProgramAddressSync([SEED_TOKEN_MINT, tokenState.toBytes()], PROGRAM_ID);
+  return PublicKey.findProgramAddressSync([SEED_TOKEN_MINT, tokenState.toBytes()], getProgramId());
 }
 
 export function deriveMintAuthority(mint: PublicKey): [PublicKey, number] {
-  return PublicKey.findProgramAddressSync([SEED_MINT_AUTHORITY, mint.toBytes()], PROGRAM_ID);
+  return PublicKey.findProgramAddressSync([SEED_MINT_AUTHORITY, mint.toBytes()], getProgramId());
 }
 
 export function deriveTokenVault(mint: PublicKey): [PublicKey, number] {
-  return PublicKey.findProgramAddressSync([SEED_TOKEN_VAULT, mint.toBytes()], PROGRAM_ID);
+  return PublicKey.findProgramAddressSync([SEED_TOKEN_VAULT, mint.toBytes()], getProgramId());
 }
 
 export function deriveBuyerState(buyer: PublicKey, mint: PublicKey): [PublicKey, number] {
   return PublicKey.findProgramAddressSync(
     [SEED_BUYER_STATE, buyer.toBytes(), mint.toBytes()],
-    PROGRAM_ID,
+    getProgramId(),
   );
 }
 
 export function derivePlatformFeeVault(): [PublicKey, number] {
-  return PublicKey.findProgramAddressSync([SEED_PLATFORM_FEE], PROGRAM_ID);
+  return PublicKey.findProgramAddressSync([SEED_PLATFORM_FEE], getProgramId());
 }
 
 // ─── SDK Client ────────────────────────────────────────────────────────────
@@ -157,6 +178,11 @@ export class CreatorCoinSolanaClient {
   private provider: AnchorProvider;
 
   constructor(provider: AnchorProvider) {
+    if (!isSolanaProgramConfigured()) {
+      throw new Error(
+        'Solana creator-coin program is not configured — set the SOLANA_PROGRAM_ID env var to the deployed program address before constructing a client.',
+      );
+    }
     this.provider = provider;
     this.program = new Program(getIdl(), provider);
   }
@@ -335,14 +361,14 @@ export class CreatorCoinSolanaClient {
 }
 
 function deriveVestingVault(mint: PublicKey): [PublicKey, number] {
-  return PublicKey.findProgramAddressSync([SEED_VESTING_VAULT, mint.toBytes()], PROGRAM_ID);
+  return PublicKey.findProgramAddressSync([SEED_VESTING_VAULT, mint.toBytes()], getProgramId());
 }
 
 // ─── IDL Stub ──────────────────────────────────────────────────────────────
 
 function getIdl(): any {
   return {
-    address: PROGRAM_ID.toBase58(),
+    address: getProgramId().toBase58(),
     metadata: { name: 'degenfeed_creator_token', version: '0.1.0', spec: '0.1.0' },
     instructions: [
       {
