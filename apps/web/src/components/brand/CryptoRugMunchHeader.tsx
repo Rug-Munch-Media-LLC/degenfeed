@@ -3,8 +3,8 @@
 import Image from 'next/image';
 
 /**
- * @CryptoRugMunch feed header — brands feed.rugmunch.io as a real part of the
- * RugMunch platform (matching the @CryptoRugMunch X profile).
+ * @CryptoRugMunch feed header — brands feed.rugmunch.io as a sub-page of the
+ * Rug Munch Intelligence platform (matching the @CryptoRugMunch X profile).
  *
  * Self-hosted avatar/banner (public/avatar.jpg, public/banner.jpg) — no
  * pbs.twimg.com hotlinks.
