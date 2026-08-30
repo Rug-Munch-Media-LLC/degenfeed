@@ -229,19 +229,6 @@ export async function handleWalletVerify(request: Request, env: Env): Promise<Re
       return jsonResponse({ error: 'Invalid signature' }, 401);
     }
 
-    // Fire-and-forget: notify rmi-backend that this wallet verified successfully
-    // This is a cross-check so rmi-backend can track wallet risk/scam status.
-    // Does NOT block auth — if rmi-backend is unreachable, the login proceeds.
-    notifyRmiBackend(
-      {
-        address: body.address,
-        chain: body.chain,
-        message: body.message,
-        signature: body.signature,
-      },
-      env,
-    ).catch(() => {});
-
     // Wallet is verified — it's a first-class identity on DegenFeed
     // GotoSocial account link is OPTIONAL
     const gtsSession = await tryGtsAuth(env);
@@ -313,39 +300,6 @@ export async function handleWalletVerify(request: Request, env: Env): Promise<Re
     );
   } catch (err) {
     return jsonResponse({ error: String(err) }, 500);
-  }
-}
-
-// ─── RMI backend verification cross-check (fire-and-forget) ──
-
-/**
- * Fire-and-forget notification to rmi-backend that a wallet was verified.
- * This lets rmi-backend track wallet activity, cross-reference scam/risk
- * databases, and build a profile of authenticated wallets.
- *
- * Completely non-blocking — auth works even if rmi-backend is unreachable.
- */
-async function notifyRmiBackend(
-  params: { address: string; chain: string; message: string; signature: string },
-  env: Env,
-): Promise<void> {
-  const rmiUrl = env.RMI_BACKEND_URL || 'http://rmi-backend:8000';
-  try {
-    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-    if (env.RMI_API_KEY) {
-      headers.Authorization = `Bearer ${env.RMI_API_KEY}`;
-    }
-    await fetch(`${rmiUrl}/api/v1/wallet/verify-signature`, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify(params),
-    });
-  } catch (err) {
-    // Non-fatal — rmi-backend being down must never break auth
-    log('warn', 'RMI backend verification cross-check failed (non-blocking)', {
-      error: err instanceof Error ? err.message : String(err),
-      address: params.address.slice(0, 8),
-    });
   }
 }
 
