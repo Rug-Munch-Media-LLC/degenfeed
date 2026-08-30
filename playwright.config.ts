@@ -9,7 +9,7 @@ export default defineConfig({
   reporter: [['html'], ['list']],
   timeout: 30000,
   use: {
-    baseURL: 'http://localhost:3000',
+    baseURL: 'http://localhost:3456',
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
   },
@@ -34,9 +34,17 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: 'pnpm --filter degenfeed dev',
-    port: 3000,
+    // Standalone-appropriate: `next start` cannot serve an `output:
+    // 'standalone'` build, so build once and run the generated server.js
+    // directly (this also matches how the Docker image boots the app).
+    // Port 3456 is free on the CI runner / dev host — :3000 is Forgejo.
+    command: 'pnpm --filter degenfeed build && node apps/web/.next/standalone/apps/web/server.js',
+    port: 3456,
     reuseExistingServer: !process.env.CI,
-    timeout: 120000,
+    timeout: 300000,
+    env: {
+      PORT: '3456',
+      HOSTNAME: '127.0.0.1',
+    },
   },
 });

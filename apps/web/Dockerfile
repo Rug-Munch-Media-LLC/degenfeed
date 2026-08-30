@@ -18,8 +18,10 @@ COPY pnpm-lock.yaml pnpm-workspace.yaml package.json ./
 COPY apps/web/package.json ./apps/web/
 COPY packages/ ./packages/
 
-# Install packages (lockfile may be ahead of package.json in active dev)
-RUN pnpm install --no-frozen-lockfile --ignore-scripts
+# Install packages pinned to the committed lockfile for reproducible builds.
+# CI installs with --frozen-lockfile; the Docker image must match exactly so
+# `next build` here reproduces what CI validated.
+RUN pnpm install --frozen-lockfile --ignore-scripts
 
 # Build native deps (sharp, esbuild, etc. — listed in pnpm-workspace allowBuilds)
 RUN pnpm rebuild
@@ -33,10 +35,13 @@ ARG NEXT_PUBLIC_APP_URL
 ARG NEXT_PUBLIC_API_BASE
 ARG NEXT_PUBLIC_API_URL
 ARG NEXT_PUBLIC_WS_URL
-# API proxy target is baked into rewrites() at build time — must be set here
-# (defaults to the docker-DNS api-server container which is reachable from
-# the web container on the degenfeed_default network).
-ARG API_PROXY_TARGET=http://degenfeed-api:3001
+# API proxy target is baked into rewrites() at BUILD time — must be set here.
+# The bridge runs as a HOST process on :8787, so containers reach it via
+# host.docker.internal (the old docker-DNS host http://degenfeed-api:3001 is
+# dead). On Linux hosts the runtime must add the gateway mapping:
+#   extra_hosts: ["host.docker.internal:host-gateway"]
+# ENV passes the ARG through to `next build` so the env var reaches the app.
+ARG API_PROXY_TARGET=http://host.docker.internal:8787
 ENV API_PROXY_TARGET=$API_PROXY_TARGET
 
 WORKDIR /app
