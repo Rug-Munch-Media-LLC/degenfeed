@@ -1,6 +1,14 @@
 # DegenFeed Web — Deployment Guide
 
-**Status:** canonical  
+> ⚠️ **HISTORICAL — NOT CANONICAL (2026-08-30).** Production is a **systemd
+> standalone service**, NOT Cloudflare Workers/Pages and NOT Docker Compose.
+> Workers + Pages were retired 2026-08-04. The canonical deploy guide is
+> [`../DEPLOYMENT.md`](../DEPLOYMENT.md); the production runbook is
+> [`../deploy/RUNBOOK.md`](../deploy/RUNBOOK.md). Everything below about
+> Cloudflare Workers, Pages, KV, and GitHub Actions is retained as historical
+> reference only — do not follow it for current deploys.
+
+**Status:** historical reference (superseded by `../DEPLOYMENT.md`)  
 **Last updated:** 2026-07-20
 
 This doc covers deploying the full DegenFeed stack: Cloudflare Workers + Pages frontend, self-hosted infrastructure (GoToSocial, AT Protocol PDS, PeerTube, Prosody XMPP), and smart contracts (Base + Solana).

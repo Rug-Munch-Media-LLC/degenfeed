@@ -1,0 +1,20 @@
+# degenfeed-meili-reindex.timer — daily full search reindex
+# Schedule rationale: 04:30 server-local, off-peak for the feed; randomized
+# by up to 15m so multiple hosts/timers never align. Persistent=true catches
+# up after downtime (one catch-up run max).
+#
+# Manual run:  systemctl start degenfeed-meili-reindex.service
+# Last result: systemctl list-timers degenfeed-meili-reindex.timer
+# Logs:        journalctl -u degenfeed-meili-reindex.service
+
+[Unit]
+Description=Run DegenFeed MeiliSearch reindex daily
+
+[Timer]
+OnCalendar=*-*-* 04:30:00
+RandomizedDelaySec=15min
+Persistent=true
+Unit=degenfeed-meili-reindex.service
+
+[Install]
+WantedBy=timers.target

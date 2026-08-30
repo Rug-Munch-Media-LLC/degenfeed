@@ -1,0 +1,38 @@
+# degenfeed-meili-reindex.service — oneshot wrapper for the search reindex
+# Part of the DegenFeed production deploy (see deploy/RUNBOOK.md §5).
+#
+# Install (lead, on the deploy host):
+#   install -m 755 <repo>/scripts/meilisearch-reindex.sh /usr/local/bin/
+#   cp <repo>/deploy/systemd/degenfeed-meili-reindex.{service,timer} /etc/systemd/system/
+#   systemctl daemon-reload
+#   systemctl enable --now degenfeed-meili-reindex.timer
+#
+# Secrets are NOT inlined here. Provide them via the env file below
+# (root:deploy 0600) or a systemd credential:
+#   /etc/default/degenfeed-meili-reindex:
+#     BRIDGE_API_KEY=...
+#     MEILI_KEY=...            # optional, enables post-reindex verification
+#     # MEILI_URL / BRIDGE_URL only if non-default
+
+[Unit]
+Description=DegenFeed MeiliSearch full reindex (via bridge)
+After=network-online.target
+Wants=network-online.target
+# NOTE: intentionally NO ordering dependency on degenfeed-web/bridge — the
+# reindex talks to the running bridge over HTTP and must not restart it.
+
+[Service]
+Type=oneshot
+# Adjust to the service user that owns the checkout/deploy on your host.
+User=degenfeed
+Group=degenfeed
+EnvironmentFile=-/etc/default/degenfeed-meili-reindex
+ExecStart=/usr/local/bin/degenfeed-meili-reindex.sh
+# A full provider crawl can take minutes; give it headroom.
+TimeoutStartSec=1900
+# Lockfile lives in /tmp by default; keep a private one per service.
+PrivateTmp=true
+NoNewPrivileges=true
+
+[Install]
+WantedBy=multi-user.target
