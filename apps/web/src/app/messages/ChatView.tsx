@@ -100,11 +100,14 @@ function SafetyNumbersModal({
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
-      onClick={onClose}
+      onPointerDown={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
     >
       <div
+        role="dialog"
+        aria-modal="true"
         className="mx-4 w-full max-w-sm rounded-2xl border border-[var(--color-border)] bg-[var(--color-card)] p-5 shadow-2xl"
-        onClick={(e) => e.stopPropagation()}
       >
         <h3 className="text-sm font-bold text-[var(--color-fg)] mb-3">Verify Identity</h3>
         <p className="text-[10px] text-[var(--color-muted)] mb-4 leading-relaxed">
@@ -180,7 +183,7 @@ function DisappearingTimerSelector({
       </button>
       {open && (
         <>
-          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
+          <div className="fixed inset-0 z-40" onPointerDown={() => setOpen(false)} />
           <div className="absolute right-0 top-full z-50 mt-1 w-28 rounded-lg border border-[var(--color-border)] bg-[var(--color-card)] py-1 shadow-lg">
             {DISAPPEAR_TIMERS.map((t) => (
               <button
@@ -336,7 +339,7 @@ function ChatThemeSelector({
       </button>
       {open && (
         <>
-          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
+          <div className="fixed inset-0 z-40" onPointerDown={() => setOpen(false)} />
           <div className="absolute right-0 top-full z-50 mt-1 w-32 rounded-lg border border-[var(--color-border)] bg-[var(--color-card)] py-1 shadow-lg">
             {CHAT_THEMES.map((theme) => (
               <button

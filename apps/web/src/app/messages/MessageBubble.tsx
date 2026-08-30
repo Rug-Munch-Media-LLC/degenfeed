@@ -118,23 +118,28 @@ function DeliveryBadges({ statuses }: { statuses: DeliveryBadge[] }) {
   const failed = statuses.filter((s) => !s.ok);
 
   return (
-    <div className="flex items-center gap-0.5" role="list" aria-label="Delivery status">
-      {delivered.length > 0 && (
-        <span className="text-[8px] text-[var(--color-muted)] mr-0.5">✓</span>
-      )}
+    <ul className="flex items-center gap-0.5" aria-label="Delivery status">
+      {delivered.length > 0 && <li className="text-[8px] text-[var(--color-muted)] mr-0.5">✓</li>}
       {delivered.map((s) => (
-        <ProtocolBadge key={`ok-${s.protocol}`} protocol={s.protocol} ok={true} />
+        <li key={`ok-${s.protocol}`}>
+          <ProtocolBadge protocol={s.protocol} ok={true} />
+        </li>
       ))}
       {failed.length > 0 && (
-        <span
+        <li
           className="text-[8px] text-red-400 ml-0.5"
           role="img"
           aria-label={`${failed.length} failed`}
         >
           ✗
-        </span>
+        </li>
       )}
-    </div>
+      {failed.map((s) => (
+        <li key={`fail-${s.protocol}`}>
+          <ProtocolBadge protocol={s.protocol} ok={false} />
+        </li>
+      ))}
+    </ul>
   );
 }
 
@@ -386,7 +391,7 @@ function MessageContextMenu({
 
   return (
     <>
-      <div className="fixed inset-0 z-50" onClick={onClose} />
+      <div className="fixed inset-0 z-50" onPointerDown={onClose} />
       <div
         className="absolute z-50 min-w-[140px] rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] py-1 shadow-2xl"
         style={style}
@@ -569,7 +574,7 @@ export function MessageBubble({
     <div
       className={`group relative flex ${isMe ? 'justify-end' : 'justify-start'} animate-message-enter`}
     >
-      <div
+      <article
         className={`relative max-w-[85%] sm:max-w-[70%] rounded-2xl px-3.5 py-2.5 ${
           isMe
             ? 'bg-[var(--color-msg-sent)] text-[var(--color-fg)] rounded-br-md'
@@ -804,7 +809,7 @@ export function MessageBubble({
             </button>
           </div>
         )}
-      </div>
+      </article>
 
       {/* Context menu */}
       {showContextMenu && (

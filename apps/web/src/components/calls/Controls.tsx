@@ -283,25 +283,23 @@ interface PiPOverlayProps {
 
 export function PiPOverlay({ localStream, duration, onExpand, onEndCall }: PiPOverlayProps) {
   return (
-    <div
-      className="fixed bottom-4 right-4 z-50 w-56 cursor-pointer overflow-hidden rounded-2xl border border-white/20 shadow-2xl bg-black"
-      onClick={onExpand}
-      role="button"
-      tabIndex={0}
-      aria-label="Expand call"
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') onExpand();
-      }}
-    >
-      <video
-        ref={(el) => {
-          if (el && localStream) el.srcObject = localStream;
-        }}
-        autoPlay
-        muted
-        playsInline
-        className="h-32 w-full object-cover"
-      />
+    <div className="fixed bottom-4 right-4 z-50 w-56 overflow-hidden rounded-2xl border border-white/20 shadow-2xl bg-black">
+      <button
+        type="button"
+        onClick={onExpand}
+        aria-label="Expand call"
+        className="block w-full cursor-pointer"
+      >
+        <video
+          ref={(el) => {
+            if (el && localStream) el.srcObject = localStream;
+          }}
+          autoPlay
+          muted
+          playsInline
+          className="h-32 w-full object-cover"
+        />
+      </button>
       <div className="absolute inset-x-0 bottom-0 flex items-center justify-between bg-gradient-to-t from-black/80 to-transparent px-2 py-1.5">
         <span className="text-[10px] font-mono text-white">
           {Math.floor(duration / 60)}:{(duration % 60).toString().padStart(2, '0')}

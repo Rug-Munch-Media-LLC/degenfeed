@@ -36,19 +36,19 @@ export function HoverCard({ children, content, showDelay = 400 }: HoverCardProps
   return (
     <span
       className="relative inline-flex"
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
+      onPointerEnter={handleMouseEnter}
+      onPointerLeave={handleMouseLeave}
     >
       {children}
       {visible && (
         <div
           ref={cardRef}
+          role="tooltip"
           className="absolute bottom-full left-1/2 z-50 mb-2 w-64 -translate-x-1/2 rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] p-4 shadow-xl backdrop-blur-xl"
           onMouseEnter={() => {
             if (hideTimer.current) clearTimeout(hideTimer.current);
           }}
           onMouseLeave={handleMouseLeave}
-          role="tooltip"
         >
           {/* Arrow */}
           <div className="absolute -bottom-1 left-1/2 h-2 w-2 -translate-x-1/2 rotate-45 border-b border-r border-[var(--color-border)] bg-[var(--color-card)]" />

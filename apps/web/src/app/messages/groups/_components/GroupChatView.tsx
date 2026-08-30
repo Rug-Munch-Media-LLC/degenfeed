@@ -400,11 +400,12 @@ export function GroupChatView({ groupId, onBack }: { groupId: string; onBack: ()
       {showInfo && info && (
         <div
           className="md:hidden fixed inset-0 z-40 bg-black/60 backdrop-blur-sm"
-          onClick={() => setShowInfo(false)}
+          onPointerDown={() => setShowInfo(false)}
         >
           <div
+            role="dialog"
+            aria-modal="true"
             className="absolute right-0 top-0 h-full w-72 bg-[var(--color-card)] border-l border-[var(--color-border)] p-4 overflow-y-auto"
-            onClick={(e) => e.stopPropagation()}
           >
             <button
               type="button"

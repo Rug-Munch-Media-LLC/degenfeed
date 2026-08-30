@@ -67,8 +67,8 @@ export function ActivityTicker() {
   return (
     <div
       className="rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] p-3"
-      onMouseEnter={() => setPaused(true)}
-      onMouseLeave={() => setPaused(false)}
+      onPointerEnter={() => setPaused(true)}
+      onPointerLeave={() => setPaused(false)}
     >
       <h3 className="text-xs font-semibold text-[var(--color-muted)] mb-2 uppercase tracking-wider">
         Live Activity

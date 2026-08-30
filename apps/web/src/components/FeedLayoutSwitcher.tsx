@@ -26,9 +26,8 @@ export const FeedLayoutSwitcher = memo(function FeedLayoutSwitcher({
   const [hovered, setHovered] = useState<string | null>(null);
 
   return (
-    <div
-      className="feed-layout-switcher inline-flex items-center gap-0.5 rounded-lg border border-white/[0.06] bg-[var(--color-glass-bg)] p-0.5"
-      role="radiogroup"
+    <fieldset
+      className="feed-layout-switcher m-0 inline-flex items-center gap-0.5 rounded-lg border border-white/[0.06] bg-[var(--color-glass-bg)] p-0.5"
       aria-label="Feed layout"
     >
       {LAYOUT_OPTIONS.map((opt) => {
@@ -37,8 +36,7 @@ export const FeedLayoutSwitcher = memo(function FeedLayoutSwitcher({
           <button
             key={opt.id}
             type="button"
-            role="radio"
-            aria-checked={active}
+            aria-pressed={active}
             aria-label={opt.label}
             onClick={() => onChange(opt.id)}
             onMouseEnter={() => setHovered(opt.id)}
@@ -64,6 +62,6 @@ export const FeedLayoutSwitcher = memo(function FeedLayoutSwitcher({
           </button>
         );
       })}
-    </div>
+    </fieldset>
   );
 });

@@ -762,15 +762,18 @@ export const TokenGateConfig = memo(function TokenGateConfig({
         {isOpen && (
           <div
             className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
-            onClick={() => setIsOpen(false)}
+            onPointerDown={(e) => {
+              if (e.target === e.currentTarget) setIsOpen(false);
+            }}
           >
             <div
+              role="dialog"
+              aria-modal="true"
               className="w-full max-w-lg rounded-2xl border p-6 shadow-2xl max-h-[90vh] overflow-y-auto"
               style={{
                 backgroundColor: 'var(--color-bg)',
                 borderColor: 'var(--color-glass-border)',
               }}
-              onClick={(e) => e.stopPropagation()}
             >
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-lg font-bold" style={{ color: 'var(--color-fg)' }}>

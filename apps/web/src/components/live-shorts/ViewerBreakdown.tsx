@@ -29,9 +29,9 @@ export function ViewerBreakdown({ counts, total, compact = false }: ViewerBreakd
 
   if (compact) {
     return (
-      <div className="flex items-center gap-1" role="list" aria-label="Viewers by platform">
+      <ul className="flex items-center gap-1" aria-label="Viewers by platform">
         {counts.slice(0, 4).map((platform) => (
-          <span
+          <li
             key={platform.platform}
             className="inline-flex items-center gap-1 rounded-md px-1 py-0.5 text-[9px] font-medium"
             style={{ backgroundColor: `${platform.color}18`, color: platform.color }}
@@ -43,12 +43,12 @@ export function ViewerBreakdown({ counts, total, compact = false }: ViewerBreakd
               aria-hidden="true"
             />
             {formatViewers(platform.count)}
-          </span>
+          </li>
         ))}
         {counts.length > 4 && (
-          <span className="text-[9px] text-[var(--color-muted)]">+{counts.length - 4}</span>
+          <li className="text-[9px] text-[var(--color-muted)]">+{counts.length - 4}</li>
         )}
-      </div>
+      </ul>
     );
   }
 

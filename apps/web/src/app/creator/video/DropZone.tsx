@@ -40,32 +40,30 @@ export default function DropZone({
   );
 
   return (
-    <div
-      onDragOver={handleDragOver}
-      onDragLeave={handleDragLeave}
-      onDrop={handleDrop}
-      onClick={handleClick}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') handleClick();
-      }}
-      role="button"
-      tabIndex={0}
-      aria-label={label}
-      className={`flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed p-12 text-center transition-all ${
-        dragging
-          ? 'border-degen-500 bg-degen-500/5'
-          : 'border-[var(--color-glass-border)] hover:border-degen-500/30 hover:bg-[var(--color-overlay)]'
-      }`}
-    >
-      <span className="mb-3 text-4xl" aria-hidden="true">
-        {dragging ? '🎯' : '🎬'}
-      </span>
-      <p className="mb-1 text-sm font-medium" style={{ color: 'var(--color-fg)' }}>
-        {dragging ? "Drop it like it's hot!" : label}
-      </p>
-      <p className="text-[11px]" style={{ color: 'var(--color-muted)' }}>
-        Supports MP4, WebM, MOV &middot; Max 4GB
-      </p>
+    <>
+      <button
+        type="button"
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
+        onClick={handleClick}
+        aria-label={label}
+        className={`flex w-full cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed p-12 text-center transition-all ${
+          dragging
+            ? 'border-degen-500 bg-degen-500/5'
+            : 'border-[var(--color-glass-border)] hover:border-degen-500/30 hover:bg-[var(--color-overlay)]'
+        }`}
+      >
+        <span className="mb-3 text-4xl" aria-hidden="true">
+          {dragging ? '🎯' : '🎬'}
+        </span>
+        <p className="mb-1 text-sm font-medium" style={{ color: 'var(--color-fg)' }}>
+          {dragging ? "Drop it like it's hot!" : label}
+        </p>
+        <p className="text-[11px]" style={{ color: 'var(--color-muted)' }}>
+          Supports MP4, WebM, MOV &middot; Max 4GB
+        </p>
+      </button>
       <input
         ref={inputRef}
         type="file"
@@ -73,6 +71,6 @@ export default function DropZone({
         onChange={handleChange}
         className="hidden"
       />
-    </div>
+    </>
   );
 }

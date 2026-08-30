@@ -38,7 +38,7 @@ interface StreamControlsProps {
   onEnterPiP: () => void;
   onDownload: () => void;
   onShowSettings: () => void;
-  onProgressClick: (e: React.MouseEvent<HTMLDivElement>) => void;
+  onProgressClick: (e: { clientX: number }) => void;
   progressRef: React.RefObject<HTMLDivElement | null>;
   showControls: boolean;
 }
@@ -84,10 +84,24 @@ export function StreamControls({
       {/* Progress bar */}
       <div
         ref={progressRef}
+        role="slider"
+        tabIndex={0}
+        aria-label="Stream progress"
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-valuenow={Math.round(progress)}
         className={`absolute inset-x-0 bottom-14 z-20 h-1 cursor-pointer transition-all hover:h-1.5 ${
           showControls ? 'opacity-100' : 'opacity-0'
         }`}
         onClick={onProgressClick}
+        onKeyDown={(e) => {
+          if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+          e.preventDefault();
+          const rect = progressRef.current?.getBoundingClientRect();
+          if (!rect) return;
+          const delta = (e.key === 'ArrowRight' ? 5 : -5) * (rect.width / 100);
+          onProgressClick({ clientX: rect.left + (progress / 100) * rect.width + delta });
+        }}
       >
         <div className="h-full w-full bg-white/20">
           <div

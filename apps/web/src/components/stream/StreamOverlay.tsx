@@ -122,10 +122,10 @@ export function StreamOverlay({
       {showSettings && (
         <div
           className="absolute bottom-16 right-3 z-30 w-52 rounded-xl border border-white/10 bg-gray-900/95 p-3 backdrop-blur-xl shadow-2xl"
-          onMouseEnter={() => {
+          onPointerEnter={() => {
             /* keep alive */
           }}
-          onMouseLeave={onShowControlsTemporarily}
+          onPointerLeave={onShowControlsTemporarily}
         >
           <h3 className="mb-2 text-[10px] font-bold uppercase tracking-wider text-white/40">
             Playback Settings

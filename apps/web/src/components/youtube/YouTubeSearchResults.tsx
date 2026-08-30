@@ -102,7 +102,7 @@ export const YouTubeSearchBar = memo(function YouTubeSearchBar({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="relative w-full max-w-xl" role="search">
+    <form onSubmit={handleSubmit} className="relative w-full max-w-xl">
       <div className="relative">
         <input
           type="search"

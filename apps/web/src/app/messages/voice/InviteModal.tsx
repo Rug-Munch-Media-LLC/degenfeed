@@ -75,12 +75,14 @@ export function CreateRoomModal({
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
-      onClick={onClose}
+      onPointerDown={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
     >
       <div
         className="mx-4 w-full max-w-md rounded-2xl border border-[var(--color-border)] bg-[var(--color-card)] p-6 shadow-2xl"
-        onClick={(e) => e.stopPropagation()}
         role="dialog"
+        aria-modal="true"
         aria-labelledby="create-room-title"
       >
         <h2 id="create-room-title" className="text-lg font-bold text-[var(--color-fg)] mb-5">
@@ -131,12 +133,13 @@ export function CreateRoomModal({
               className={`absolute top-0.5 left-0.5 h-4 w-4 rounded-full bg-white transition-transform ${inviteOnly ? 'translate-x-4' : ''}`}
             />
           </button>
-          <span
+          <button
+            type="button"
             className="text-sm text-[var(--color-fg)] cursor-pointer select-none"
             onClick={() => setInviteOnly(!inviteOnly)}
           >
             Invite-only room
-          </span>
+          </button>
         </div>
         {error && (
           <p className="mb-4 text-xs text-red-400 flex items-center gap-1.5" role="alert">
@@ -222,12 +225,14 @@ export function JoinRoomModal({
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
-      onClick={onClose}
+      onPointerDown={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
     >
       <div
         className="mx-4 w-full max-w-sm rounded-2xl border border-[var(--color-border)] bg-[var(--color-card)] p-6 shadow-2xl"
-        onClick={(e) => e.stopPropagation()}
         role="dialog"
+        aria-modal="true"
         aria-labelledby="join-room-title"
       >
         <h2 id="join-room-title" className="text-lg font-bold text-[var(--color-fg)] mb-2">

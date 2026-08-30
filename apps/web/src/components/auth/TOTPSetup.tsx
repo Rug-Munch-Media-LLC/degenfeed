@@ -142,7 +142,6 @@ export default function TOTPSetup({ onVerified, onCancel }: TOTPSetupProps) {
           {/* QR Code */}
           <div className="flex justify-center">
             <div className="rounded-2xl border border-[var(--color-glass-border)] bg-white p-3">
-              {/* biome-ignore lint/a11y/useAltText: QR code is decorative; manual key provided below */}
               <img
                 src={setupData.qrCodeUrl}
                 width="200"

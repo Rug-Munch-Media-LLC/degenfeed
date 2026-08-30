@@ -182,9 +182,10 @@ export const ShortVideoCard = memo(function ShortVideoCard({
       </div>
 
       {/* Video Player */}
+      {/* biome-ignore lint/a11y/noStaticElementInteractions: video gesture layer (tap zones + double-tap); all player controls are exposed via overlay UI buttons */}
       <div
         className="absolute inset-0 cursor-pointer"
-        onClick={(e) => {
+        onPointerDown={(e) => {
           const rect = e.currentTarget.getBoundingClientRect();
           const x = e.clientX - rect.left;
           const width = rect.width;
@@ -200,7 +201,6 @@ export const ShortVideoCard = memo(function ShortVideoCard({
           window.dispatchEvent(new CustomEvent('shorts-toggle-overlay'));
         }}
         onDoubleClick={handleTap}
-        role="presentation"
       >
         {renderPlayer()}
         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[45%] bg-gradient-to-t from-black/80 via-black/30 to-transparent" />

@@ -194,28 +194,7 @@ export default function VideoUploader({ mode, onClose, onSuccess }: VideoUploade
         {stage === 'select' && (
           <div className="space-y-5">
             {/* File drop zone */}
-            <div
-              className={`relative flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed p-8 transition-colors ${
-                dragOver
-                  ? 'border-degen-500 bg-degen-500/10'
-                  : selectedFile
-                    ? 'border-degen-500/40 bg-degen-500/5'
-                    : 'border-[var(--color-border)] bg-[var(--color-overlay)] hover:border-[var(--color-muted)]'
-              }`}
-              onDragOver={(e) => {
-                e.preventDefault();
-                setDragOver(true);
-              }}
-              onDragLeave={() => setDragOver(false)}
-              onDrop={handleDrop}
-              onClick={() => fileInputRef.current?.click()}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') fileInputRef.current?.click();
-              }}
-              role="button"
-              tabIndex={0}
-              aria-label="Select video file"
-            >
+            <div className="relative flex flex-col items-center">
               <input
                 ref={fileInputRef}
                 type="file"
@@ -223,39 +202,60 @@ export default function VideoUploader({ mode, onClose, onSuccess }: VideoUploade
                 className="hidden"
                 onChange={(e) => e.target.files?.[0] && handleFileSelect(e.target.files[0])}
               />
-
-              {selectedFile ? (
-                <div className="text-center">
-                  <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-xl bg-degen-500/20 text-2xl text-degen-400">
-                    🎬
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                aria-label="Select video file"
+                className={`flex w-full cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed p-8 transition-colors ${
+                  dragOver
+                    ? 'border-degen-500 bg-degen-500/10'
+                    : selectedFile
+                      ? 'border-degen-500/40 bg-degen-500/5'
+                      : 'border-[var(--color-border)] bg-[var(--color-overlay)] hover:border-[var(--color-muted)]'
+                }`}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  setDragOver(true);
+                }}
+                onDragLeave={() => setDragOver(false)}
+                onDrop={handleDrop}
+              >
+                {selectedFile ? (
+                  <div className="text-center">
+                    <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-xl bg-degen-500/20 text-2xl text-degen-400">
+                      🎬
+                    </div>
+                    <p className="text-sm font-medium text-[var(--color-fg)]">
+                      {selectedFile.name}
+                    </p>
+                    <p className="mt-1 text-xs text-[var(--color-muted)]">
+                      {(selectedFile.size / (1024 * 1024)).toFixed(1)} MB
+                    </p>
                   </div>
-                  <p className="text-sm font-medium text-[var(--color-fg)]">{selectedFile.name}</p>
-                  <p className="mt-1 text-xs text-[var(--color-muted)]">
-                    {(selectedFile.size / (1024 * 1024)).toFixed(1)} MB
-                  </p>
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setSelectedFile(null);
-                    }}
-                    className="mt-2 text-xs text-red-400 hover:text-red-300"
-                  >
-                    Remove
-                  </button>
-                </div>
-              ) : (
-                <>
-                  <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-xl bg-[var(--color-overlay)] text-2xl text-[var(--color-muted)]">
-                    📹
-                  </div>
-                  <p className="text-sm font-medium text-[var(--color-fg)]">
-                    Drop video here or click to browse
-                  </p>
-                  <p className="mt-1 text-xs text-[var(--color-muted)]">
-                    {isShort ? 'Max 100MB, vertical format' : 'Max 500MB, MP4/WebM'}
-                  </p>
-                </>
+                ) : (
+                  <>
+                    <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-xl bg-[var(--color-overlay)] text-2xl text-[var(--color-muted)]">
+                      📹
+                    </div>
+                    <p className="text-sm font-medium text-[var(--color-fg)]">
+                      Drop video here or click to browse
+                    </p>
+                    <p className="mt-1 text-xs text-[var(--color-muted)]">
+                      {isShort ? 'Max 100MB, vertical format' : 'Max 500MB, MP4/WebM'}
+                    </p>
+                  </>
+                )}
+              </button>
+              {selectedFile && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedFile(null);
+                  }}
+                  className="mt-2 text-xs text-red-400 hover:text-red-300"
+                >
+                  Remove
+                </button>
               )}
             </div>
 

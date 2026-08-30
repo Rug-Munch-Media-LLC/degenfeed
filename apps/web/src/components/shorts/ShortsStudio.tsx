@@ -641,7 +641,7 @@ export function ShortsStudio({ open, onClose, onPublished }: ShortsStudioProps) 
         {publishId && (
           <div className="flex flex-wrap gap-1.5">
             {Object.entries(publishResults)
-              .filter(([_, r]) => r.ok && r.url)
+              .filter(([, r]) => r.ok && r.url)
               .map(([protocol, result]) => {
                 const meta = PROTOCOL_META[protocol as ShortProtocol];
                 return (
@@ -719,7 +719,7 @@ export function ShortsStudio({ open, onClose, onPublished }: ShortsStudioProps) 
   return (
     <div
       className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/80 backdrop-blur-sm py-8"
-      onClick={(e) => {
+      onPointerDown={(e) => {
         if (e.target === e.currentTarget && tab !== 'publish') {
           reset();
           onClose();

@@ -570,11 +570,14 @@ export function DocSearch() {
       {open && (
         <div
           className="fixed inset-0 z-50 flex items-start justify-center pt-[15vh] bg-black/60 backdrop-blur-sm"
-          onClick={() => setOpen(false)}
+          onPointerDown={(e) => {
+            if (e.target === e.currentTarget) setOpen(false);
+          }}
         >
           <div
+            role="dialog"
+            aria-modal="true"
             className="w-full max-w-xl rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] shadow-2xl"
-            onClick={(e) => e.stopPropagation()}
           >
             {/* Search input */}
             <div className="flex items-center gap-3 border-b border-[var(--color-glass-border)] px-4 py-3">

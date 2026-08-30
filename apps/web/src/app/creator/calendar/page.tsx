@@ -615,7 +615,7 @@ function MonthView({
             const isToday = cell.date === today;
 
             return (
-              <div
+              <article
                 key={cell.date}
                 className={`min-h-[100px] border-r border-[var(--color-border)] last:border-r-0 p-1.5 transition-colors ${
                   cell.isCurrentMonth
@@ -624,7 +624,9 @@ function MonthView({
                 } ${isToday ? 'ring-1 ring-degen-500/30 ring-inset' : ''}`}
                 onDragOver={(e) => e.preventDefault()}
                 onDrop={() => onDrop(cell.date)}
-                onClick={() => onDateClick(cell.date)}
+                onPointerDown={(e) => {
+                  if (e.target === e.currentTarget) onDateClick(cell.date);
+                }}
               >
                 <div
                   className={`mb-1 text-[11px] font-medium ${isToday ? 'text-degen-400' : 'text-[var(--color-muted)]'}`}
@@ -633,9 +635,9 @@ function MonthView({
                 </div>
 
                 {entries.length > 0 && (
-                  <div className="space-y-0.5">
+                  <ul className="space-y-0.5">
                     {entries.slice(0, 3).map((entry) => (
-                      <div
+                      <li
                         key={entry.id}
                         draggable
                         onDragStart={() => onDragStart(entry)}
@@ -649,16 +651,16 @@ function MonthView({
                         {entry.masterPost.text.slice(0, 20)}
                         {entry.masterPost.text.length > 20 ? '…' : ''}
                         {entry.aiOptimized && ' ✨'}
-                      </div>
+                      </li>
                     ))}
                     {entries.length > 3 && (
-                      <div className="text-[9px] text-[var(--color-muted)] text-center">
+                      <li className="text-[9px] text-[var(--color-muted)] text-center">
                         +{entries.length - 3} more
-                      </div>
+                      </li>
                     )}
-                  </div>
+                  </ul>
                 )}
-              </div>
+              </article>
             );
           })}
         </div>
@@ -701,22 +703,23 @@ function WeekView({
           const dateStr = day.toISOString().split('T')[0] ?? '';
           const isToday = dateStr === today;
           return (
-            <div
+            <button
               key={dateStr}
+              type="button"
               className={`px-2 py-2 text-center cursor-pointer transition-colors hover:bg-[var(--color-overlay)] ${
                 isToday ? 'text-degen-400' : 'text-[var(--color-muted)]'
               }`}
               onClick={() => onDateClick(dateStr)}
             >
-              <div className="text-[10px] font-medium uppercase">
+              <span className="block text-[10px] font-medium uppercase">
                 {day.toLocaleDateString('en-US', { weekday: 'short' })}
-              </div>
-              <div
-                className={`text-sm font-bold ${isToday ? 'text-degen-400' : 'text-[var(--color-fg)]'}`}
+              </span>
+              <span
+                className={`block text-sm font-bold ${isToday ? 'text-degen-400' : 'text-[var(--color-fg)]'}`}
               >
                 {day.getDate()}
-              </div>
-            </div>
+              </span>
+            </button>
           );
         })}
       </div>
@@ -738,29 +741,31 @@ function WeekView({
               });
 
               return (
-                <div
+                <article
                   key={`${dateStr}-${hour}`}
                   className="relative border-r border-[var(--color-border)] last:border-r-0 p-1 transition-colors hover:bg-[var(--color-overlay)]"
                   onDragOver={(e) => e.preventDefault()}
                   onDrop={() => onDrop(dateStr)}
                 >
-                  {hourEntries.map((entry) => (
-                    <div
-                      key={entry.id}
-                      draggable
-                      onDragStart={() => onDragStart(entry)}
-                      className="mb-0.5 cursor-grab truncate rounded px-1 py-0.5 text-[9px] font-medium text-white"
-                      style={{
-                        backgroundColor: PROTOCOL_COLORS[entry.protocols[0] ?? ''] ?? '#6364ff',
-                        opacity: 0.85,
-                      }}
-                      title={entry.masterPost.text.slice(0, 100)}
-                    >
-                      {entry.masterPost.text.slice(0, 15)}
-                      {entry.aiOptimized && ' ✨'}
-                    </div>
-                  ))}
-                </div>
+                  <ul>
+                    {hourEntries.map((entry) => (
+                      <li
+                        key={entry.id}
+                        draggable
+                        onDragStart={() => onDragStart(entry)}
+                        className="mb-0.5 cursor-grab truncate rounded px-1 py-0.5 text-[9px] font-medium text-white"
+                        style={{
+                          backgroundColor: PROTOCOL_COLORS[entry.protocols[0] ?? ''] ?? '#6364ff',
+                          opacity: 0.85,
+                        }}
+                        title={entry.masterPost.text.slice(0, 100)}
+                      >
+                        {entry.masterPost.text.slice(0, 15)}
+                        {entry.aiOptimized && ' ✨'}
+                      </li>
+                    ))}
+                  </ul>
+                </article>
               );
             })}
           </div>
@@ -868,7 +873,7 @@ function EntryCard({
   onDragStart: (entry: CalendarEntry) => void;
 }) {
   return (
-    <div
+    <article
       draggable
       onDragStart={() => onDragStart(entry)}
       className="group cursor-grab rounded-lg border border-[var(--color-border)] bg-[var(--color-overlay)] p-3 transition-all hover:border-degen-500/30 hover:shadow-sm active:cursor-grabbing"
@@ -943,7 +948,7 @@ function EntryCard({
           </span>
         )}
       </div>
-    </div>
+    </article>
   );
 }
 

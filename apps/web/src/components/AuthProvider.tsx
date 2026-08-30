@@ -10,18 +10,9 @@ import {
   saveIdentity,
   setPrimaryIdentity as setPrimaryIdentityInDb,
 } from '@degenfeed/storage';
-import type { EngagementAction } from '@degenfeed/types';
 import type { AuthTab } from '@degenfeed/ui';
 import dynamic from 'next/dynamic';
-import {
-  createContext,
-  type ReactNode,
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-} from 'react';
+import { type ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
 
 const SignInModal = dynamic(
   () => import('@degenfeed/ui').then((m) => ({ default: m.SignInModal })),
@@ -40,6 +31,17 @@ import {
   useSession,
 } from '@/lib/auth-client';
 import { useWeb3 } from '../components/Web3Provider';
+import {
+  AuthActionContext,
+  type AuthActionValue,
+  type AuthContextValue,
+  AuthStateContext,
+  type AuthStateValue,
+  type ComposeReplyContext,
+  useAuth,
+  useAuthState,
+} from '../context/auth-context';
+import { useWallet, WalletProvider } from '../context/WalletContext';
 import { useCrossReply } from '../hooks/useCrossReply';
 import { useEngage } from '../hooks/useEngage';
 import { triggerOnboarding } from '../hooks/useOnboarding';
@@ -48,130 +50,41 @@ import { useScheduledPosts } from '../hooks/useScheduledPosts';
 import { useSolanaSignIn } from '../hooks/useSolanaSignIn';
 import { useWalletSignIn } from '../hooks/useWalletSignIn';
 import { publishNoteToNostr } from '../lib/nostr';
-import {
-  addStoredWallet,
-  clearStoredWallets,
-  getActiveWalletIndex,
-  getStoredWallets,
-  removeStoredWallet,
-  type StoredWalletMeta,
-  setActiveWalletIndex,
-} from '../lib/walletStorage';
+import { addStoredWallet, getStoredWallets, type StoredWalletMeta } from '../lib/walletStorage';
 import { RegistrationPrompt } from './RegistrationPrompt';
 import { useToast } from './Toast';
 
-/** Cross-protocol reply context passed to ComposeModal. */
-export interface ComposeReplyContext {
-  parentPostUri: string;
-  parentProtocol: string;
-  parentPreview?: string;
-}
-
-// ── Split contexts: identity state (rarely changes) vs actions (stable refs) ──
-
-/** Values that change only when identity/wallet data changes */
-export interface AuthStateValue {
-  signedInProtocols: Record<string, boolean>;
-  /** True while a wallet sign-in request is in flight */
-  signingIn: boolean;
-  /** Active wallet address (backward-compat: first wallet in the list) */
-  walletAddress?: string;
-  /** All connected wallet addresses */
-  walletAddresses: string[];
-  /** Metadata for each connected wallet */
-  walletMeta: Record<string, StoredWalletMeta>;
-  primaryIdentity?: StoredIdentity;
-  linkedIdentities: StoredIdentity[];
-  isWalletOnly: boolean;
-  linkGtsUrl?: string | null;
-  nostrPublicId?: string;
-}
-
-/** Stable action functions + frequently-changing non-identity state */
-export interface AuthActionValue {
-  tokens: Record<string, string>;
-  /** Index of the currently active wallet */
-  activeWalletIndex: number;
-  /** Number of connected wallets */
-  walletCount: number;
-  ready: boolean;
-  openSignIn: () => void;
-  /** Open the sign-in modal directly on the "Create Account" tab. */
-  openSignUp: () => void;
-  /** Trigger a sign-in for a protocol directly (wallet, email, nsec, …). */
-  signIn: (protocol: string, credentials?: string | Record<string, string>) => Promise<void>;
-  openCompose: () => void;
-  /** Open the composer in cross-protocol reply mode for the given parent post. */
-  openComposeReply: (ctx: ComposeReplyContext) => void;
-  signOut: () => Promise<void>;
-  /** Switch to a different connected wallet by index */
-  switchWallet: (index: number) => void;
-  /** Connect a new wallet without disconnecting the current one */
-  addWallet: () => Promise<void>;
-  /** Remove a wallet from the connected list */
-  removeWallet: (index: number) => void;
-  publish: (
-    text: string,
-    targets: string[],
-  ) => Promise<Record<string, { ok: boolean; error?: string }>>;
-  engage: (
-    action: EngagementAction,
-    postId: string,
-    protocol: string,
-    opts?: {
-      content?: string;
-      reaction?: string;
-      target?: { authorId?: string; publicationId?: string };
-    },
-  ) => Promise<{ ok: boolean; error?: string }>;
-  /** Reply to a post on another protocol via the cross-protocol bridge. */
-  crossReply: (
-    parentPostUri: string,
-    parentProtocol: string,
-    replyProtocol: string,
-    content: string,
-  ) => Promise<{ ok: boolean; nativeId?: string; error?: string }>;
-  setPrimaryIdentity: (id: string) => Promise<void>;
-  unlinkIdentity: (id: string) => Promise<void>;
-  /** Reload identities + wallets from local storage (after linking/unlinking). */
-  refresh: () => Promise<void>;
-}
-
-/** Combined type for backward compatibility with existing consumers */
-export interface AuthContextValue extends AuthStateValue, AuthActionValue {}
-
-const AuthStateContext = createContext<AuthStateValue | null>(null);
-const AuthActionContext = createContext<AuthActionValue | null>(null);
-
-/**
- * Read only identity state — does NOT re-render when action callbacks change.
- * Preferred for components that only need signedInProtocols, walletAddress, etc.
- */
-export function useAuthState(): AuthStateValue {
-  const ctx = useContext(AuthStateContext);
-  if (!ctx) throw new Error('useAuthState must be used within an AuthProvider');
-  return ctx;
-}
-
-/** Combined convenience hook — reads from both contexts. Backward compatible. */
-export function useAuth(): AuthContextValue {
-  const state = useContext(AuthStateContext);
-  const actions = useContext(AuthActionContext);
-  if (!state || !actions) throw new Error('useAuth must be used within an AuthProvider');
-  return { ...state, ...actions };
-}
+// Backward-compatible re-exports — consumers keep importing from './AuthProvider'.
+export type { AuthActionValue, AuthContextValue, AuthStateValue, ComposeReplyContext };
+export { useAuth, useAuthState };
 
 export function AuthProvider({ children }: { children: ReactNode }) {
+  return (
+    <WalletProvider>
+      <AuthCore>{children}</AuthCore>
+    </WalletProvider>
+  );
+}
+
+function AuthCore({ children }: { children: ReactNode }) {
   const [identities, setIdentities] = useState<StoredIdentity[]>([]);
   const [primaryIdentity, setPrimaryIdentity] = useState<StoredIdentity | undefined>(undefined);
   const [signedInProtocols, setSignedInProtocols] = useState<Record<string, boolean>>({});
   const [tokens, setTokens] = useState<Record<string, string>>({});
-  // == Multi-wallet state ==========================================
-  const [walletAddresses, setWalletAddresses] = useState<string[]>([]);
-  const [activeWalletIndex, setActiveWalletIndexState] = useState<number>(0);
-  const [walletMeta, setWalletMeta] = useState<Record<string, StoredWalletMeta>>({});
-  // == Legacy single-wallet derived state ==========================
-  const walletAddress = walletAddresses[activeWalletIndex] ?? undefined;
+  // == Multi-wallet state lives in the scoped WalletContext ========
+  const {
+    walletAddresses,
+    activeWalletIndex,
+    walletMeta,
+    walletAddress,
+    walletCount,
+    loadWallets,
+    attachWallet,
+    switchWallet,
+    addWallet,
+    removeWallet,
+    clearWallets,
+  } = useWallet();
   // ==
   const [linkGtsUrl, setLinkGtsUrl] = useState<string | null>(null);
   const [nostrPublicId, setNostrPublicId] = useState<string | undefined>(undefined);
@@ -203,18 +116,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const { data: session, isPending: sessionPending } = useSession();
 
   // == Wallet persistence helpers ==================================
-
-  /** Load wallet list from localStorage and merge with any stored identities */
-  const loadWallets = useCallback(() => {
-    const stored = getStoredWallets();
-    const addresses = stored.map((m) => m.address);
-    const meta: Record<string, StoredWalletMeta> = {};
-    for (const m of stored) meta[m.address] = m;
-    setWalletMeta(meta);
-    setWalletAddresses(addresses);
-    const idx = getActiveWalletIndex();
-    setActiveWalletIndexState(idx < addresses.length ? idx : 0);
-  }, []);
 
   const refresh = useCallback(async () => {
     const all = await getAllIdentities();
@@ -410,20 +311,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           const session = await signInWithEthereum();
           if (session) {
             setLinkGtsUrl(session.gtsAuthorizeUrl ?? null);
-            // Add to wallet list
-            const addr = session.address.toLowerCase();
-            const meta: StoredWalletMeta = {
-              address: addr,
+            // Add to wallet list and activate it
+            attachWallet({
+              address: session.address.toLowerCase(),
               chain: 'ethereum',
               walletName: null,
               chainId: evmChainId ?? 1,
               addedAt: Date.now(),
-            };
-            const updated = addStoredWallet(meta);
-            setWalletMeta((prev) => ({ ...prev, [addr]: meta }));
-            setWalletAddresses(updated.map((w) => w.address));
-            setActiveWalletIndexState(updated.length - 1);
-            setActiveWalletIndex(updated.length - 1);
+            });
             await refresh();
             triggerOnboarding();
             setShowSignIn(false);
@@ -442,19 +337,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             if (session) {
               setLinkGtsUrl(session.gtsAuthorizeUrl ?? null);
               // Add to wallet list
-              const addr = session.address.toLowerCase();
-              const meta: StoredWalletMeta = {
-                address: addr,
+              attachWallet({
+                address: session.address.toLowerCase(),
                 chain: 'solana',
                 walletName: null,
                 chainId: null,
                 addedAt: Date.now(),
-              };
-              const updated = addStoredWallet(meta);
-              setWalletMeta((prev) => ({ ...prev, [addr]: meta }));
-              setWalletAddresses(updated.map((w) => w.address));
-              setActiveWalletIndexState(updated.length - 1);
-              setActiveWalletIndex(updated.length - 1);
+              });
               await refresh();
               triggerOnboarding();
               setShowSignIn(false);
@@ -604,7 +493,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         showToast('error', `Sign-in failed: ${message}`);
       }
     },
-    [signInWithEthereum, refresh, signInWithSolana, showToast, evmChainId],
+    [signInWithEthereum, refresh, signInWithSolana, showToast, evmChainId, attachWallet],
   );
 
   const handlePublish = usePublish(tokens);
@@ -627,21 +516,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch {
       /* ignore */
     }
-    clearStoredWallets();
+    clearWallets();
     setIdentities([]);
     setPrimaryIdentity(undefined);
     setSignedInProtocols({});
     setTokens({});
-    setWalletAddresses([]);
-    setActiveWalletIndexState(0);
-    setWalletMeta({});
     setLinkGtsUrl(null);
     showToast('success', 'See you soon! 👋');
     // Redirect to landing page after a short delay
     setTimeout(() => {
       window.location.href = '/';
     }, 1200);
-  }, [identities, showToast]);
+  }, [identities, showToast, clearWallets]);
 
   const handleSetPrimary = useCallback(
     async (id: string) => {
@@ -659,103 +545,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [refresh],
   );
 
-  // == Multi-wallet actions ======================================
-
-  const switchWallet = useCallback((index: number) => {
-    const stored = getStoredWallets();
-    if (index < 0 || index >= stored.length) return;
-    setActiveWalletIndexState(index);
-    setActiveWalletIndex(index);
-  }, []);
-
-  const addWallet = useCallback(async () => {
-    // Connect a NEW wallet via the Web3 provider (without disconnecting current).
-    // We call connect() which prompts the browser wallet to switch accounts.
-    try {
-      interface Eip1193Provider {
-        request: (args: { method: string; params?: unknown[] }) => Promise<unknown>;
-        on?: (event: string, handler: (...args: unknown[]) => void) => void;
-        removeListener?: (event: string, handler: (...args: unknown[]) => void) => void;
-      }
-      const provider: Eip1193Provider | null =
-        typeof window !== 'undefined'
-          ? ((window as unknown as { ethereum?: Eip1193Provider }).ethereum ?? null)
-          : null;
-      if (!provider) {
-        showToast('error', 'No Ethereum wallet detected');
-        return;
-      }
-      // Request accounts — the wallet may prompt the user to select an account.
-      // If they select a new/different account, it gets added to our list.
-      const accounts = (await provider.request({
-        method: 'eth_requestAccounts',
-      })) as string[];
-      const newAddress = accounts[0]?.toLowerCase();
-      if (!newAddress) {
-        showToast('error', 'No account selected');
-        return;
-      }
-
-      const stored = getStoredWallets();
-      if (stored.some((w) => w.address === newAddress)) {
-        // Already connected — just switch to it
-        const existingIdx = stored.findIndex((w) => w.address === newAddress);
-        switchWallet(existingIdx);
-        showToast('success', 'Switched to wallet');
-        return;
-      }
-
-      const meta: StoredWalletMeta = {
-        address: newAddress,
-        chain: 'ethereum',
-        walletName: null,
-        chainId: null,
-        addedAt: Date.now(),
-      };
-      const updated = addStoredWallet(meta);
-      setWalletMeta((prev) => ({ ...prev, [newAddress]: meta }));
-      setWalletAddresses(updated.map((w) => w.address));
-      setActiveWalletIndexState(updated.length - 1);
-      setActiveWalletIndex(updated.length - 1);
-      showToast('success', 'Wallet added');
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to add wallet';
-      showToast('error', message);
-    }
-  }, [switchWallet, showToast]);
-
-  const removeWallet = useCallback(
-    (index: number) => {
-      const stored = getStoredWallets();
-      if (index < 0 || index >= stored.length) return;
-      const removed = stored[index];
-      if (!removed) return;
-      const updated = removeStoredWallet(removed.address);
-      setWalletMeta((prev) => {
-        const next = { ...prev };
-        delete next[removed.address];
-        return next;
-      });
-      setWalletAddresses(updated.map((w) => w.address));
-
-      // Adjust active wallet index
-      if (updated.length === 0) {
-        setActiveWalletIndexState(0);
-        setActiveWalletIndex(0);
-      } else if (index >= updated.length) {
-        setActiveWalletIndexState(updated.length - 1);
-        setActiveWalletIndex(updated.length - 1);
-      } else if (index === activeWalletIndex) {
-        // Active wallet was removed — keep index at same position (it shifted)
-        // No change needed
-      } else if (index < activeWalletIndex) {
-        setActiveWalletIndexState(activeWalletIndex - 1);
-        setActiveWalletIndex(activeWalletIndex - 1);
-      }
-    },
-    [activeWalletIndex],
-  );
-
   const linkedIdentities = useMemo(
     () => identities.filter((i) => i.id !== primaryIdentity?.id),
     [identities, primaryIdentity],
@@ -768,8 +557,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       linkedIdentities.length === 0
     );
   }, [primaryIdentity, linkedIdentities]);
-
-  const walletCount = walletAddresses.length;
 
   const openSignIn = useCallback(() => {
     setSignInError(null);

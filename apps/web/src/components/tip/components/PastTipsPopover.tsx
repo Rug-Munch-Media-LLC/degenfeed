@@ -14,7 +14,7 @@ export function PastTipsPopover({
   return (
     <div
       className="absolute right-0 top-full z-50 mt-1 w-64 rounded-xl border border-[var(--color-border)] bg-[var(--color-card)] p-3 shadow-2xl backdrop-blur-xl"
-      onMouseLeave={onClose}
+      onPointerLeave={onClose}
     >
       <div className="mb-2 flex items-center justify-between">
         <h3 className="text-xs font-semibold text-[var(--color-fg)]">💰 Past Tips</h3>

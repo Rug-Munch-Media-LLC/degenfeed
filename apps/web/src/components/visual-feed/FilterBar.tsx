@@ -68,7 +68,7 @@ export function FilterBar({
       <span className="mx-1 h-5 w-px" style={{ backgroundColor: 'var(--color-glass-border)' }} />
 
       {/* Sort controls */}
-      <div className="flex gap-1" role="group" aria-label="Sort order">
+      <fieldset className="m-0 flex gap-1" aria-label="Sort order">
         {SORTS.map((s) => {
           const isActive = activeSort === s.id;
           return (
@@ -88,7 +88,7 @@ export function FilterBar({
             </button>
           );
         })}
-      </div>
+      </fieldset>
     </div>
   );
 }

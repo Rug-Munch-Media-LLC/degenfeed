@@ -276,10 +276,10 @@ export function ImageViewer({
       {/* Main image area */}
       <div
         className="flex flex-1 items-center justify-center"
-        onMouseDown={handleMouseDown}
-        onMouseMove={handleMouseMove}
-        onMouseUp={handleMouseUp}
-        onMouseLeave={handleMouseUp}
+        onPointerDown={handleMouseDown}
+        onPointerMove={handleMouseMove}
+        onPointerUp={handleMouseUp}
+        onPointerLeave={handleMouseUp}
         style={{ cursor: zoom > 1 ? 'grab' : 'default' }}
       >
         {!loaded && (

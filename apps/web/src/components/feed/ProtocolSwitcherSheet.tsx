@@ -115,12 +115,12 @@ export function ProtocolSwitcherSheet({ open, onClose }: { open: boolean; onClos
   return (
     <div
       className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-sm lg:hidden"
-      onClick={onClose}
-      role="presentation"
+      onPointerDown={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
     >
       <div
         className="flex max-h-[80vh] w-full max-w-lg flex-col rounded-t-2xl border border-b-0 border-[var(--color-glass-border)] bg-[var(--color-card)] shadow-2xl"
-        onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
         aria-label="Switch protocol"

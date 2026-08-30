@@ -116,18 +116,18 @@ export function RegistrationPrompt() {
       {surface === 'modal' && (
         <section
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
-          onClick={handleCloseModal}
-          onKeyDown={(e) => {
-            if (e.key === 'Escape') handleCloseModal();
+          onPointerDown={(e) => {
+            if (e.target === e.currentTarget) handleCloseModal();
           }}
-          aria-modal="true"
-          aria-label="Create a free DegenFeed account"
-          role="dialog"
         >
           <div
+            role="dialog"
+            aria-modal="true"
+            aria-label="Create a free DegenFeed account"
             className="w-full max-w-md rounded-2xl border border-[var(--color-border)] bg-[var(--color-card)] p-6 shadow-2xl"
-            onClick={(e) => e.stopPropagation()}
-            onKeyDown={(e) => e.stopPropagation()}
+            onKeyDown={(e) => {
+              if (e.key === 'Escape') handleCloseModal();
+            }}
           >
             <div className="mb-4 flex items-start justify-between">
               <div>

@@ -154,18 +154,18 @@ export function ProfileSetupWizard({ onComplete, onClose }: ProfileSetupWizardPr
   return (
     <section
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm"
-      onClick={onClose}
-      onKeyDown={(e) => {
-        if (e.key === 'Escape') onClose();
+      onPointerDown={(e) => {
+        if (e.target === e.currentTarget) onClose();
       }}
-      aria-modal="true"
-      aria-label="Set up your profile"
-      role="dialog"
     >
       <div
+        role="dialog"
+        aria-modal="true"
+        aria-label="Set up your profile"
         className="mx-4 w-full max-w-md rounded-2xl border border-[var(--color-border)] bg-[var(--color-card)] p-6 shadow-2xl"
-        onClick={(e) => e.stopPropagation()}
-        onKeyDown={(e) => e.stopPropagation()}
+        onKeyDown={(e) => {
+          if (e.key === 'Escape') onClose();
+        }}
       >
         {/* Progress indicator */}
         <div className="mb-6 flex items-center gap-2">

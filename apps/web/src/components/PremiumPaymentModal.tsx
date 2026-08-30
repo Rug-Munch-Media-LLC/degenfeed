@@ -505,7 +505,6 @@ export function PremiumPaymentModal({
         className={`relative w-full ${
           step === 'processing' ? 'max-w-sm' : step === 'success' ? 'max-w-sm' : 'max-w-md'
         } rounded-t-2xl sm:rounded-2xl border border-[var(--color-border)] bg-[var(--color-card)] p-5 shadow-2xl max-h-[90vh] overflow-y-auto animate-slide-up`}
-        onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
         aria-label="Subscription payment"
