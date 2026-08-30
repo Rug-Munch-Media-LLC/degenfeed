@@ -65,7 +65,7 @@ describe('Feed pipeline — deduplication logic', () => {
     }
 
     expect(deduped.length).toBe(1); // One unique text
-    expect(deduped[0].id).toBe('mastodon:original@test'); // Keeps first encountered
+    expect(deduped[0]!.id).toBe('mastodon:original@test'); // Keeps first encountered
   });
 
   it('sorts posts by createdAt descending', () => {
@@ -78,9 +78,9 @@ describe('Feed pipeline — deduplication logic', () => {
 
     posts.sort((a, b) => b.createdAt - a.createdAt);
 
-    expect(posts[0].text).toBe('New post');
-    expect(posts[1].text).toBe('Mid post');
-    expect(posts[2].text).toBe('Old post');
+    expect(posts[0]!.text).toBe('New post');
+    expect(posts[1]!.text).toBe('Mid post');
+    expect(posts[2]!.text).toBe('Old post');
   });
 
   it('deduplication keeps newest when same text from different sources', () => {
@@ -101,7 +101,7 @@ describe('Feed pipeline — deduplication logic', () => {
     }
 
     expect(deduped.length).toBe(1);
-    expect(deduped[0].id).toBe('old:1'); // First encountered wins with this simple approach
+    expect(deduped[0]!.id).toBe('old:1'); // First encountered wins with this simple approach
   });
 });
 
@@ -137,7 +137,7 @@ describe('Feed pipeline — quality and ranking', () => {
 
     // Sort by recency (descending)
     posts.sort((a, b) => b.createdAt - a.createdAt);
-    expect(posts[0].id).toBe('fresh');
+    expect(posts[0]!.id).toBe('fresh');
   });
 });
 
@@ -152,8 +152,8 @@ describe('Feed pipeline — pagination', () => {
 
     expect(page1.length).toBe(10);
     expect(page2.length).toBe(10);
-    expect(page1[0].id).toBe('post:0');
-    expect(page2[0].id).toBe('post:10');
+    expect(page1[0]!.id).toBe('post:0');
+    expect(page2[0]!.id).toBe('post:10');
   });
 
   it('limit parameter caps total returned posts', () => {
@@ -198,33 +198,31 @@ describe('Feed pipeline — aggregation from multiple sources', () => {
     ];
 
     posts.sort((a, b) => b.createdAt - a.createdAt);
-    expect(posts[0].id).toBe('r:fresh');
-    expect(posts[1].id).toBe('n:middle');
-    expect(posts[2].id).toBe('m:old');
+    expect(posts[0]!.id).toBe('r:fresh');
+    expect(posts[1]!.id).toBe('n:middle');
+    expect(posts[2]!.id).toBe('m:old');
   });
 });
 
-describe('Feed pipeline — seed content fallback', () => {
-  it('getSeedContent serves demo content when no real posts', async () => {
+describe('Feed pipeline — seed content fallback (banned)', () => {
+  it('getSeedContent returns no demo content when providers are empty', async () => {
+    // Demo/seed content is banned: empty providers must produce an empty feed,
+    // never fabricated posts.
     const { getSeedContent } = await import('../server/seed-content');
     const posts = getSeedContent(5);
-    expect(posts.length).toBeGreaterThan(0);
-    expect(posts.every((p) => p.protocol === '_demo')).toBe(true);
+    expect(posts.length).toBe(0);
   });
 
-  it('seed content is marked with _demo flag', async () => {
+  it('never fabricates posts marked with the _demo protocol', async () => {
     const { getSeedContent } = await import('../server/seed-content');
     const posts = getSeedContent(3);
-    for (const p of posts) {
-      expect(p.raw).toHaveProperty('_demo');
-    }
+    expect(posts.filter((p) => p.protocol === '_demo')).toHaveLength(0);
   });
 
-  it('empty provider list triggers default protocol fallback', async () => {
-    // Test the buildFeed empty protocol list behavior by testing getSeedContent
+  it('empty provider list returns empty feed (no fabricated fallback)', async () => {
     const { getSeedContent } = await import('../server/seed-content');
     const posts = getSeedContent(5, 'mastodon');
-    expect(posts.length).toBeGreaterThan(0);
+    expect(posts.length).toBe(0);
   });
 });
 

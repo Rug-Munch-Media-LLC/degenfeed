@@ -2,8 +2,8 @@
  * Cross-poster transform pipeline — converts UnifiedPost to target protocol formats
  */
 
-import type { ProtocolName, TransformResult } from '../crossposter-types';
 import type { UnifiedPost } from '../server/types';
+import type { ProtocolName, TransformResult } from './crossposter-types';
 
 type TransformFunction = (
   post: UnifiedPost,
@@ -122,7 +122,7 @@ export const TRANSFORMS: Record<string, TransformFunction> = {
       return { success: false, error: 'No video embed to announce' };
     }
 
-    const duration = videoEmbed.meta?.duration || 0;
+    const duration = Number(videoEmbed.meta?.duration) || 0;
     const durationStr = duration > 0 ? ` (${Math.floor(duration / 60)}m ${duration % 60}s)` : '';
 
     return {

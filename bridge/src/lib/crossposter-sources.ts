@@ -52,7 +52,7 @@ export async function fetchLatestGtsPost(): Promise<UnifiedPost | null> {
 
     if (!raw.length) return null;
 
-    const s = raw[0];
+    const s = raw[0]!;
     return {
       id: `mastodon:${s.id}@social.degenfeed.xyz`,
       protocol: 'mastodon',
@@ -85,7 +85,7 @@ export async function fetchLatestGtsPost(): Promise<UnifiedPost | null> {
       raw: s,
       niches: [],
     };
-  } catch (err) {
+  } catch {
     // console.log('[crossposter] GTS fetch error:', (err as Error).message);
     return null;
   }
@@ -118,7 +118,7 @@ export async function fetchLatestPixelfedPost(): Promise<UnifiedPost | null> {
 
     if (!raw.length) return null;
 
-    const s = raw[0];
+    const s = raw[0]!;
     return {
       id: `pixelfed:${s.id}@photos.degenfeed.xyz`,
       protocol: 'pixelfed',
@@ -151,7 +151,7 @@ export async function fetchLatestPixelfedPost(): Promise<UnifiedPost | null> {
       raw: s,
       niches: [],
     };
-  } catch (err) {
+  } catch {
     // console.log('[crossposter] Pixelfed fetch error:', (err as Error).message);
     return null;
   }
@@ -178,7 +178,7 @@ export async function fetchLatestLemmyPost(): Promise<UnifiedPost | null> {
 
     if (!data.posts?.length) return null;
 
-    const pv = data.posts[0];
+    const pv = data.posts[0]!;
     return {
       id: `lemmy:${pv.post.id}`,
       protocol: 'lemmy',

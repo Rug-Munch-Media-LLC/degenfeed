@@ -4,6 +4,7 @@
 
 import { getPublicKey, signEvent } from '@degenfeed/nostr-sdk';
 import WebSocket from 'ws';
+import type { UnifiedPost } from '../server/types';
 
 // ─── Publisher implementations ──────────────────────────────────────────
 
@@ -42,7 +43,7 @@ async function publishToNostrRelay(_payload: unknown): Promise<boolean> {
           // console.log(`[nostr] Sent signed event ${signedEvent.id.slice(0, 8)} to ${relayUrl}`);
         });
 
-        ws.addEventListener('message', (event: MessageEvent) => {
+        ws.addEventListener('message', (event) => {
           try {
             const msg = JSON.parse(event.data as string);
             if (msg[0] === 'OK') {
@@ -111,7 +112,7 @@ async function publishToBluesky(_payload: unknown): Promise<boolean> {
       }
       jwt = session.accessJwt;
       // console.log('[crossposter] Bluesky: JWT refreshed via app password');
-    } catch (err) {
+    } catch {
       // console.log('[crossposter] Bluesky: session error', (err as Error).message);
       return false;
     }
@@ -142,7 +143,7 @@ function isJwtExpired(token: string): boolean {
   try {
     const parts = token.split('.');
     if (parts.length !== 3) return true;
-    const payload = JSON.parse(Buffer.from(parts[1], 'base64').toString('utf8'));
+    const payload = JSON.parse(Buffer.from(parts[1]!, 'base64').toString('utf8'));
     const now = Math.floor(Date.now() / 1000);
     return !payload.exp || payload.exp < now;
   } catch {
@@ -216,10 +217,8 @@ async function publishToFarcaster(_payload: unknown): Promise<boolean> {
       return true;
     }
 
-    const errBody = await res.text().catch(() => '');
-    // console.log(`[crossposter] ✗ Farcaster: HTTP ${res.status} ${errBody.slice(0, 200)}`);
     return false;
-  } catch (err) {
+  } catch {
     // console.log(`[crossposter] ✗ Farcaster error: ${(err as Error).message}`);
     return false;
   }
@@ -282,7 +281,7 @@ async function lensAuthenticate(): Promise<string | null> {
     }
 
     return newToken;
-  } catch (err) {
+  } catch {
     // console.log(`[crossposter] Lens: token refresh error: ${(err as Error).message}`);
     return null;
   }
@@ -293,7 +292,7 @@ function decodeJwtExpiry(token: string): number {
   try {
     const parts = token.split('.');
     if (parts.length !== 3) return 0;
-    const payload = JSON.parse(Buffer.from(parts[1], 'base64').toString('utf8'));
+    const payload = JSON.parse(Buffer.from(parts[1]!, 'base64').toString('utf8'));
     return payload.exp || 0;
   } catch {
     return 0;
@@ -366,10 +365,8 @@ async function publishToLens(_payload: unknown): Promise<boolean> {
       return false;
     }
 
-    const errBody = await res.text().catch(() => '');
-    // console.log(`[crossposter] ✗ Lens: HTTP ${res.status} ${errBody.slice(0, 200)}`);
     return false;
-  } catch (err) {
+  } catch {
     // console.log(`[crossposter] ✗ Lens error: ${(err as Error).message}`);
     return false;
   }
@@ -413,7 +410,6 @@ async function publishToPixelfed(_payload: unknown): Promise<boolean> {
 
   try {
     const { publishUnifiedPost } = await import('../providers/pixelfed-write');
-    const { UnifiedPost } = await import('../server/types');
 
     const mockPost = {
       text: payload.caption,
@@ -451,7 +447,7 @@ async function publishToPixelfed(_payload: unknown): Promise<boolean> {
     }
     // console.log(`[crossposter] ✗ Pixelfed: ${result.error}`);
     return false;
-  } catch (err) {
+  } catch {
     // console.log(`[crossposter] ✗ Pixelfed error: ${(err as Error).message}`);
     return false;
   }
@@ -484,7 +480,7 @@ async function publishToWriteFreely(_payload: unknown): Promise<boolean> {
     }
     // console.log(`[crossposter] ✗ WriteFreely: ${result.error}`);
     return false;
-  } catch (err) {
+  } catch {
     // console.log(`[crossposter] ✗ WriteFreely error: ${(err as Error).message}`);
     return false;
   }
