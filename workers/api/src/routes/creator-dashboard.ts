@@ -112,30 +112,31 @@ export async function handleCreatorCoinStats(request: Request, env: Env): Promis
   const stats = await getCoinStats(address, chain, env);
 
   if (!stats) {
-    // Fallback: return live-calculated mock data for demo
-    const mockStats = {
-      marketCap: '1250000',
-      fdv: '5000000',
-      price: '0.00125',
-      priceChange24h: 12.4,
-      volume24h: '89000',
-      holderCount: 342,
-      creatorAllocationVested: '50000',
-      creatorAllocationUnvested: '150000',
-      creatorRevenue: '3200',
-      totalSupply: '1000000000',
-      graduated: false,
-      bondingPhase: 2,
-      bondingPhaseName: 'Cruise Control',
+    // FENCE: the on-chain query returned no data for this coin. Never
+    // fabricate market numbers — return the stable stats shape with honest
+    // zero/"unknown" values. Nothing is cached here, so a later real
+    // on-chain result is never shadowed by a "no data" entry.
+    return noCacheJsonResponse({
       name: 'Unknown',
       symbol: 'N/A',
-    };
-
-    // Cache the mock data briefly
-    await kvPut(env.CACHE, COIN_DATA_PREFIX + address.toLowerCase(), mockStats, _TTL_1H).catch(
-      () => {},
-    );
-    return noCacheJsonResponse(mockStats);
+      marketCap: '0',
+      fdv: '0',
+      price: '0',
+      priceNative: '0',
+      volume24h: '0',
+      holderCount: 0,
+      totalSupply: '0',
+      totalRaised: '0',
+      uniqueBuyers: 0,
+      graduated: false,
+      bondingPhase: 0,
+      bondingPhaseName: 'Unknown',
+      creator: '0x0000000000000000000000000000000000000000',
+      creatorFeeBps: 0,
+      platformFeeBps: 0,
+      createdAt: 0,
+      creatorClaimed: '0',
+    });
   }
 
   // Cache on-chain data for 1 hour
@@ -187,18 +188,9 @@ export async function handleCreatorCoinHolders(request: Request, env: Env): Prom
     return noCacheJsonResponse({ holders: paginated, total: onChainHolders.length, offset, limit });
   }
 
-  // Fallback: mock data for demo
-  const mockHolders = Array.from({ length: 20 }, (_, i) => ({
-    address: `0x${(i + 1).toString(16).padStart(40, '0')}`,
-    balance: String(Math.floor(Math.random() * 100000) + 1000),
-    percentage: Math.random() * 5,
-    isCreator: i === 0,
-    lastTx: Date.now() - Math.floor(Math.random() * 86400000),
-  }));
-  mockHolders[0].percentage = 12.5;
-  mockHolders[0].balance = '125000000';
-  const paginated = mockHolders.slice(offset, offset + limit);
-  return noCacheJsonResponse({ holders: paginated, total: mockHolders.length, offset, limit });
+  // FENCE: no on-chain holder data is available for this coin. Never
+  // fabricate holder addresses/balances — return an honest empty list.
+  return noCacheJsonResponse({ holders: [], total: 0, offset, limit });
 }
 
 // ─── GET /api/creator/coin/:address/trades ─────────────────────────────
@@ -243,19 +235,9 @@ export async function handleCreatorCoinTrades(request: Request, env: Env): Promi
     return noCacheJsonResponse({ trades: onChainTrades });
   }
 
-  // Fallback: mock data for demo
-  const mockTrades = Array.from({ length: 25 }, (_, i) => ({
-    txHash: `0x${(i + 1).toString(16).padStart(64, '0')}`,
-    type: (i % 3 === 0 ? 'sell' : 'buy') as 'buy' | 'sell',
-    trader: `0x${Math.floor(Math.random() * 1000000)
-      .toString(16)
-      .padStart(40, '0')}`,
-    tokenAmount: String(Math.floor(Math.random() * 10000) + 100),
-    nativeValue: String(Math.floor(Math.random() * 10) + 1),
-    price: (Math.random() * 0.01 + 0.001).toFixed(6),
-    timestamp: Date.now() - Math.floor(Math.random() * 86400000),
-  }));
-  return noCacheJsonResponse({ trades: mockTrades.slice(0, limit) });
+  // FENCE: no on-chain trade data is available for this coin. Never fabricate
+  // txHashes/traders — return an honest empty list.
+  return noCacheJsonResponse({ trades: [] });
 }
 
 // ─── POST /api/creator/coin/:address/burn ──────────────────────────────
@@ -462,21 +444,16 @@ export async function handleCreatorCoinRevenue(request: Request, env: Env): Prom
     return noCacheJsonResponse(onChainRevenue);
   }
 
-  // Fallback: mock data for demo
-  const days = Array.from({ length: 30 }, (_, i) => {
-    const d = new Date(Date.now() - i * 86400000);
-    return {
-      date: d.toISOString().slice(0, 10),
-      amount: String(Math.floor(Math.random() * 5000) + 500),
-    };
-  });
+  // FENCE: no on-chain revenue data is available for this coin. Never
+  // fabricate fee totals or a daily breakdown — return the stable revenue
+  // shape with honest zero values and an empty breakdown.
   return noCacheJsonResponse({
-    totalRevenue: '45200',
-    creatorFees: '28400',
-    treasuryFees: '8900',
-    tipsReceived: '12000',
-    platformFees: '2260',
-    revenueByDay: days,
+    totalRevenue: '0',
+    creatorFees: '0',
+    treasuryFees: '0',
+    tipsReceived: '0',
+    platformFees: '0',
+    revenueByDay: [],
   });
 }
 
@@ -497,17 +474,20 @@ export async function handlePlatformRevenue(_request: Request, env: Env): Promis
   }>(env.CACHE, 'platform:revenue:aggregate');
 
   if (!revenue) {
+    // FENCE: the worker does not track platform-wide revenue aggregates, so
+    // none are reported — never fabricate platform totals. Consumers must
+    // treat 0 as "no data". lastUpdated 0 signals "never aggregated".
     return noCacheJsonResponse({
-      totalFeesCollected: '128450',
-      totalTrades: 89234,
-      activeCoins: 156,
-      dailyVolume: '4500000',
+      totalFeesCollected: '0',
+      totalTrades: 0,
+      activeCoins: 0,
+      dailyVolume: '0',
       feeDistribution: {
-        protocolTreasury: '77070',
-        degenfeedOps: '25690',
-        creatorRewardPool: '25690',
+        protocolTreasury: '0',
+        degenfeedOps: '0',
+        creatorRewardPool: '0',
       },
-      lastUpdated: Date.now(),
+      lastUpdated: 0,
     });
   }
 
