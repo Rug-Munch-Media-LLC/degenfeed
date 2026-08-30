@@ -25,7 +25,12 @@ const WORDPRESS_SITES: Array<{
   mode: 'rest' | 'wpcom';
 }> = [
   // Self-hosted WordPress (REST API)
-  { url: 'https://wordpress.org/news', label: 'WordPress News', niches: ['tech', 'cms'], mode: 'rest' },
+  {
+    url: 'https://wordpress.org/news',
+    label: 'WordPress News',
+    niches: ['tech', 'cms'],
+    mode: 'rest',
+  },
   { url: 'https://ma.tt', label: 'Matt Mullenweg', niches: ['tech', 'blog'], mode: 'rest' },
   // WordPress.com (public-api REST)
   {

@@ -196,10 +196,7 @@ export function formatCount(count: number): string {
 
 // ─── Mapping ───────────────────────────────────────────────────────────
 
-export function loopsVideoToPost(
-  video: LoopsVideo,
-  _sourceLabel = 'Loops via @degenfeed',
-): UnifiedPost {
+export function loopsVideoToPost(video: LoopsVideo): UnifiedPost {
   const account = video.account;
   const authorName = account?.name || account?.username || 'Loops';
   const authorHandle = account?.username || '';
@@ -335,7 +332,7 @@ export async function fetchLoopsPosts(limit = 20): Promise<UnifiedPost[]> {
 }
 
 /** Fetch and map a single Loops instance's public web feed. */
-async function fetchLoopsFeed(base: string, label: string, limit: number): Promise<UnifiedPost[]> {
+async function fetchLoopsFeed(base: string, _label: string, limit: number): Promise<UnifiedPost[]> {
   try {
     const headers: Record<string, string> = {
       'User-Agent': 'DegenFeed-Bridge/0.1',
@@ -363,7 +360,7 @@ async function fetchLoopsFeed(base: string, label: string, limit: number): Promi
       .slice(0, limit)
       .filter((v) => v?.id)
       .map(loopsVideoToPost);
-  } catch (err) {
+  } catch {
     // console.log(`[loops] ${label}: error - ${(err as Error).message}`);
     return [];
   }

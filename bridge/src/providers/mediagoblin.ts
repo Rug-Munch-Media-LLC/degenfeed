@@ -116,7 +116,7 @@ async function fetchFromInstance(instance: string, limit: number): Promise<Unifi
           niches: guessNiches(text, entry.tags_raw),
         };
       });
-  } catch (err) {
+  } catch {
     // console.log(`[bridge] MediaGoblin error (${instance}): ${(err as Error).message}`);
     return [];
   }

@@ -13,6 +13,6 @@ export {
   fetchBlueskyVideoFeed,
   schema,
 } from './bluesky/fetchers';
-export { getFirehosePosts, firehoseStatus, startFirehose } from './bluesky/firehose';
+export { firehoseStatus, getFirehosePosts, startFirehose } from './bluesky/firehose';
 export { extractMediaFromPost, guessNiches } from './bluesky/helpers';
 export { postToUnified } from './bluesky/mapper';

@@ -135,11 +135,7 @@ function snapshotProposalToPost(proposal: SnapshotProposal): UnifiedPost | null 
   const voteInfo = formatVoteCount(proposal);
   const spaceName = space?.name || space?.id || 'Unknown DAO';
 
-  const _authorAddr = `${proposal.author.slice(0, 6)}...${proposal.author.slice(-4)}`;
   const text = `${emoji} [${spaceName}] ${title}\n\n${stateLabel} · ${voteInfo}\n\n${body.slice(0, 300)}`;
-
-  const _startDate = proposal.start * 1000;
-  const _endDate = proposal.end * 1000;
 
   return {
     id: `snapshot:${proposal.id}`,
@@ -215,7 +211,7 @@ async function graphQLQuery<T>(
     });
     if (!res.ok) return {};
     return (await res.json()) as GraphQLResponse<T>;
-  } catch (err) {
+  } catch {
     // console.log(`[bridge] Snapshot GraphQL error: ${(err as Error).message}`);
     return {};
   }

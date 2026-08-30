@@ -92,7 +92,7 @@ export type FeedCategory =
 // CRYPTO NEWS (25 feeds)
 // ═══════════════════════════════════════════════════════════════════════════
 
-const CRYPTO_NEWS_FEEDS: FeedSource[] = [
+export const CRYPTO_NEWS_FEEDS: FeedSource[] = [
   {
     url: 'https://thedefiant.io/feed.xml',
     label: 'The Defiant',
@@ -327,7 +327,7 @@ const CRYPTO_NEWS_FEEDS: FeedSource[] = [
 // CRYPTO RESEARCH & ANALYTICS (12 feeds)
 // ═══════════════════════════════════════════════════════════════════════════
 
-const RESEARCH_FEEDS: FeedSource[] = [
+export const RESEARCH_FEEDS: FeedSource[] = [
   {
     url: 'https://www.theblock.co/rss.xml',
     label: 'The Block',
@@ -361,7 +361,7 @@ const RESEARCH_FEEDS: FeedSource[] = [
 // VC & INVESTMENT (12 feeds)
 // ═══════════════════════════════════════════════════════════════════════════
 
-const VC_FEEDS: FeedSource[] = [
+export const VC_FEEDS: FeedSource[] = [
   {
     url: 'https://www.castleisland.vc/feed/',
     label: 'Castle Island VC',
@@ -380,7 +380,7 @@ const VC_FEEDS: FeedSource[] = [
 // DEV & TECHNICAL (10 feeds)
 // ═══════════════════════════════════════════════════════════════════════════
 
-const DEV_FEEDS: FeedSource[] = [
+export const DEV_FEEDS: FeedSource[] = [
   {
     url: 'https://ethresear.ch/posts.rss',
     label: 'EthResearch',
@@ -416,7 +416,7 @@ const DEV_FEEDS: FeedSource[] = [
 // LAYER 1 & 2 (verified 2026-08-03)
 // ═══════════════════════════════════════════════════════════════════════════
 
-const L1_L2_FEEDS: FeedSource[] = [
+export const L1_L2_FEEDS: FeedSource[] = [
   {
     url: 'https://solana.com/news/rss.xml',
     label: 'Solana Blog',
@@ -479,7 +479,7 @@ const L1_L2_FEEDS: FeedSource[] = [
 // SECURITY & AUDITS (8 feeds)
 // ═══════════════════════════════════════════════════════════════════════════
 
-const SECURITY_FEEDS: FeedSource[] = [
+export const SECURITY_FEEDS: FeedSource[] = [
   {
     url: 'https://web3isgoinggreat.com/feed.xml',
     label: 'Web3 is Going Great',
@@ -511,7 +511,7 @@ const SECURITY_FEEDS: FeedSource[] = [
 // ACADEMIC (6 feeds)
 // ═══════════════════════════════════════════════════════════════════════════
 
-const ACADEMIC_FEEDS: FeedSource[] = [
+export const ACADEMIC_FEEDS: FeedSource[] = [
   {
     url: 'https://rss.arxiv.org/rss/cs.CR',
     label: 'arXiv Cryptography',
@@ -574,7 +574,7 @@ const ACADEMIC_FEEDS: FeedSource[] = [
 // TECH & GENERAL (10 feeds)
 // ═══════════════════════════════════════════════════════════════════════════
 
-const TECH_FEEDS: FeedSource[] = [
+export const TECH_FEEDS: FeedSource[] = [
   {
     url: 'https://hackernoon.com/feed',
     label: 'Hacker Noon',
@@ -783,7 +783,7 @@ const TECH_FEEDS: FeedSource[] = [
 // ═══════════════════════════════════════════════════════════════════════════
 // DEFI-SPECIFIC (verified 2026-08-03)
 // ═══════════════════════════════════════════════════════════════════════════
-const DEFI_FEEDS: FeedSource[] = [
+export const DEFI_FEEDS: FeedSource[] = [
   {
     url: 'https://curve.substack.com/feed',
     label: 'Curve Finance',
@@ -867,7 +867,7 @@ const DEFI_FEEDS: FeedSource[] = [
 // NFT & METAVERSE (6 feeds)
 // ═══════════════════════════════════════════════════════════════════════════
 
-const NFT_FEEDS: FeedSource[] = [
+export const NFT_FEEDS: FeedSource[] = [
   { url: 'https://nftnow.com/feed/', label: 'NFT Now', category: 'nft', niches: ['nft', 'crypto'] },
   {
     url: 'https://decrypt.co/feed/nft',
@@ -887,7 +887,7 @@ const NFT_FEEDS: FeedSource[] = [
 // AI SPECIFIC (6 feeds)
 // ═══════════════════════════════════════════════════════════════════════════
 
-const AI_FEEDS: FeedSource[] = [
+export const AI_FEEDS: FeedSource[] = [
   {
     url: 'https://huggingface.co/blog/feed.xml',
     label: 'Hugging Face Blog',
@@ -900,7 +900,7 @@ const AI_FEEDS: FeedSource[] = [
 // SCIENCE (verified 2026-08-03)
 // ═══════════════════════════════════════════════════════════════════════════
 
-const SCIENCE_FEEDS: FeedSource[] = [
+export const SCIENCE_FEEDS: FeedSource[] = [
   {
     url: 'https://www.nature.com/nature.rss',
     label: 'Nature',
@@ -933,7 +933,7 @@ const SCIENCE_FEEDS: FeedSource[] = [
 // GEOPOLITICS & WORLD AFFAIRS (verified 2026-08-03)
 // ═══════════════════════════════════════════════════════════════════════════
 
-const GEOPOLITICS_FEEDS: FeedSource[] = [
+export const GEOPOLITICS_FEEDS: FeedSource[] = [
   {
     url: 'https://foreignaffairs.com/rss.xml',
     label: 'Foreign Affairs',
@@ -985,7 +985,7 @@ const GEOPOLITICS_FEEDS: FeedSource[] = [
 // BUSINESS & ECONOMICS (verified 2026-08-03)
 // ═══════════════════════════════════════════════════════════════════════════
 
-const BUSINESS_FEEDS: FeedSource[] = [
+export const BUSINESS_FEEDS: FeedSource[] = [
   {
     url: 'https://feeds.a.dj.com/rss/RSSMarketsMain.xml',
     label: 'WSJ Crypto',
@@ -1041,7 +1041,7 @@ const BUSINESS_FEEDS: FeedSource[] = [
 // WORLD NEWS (verified 2026-08-03 — Ground News breadth play)
 // ═══════════════════════════════════════════════════════════════════════════
 
-const WORLD_FEEDS: FeedSource[] = [
+export const WORLD_FEEDS: FeedSource[] = [
   {
     url: 'https://www.ft.com/rss/home',
     label: 'FT',
@@ -1337,7 +1337,7 @@ const WORLD_FEEDS: FeedSource[] = [
 // SCIENCE & TECH (verified 2026-08-03 — Ground News breadth play)
 // ═══════════════════════════════════════════════════════════════════════════
 
-const SCIENCE_TECH_FEEDS: FeedSource[] = [
+export const SCIENCE_TECH_FEEDS: FeedSource[] = [
   {
     url: 'https://news.mit.edu/rss/feed',
     label: 'MIT News',
@@ -1483,7 +1483,7 @@ const SCIENCE_TECH_FEEDS: FeedSource[] = [
 // CULTURE & POLITICS (verified 2026-08-03 — Ground News breadth play)
 // ═══════════════════════════════════════════════════════════════════════════
 
-const CULTURE_FEEDS: FeedSource[] = [
+export const CULTURE_FEEDS: FeedSource[] = [
   {
     url: 'https://www.theatlantic.com/feed/all/',
     label: 'The Atlantic',
@@ -1711,7 +1711,7 @@ const CULTURE_FEEDS: FeedSource[] = [
 /**
  * Top crypto/DeFi Substack writers. RSS format: https://{author}.substack.com/feed
  */
-const SUBSTACK_WRITERS: FeedSource[] = [
+export const SUBSTACK_WRITERS: FeedSource[] = [
   {
     url: 'https://validity.substack.com/feed',
     label: 'Validity',
@@ -1808,7 +1808,7 @@ const SUBSTACK_WRITERS: FeedSource[] = [
 /**
  * Top Medium crypto publications. RSS: https://medium.com/feed/{publication}
  */
-const MEDIUM_PUBLICATIONS: FeedSource[] = [
+export const MEDIUM_PUBLICATIONS: FeedSource[] = [
   {
     url: 'https://medium.com/feed/coinmonks',
     label: 'Coinmonks',
@@ -1913,14 +1913,14 @@ const MEDIUM_PUBLICATIONS: FeedSource[] = [
  * NOTE: All Mirror feeds were returning 403 (Cloudflare) as of 2026-08-03
  * audit — disabled. Re-add when Mirror lifts the bot challenge.
  */
-const MIRROR_WRITERS: FeedSource[] = [];
+export const MIRROR_WRITERS: FeedSource[] = [];
 
 /**
  * Paragraph.xyz web3 newsletters. Uses GraphQL API.
  * NOTE: All Paragraph RSS endpoints were returning 429/404 as of 2026-08-03
  * audit — removed. Re-add if Paragraph restores its public feed endpoints.
  */
-const PARAGRAPH_NEWSLETTERS: FeedSource[] = [];
+export const PARAGRAPH_NEWSLETTERS: FeedSource[] = [];
 
 /**
  * Ghost blogs with public RSS feeds.
@@ -1928,20 +1928,20 @@ const PARAGRAPH_NEWSLETTERS: FeedSource[] = [];
  * return 404/DNS errors as of 2026-08-03 audit — removed. The primary RSS
  * feeds for Ethereum/Solana blogs remain in RESEARCH_FEEDS.
  */
-const GHOST_BLOGS: FeedSource[] = [];
+export const GHOST_BLOGS: FeedSource[] = [];
 
 /**
  * Beehiiv publications with RSS.
  * NOTE: The Block (Beehiiv) is 403 and Milken Institute is 404 as of the
  * 2026-08-03 audit — removed.
  */
-const BEEHIIV_PUBLICATIONS: FeedSource[] = [];
+export const BEEHIIV_PUBLICATIONS: FeedSource[] = [];
 
 // ═══════════════════════════════════════════════════════════════════════════
 // REGULATION & POLICY (4 feeds)
 // ═══════════════════════════════════════════════════════════════════════════
 
-const REGULATION_FEEDS: FeedSource[] = [
+export const REGULATION_FEEDS: FeedSource[] = [
   {
     url: 'https://www.sec.gov/rss/news/press.xml',
     label: 'SEC Press',
@@ -1960,7 +1960,7 @@ const REGULATION_FEEDS: FeedSource[] = [
 // CRYPTO & WEB3 PODCASTS (10 feeds)
 // ═══════════════════════════════════════════════════════════════════════════
 
-const PODCAST_FEEDS: FeedSource[] = [
+export const PODCAST_FEEDS: FeedSource[] = [
   {
     url: 'https://feeds.libsyn.com/247424/rss',
     label: 'Bankless',
@@ -2163,14 +2163,14 @@ export function extractMetadata(html: string): {
   if (!html) return meta;
 
   const descMatch = html.match(/<meta[^>]+name=["']description["'][^>]+content=["']([^"']+)["']/i);
-  if (descMatch) meta.description = stripHtml(descMatch[1]).slice(0, 500);
+  if (descMatch) meta.description = stripHtml(descMatch[1]!).slice(0, 500);
 
   const authorMatch = html.match(/<meta[^>]+name=["']author["'][^>]+content=["']([^"']+)["']/i);
-  if (authorMatch) meta.authorName = stripHtml(authorMatch[1]);
+  if (authorMatch) meta.authorName = stripHtml(authorMatch[1]!);
 
   const keywordsMatch = html.match(/<meta[^>]+name=["']keywords["'][^>]+content=["']([^"']+)["']/i);
   if (keywordsMatch) {
-    meta.keywords = keywordsMatch[1].split(',').map((k) => k.trim().toLowerCase());
+    meta.keywords = keywordsMatch[1]!.split(',').map((k) => k.trim().toLowerCase());
   }
 
   return meta;
@@ -2440,7 +2440,7 @@ export function setPostImage(post: UnifiedPost, image: string): void {
   raw.image = image;
   const idx = post.embeds.findIndex((e) => e.kind === 'image');
   if (idx >= 0) {
-    post.embeds[idx] = { kind: 'image', url: image, meta: post.embeds[idx].meta };
+    post.embeds[idx] = { kind: 'image', url: image, meta: post.embeds[idx]!.meta };
   } else {
     post.embeds.push({ kind: 'image', url: image });
   }
@@ -2713,7 +2713,7 @@ export function parseFeedXml(xml: string): {
   let m: RegExpExecArray | null;
   // biome-ignore lint/suspicious/noAssignInExpressions: regex exec loop
   while ((m = entryRe.exec(xml)) !== null) {
-    const e = m[1];
+    const e = m[1]!;
     const item = parseAtomEntry(e);
     if (item) result.push(item);
   }
@@ -2723,15 +2723,15 @@ export function parseFeedXml(xml: string): {
     const itemRe = /<item[\s>]([\s\S]*?)<\/item>/gi;
     // biome-ignore lint/suspicious/noAssignInExpressions: regex exec loop
     while ((m = itemRe.exec(xml)) !== null) {
-      const e = m[1];
+      const e = m[1]!;
       const item = parseRssItem(e);
       if (item) result.push(item);
     }
   }
 
   return {
-    title: feedTitleMatch ? stripHtml(feedTitleMatch[1]).trim() : undefined,
-    description: feedDescMatch ? stripHtml(feedDescMatch[1]).trim().slice(0, 500) : undefined,
+    title: feedTitleMatch ? stripHtml(feedTitleMatch[1]!).trim() : undefined,
+    description: feedDescMatch ? stripHtml(feedDescMatch[1]!).trim().slice(0, 500) : undefined,
     link: feedLinkMatch?.[1],
     image: feedImageMatch?.[1] ? stripHtml(feedImageMatch[1]).trim() : undefined,
     items: result,
@@ -2740,18 +2740,18 @@ export function parseFeedXml(xml: string): {
 
 function parseAtomEntry(e: string): ParsedFeedItem | null {
   const titleMatch = e.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
-  const title = titleMatch ? stripHtml(titleMatch[1]).trim() : '';
+  const title = titleMatch ? stripHtml(titleMatch[1]!).trim() : '';
   if (!title) return null;
 
   // Link - try href attribute first, then content
   const linkMatch = e.match(/<link[^>]+href=["']([^"']+)["']/i);
   const linkAltMatch = e.match(/<link[^>]*>([\s\S]*?)<\/link>/i);
-  const link = linkMatch?.[1] || (linkAltMatch ? stripHtml(linkAltMatch[1]) : '');
+  const link = linkMatch?.[1] || (linkAltMatch ? stripHtml(linkAltMatch[1]!) : '');
 
   const updatedMatch = e.match(/<updated[^>]*>([\s\S]*?)<\/updated>/i);
   const publishedMatch = e.match(/<published[^>]*>([\s\S]*?)<\/published>/i);
-  const publishedAt = publishedMatch ? new Date(publishedMatch[1]).getTime() : Date.now();
-  const updatedAt = updatedMatch ? new Date(updatedMatch[1]).getTime() : publishedAt;
+  const publishedAt = publishedMatch ? new Date(publishedMatch[1]!).getTime() : Date.now();
+  const updatedAt = updatedMatch ? new Date(updatedMatch[1]!).getTime() : publishedAt;
 
   const contentMatch = e.match(/<content[^>]*>([\s\S]*?)<\/content>/i);
   const summaryMatch = e.match(/<summary[^>]*>([\s\S]*?)<\/summary>/i);
@@ -2760,7 +2760,7 @@ function parseAtomEntry(e: string): ParsedFeedItem | null {
 
   const descriptionMatch = e.match(/<summary[^>]*>([\s\S]*?)<\/summary>/i);
   const description = descriptionMatch
-    ? stripHtml(descriptionMatch[1]).slice(0, 500)
+    ? stripHtml(descriptionMatch[1]!).slice(0, 500)
     : contentText.slice(0, 500);
 
   const authorNameMatch = e.match(
@@ -2769,14 +2769,14 @@ function parseAtomEntry(e: string): ParsedFeedItem | null {
   const authorUriMatch = e.match(/<author>[\s\S]*?<uri[^>]*>([\s\S]*?)<\/uri>[\s\S]*?<\/author>/i);
 
   const categoryMatches = [...e.matchAll(/<category[^>]+term=["']([^"']+)["']/gi)];
-  const categories = categoryMatches.map((cm) => cm[1].toLowerCase());
+  const categories = categoryMatches.map((cm) => cm[1]!.toLowerCase());
 
   const enclosures = extractEnclosures(e);
   const featuredImage =
     extractFeaturedImage(contentHtml) || extractMediaImage(e) || enclosures[0]?.url;
 
   const idMatch = e.match(/<id[^>]*>([\s\S]*?)<\/id>/i);
-  const id = idMatch ? stripHtml(idMatch[1]) : `entry:${title}:${publishedAt}`;
+  const id = idMatch ? stripHtml(idMatch[1]!) : `entry:${title}:${publishedAt}`;
 
   return {
     title,
@@ -2786,8 +2786,8 @@ function parseAtomEntry(e: string): ParsedFeedItem | null {
     description,
     publishedAt: Number.isNaN(publishedAt) ? Date.now() : publishedAt,
     updatedAt: Number.isNaN(updatedAt) ? Date.now() : updatedAt,
-    authorName: authorNameMatch ? stripHtml(authorNameMatch[1]) : undefined,
-    authorLink: authorUriMatch ? stripHtml(authorUriMatch[1]) : undefined,
+    authorName: authorNameMatch ? stripHtml(authorNameMatch[1]!) : undefined,
+    authorLink: authorUriMatch ? stripHtml(authorUriMatch[1]!) : undefined,
     featuredImage,
     categories,
     enclosures,
@@ -2798,11 +2798,11 @@ function parseAtomEntry(e: string): ParsedFeedItem | null {
 
 function parseRssItem(e: string): ParsedFeedItem | null {
   const titleMatch = e.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
-  const title = titleMatch ? stripHtml(titleMatch[1]).trim() : '';
+  const title = titleMatch ? stripHtml(titleMatch[1]!).trim() : '';
   if (!title) return null;
 
   const linkMatch = e.match(/<link[^>]*>([\s\S]*?)<\/link>/i);
-  const link = linkMatch ? stripHtml(linkMatch[1]).trim() : '';
+  const link = linkMatch ? stripHtml(linkMatch[1]!).trim() : '';
 
   const descMatch = e.match(/<description[^>]*>([\s\S]*?)<\/description>/i);
   // Description in RSS may be CDATA-wrapped with HTML
@@ -2818,14 +2818,14 @@ function parseRssItem(e: string): ParsedFeedItem | null {
   const dcCreatorMatch = e.match(/<dc:creator[^>]*>([\s\S]*?)<\/dc:creator>/i);
 
   const categoryMatches = [...e.matchAll(/<category[^>]*>([\s\S]*?)<\/category>/gi)];
-  const categories = categoryMatches.map((cm) => stripHtml(cm[1]).toLowerCase()).filter(Boolean);
+  const categories = categoryMatches.map((cm) => stripHtml(cm[1]!).toLowerCase()).filter(Boolean);
 
   const enclosures = extractEnclosures(e);
   const featuredImage =
     extractFeaturedImage(contentHtml) || extractMediaImage(e) || enclosures[0]?.url;
 
   const guidMatch = e.match(/<guid[^>]*>([\s\S]*?)<\/guid>/i);
-  const id = guidMatch ? stripHtml(guidMatch[1]) : `rss:${title}:${publishedAt}`;
+  const id = guidMatch ? stripHtml(guidMatch[1]!) : `rss:${title}:${publishedAt}`;
 
   return {
     title,
@@ -2836,9 +2836,9 @@ function parseRssItem(e: string): ParsedFeedItem | null {
     publishedAt: Number.isNaN(publishedAt) ? Date.now() : publishedAt,
     updatedAt: Number.isNaN(publishedAt) ? Date.now() : publishedAt,
     authorName: authorMatch
-      ? stripHtml(authorMatch[1])
+      ? stripHtml(authorMatch[1]!)
       : dcCreatorMatch
-        ? stripHtml(dcCreatorMatch[1])
+        ? stripHtml(dcCreatorMatch[1]!)
         : undefined,
     featuredImage,
     categories,
@@ -2977,7 +2977,7 @@ async function fetchSingleFeed(feed: FeedSource, limit: number): Promise<Unified
         contentType: isPodcast ? 'podcast' : 'link',
       };
     });
-  } catch (err) {
+  } catch {
     // console.log(`[rss] ${feed.label}: error — ${err instanceof Error ? err.message : 'unknown'}`);
     return [];
   }
@@ -3157,7 +3157,7 @@ export function normalizeUrlKey(url: string): string {
       .toLowerCase()
       .replace(/^https?:\/\//, '')
       .replace(/\/+$/, '')
-      .split('?')[0];
+      .split('?')[0]!;
   }
 }
 
@@ -3741,9 +3741,6 @@ export const SOURCE_BIAS: Record<string, BiasLabel> = {
   'BBC Technology': 'center',
   'BBC Africa': 'center',
   'Sky News': 'center',
-  Reuters: 'center',
-  AP: 'center',
-  'AP News': 'center',
   'NPR World': 'center',
   'CBS News': 'center',
   'NBC News': 'center',
@@ -3751,12 +3748,10 @@ export const SOURCE_BIAS: Record<string, BiasLabel> = {
   'USA Today': 'center',
   'Financial Times': 'center',
   FT: 'center',
-  'FT Alphaville': 'center',
   'The Economist': 'center',
   'The Economist Science': 'center',
   'Bloomberg Markets': 'center',
   'Bloomberg Tech': 'center',
-  'Bloomberg Crypto': 'center',
   'CNBC Top News': 'center',
   'CNBC Markets': 'center',
   'CNBC Tech': 'center',
@@ -4076,9 +4071,7 @@ export const SOURCE_FACTUALITY: Record<string, FactualityLabel> = {
   CoinMetrics: 'high',
   'Glassnode Insights': 'high',
   'Reuters Crypto': 'very-high',
-  Reuters: 'very-high',
   'WSJ Crypto': 'very-high',
-  'Bloomberg Crypto': 'very-high',
   'DeFi Llama': 'high',
   DeFiLlama: 'high',
   Yearn: 'high',
@@ -4630,7 +4623,7 @@ export function ensureBiasDiversity(
   const pickFrom = (bucket: BiasBucket): UnifiedPost | undefined => {
     const arr = buckets[bucket];
     for (let i = 0; i < arr.length; i++) {
-      const p = arr[i];
+      const p = arr[i]!;
       if (!picked.has(p.id)) {
         picked.add(p.id);
         quota[bucket] = Math.max(0, quota[bucket] - 1);
@@ -4641,7 +4634,7 @@ export function ensureBiasDiversity(
   };
 
   // Headline: the single highest-ranked post (diversity must never bury it).
-  const head = ranked[0];
+  const head = ranked[0]!;
   out.push(head);
   picked.add(head.id);
   const headRaw = head.raw as { feedLabel?: string } | undefined;
@@ -4653,7 +4646,7 @@ export function ensureBiasDiversity(
   let cursor = 0;
 
   while (out.length < limit && cursor < ranked.length) {
-    const preferred = order[pass % order.length];
+    const preferred = order[pass % order.length]!;
     const tried: BiasBucket[] = [preferred, ...order.filter((b) => b !== preferred)];
     let pickedThisPass = false;
     for (const bucket of tried) {
@@ -5180,9 +5173,6 @@ export async function fetchRssPosts(limit = 50): Promise<UnifiedPost[]> {
     //     console.log(
     //       `[rss] Total: ${deduped.length} posts from ~${activeFeeds.length} feeds (${all.length} raw)`,
     //     );
-    for (const [cat, count] of byCategory) {
-      // console.log(`[rss]   ${cat}: ${count} posts`);
-    }
 
     // Anti-poisoning: never replace a healthy cache with a degraded fetch.
     // The bridge's feed builder kills provider fetches after FETCH_TIMEOUT_MS

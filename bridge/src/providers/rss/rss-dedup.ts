@@ -1,3 +1,5 @@
+import type { UnifiedPost } from '../../server/types';
+
 export function normalizeUrlKey(url: string): string {
   try {
     const u = new URL(url);
@@ -24,7 +26,7 @@ export function normalizeUrlKey(url: string): string {
       .toLowerCase()
       .replace(/^https?:\/\//, '')
       .replace(/\/+$/, '')
-      .split('?')[0];
+      .split('?')[0]!;
   }
 }
 

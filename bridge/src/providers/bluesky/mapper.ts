@@ -1,7 +1,6 @@
 import type { UnifiedPost } from '../../server';
 import {
   buildRichTextHtml,
-  detectContentType,
   extractMediaFromPost,
   extractQuoteFromPost,
   guessNiches,
@@ -73,7 +72,6 @@ export function postToUnified(post: BskyPostView): UnifiedPost {
     });
   }
 
-  const contentType = detectContentType(post);
   const richHtml = buildRichTextHtml(post.record.text, post.record.facets);
   const nativeId = post.uri.split('/').pop() || post.cid;
 

@@ -22,7 +22,6 @@ const $fetch = globalThis.fetch;
 // ─── Constants ─────────────────────────────────────────────────────────
 
 const PUSH_API = 'https://backend.epns.io/api';
-const _PUSH_DELIVERY_NODE = process.env.PUSH_DELIVERY_NODE_URL || 'http://127.0.0.1:8102';
 
 const PUBLIC_CHANNELS = [
   { address: 'eip155:1:0x35B84d6848D16415177c64D64504663b998A6ab4', name: 'Push Protocol' },
@@ -134,7 +133,7 @@ async function fetchPublicNotifications(limit: number): Promise<UnifiedPost[]> {
       if (r.status === 'fulfilled') all.push(...r.value);
     }
     return all.slice(0, limit);
-  } catch (err) {
+  } catch {
     // console.log(`[bridge] Push API error: ${(err as Error).message}`);
     return [];
   }

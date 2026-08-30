@@ -23,7 +23,6 @@ const $fetch = globalThis.fetch;
 
 const OPENSEA_API = process.env.OPENSEA_API_URL || 'https://api.opensea.io/api/v2';
 const OPENSEA_API_KEY = process.env.OPENSEA_API_KEY || '';
-const _OPENSEA_STREAM_WS = process.env.OPENSEA_STREAM_WS || 'wss://stream-api.opensea.io/socket';
 
 // ─── Types ─────────────────────────────────────────────────────────────
 
@@ -281,7 +280,7 @@ async function fetchTrendingCollections(limit: number): Promise<UnifiedPost[]> {
         },
       } as UnifiedPost;
     });
-  } catch (err) {
+  } catch {
     // console.log(`[bridge] OpenSea trending collections error: ${(err as Error).message}`);
     return [];
   }
@@ -299,7 +298,7 @@ async function fetchRecentEvents(limit: number): Promise<UnifiedPost[]> {
     const data = (await res.json()) as OpenSeaEventsResponse;
     const events = data.asset_events || [];
     return events.map(openseaEventToPost).filter((p): p is UnifiedPost => p !== null);
-  } catch (err) {
+  } catch {
     // console.log(`[bridge] OpenSea events error: ${(err as Error).message}`);
     return [];
   }

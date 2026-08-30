@@ -291,8 +291,6 @@ export async function handlePodcastRoute(
   req: http.IncomingMessage,
   res: http.ServerResponse,
 ): Promise<boolean> {
-  const segments = path.split('/').filter(Boolean);
-
   // /api/podcast/discover — Discovery feed
   if (path === '/api/podcast/discover' && method === 'GET') {
     await handleDiscover(req, res);
@@ -338,35 +336,35 @@ export async function handlePodcastRoute(
   // /api/podcast/episode/:id/publish — Publish episode
   const publishMatch = path.match(/^\/api\/podcast\/episode\/([^/]+)\/publish$/);
   if (publishMatch && method === 'POST') {
-    await handlePublishEpisode(req, res, publishMatch[1]);
+    await handlePublishEpisode(req, res, publishMatch[1]!);
     return true;
   }
 
   // /api/podcast/episode/:id/tip — Tip episode
   const tipMatch = path.match(/^\/api\/podcast\/episode\/([^/]+)\/tip$/);
   if (tipMatch && method === 'POST') {
-    await handleTipEpisode(req, res, tipMatch[1]);
+    await handleTipEpisode(req, res, tipMatch[1]!);
     return true;
   }
 
   // /api/podcast/episode/:id — Delete episode
   const episodeDeleteMatch = path.match(/^\/api\/podcast\/episode\/([^/]+)$/);
   if (episodeDeleteMatch && method === 'DELETE') {
-    await handleDeleteEpisode(req, res, episodeDeleteMatch[1]);
+    await handleDeleteEpisode(req, res, episodeDeleteMatch[1]!);
     return true;
   }
 
   // /api/podcast/:id/episodes — Get episodes
   const episodesMatch = path.match(/^\/api\/podcast\/([^/]+)\/episodes$/);
   if (episodesMatch && method === 'GET') {
-    await handleGetEpisodes(req, res, episodesMatch[1]);
+    await handleGetEpisodes(req, res, episodesMatch[1]!);
     return true;
   }
 
   // /api/podcast/:id — Get single podcast
   const podcastMatch = path.match(/^\/api\/podcast\/([^/]+)$/);
   if (podcastMatch && method === 'GET') {
-    await handleGetPodcast(req, res, podcastMatch[1]);
+    await handleGetPodcast(req, res, podcastMatch[1]!);
     return true;
   }
 
@@ -396,10 +394,7 @@ async function readBody(req: http.IncomingMessage): Promise<string> {
  * Mixes curated Castopod episodes + creator podcasts
  * Params: category, limit, page, source
  */
-async function handleDiscover(
-  req: http.IncomingMessage,
-  res: http.ServerResponse,
-): Promise<boolean> {
+async function handleDiscover(req: http.IncomingMessage, res: http.ServerResponse): Promise<void> {
   const url = new URL(req.url || '/', `http://${req.headers.host || 'localhost'}`);
   const category = url.searchParams.get('category') || '';
   const limit = Math.min(100, parseInt(url.searchParams.get('limit') || '20', 10));
@@ -468,10 +463,7 @@ async function handleDiscover(
  * GET /api/podcast/trending — Trending episodes
  * Params: limit
  */
-async function handleTrending(
-  req: http.IncomingMessage,
-  res: http.ServerResponse,
-): Promise<boolean> {
+async function handleTrending(req: http.IncomingMessage, res: http.ServerResponse): Promise<void> {
   const url = new URL(req.url || '/', `http://${req.headers.host || 'localhost'}`);
   const limit = Math.min(50, parseInt(url.searchParams.get('limit') || '10', 10));
 
@@ -506,7 +498,7 @@ async function handleTrending(
 /**
  * GET /api/podcast/mine — My podcasts (requires auth header)
  */
-async function handleMine(req: http.IncomingMessage, res: http.ServerResponse): Promise<boolean> {
+async function handleMine(req: http.IncomingMessage, res: http.ServerResponse): Promise<void> {
   const walletAddress = (req.headers['x-wallet-address'] as string) || '';
 
   if (!walletAddress) {
@@ -535,7 +527,7 @@ async function handleMine(req: http.IncomingMessage, res: http.ServerResponse): 
 async function handleCreatePodcast(
   req: http.IncomingMessage,
   res: http.ServerResponse,
-): Promise<boolean> {
+): Promise<void> {
   const walletAddress = (req.headers['x-wallet-address'] as string) || '';
   if (!walletAddress) {
     return jsonError(res, 401, 'Authentication required');
@@ -605,7 +597,7 @@ async function handleCreatePodcast(
 async function handleCreateEpisode(
   req: http.IncomingMessage,
   res: http.ServerResponse,
-): Promise<boolean> {
+): Promise<void> {
   const walletAddress = (req.headers['x-wallet-address'] as string) || '';
   if (!walletAddress) {
     return jsonError(res, 401, 'Authentication required');
@@ -693,7 +685,7 @@ async function handlePublishEpisode(
   req: http.IncomingMessage,
   res: http.ServerResponse,
   episodeId: string,
-): Promise<boolean> {
+): Promise<void> {
   const walletAddress = (req.headers['x-wallet-address'] as string) || '';
   if (!walletAddress) return jsonError(res, 401, 'Authentication required');
 
@@ -736,7 +728,7 @@ async function handleTipEpisode(
   req: http.IncomingMessage,
   res: http.ServerResponse,
   episodeId: string,
-): Promise<boolean> {
+): Promise<void> {
   try {
     const body = JSON.parse(await readBody(req)) as TipRequest;
     if (!body.amount || Number(body.amount) <= 0) {
@@ -778,7 +770,7 @@ async function handleDeleteEpisode(
   req: http.IncomingMessage,
   res: http.ServerResponse,
   episodeId: string,
-): Promise<boolean> {
+): Promise<void> {
   const walletAddress = (req.headers['x-wallet-address'] as string) || '';
   if (!walletAddress) return jsonError(res, 401, 'Authentication required');
 
@@ -817,7 +809,7 @@ async function handleGetEpisodes(
   req: http.IncomingMessage,
   res: http.ServerResponse,
   podcastId: string,
-): Promise<boolean> {
+): Promise<void> {
   const url = new URL(req.url || '/', `http://${req.headers.host || 'localhost'}`);
   const limit = Math.min(100, parseInt(url.searchParams.get('limit') || '50', 10));
   const statusFilter = url.searchParams.get('status') || '';
@@ -846,10 +838,10 @@ async function handleGetEpisodes(
  * GET /api/podcast/:id — Get a single podcast
  */
 async function handleGetPodcast(
-  req: http.IncomingMessage,
+  _req: http.IncomingMessage,
   res: http.ServerResponse,
   podcastId: string,
-): Promise<boolean> {
+): Promise<void> {
   try {
     const podcast = podcasts.get(podcastId);
     if (!podcast) return jsonError(res, 404, 'Podcast not found');
@@ -865,9 +857,9 @@ async function handleGetPodcast(
  * GET /api/podcast/categories — Get categories with counts
  */
 async function handleCategories(
-  req: http.IncomingMessage,
+  _req: http.IncomingMessage,
   res: http.ServerResponse,
-): Promise<boolean> {
+): Promise<void> {
   const counts: Record<string, number> = { total: podcasts.size };
   for (const cat of CATEGORIES) {
     counts[cat] = Array.from(podcasts.values()).filter((p) => p.category === cat).length;
@@ -879,7 +871,7 @@ async function handleCategories(
 /**
  * GET /api/podcast/search — Search across podcasts
  */
-async function handleSearch(req: http.IncomingMessage, res: http.ServerResponse): Promise<boolean> {
+async function handleSearch(req: http.IncomingMessage, res: http.ServerResponse): Promise<void> {
   const url = new URL(req.url || '/', `http://${req.headers.host || 'localhost'}`);
   const q = url.searchParams.get('q') || '';
   const limit = Math.min(50, parseInt(url.searchParams.get('limit') || '20', 10));
@@ -951,10 +943,6 @@ async function generateRssFeed(podcastId: string): Promise<string | null> {
     const podcast = podcasts.get(podcastId);
     if (!podcast) return null;
 
-    const podEpisodes = Array.from(episodes.values())
-      .filter((e) => e.podcastId === podcastId && e.status === 'published')
-      .sort((a, b) => (b.publishedAt || b.createdAt) - (a.publishedAt || a.createdAt));
-
     const feedUrl = `https://podcast.degenfeed.xyz/feed/${podcastId}.xml`;
     podcast.feedUrl = feedUrl;
     podcasts.set(podcastId, podcast);
@@ -976,7 +964,7 @@ async function generateRssFeed(podcastId: string): Promise<string | null> {
 /**
  * Publish a new podcast to the fediverse via ActivityPub.
  */
-async function publishPodcastActivityPub(podcast: Podcast): Promise<void> {
+async function publishPodcastActivityPub(_podcast: Podcast): Promise<void> {
   // Castopod handles ActivityPub federation automatically.
   // For non-Castopod podcasts, we would create an ActivityPub Announce.
   // console.log(`[podcast] ActivityPub: Published podcast "${podcast.title}"`);
@@ -985,7 +973,10 @@ async function publishPodcastActivityPub(podcast: Podcast): Promise<void> {
 /**
  * Publish an episode update to ActivityPub.
  */
-async function publishEpisodeActivityPub(episode: PodcastEpisode, podcast: Podcast): Promise<void> {
+async function publishEpisodeActivityPub(
+  _episode: PodcastEpisode,
+  _podcast: Podcast,
+): Promise<void> {
   // Castopod handles ActivityPub automatically.
   // For independent podcasts, we emit a Create/Note with audio attachment.
   // console.log(`[podcast] ActivityPub: Published episode "${episode.title}"`);
@@ -1121,7 +1112,6 @@ async function crossPostEpisodeToProtocols(
   episode.crossPosted = { ...episode.crossPosted, ...results };
   episodes.set(episode.id, episode);
 
-  const succeeded = Object.values(results).filter(Boolean).length;
   // console.log(`[podcast] Cross-posted "${episode.title}": ${succeeded}/4 protocols`);
 
   return results;
@@ -1181,10 +1171,14 @@ function mapCastopodPodcast(raw: Record<string, unknown>): Podcast {
     title: String(raw.title || 'Untitled Podcast'),
     description: String(raw.description || ''),
     category: String(raw.category || 'crypto'),
-    coverUrl: String(raw.image_url || raw.cover?.url || ''),
-    hostName: String(raw.publisher || raw.actor?.display_name || 'Unknown Host'),
+    coverUrl: String(raw.image_url || (raw.cover as { url?: unknown } | undefined)?.url || ''),
+    hostName: String(
+      raw.publisher ||
+        (raw.actor as { display_name?: unknown } | undefined)?.display_name ||
+        'Unknown Host',
+    ),
     hostAddress: String(raw.owner_email || ''),
-    hostAvatarUrl: String(raw.actor?.avatar_url || ''),
+    hostAvatarUrl: String((raw.actor as { avatar_url?: unknown } | undefined)?.avatar_url || ''),
     language: String(raw.language || 'en'),
     explicit: Boolean(raw.explicit),
     website: raw.website_url ? String(raw.website_url) : undefined,

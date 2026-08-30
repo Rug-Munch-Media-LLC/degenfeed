@@ -105,33 +105,33 @@ describe('RSS bias classification (SOURCE_BIAS_SCORE)', () => {
   it('matches the curated Ground-News-beating spec', async () => {
     const { SOURCE_BIAS_SCORE } = await import('../providers/rss');
     // Left-leaning
-    expect(SOURCE_BIAS_SCORE['Vice']).toBe(-0.6);
-    expect(SOURCE_BIAS_SCORE['Motherboard']).toBe(-0.6);
+    expect(SOURCE_BIAS_SCORE.Vice).toBe(-0.6);
+    expect(SOURCE_BIAS_SCORE.Motherboard).toBe(-0.6);
     expect(SOURCE_BIAS_SCORE['The Intercept']).toBe(-0.7);
-    expect(SOURCE_BIAS_SCORE['Jacobin']).toBe(-0.8);
+    expect(SOURCE_BIAS_SCORE.Jacobin).toBe(-0.8);
     expect(SOURCE_BIAS_SCORE['The Nation']).toBe(-0.7);
     expect(SOURCE_BIAS_SCORE['Democracy Now']).toBe(-0.6);
     expect(SOURCE_BIAS_SCORE['The Guardian Tech']).toBe(-0.4);
     // Lean left
-    expect(SOURCE_BIAS_SCORE['Decrypt']).toBe(-0.1);
+    expect(SOURCE_BIAS_SCORE.Decrypt).toBe(-0.1);
     expect(SOURCE_BIAS_SCORE['The Block']).toBe(-0.1);
-    expect(SOURCE_BIAS_SCORE['TechCrunch']).toBe(-0.1);
-    expect(SOURCE_BIAS_SCORE['Wired']).toBe(-0.2);
+    expect(SOURCE_BIAS_SCORE.TechCrunch).toBe(-0.1);
+    expect(SOURCE_BIAS_SCORE.Wired).toBe(-0.2);
     expect(SOURCE_BIAS_SCORE['The Verge']).toBe(-0.1);
     // Center
-    expect(SOURCE_BIAS_SCORE['CoinTelegraph']).toBe(0.0);
-    expect(SOURCE_BIAS_SCORE['Reuters']).toBe(0.0);
-    expect(SOURCE_BIAS_SCORE['AP']).toBe(0.0);
+    expect(SOURCE_BIAS_SCORE.CoinTelegraph).toBe(0.0);
+    expect(SOURCE_BIAS_SCORE.Reuters).toBe(0.0);
+    expect(SOURCE_BIAS_SCORE.AP).toBe(0.0);
     expect(SOURCE_BIAS_SCORE['Bloomberg Crypto']).toBe(-0.1);
     expect(SOURCE_BIAS_SCORE['WSJ Crypto']).toBe(0.1);
-    expect(SOURCE_BIAS_SCORE['CoinDesk']).toBe(0.2);
+    expect(SOURCE_BIAS_SCORE.CoinDesk).toBe(0.2);
     // Lean right / right
     expect(SOURCE_BIAS_SCORE['Bitcoin Magazine']).toBe(0.6);
-    expect(SOURCE_BIAS_SCORE['Coinspeaker']).toBe(0.3);
+    expect(SOURCE_BIAS_SCORE.Coinspeaker).toBe(0.3);
     expect(SOURCE_BIAS_SCORE['Bitcoin.com News']).toBe(0.4);
-    expect(SOURCE_BIAS_SCORE['Blockworks']).toBe(0.2);
-    expect(SOURCE_BIAS_SCORE['ZeroHedge']).toBe(0.8);
-    expect(SOURCE_BIAS_SCORE['Breitbart']).toBe(0.9);
+    expect(SOURCE_BIAS_SCORE.Blockworks).toBe(0.2);
+    expect(SOURCE_BIAS_SCORE.ZeroHedge).toBe(0.8);
+    expect(SOURCE_BIAS_SCORE.Breitbart).toBe(0.9);
     expect(SOURCE_BIAS_SCORE['Daily Caller']).toBe(0.7);
   });
 
@@ -178,7 +178,7 @@ describe('RSS bias diversity ranking', () => {
     const out = ensureBiasDiversity(posts, 12, 2);
     expect(out.length).toBe(12);
     // Headline preserved
-    expect(out[0].id).toBe(posts[0].id);
+    expect(out[0]!.id).toBe(posts[0]!.id);
     const { computeBiasDistribution, biasDisplayLabel } = await import('../providers/rss');
     const dist = computeBiasDistribution(out);
     // At least the minimum per bucket is present after interleave

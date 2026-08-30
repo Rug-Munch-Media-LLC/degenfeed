@@ -177,8 +177,7 @@ async function parseFeed(xml: string): Promise<FeedResponse> {
   // Parse RSS items or Atom entries
   // Try RSS 2.0 items
   const itemRegex = /<item>([\s\S]*?)<\/item>/g;
-  let itemMatch: RegExpExecArray | null;
-  while ((itemMatch = itemRegex.exec(xml)) !== null) {
+  for (let itemMatch = itemRegex.exec(xml); itemMatch !== null; itemMatch = itemRegex.exec(xml)) {
     const itemXml = itemMatch[1];
     if (!itemXml) continue;
 
@@ -213,7 +212,7 @@ async function parseFeed(xml: string): Promise<FeedResponse> {
       'media:content': getMediaTag('media:content'),
       'media:thumbnail': getMediaTag('media:thumbnail'),
       enclosure: enclosure.url
-        ? (enclosure as { url: string; type?: string; length?: string | number })
+        ? (enclosure as { url: string; type?: string; length?: number })
         : undefined,
     });
   }
@@ -221,7 +220,11 @@ async function parseFeed(xml: string): Promise<FeedResponse> {
   // Try Atom entries if no RSS items found
   if (items.length === 0) {
     const entryRegex = /<entry>([\s\S]*?)<\/entry>/g;
-    while ((entryMatch = entryRegex.exec(xml)) !== null) {
+    for (
+      let entryMatch = entryRegex.exec(xml);
+      entryMatch !== null;
+      entryMatch = entryRegex.exec(xml)
+    ) {
       const entryXml = entryMatch[1];
       if (!entryXml) continue;
 
@@ -295,8 +298,6 @@ export const schema: SchemaGuard = {
 };
 
 export async function fetchFaircampPosts(limit = 20): Promise<UnifiedPost[]> {
-  const _perInstance = Math.max(3, Math.ceil(limit / FAIRCAMP_INSTANCES.length));
-
   const results = await Promise.allSettled(
     FAIRCAMP_INSTANCES.map((instance) => fetchInstanceFeed(instance)),
   );

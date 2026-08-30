@@ -23,10 +23,6 @@ const STEEM_NODES = [
 
 // ─── Types ─────────────────────────────────────────────────────────────
 
-interface SteemAuthor {
-  reputation?: string | number;
-}
-
 interface SteemPost {
   post_id: number;
   author: string;
@@ -131,12 +127,10 @@ function steemPostToPost(p: SteemPost): UnifiedPost {
       keys: { hiveUsername: p.author, hiveReputation: String(p.author_reputation || '0') },
     },
     text,
-    embeds: [
-      ...(meta.image || []).map((img: string) => ({
-        kind: 'image' as const,
-        url: img,
-      })),
-    ],
+    embeds: (meta.image || []).map((img: string) => ({
+      kind: 'image' as const,
+      url: img,
+    })),
     contentType: text.length > 500 ? 'article' : 'text',
     createdAt: new Date(p.created).getTime(),
     metrics: {
@@ -176,20 +170,20 @@ async function callSteemAPI(node: string, method: string, params: unknown[]): Pr
     const data = (await res.json()) as SteemRPCResponse;
     if (data.error || !data.result) return [];
     return data.result;
-  } catch (err) {
+  } catch {
     // console.log(`[bridge] Steem RPC error (${node}): ${(err as Error).message}`);
     return [];
   }
 }
 
 async function fetchByTag(tag: string, limit: number): Promise<SteemPost[]> {
-  return callSteemAPI(STEEM_NODES[0], 'condenser_api.get_discussions_by_created', [
+  return callSteemAPI(STEEM_NODES[0]!, 'condenser_api.get_discussions_by_created', [
     { tag, limit: Math.min(limit, 20) },
   ]);
 }
 
 async function fetchHot(limit: number): Promise<SteemPost[]> {
-  return callSteemAPI(STEEM_NODES[0], 'condenser_api.get_discussions_by_hot', [
+  return callSteemAPI(STEEM_NODES[0]!, 'condenser_api.get_discussions_by_hot', [
     { limit: Math.min(limit, 20) },
   ]);
 }

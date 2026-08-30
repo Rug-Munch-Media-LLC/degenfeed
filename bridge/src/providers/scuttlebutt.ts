@@ -53,39 +53,13 @@ interface SSBMessage {
   timestamp: number;
 }
 
-interface SSBBlob {
-  id: string;
-  name: string;
-  type: string;
-  size: number;
-  url?: string;
-}
-
-interface SSBChannel {
-  channel: string;
-  count: number;
-  updated: number;
-}
-
-interface SSBFeedResponse {
-  messages: SSBMessage[];
-  hasMore: boolean;
-}
-
-interface SSBProfile {
-  name?: string;
-  description?: string;
-  image?: string;
-  publicWebHosting?: boolean;
-}
-
 // ─── Helpers ──────────────────────────────────────────────────────────
 
 function extractNameFromAuthor(author: string): string {
   // Author format: @<base64>.ed25519
   const match = author.match(/@([A-Za-z0-9+/]+)/);
   if (!match) return 'SSB User';
-  return `${match[1].slice(0, 12)}...`;
+  return `${match[1]!.slice(0, 12)}...`;
 }
 
 export function guessNiches(text: string, channel: string): string[] {
@@ -204,7 +178,7 @@ async function fetchFromSSBLocal(limit: number): Promise<UnifiedPost[]> {
     return data
       .map((m) => ssbMessageToPost(m, SSB_LOCAL))
       .filter((p): p is UnifiedPost => p !== null);
-  } catch (err) {
+  } catch {
     // console.log(`[bridge] SSB local error: ${(err as Error).message}`);
     return [];
   }

@@ -149,7 +149,7 @@ async function fetchHotFeed(limit: number): Promise<UnifiedPost[]> {
     const data = (await res.json()) as { HotFeedPage: DeSoPostEntry[] };
     if (!data.HotFeedPage) return [];
     return data.HotFeedPage.filter((p) => !p.IsHidden).map(desoPostToPost);
-  } catch (err) {
+  } catch {
     // console.log(`[bridge] DeSo hot feed error: ${(err as Error).message}`);
     return [];
   }
@@ -171,7 +171,7 @@ async function fetchGlobalFeed(limit: number): Promise<UnifiedPost[]> {
     const data = (await res.json()) as DeSoPostsResponse;
     if (!data.Posts) return [];
     return data.Posts.filter((p) => !p.IsHidden).map(desoPostToPost);
-  } catch (err) {
+  } catch {
     // console.log(`[bridge] DeSo global feed error: ${(err as Error).message}`);
     return [];
   }

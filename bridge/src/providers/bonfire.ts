@@ -146,7 +146,7 @@ async function fetchFromInstance(instance: string, limit: number): Promise<Unifi
     if (!Array.isArray(statuses)) return [];
 
     return statuses.slice(0, limit).map((s) => bonfireStatusToPost(s, instance));
-  } catch (err) {
+  } catch {
     // console.log(`[bridge] Bonfire error (${instance}): ${(err as Error).message}`);
     return [];
   }

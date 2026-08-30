@@ -405,7 +405,7 @@ export function parseRssXml(
   let m: RegExpExecArray | null;
   // biome-ignore lint/suspicious/noAssignInExpressions: standard regex exec loop
   while ((m = entryRe.exec(xml)) !== null && posts.length < limit) {
-    const e = m[1];
+    const e = m[1]!;
     const titleMatch = e.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
     const linkMatch = e.match(/<link[^>]+href=["']([^"']+)["']/i);
     const updatedMatch =
@@ -419,7 +419,7 @@ export function parseRssXml(
     const mediaUrl = enclosureMatch?.[1] || '';
     const mediaType = enclosureMatch?.[2] || '';
 
-    const title = titleMatch ? stripHtml(titleMatch[1]).trim() : '';
+    const title = titleMatch ? stripHtml(titleMatch[1]!).trim() : '';
     if (!title) continue;
     const link = linkMatch ? linkMatch[1] : '';
 
@@ -458,7 +458,7 @@ export function parseRssXml(
       text: title,
       embeds,
       contentType,
-      createdAt: updatedMatch ? new Date(updatedMatch[1]).getTime() : Date.now(),
+      createdAt: updatedMatch ? new Date(updatedMatch[1]!).getTime() : Date.now(),
       metrics: { likes: 0, reposts: 0, replies: 0, quotes: 0, views: 0 },
       engagement: {
         viewerLiked: false,
@@ -476,7 +476,7 @@ export function parseRssXml(
     const itemRe = /<item[\s>]([\s\S]*?)<\/item>/gi;
     // biome-ignore lint/suspicious/noAssignInExpressions: standard regex exec loop
     while ((m = itemRe.exec(xml)) !== null && posts.length < limit) {
-      const e = m[1];
+      const e = m[1]!;
       const titleMatch = e.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
       const linkMatch = e.match(/<link[^>]*>([\s\S]*?)<\/link>/i);
 
@@ -487,9 +487,9 @@ export function parseRssXml(
       const mediaUrl = enclosureMatch?.[1] || '';
       const mediaType = enclosureMatch?.[2] || '';
 
-      const title = titleMatch ? stripHtml(titleMatch[1]).trim() : '';
+      const title = titleMatch ? stripHtml(titleMatch[1]!).trim() : '';
       if (!title) continue;
-      const link = linkMatch ? stripHtml(linkMatch[1]) : '';
+      const link = linkMatch ? stripHtml(linkMatch[1]!) : '';
 
       let contentType: string | undefined;
       const embeds: { kind: string; url: string; meta?: Record<string, unknown> }[] = [];

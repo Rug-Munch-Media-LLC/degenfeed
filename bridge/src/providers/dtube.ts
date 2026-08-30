@@ -205,7 +205,7 @@ async function fetchFromDTubeAPI(limit: number): Promise<UnifiedPost[]> {
         niches: guessNiches(text, v.title),
       };
     });
-  } catch (err) {
+  } catch {
     // console.log(`[bridge] DTube API error: ${(err as Error).message}`);
     return [];
   }
@@ -252,7 +252,15 @@ async function fetchHiveDTubePosts(limit: number): Promise<UnifiedPost[]> {
       .slice(0, limit)
       .map((p) => {
         const meta = p.json_metadata;
-        const videoMeta = meta?.video?.content || meta?.video?.info;
+        const videoMeta:
+          | {
+              title?: string;
+              description?: string;
+              videohash?: string;
+              thumbnail?: string;
+              duration?: number | string;
+            }
+          | undefined = meta?.video?.content || meta?.video?.info;
         const title = videoMeta?.title || p.title || 'DTube Video';
         const description = videoMeta?.description || meta?.description || '';
         const text = `${title}\n\n${stripHtml(p.body || description).slice(0, 500)}`.trim();
@@ -314,7 +322,7 @@ async function fetchHiveDTubePosts(limit: number): Promise<UnifiedPost[]> {
           niches: guessNiches(text, title),
         };
       });
-  } catch (err) {
+  } catch {
     // console.log(`[bridge] DTube Hive fetch error: ${(err as Error).message}`);
     return [];
   }

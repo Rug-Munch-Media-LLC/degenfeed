@@ -138,7 +138,10 @@ export function buildRichTextHtml(text: string, facets?: BskyFacet[]): string {
   const sorted = facets
     .filter((f) => Number.isInteger(f.index?.byteStart) && Number.isInteger(f.index?.byteEnd))
     .sort((a, b) => a.index.byteStart - b.index.byteStart)
-    .filter((f) => f.index.byteStart >= 0 && f.index.byteEnd <= byteLen && f.index.byteEnd > f.index.byteStart);
+    .filter(
+      (f) =>
+        f.index.byteStart >= 0 && f.index.byteEnd <= byteLen && f.index.byteEnd > f.index.byteStart,
+    );
 
   const chunks: string[] = [];
   let cursor = 0;
@@ -152,12 +155,12 @@ export function buildRichTextHtml(text: string, facets?: BskyFacet[]): string {
     const feature = facet.features?.[0];
     const type = feature?.$type || '';
     let rendered: string;
-    if (type === 'app.bsky.richtext.facet#link' && feature.uri) {
+    if (type === 'app.bsky.richtext.facet#link' && feature?.uri) {
       const href = /^https?:\/\//i.test(feature.uri) ? feature.uri : `https://${feature.uri}`;
       rendered = `<a href="${escapeAttr(href)}" target="_blank" rel="noopener noreferrer">${escapeHtml(target)}</a>`;
-    } else if (type === 'app.bsky.richtext.facet#mention' && feature.did) {
+    } else if (type === 'app.bsky.richtext.facet#mention' && feature?.did) {
       rendered = `<a href="https://bsky.app/profile/${encodeURIComponent(feature.did)}" target="_blank" rel="noopener noreferrer" class="mention">${escapeHtml(target)}</a>`;
-    } else if (type === 'app.bsky.richtext.facet#tag' && feature.tag) {
+    } else if (type === 'app.bsky.richtext.facet#tag' && feature?.tag) {
       rendered = `<a href="https://bsky.app/hashtag/${encodeURIComponent(feature.tag)}" target="_blank" rel="noopener noreferrer" class="hashtag">${escapeHtml(target)}</a>`;
     } else {
       rendered = escapeHtml(target);

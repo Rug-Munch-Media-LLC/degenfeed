@@ -229,7 +229,7 @@ async function fetchHottestStories(limit: number): Promise<UnifiedPost[]> {
 
     const stories = (await res.json()) as LobstersStory[];
     return stories.map(lobstersStoryToPost).filter((p): p is UnifiedPost => p !== null);
-  } catch (err) {
+  } catch {
     // console.log(`[bridge] Lobsters hottest error: ${(err as Error).message}`);
     return [];
   }
@@ -246,7 +246,7 @@ async function fetchRecentComments(limit: number): Promise<UnifiedPost[]> {
 
     const comments = (await res.json()) as LobstersComment[];
     return comments.map(lobstersCommentToPost).filter((p): p is UnifiedPost => p !== null);
-  } catch (err) {
+  } catch {
     // console.log(`[bridge] Lobsters recent error: ${(err as Error).message}`);
     return [];
   }
@@ -263,7 +263,7 @@ async function fetchTaggedStories(tag: string, limit: number): Promise<UnifiedPo
 
     const stories = (await res.json()) as LobstersStory[];
     return stories.map(lobstersStoryToPost).filter((p): p is UnifiedPost => p !== null);
-  } catch (err) {
+  } catch {
     // console.log(`[bridge] Lobsters tag ${tag} error: ${(err as Error).message}`);
     return [];
   }

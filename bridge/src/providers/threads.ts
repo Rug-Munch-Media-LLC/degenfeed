@@ -297,8 +297,7 @@ async function fetchProfileHtml(username: string): Promise<FetchHtmlResult> {
         continue;
       }
       return { html, status: res.status };
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
+    } catch {
       //       console.log(
       //         `[threads] @${username}: fetch error (${msg}), attempt ${attempt}/${maxAttempts}`,
       //       );
@@ -610,7 +609,7 @@ async function fetchViaActivityPub(limit: number): Promise<UnifiedPost[]> {
     const provider = new mod.ThreadsProvider({ curatedHandles: CURATED_THREADS_HANDLES });
     const result = await provider.fetchFeed({ timeoutMs: 10_000 });
     return (result.posts || []).slice(0, limit);
-  } catch (err) {
+  } catch {
     // console.log(`[threads] ActivityPub fallback error: ${(err as Error).message}`);
     return [];
   }
@@ -645,7 +644,6 @@ export async function fetchThreadsPosts(limit = 20): Promise<UnifiedPost[]> {
   // Fetch the most relevant accounts first, concurrency-limited, with jitter.
   const CONCURRENCY = 3;
   const queue = [...handles];
-  let scraping = 0;
 
   async function worker(): Promise<void> {
     while (queue.length > 0) {
@@ -657,7 +655,6 @@ export async function fetchThreadsPosts(limit = 20): Promise<UnifiedPost[]> {
           const rawPosts = parseProfileHtml(html, username);
           const posts = rawPosts.slice(0, perAccount).map((p) => threadToPost(p, username));
           for (const p of posts) if (p) all.push(p);
-          if (rawPosts.length > 0) scraping += rawPosts.length;
         }
       } catch {
         // continue to next account

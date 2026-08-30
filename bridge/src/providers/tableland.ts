@@ -44,17 +44,6 @@ interface TablelandHealthResponse {
 
 // ─── Helpers ──────────────────────────────────────────────────────────
 
-function _guessTablelandNiches(content: string): string[] {
-  const lower = content.toLowerCase();
-  const n: string[] = [];
-  if (/\b(crypto|web3|blockchain|nft|defi|dao)\b/.test(lower)) n.push('crypto');
-  if (/\b(tableland|sql|database|query|table)\b/.test(lower)) n.push('database');
-  if (/\b(health|monitoring|status|metrics)\b/.test(lower)) n.push('infrastructure');
-  if (/\b(analytics|data|stats|report|analysis)\b/.test(lower)) n.push('analytics');
-  if (n.length === 0) n.push('database');
-  return n;
-}
-
 // ─── Fetch Logic ──────────────────────────────────────────────────────
 
 async function fetchNodeHealth(nodeUrl: string): Promise<UnifiedPost[]> {
@@ -100,7 +89,7 @@ async function fetchNodeHealth(nodeUrl: string): Promise<UnifiedPost[]> {
         niches: ['database', 'infrastructure'],
       },
     ];
-  } catch (err) {
+  } catch {
     // console.log(`[bridge] Tableland health error (${nodeUrl}): ${(err as Error).message}`);
     return [];
   }

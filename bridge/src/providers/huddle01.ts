@@ -80,7 +80,7 @@ function huddleRoomToPost(room: HuddleRoom): UnifiedPost {
       keys: {},
     },
     text,
-    embeds: [...(room.recordingUrl ? [{ kind: 'video' as const, url: room.recordingUrl }] : [])],
+    embeds: room.recordingUrl ? [{ kind: 'video' as const, url: room.recordingUrl }] : [],
     contentType: room.status === 'active' ? 'live' : 'scheduled',
     createdAt: room.createdAt ? new Date(room.createdAt).getTime() : Date.now(),
     metrics: { likes: 0, reposts: 0, replies: 0, quotes: 0, views: room.participantCount || 0 },
@@ -146,7 +146,7 @@ async function fetchActiveRooms(limit: number): Promise<UnifiedPost[]> {
     const rooms = data.rooms || data.data || [];
     if (!Array.isArray(rooms)) return [];
     return rooms.slice(0, limit).map(huddleRoomToPost);
-  } catch (err) {
+  } catch {
     // console.log(`[bridge] Huddle01 API error: ${(err as Error).message}`);
     return [];
   }

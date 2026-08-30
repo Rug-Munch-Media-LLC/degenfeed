@@ -42,15 +42,12 @@ interface NostrEvent {
 
 // Simple Nostr relay query via HTTP (NIP-11)
 async function queryRelayEvents(
-  relay: string,
+  _relay: string,
   kinds: number[],
   limit: number,
 ): Promise<NostrEvent[]> {
   try {
     // Try HTTP relay proxy if available
-    const _httpRelay = relay.replace('wss://', 'https://').replace('ws://', 'http://');
-    const filters = JSON.stringify([{ kinds, limit }]);
-    const _payload = JSON.stringify(['REQ', 'degenfeed-groups', ...JSON.parse(filters)]);
 
     // Use nostr.wine or similar public NIP-11 relay proxy
     const searchUrl = `https://relay.nostr.band/npub?kinds=${kinds.join(',')}&limit=${limit}`;
@@ -91,16 +88,8 @@ function extractNIP29Metadata(event: NostrEvent): {
   return {
     groupId: groupTag?.[1],
     groupName: nameTag?.[1],
-    memberCount: memberTag ? parseInt(memberTag[1], 10) : undefined,
+    memberCount: memberTag ? parseInt(memberTag[1]!, 10) : undefined,
   };
-}
-
-function nipKindToPostType(kind: number): string {
-  if (kind === 9000 || kind === 9001) return 'group-metadata';
-  if (kind === 9002) return 'group-admin';
-  if (kind === 9005) return 'group-membership';
-  if (kind === 11 || kind === 12) return 'group-chat';
-  return 'group-event';
 }
 
 export async function fetchNostrGroupsPosts(limit: number = 20): Promise<UnifiedPost[]> {
@@ -126,7 +115,6 @@ export async function fetchNostrGroupsPosts(limit: number = 20): Promise<Unified
     seen.add(event.id);
 
     const meta = extractNIP29Metadata(event);
-    const _contentType = nipKindToPostType(event.kind);
     const isChat = event.kind === 11 || event.kind === 12;
     const groupId = meta.groupId ?? event.tags.find((t) => t[0] === 'h')?.[1] ?? 'unknown';
     const groupName =

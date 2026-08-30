@@ -196,7 +196,9 @@ function selectTrendingMix(pubs: IndexerPublication[], limit: number): IndexerPu
   const authorRank = new Map<string, number>();
   [...authorScore.entries()]
     .sort((a, b) => b[1] - a[1])
-    .forEach(([addr], i) => authorRank.set(addr, i));
+    .forEach(([addr], i) => {
+      authorRank.set(addr, i);
+    });
 
   const scored = pubs.map((p) => ({
     p,

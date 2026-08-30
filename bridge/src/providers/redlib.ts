@@ -558,16 +558,11 @@ export async function fetchRedditPosts(limit = 20): Promise<UnifiedPost[]> {
     // request per 15s+ window is the only cadence Reddit tolerates.
     const sub = pickRotatingSubreddit();
     const posts: UnifiedPost[] = [];
-    let rssCount = 0;
-    let oauthCount = 0;
-    let jsonCount = 0;
-    let redlibCount = 0;
     const perSub = 25;
 
     try {
       const rssPosts = await fetchFromRedditRss(sub, perSub);
       posts.push(...rssPosts);
-      rssCount += rssPosts.length;
     } catch {
       // continue to fallback
     }
@@ -578,7 +573,6 @@ export async function fetchRedditPosts(limit = 20): Promise<UnifiedPost[]> {
       try {
         const oauthPosts = await fetchFromRedditOAuth(sub, perSub);
         posts.push(...oauthPosts);
-        oauthCount += oauthPosts.length;
       } catch {
         // continue
       }
@@ -591,7 +585,6 @@ export async function fetchRedditPosts(limit = 20): Promise<UnifiedPost[]> {
         await new Promise((r) => setTimeout(r, 300));
         const jsonPosts = await fetchFromRedditJson(sub, perSub);
         posts.push(...jsonPosts);
-        jsonCount += jsonPosts.length;
       } catch {
         // continue
       }
@@ -602,7 +595,6 @@ export async function fetchRedditPosts(limit = 20): Promise<UnifiedPost[]> {
       try {
         const redlibPosts = await fetchFromRedlib(sub, perSub);
         posts.push(...redlibPosts);
-        redlibCount += redlibPosts.length;
       } catch {
         // continue
       }
@@ -633,7 +625,6 @@ export async function fetchRedditPosts(limit = 20): Promise<UnifiedPost[]> {
       }
     }
 
-    const authMode = getRedditOAuth().isConfigured ? 'oauth' : 'unauthenticated';
     //     console.log(
     //       `[bridge] Reddit: ${deduped.length} posts from r/${sub} [${authMode}] (rss: ${rssCount}, oauth: ${oauthCount}, json: ${jsonCount}, redlib: ${redlibCount})`,
     //     );

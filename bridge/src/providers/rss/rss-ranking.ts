@@ -1,3 +1,9 @@
+import type { UnifiedPost } from '../../server/types';
+import { sourceBiasScore } from './rss-bias';
+import type { PriceImpactEntry } from './rss-content';
+import { TRENDING_COINS } from './rss-content';
+import { sourceTier } from './rss-sources';
+
 export function freshnessScore(createdAt: number, now = Date.now()): number {
   const ageHours = Math.max(0, now - createdAt) / 3_600_000;
   if (ageHours < 0.5) return 1;
@@ -408,7 +414,7 @@ export function ensureBiasDiversity(
   const pickFrom = (bucket: BiasBucket): UnifiedPost | undefined => {
     const arr = buckets[bucket];
     for (let i = 0; i < arr.length; i++) {
-      const p = arr[i];
+      const p = arr[i]!;
       if (!picked.has(p.id)) {
         picked.add(p.id);
         quota[bucket] = Math.max(0, quota[bucket] - 1);
@@ -419,7 +425,7 @@ export function ensureBiasDiversity(
   };
 
   // Headline: the single highest-ranked post (diversity must never bury it).
-  const head = ranked[0];
+  const head = ranked[0]!;
   out.push(head);
   picked.add(head.id);
   // Consume the headline from its bucket's quota.
@@ -434,7 +440,7 @@ export function ensureBiasDiversity(
   let cursor = 0;
 
   while (out.length < limit && cursor < ranked.length) {
-    const preferred = order[pass % order.length];
+    const preferred = order[pass % order.length]!;
     // First pass: fill every bucket to its quota, preferring the rotation.
     const tried: BiasBucket[] = [preferred, ...order.filter((b) => b !== preferred)];
     let pickedThisPass = false;

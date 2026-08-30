@@ -30,74 +30,9 @@ const XMTP_NETWORK = process.env.XMTP_NETWORK || 'testnet';
 
 // ─── Types ─────────────────────────────────────────────────────────────
 
-interface XMTPConversation {
-  topic: string;
-  created_at: string;
-  last_message_at?: string;
-  peer_address: string;
-  context?: string;
-  wallet_address?: string;
-  environment?: string;
-}
-
-interface XMTPMessage {
-  id: string;
-  topic: string;
-  content: string;
-  sender_address: string;
-  sent_at: string;
-  content_type?: string;
-}
-
 // ─── Helpers ──────────────────────────────────────────────────────────
 
-function guessXmtpNiches(text: string): string[] {
-  const lower = text.toLowerCase();
-  const n: string[] = [];
-  if (/\b(crypto|web3|blockchain|bitcoin|eth|sol)\b/.test(lower)) n.push('crypto');
-  if (/\b(xmtp|messaging|encrypted|private|secure)\b/.test(lower)) n.push('privacy');
-  if (/\b(dao|community|group|chat|discussion)\b/.test(lower)) n.push('community');
-  if (/\b(gm|hello|hi|welcome|intro)\b/.test(lower)) n.push('social');
-  if (n.length === 0) n.push('messaging');
-  return n;
-}
-
 // ─── Mapping ──────────────────────────────────────────────────────────
-
-function _xmtpMessageToPost(msg: XMTPMessage): UnifiedPost {
-  const text = msg.content?.slice(0, 2000) || '';
-  return {
-    id: `xmtp:${msg.id}`,
-    protocol: 'xmtp',
-    author: {
-      id: `xmtp:${msg.sender_address}`,
-      primary: { protocol: 'xmtp', id: msg.sender_address },
-      handles: { xmtp: msg.sender_address?.slice(0, 10) },
-      displayName: `${msg.sender_address?.slice(0, 6)}...${msg.sender_address?.slice(-4)}`,
-      bio: '',
-      avatarUrl: '',
-      followerCount: 0,
-      followingCount: 0,
-      links: [],
-      keys: {},
-    },
-    text,
-    embeds: [
-      { kind: 'link', url: `https://xmtp.org/chat/${msg.topic}`, meta: { topic: msg.topic } },
-    ],
-    contentType: 'message',
-    createdAt: new Date(msg.sent_at).getTime(),
-    metrics: { likes: 0, reposts: 0, replies: 0, quotes: 0 },
-    engagement: {
-      viewerLiked: false,
-      viewerReposted: false,
-      viewerBookmarked: false,
-      raw: { likes: 0, reposts: 0, replies: 0, quotes: 0 },
-    },
-    raw: msg,
-    niches: guessXmtpNiches(text),
-  };
-}
 
 // ─── Fetch Logic ──────────────────────────────────────────────────────
 

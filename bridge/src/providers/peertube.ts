@@ -181,7 +181,7 @@ export async function fetchPeerTubeTrending(limit = 12): Promise<UnifiedPost[]> 
     }
     const data = (await res.json()) as PeerTubeResponse;
     return (data.data ?? []).slice(0, limit).map(videoToPost);
-  } catch (err) {
+  } catch {
     // console.log(`[bridge] PeerTube trending: error - ${(err as Error).message}`);
     return [];
   }
@@ -233,7 +233,7 @@ export async function fetchPeerTubeChannels(limit = 20): Promise<PeerTubeChannel
       videosCount: c.videosCount ?? 0,
       isLocal: c.isLocal ?? true,
     }));
-  } catch (err) {
+  } catch {
     // console.log(`[bridge] PeerTube channels: error - ${(err as Error).message}`);
     return [];
   }
@@ -412,7 +412,7 @@ export async function fetchPeerTubePosts(limit = 20): Promise<UnifiedPost[]> {
         );
       }
     }
-  } catch (err) {
+  } catch {
     // console.log(`[bridge] PeerTube local: error - ${(err as Error).message}`);
   }
 
@@ -519,7 +519,7 @@ export async function fetchPeerTubeLiveStreams(limit = 20): Promise<PeerTubeLive
 
     // console.log(`[bridge] PeerTube live: ${streams.length} stream(s)`);
     return streams.slice(0, limit);
-  } catch (err) {
+  } catch {
     // console.log(`[bridge] PeerTube live: error - ${(err as Error).message}`);
     return [];
   }

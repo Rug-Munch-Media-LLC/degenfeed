@@ -24,7 +24,7 @@ export async function fetchSharkeyPosts(limit = 20): Promise<UnifiedPost[]> {
   try {
     const { fetchSharkeyPosts: adapterFetch } = await getAdapter();
     return adapterFetch(limit);
-  } catch (err) {
+  } catch {
     // console.log(`[bridge] Sharkey error: ${(err as Error).message}`);
     return [];
   }

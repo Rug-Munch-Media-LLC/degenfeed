@@ -348,7 +348,7 @@ async function fetchNewsfeed(limit: number): Promise<UnifiedPost[]> {
       .filter((p) => !isSpamActivity(p))
       .slice(0, limit);
     return posts.map(mindsPostToPost);
-  } catch (err) {
+  } catch {
     // console.log(`[bridge] Minds newsfeed error: ${(err as Error).message}`);
     return [];
   }

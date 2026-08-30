@@ -159,9 +159,7 @@ function toContainerAddress(rawUrl: string, fallbackHost: string, fallbackPort: 
 // removed upstream; a cached JWT is reused until it starts failing.
 let restreamerJwtCache: { token: string; expiresAt: number } | null = null;
 
-async function restreamerLogin(
-  cfg: ReturnType<typeof config>,
-): Promise<string | null> {
+async function restreamerLogin(cfg: ReturnType<typeof config>): Promise<string | null> {
   if (restreamerJwtCache && Date.now() < restreamerJwtCache.expiresAt) {
     return restreamerJwtCache.token;
   }
@@ -183,10 +181,7 @@ async function restreamerLogin(
     restreamerJwtCache = { token: data.access_token, expiresAt: Date.now() + 6 * 60 * 1000 };
     return data.access_token;
   } catch (err) {
-    console.error(
-      '[webhook] Restreamer login error:',
-      err instanceof Error ? err.message : err,
-    );
+    console.error('[webhook] Restreamer login error:', err instanceof Error ? err.message : err);
     return null;
   }
 }

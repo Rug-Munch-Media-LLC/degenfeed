@@ -90,23 +90,6 @@ interface DiscordMessage {
   thread?: { id: string; name: string; message_count: number };
 }
 
-interface DiscordChannelInfo {
-  id: string;
-  name: string;
-  topic?: string;
-  guild_id?: string;
-  type: number;
-}
-
-interface DiscordGuildInfo {
-  id: string;
-  name: string;
-  description?: string;
-  icon?: string;
-  member_count?: number;
-  premium_tier?: number;
-}
-
 // ─── Helpers ──────────────────────────────────────────────────────────
 
 function getBotToken(): string | undefined {
@@ -277,7 +260,7 @@ async function fetchFromChannel(source: DiscordSource, limit: number): Promise<U
       .filter((m) => !m.author.bot && m.content.trim().length > 0)
       .slice(0, limit)
       .map((m) => messageToPost(m, source));
-  } catch (err) {
+  } catch {
     // console.log(`[bridge] Discord fetch error (${source.channelId}): ${(err as Error).message}`);
     return [];
   }

@@ -91,14 +91,6 @@ function extractTag(tags: ArweaveTag[], name: string): string | null {
   return t ? t.value : null;
 }
 
-function _bytesToSize(bytes: string): string {
-  const n = parseInt(bytes, 10);
-  if (Number.isNaN(n)) return '0 B';
-  if (n < 1024) return `${n} B`;
-  if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`;
-  return `${(n / (1024 * 1024)).toFixed(1)} MB`;
-}
-
 function parsePermawebPost(node: ArweaveTransaction): ArweavePost | null {
   const contentType = extractTag(node.tags, 'Content-Type') || 'unknown';
   const title =
@@ -106,8 +98,6 @@ function parsePermawebPost(node: ArweaveTransaction): ArweavePost | null {
     extractTag(node.tags, 'title') ||
     extractTag(node.tags, 'Topic') ||
     `Permaweb Content ${node.id.slice(0, 8)}`;
-  const _appName =
-    extractTag(node.tags, 'App-Name') || extractTag(node.tags, 'Application') || 'Unknown';
   const unixTime = node.block?.timestamp || Math.floor(Date.now() / 1000);
 
   return {
@@ -184,7 +174,7 @@ export async function fetchArweavePosts(limit = 20): Promise<UnifiedPost[]> {
         niches: guessNiches(`${post.title} ${post.content}`),
       } as UnifiedPost);
     }
-  } catch (err) {
+  } catch {
     // console.log(`[bridge] Arweave GraphQL error: ${(err as Error).message}`);
   }
 
@@ -250,7 +240,7 @@ export async function fetchArweavePosts(limit = 20): Promise<UnifiedPost[]> {
           } as UnifiedPost);
         }
       }
-    } catch (err) {
+    } catch {
       // console.log(`[bridge] Arweave app query error: ${(err as Error).message}`);
     }
   }

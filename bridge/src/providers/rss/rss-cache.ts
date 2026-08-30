@@ -1,3 +1,20 @@
+import { checkRateLimit } from '../../rate-limiter';
+import type { SchemaGuard, UnifiedPost } from '../../server/types';
+import {
+  ALL_FEEDS,
+  FEED_COUNT,
+  getFeaturedFeeds,
+  getFeedsByCategory,
+  getNewsletterFeeds,
+  getPodcastFeeds,
+} from './feeds';
+import type { BlindspotItem, StoryClusterOutput } from './rss-coverage';
+import { clusterStories, computeBlindspots } from './rss-coverage';
+import { deduplicatePosts } from './rss-dedup';
+import { enrichPostImages, fetchFeed } from './rss-fetcher';
+import { rankNewsPosts } from './rss-ranking';
+import type { FeedCategory } from './types';
+
 const RSS_CACHE_TTL = 60_000; // 60s — reduced from 5min so the master feed never serves stale news
 /**
  * Minimum number of posts to fetch + cache on every RSS refresh, regardless
@@ -121,9 +138,6 @@ export async function fetchRssPosts(limit = 50): Promise<UnifiedPost[]> {
   //   console.log(
   //     `[rss] Total: ${deduped.length} posts from ~${activeFeeds.length} feeds (${all.length} raw)`,
   //   );
-  for (const [cat, count] of byCategory) {
-    // console.log(`[rss]   ${cat}: ${count} posts`);
-  }
 
   // Anti-poisoning: never replace a healthy cache with a degraded fetch.
   // The bridge's feed builder kills provider fetches after FETCH_TIMEOUT_MS

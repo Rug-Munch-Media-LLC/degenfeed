@@ -205,7 +205,7 @@ async function fetchPostList(limit: number): Promise<UnifiedPost[]> {
       .map(postToUnified)
       .filter((p): p is UnifiedPost => p !== null)
       .slice(0, limit);
-  } catch (err) {
+  } catch {
     // console.log(`[bridge] PieFed post/list error: ${(err as Error).message}`);
     return [];
   }
@@ -244,7 +244,7 @@ async function fetchCommunityPosts(limit: number): Promise<UnifiedPost[]> {
       if (r.status === 'fulfilled') all.push(...r.value);
     }
     return all.slice(0, limit);
-  } catch (err) {
+  } catch {
     // console.log(`[bridge] PieFed community/list error: ${(err as Error).message}`);
     return [];
   }

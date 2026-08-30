@@ -120,7 +120,7 @@ function jsonOk(res: http.ServerResponse, data: unknown) {
   const dataStr = JSON.stringify(sanitized);
   if (dataStr && dataStr.length > 100_000 && typeof global.gc === 'function') {
     setImmediate(() => {
-      global.gc();
+      global.gc?.();
     });
   }
 }
@@ -140,7 +140,7 @@ async function fetchBridgeJson(url: string, init?: RequestInit): Promise<Record<
     headers: {
       Accept: 'application/json, application/activity+json, text/html;q=0.8',
       'User-Agent': 'degenfeed-bridge/0.4 (profile sync)',
-      ...(init?.headers ?? {}),
+      ...init?.headers,
     },
   });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -216,7 +216,8 @@ async function fetchBridgePeerTube(username: string) {
   if (!account) throw new Error('No account');
   const avatars = account.avatars as Array<{ path?: string; fileUrl?: string }> | undefined;
   const avatar =
-    avatars?.find((a) => a.fileUrl || a.path)?.fileUrl ?? avatars?.find((a) => a.fileUrl || a.path)?.path;
+    avatars?.find((a) => a.fileUrl || a.path)?.fileUrl ??
+    avatars?.find((a) => a.fileUrl || a.path)?.path;
   return {
     available: true,
     username: (account.name as string) ?? username,
@@ -241,11 +242,46 @@ async function fetchBridgeWriteFreely(username: string) {
 }
 
 const BRIDGE_SERVICES = [
-  { key: 'gotosocial', name: 'GoToSocial', url: 'https://social.degenfeed.xyz', icon: '🐦', desc: 'Microblogging', fetch: fetchBridgeGoToSocial },
-  { key: 'lemmy', name: 'Lemmy', url: 'https://community.degenfeed.xyz', icon: '💬', desc: 'Communities', fetch: fetchBridgeLemmy },
-  { key: 'pixelfed', name: 'Pixelfed', url: 'https://photos.degenfeed.xyz', icon: '📸', desc: 'Photos', fetch: fetchBridgePixelfed },
-  { key: 'peertube', name: 'PeerTube', url: 'https://video.degenfeed.xyz', icon: '📹', desc: 'Video', fetch: fetchBridgePeerTube },
-  { key: 'writefreely', name: 'WriteFreely', url: 'https://blog.degenfeed.xyz', icon: '✍️', desc: 'Blogging', fetch: fetchBridgeWriteFreely },
+  {
+    key: 'gotosocial',
+    name: 'GoToSocial',
+    url: 'https://social.degenfeed.xyz',
+    icon: '🐦',
+    desc: 'Microblogging',
+    fetch: fetchBridgeGoToSocial,
+  },
+  {
+    key: 'lemmy',
+    name: 'Lemmy',
+    url: 'https://community.degenfeed.xyz',
+    icon: '💬',
+    desc: 'Communities',
+    fetch: fetchBridgeLemmy,
+  },
+  {
+    key: 'pixelfed',
+    name: 'Pixelfed',
+    url: 'https://photos.degenfeed.xyz',
+    icon: '📸',
+    desc: 'Photos',
+    fetch: fetchBridgePixelfed,
+  },
+  {
+    key: 'peertube',
+    name: 'PeerTube',
+    url: 'https://video.degenfeed.xyz',
+    icon: '📹',
+    desc: 'Video',
+    fetch: fetchBridgePeerTube,
+  },
+  {
+    key: 'writefreely',
+    name: 'WriteFreely',
+    url: 'https://blog.degenfeed.xyz',
+    icon: '✍️',
+    desc: 'Blogging',
+    fetch: fetchBridgeWriteFreely,
+  },
 ] as const;
 
 async function fetchUnifiedProfile(username: string) {
@@ -361,16 +397,21 @@ function extractBridgeImageUrl(raw: string | null, protocol: string | null): str
   if (!raw) return null;
   const text = raw.trim();
   if (!text) return null;
-  if (/^https?:\/\/[^\s]+\.(?:jpg|jpeg|png|gif|webp|avif|svg|bmp)(?:\?[^\s]*)?$/i.test(text)) return text;
+  if (/^https?:\/\/[^\s]+\.(?:jpg|jpeg|png|gif|webp|avif|svg|bmp)(?:\?[^\s]*)?$/i.test(text))
+    return text;
   const markdown = text.match(/!\[[^\]]*\]\(([^)\s]+)\)/);
   if (markdown?.[1]) return markdown[1];
   const htmlImg = text.match(/<img[^>]+src=["']([^"']+)["']/i);
   if (htmlImg?.[1]) return htmlImg[1];
   if (protocol === 'nostr') {
-    const nostrImg = text.match(/https?:\/\/[^\s<>"']+\.(?:jpg|jpeg|png|gif|webp|avif)(?:\?[^\s<>"']*)?/i);
+    const nostrImg = text.match(
+      /https?:\/\/[^\s<>"']+\.(?:jpg|jpeg|png|gif|webp|avif)(?:\?[^\s<>"']*)?/i,
+    );
     if (nostrImg?.[0]) return nostrImg[0];
   }
-  const generic = text.match(/https?:\/\/[^\s<>"']+\.(?:jpg|jpeg|png|gif|webp|avif|svg|bmp)(?:\?[^\s<>"']*)?/i);
+  const generic = text.match(
+    /https?:\/\/[^\s<>"']+\.(?:jpg|jpeg|png|gif|webp|avif|svg|bmp)(?:\?[^\s<>"']*)?/i,
+  );
   return generic?.[0] ?? null;
 }
 
@@ -385,7 +426,12 @@ function validateBridgeProxyUrl(raw: string | null): string | null {
   if (parsed.protocol !== 'https:') return null;
   if (parsed.username || parsed.password) return null;
   const host = parsed.hostname.toLowerCase();
-  if (/^(localhost|0\.0\.0\.0|127\.|10\.|192\.168\.|169\.254\.|172\.(1[6-9]|2\d|3[01])\.|\[::1\]|\[::\])/.test(host)) return null;
+  if (
+    /^(localhost|0\.0\.0\.0|127\.|10\.|192\.168\.|169\.254\.|172\.(1[6-9]|2\d|3[01])\.|\[::1\]|\[::\])/.test(
+      host,
+    )
+  )
+    return null;
   if (parsed.port && parsed.port !== '443') return null;
   return parsed.toString();
 }
@@ -428,7 +474,9 @@ async function handleBridgeImageProxy(
       res.end('Image not found');
       return true;
     }
-    const contentType = (upstream.headers.get('Content-Type') || 'image/jpeg').split(';')[0].trim();
+    const contentType = (upstream.headers.get('Content-Type') || 'image/jpeg')
+      .split(';')[0]!
+      .trim();
     if (!BRIDGE_IMAGE_TYPES.includes(contentType)) {
       res.writeHead(415, { 'Content-Type': 'text/plain' });
       res.end('Not an image');
@@ -453,7 +501,11 @@ async function handleBridgeImageProxy(
       const now = Date.now();
       for (const [k, v] of imageProxyCache) if (v.expiresAt < now) imageProxyCache.delete(k);
     }
-    imageProxyCache.set(cacheKey, { body, contentType, expiresAt: Date.now() + IMAGE_PROXY_CACHE_TTL_MS });
+    imageProxyCache.set(cacheKey, {
+      body,
+      contentType,
+      expiresAt: Date.now() + IMAGE_PROXY_CACHE_TTL_MS,
+    });
 
     res.writeHead(200, {
       'Content-Type': contentType || 'image/jpeg',
@@ -564,9 +616,9 @@ function generateCrossProtocolNotifications(
 
   // Generate some time-distributed notifications
   for (let i = 0; i < count; i++) {
-    const template = templates[i % templates.length];
-    const protocol = template.protocols[i % template.protocols.length];
-    const actor = template.actors[i % template.actors.length];
+    const template = templates[i % templates.length]!;
+    const protocol = template.protocols[i % template.protocols.length]!;
+    const actor = template.actors[i % template.actors.length]!;
     const minutesAgo = i * 15 + Math.floor(Math.random() * 10);
 
     notifications.push({
@@ -706,7 +758,11 @@ async function crossProtocolSearch(
           protocol,
           sourceLabel: String(hit.sourceLabel || protocol),
           contentType: String(hit.contentType || 'post'),
-          text: String((hit as Record<string, unknown>)._formatted?.text || hit.text || ''),
+          text: String(
+            ((hit as Record<string, unknown>)._formatted as { text?: unknown } | undefined)?.text ||
+              hit.text ||
+              '',
+          ),
           author: {
             displayName: String(hit.authorName || 'Unknown'),
             handle: String(hit.authorHandle || ''),
@@ -769,7 +825,7 @@ async function crossProtocolSearch(
 
   // Fallback: search providers directly
   const allProviderKeys = Object.keys(PROVIDERS).filter(
-    (k) => PROVIDERS[k].category !== 'infrastructure',
+    (k) => PROVIDERS[k]?.category !== 'infrastructure',
   );
   const activeProtocols =
     sources.length > 0 && !sources.includes('all')
@@ -853,7 +909,7 @@ const server = http.createServer(async (req, res) => {
   if (ALLOWED_ORIGINS.includes(origin)) {
     res.setHeader('Access-Control-Allow-Origin', origin);
     res.setHeader('Access-Control-Allow-Credentials', 'true');
-  } else res.setHeader('Access-Control-Allow-Origin', ALLOWED_ORIGINS[0]);
+  } else res.setHeader('Access-Control-Allow-Origin', ALLOWED_ORIGINS[0]!);
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, Cookie');
   if (req.method === 'OPTIONS') {
@@ -1152,7 +1208,7 @@ const server = http.createServer(async (req, res) => {
     // protocol is registered, 404 when unknown.
     const bridgeHealthMatch = path.match(/^\/api\/bridge\/health\/([\w-]+)$/);
     if (bridgeHealthMatch) {
-      const proto = bridgeHealthMatch[1];
+      const proto = bridgeHealthMatch[1]!;
       const provider = PROVIDERS[proto];
       if (!provider) {
         res.writeHead(404, { 'Content-Type': 'application/json' });
@@ -1673,16 +1729,11 @@ const server = http.createServer(async (req, res) => {
     // WriteFreely). Mirrors workers/api/src/routes/profile-me.ts for the
     // self-hosted deployment (api-server proxies /api/* here).
     if (path === '/api/profile/me') {
-      const username =
-        searchParams.get('username') ||
-        searchParams.get('acct') ||
-        '';
+      const username = searchParams.get('username') || searchParams.get('acct') || '';
       const clean = username.trim().replace(/^@/, '').split('@')[0] || '';
       if (!clean) {
         res.writeHead(401, { 'Content-Type': 'application/json' });
-        res.end(
-          JSON.stringify({ error: 'Missing username. Pass ?username=<name>.' }),
-        );
+        res.end(JSON.stringify({ error: 'Missing username. Pass ?username=<name>.' }));
         return;
       }
       const profileResults = await fetchUnifiedProfile(clean);

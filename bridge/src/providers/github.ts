@@ -202,18 +202,6 @@ function guessGitHubNiches(text: string, repoName?: string, lang?: string): stri
   return niches;
 }
 
-function _formatRelativeTime(dateStr: string): string {
-  const date = new Date(dateStr).getTime();
-  const now = Date.now();
-  const diff = now - date;
-  const hours = Math.floor(diff / 3600000);
-  const days = Math.floor(diff / 86400000);
-  if (hours < 1) return 'just now';
-  if (hours < 24) return `${hours}h ago`;
-  if (days < 30) return `${days}d ago`;
-  return dateStr.slice(0, 10);
-}
-
 // ─── Mapping ──────────────────────────────────────────────────────────
 
 function eventToPost(event: GitHubEvent): UnifiedPost | null {
@@ -400,7 +388,7 @@ async function fetchRepoEvents(source: GitHubSource, limit: number): Promise<Uni
       .map((e) => eventToPost(e))
       .filter((p): p is UnifiedPost => p !== null)
       .slice(0, limit);
-  } catch (err) {
+  } catch {
     //     console.log(
     //       `[bridge] GitHub fetch error (${source.owner}/${source.repo || ''}): ${(err as Error).message}`,
     //     );
@@ -426,7 +414,7 @@ async function fetchTrendingRepos(limit: number): Promise<UnifiedPost[]> {
     if (!data?.items || !Array.isArray(data.items)) return [];
 
     return data.items.map((item) => repoToPost(item)).slice(0, limit);
-  } catch (err) {
+  } catch {
     // console.log(`[bridge] GitHub trending fetch error: ${(err as Error).message}`);
     return [];
   }

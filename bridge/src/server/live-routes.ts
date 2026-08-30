@@ -176,11 +176,6 @@ function jsonError(res: http.ServerResponse, status: number, code: string, messa
   res.end(JSON.stringify({ ok: false, error: { code, message } }));
 }
 
-function jsonOk(res: http.ServerResponse, data: unknown) {
-  res.writeHead(200, { 'content-type': 'application/json' });
-  res.end(JSON.stringify(data));
-}
-
 function parseBody(req: http.IncomingMessage): Promise<Record<string, unknown>> {
   return new Promise((resolve, reject) => {
     const chunks: Buffer[] = [];

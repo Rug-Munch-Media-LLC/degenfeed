@@ -10,13 +10,13 @@
  */
 
 import { describe, expect, it } from 'vitest';
-import type { UnifiedPost } from '../server/types';
 import {
   dedupeAndInterleave,
   MAX_CONSECUTIVE_SAME_PROTOCOL,
   selectDiscoveryProtocols,
   textFingerprint,
 } from '../server/feeds';
+import type { UnifiedPost } from '../server/types';
 
 function post(id: string, protocol: string, text: string, n = 0): UnifiedPost {
   return {
@@ -61,7 +61,7 @@ describe('dedupeAndInterleave — capped protocol runs', () => {
 
     let run = 1;
     for (let i = 1; i < out.length; i++) {
-      run = out[i].protocol === out[i - 1].protocol ? run + 1 : 1;
+      run = out[i]!.protocol === out[i - 1]!.protocol ? run + 1 : 1;
       expect(run).toBeLessThanOrEqual(MAX_CONSECUTIVE_SAME_PROTOCOL);
     }
   });
@@ -77,7 +77,7 @@ describe('dedupeAndInterleave — capped protocol runs', () => {
     expect(out.length).toBe(12);
     let run = 1;
     for (let i = 1; i < out.length; i++) {
-      run = out[i].protocol === out[i - 1].protocol ? run + 1 : 1;
+      run = out[i]!.protocol === out[i - 1]!.protocol ? run + 1 : 1;
       expect(run).toBeLessThanOrEqual(MAX_CONSECUTIVE_SAME_PROTOCOL);
     }
   });
@@ -108,7 +108,6 @@ describe('dedupeAndInterleave — capped protocol runs', () => {
   });
 
   it('deduplicates identical text across protocols before interleaving', () => {
-    const now = Date.now();
     const posts: UnifiedPost[] = [
       post('a', 'nostr', 'Bitcoin is the future of money!', 0),
       post('b', 'farcaster', 'Bitcoin is the future of money!', 1),

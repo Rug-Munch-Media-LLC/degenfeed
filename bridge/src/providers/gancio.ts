@@ -73,7 +73,6 @@ async function fetchInstanceEvents(instance: string, limit: number): Promise<Uni
 
     return events.slice(0, limit).map((event) => {
       const tags = event.tags?.map((t) => t.title) ?? [];
-      const _location = event.location || event.address || '';
 
       return {
         id: `gancio-${instance}-${event.id}`,

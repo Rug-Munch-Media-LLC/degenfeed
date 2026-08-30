@@ -23,32 +23,11 @@ const TRENDING_INSTANCES = [
   'https://hachyderm.io',
 ];
 
-/** Known public PeerTube instances for trending videos */
-const PEERTUBE_INSTANCES = [
-  'https://video.degenfeed.xyz',
-  'https://joinpeertube.org',
-  'https://peertube.tv',
-  'https://tilvids.com',
-];
-
 interface MastodonTag {
   name: string;
   url: string;
   history?: Array<{ day: string; uses: string; accounts: string }>;
   following_count?: number;
-}
-
-interface MastodonTrend {
-  id: string;
-  account: { id: string; username: string; acct: string; display_name: string; avatar: string };
-  content: string;
-  created_at: string;
-  favourites_count: number;
-  reblogs_count: number;
-  replies_count: number;
-  tags: Array<{ name: string }>;
-  media_attachments: Array<{ type: string; url: string }>;
-  url: string;
 }
 
 /**

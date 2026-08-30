@@ -21,10 +21,6 @@
 
 import type { UnifiedPost } from '../server/types';
 
-const _$fetch = globalThis.fetch;
-
-const _LIT_API = process.env.LIT_API_URL || 'https://nodes.litprotocol.com';
-
 // ─── Types ─────────────────────────────────────────────────────────────
 
 // LitPKP — reserved for future use
@@ -142,7 +138,7 @@ async function fetchPKPActivity(_limit: number): Promise<UnifiedPost[]> {
     ];
 
     return infoPosts;
-  } catch (err) {
+  } catch {
     // console.log(`[bridge] Lit Protocol error: ${(err as Error).message}`);
     return [];
   }

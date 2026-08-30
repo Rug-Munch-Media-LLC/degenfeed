@@ -68,19 +68,16 @@ function parseVimeoRSS(xml: string): VimeoRSSItem[] {
   while (m !== null) {
     const block = m[1];
     if (block) {
-      const title =
-        block.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1]?.trim() ?? '';
+      const title = block.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1]?.trim() ?? '';
       const link = block.match(/<link[^>]*>([\s\S]*?)<\/link>/i)?.[1]?.trim() ?? '';
       const pubDate = block.match(/<pubDate[^>]*>([\s\S]*?)<\/pubDate>/i)?.[1]?.trim() ?? '';
       const description =
         block.match(/<description[^>]*>([\s\S]*?)<\/description>/i)?.[1]?.trim() ?? '';
-      const mediaThumb =
-        block.match(/<media:thumbnail[^>]*url="([^"]+)"/i)?.[1]?.trim() ?? '';
+      const mediaThumb = block.match(/<media:thumbnail[^>]*url="([^"]+)"/i)?.[1]?.trim() ?? '';
       const mediaAuthor =
         block.match(/<media:credit[^>]*>([\s\S]*?)<\/media:credit>/i)?.[1]?.trim() ?? '';
       const durationRaw = block.match(/<media:content[^>]*duration="(\d+)"/i)?.[1];
-      const videoId =
-        link.match(/\/videos\/(\d+)/)?.[1] ?? link.match(/\/video\/(\d+)/)?.[1] ?? '';
+      const videoId = link.match(/\/videos\/(\d+)/)?.[1] ?? link.match(/\/video\/(\d+)/)?.[1] ?? '';
       const duration = durationRaw ? Number.parseInt(durationRaw, 10) : 0;
 
       if (title && link) {
@@ -173,7 +170,9 @@ export async function fetchVimeoPosts(limit: number = 20): Promise<UnifiedPost[]
   const BATCH = 3;
   for (let i = 0; i < VIMEO_CHANNELS.length; i += BATCH) {
     const batch = VIMEO_CHANNELS.slice(i, i + BATCH);
-    const results = await Promise.allSettled(batch.map((channel) => fetchChannel(channel, perChannel)));
+    const results = await Promise.allSettled(
+      batch.map((channel) => fetchChannel(channel, perChannel)),
+    );
     for (const r of results) {
       if (r.status === 'fulfilled') posts.push(...r.value);
     }

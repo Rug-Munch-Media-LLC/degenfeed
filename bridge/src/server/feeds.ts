@@ -750,7 +750,7 @@ export function selectDiscoveryProtocols(active: string[], now = Date.now()): st
   const count = Math.min(2, candidates.length);
   const selected: string[] = [];
   for (let i = 0; i < count; i++) {
-    selected.push(candidates[(windowIdx * 5 + i * 7) % candidates.length]);
+    selected.push(candidates[(windowIdx * 5 + i * 7) % candidates.length]!);
   }
   return selected;
 }
@@ -782,7 +782,7 @@ function feedCacheKey(protocols: string[]): string {
 
 function resolveActiveProtocols(protocols: string[]): string[] {
   const active = protocols.filter(
-    (p) => p in PROVIDERS && PROVIDERS[p].category !== 'infrastructure',
+    (p) => p in PROVIDERS && PROVIDERS[p]?.category !== 'infrastructure',
   );
   return active.length > 0 ? active : [...DEFAULT_HOME_PROTOCOLS];
 }
@@ -959,7 +959,7 @@ export function dedupeAndInterleave(
   const nonEmpty = [...byProtocol.entries()].filter(([, arr]) => arr.length > 0);
   if (nonEmpty.length === 0) return [];
   // Single-source feed — the diversity cap does not apply; return up to limit.
-  if (nonEmpty.length === 1) return nonEmpty[0][1].slice(0, limit);
+  if (nonEmpty.length === 1) return nonEmpty[0]![1].slice(0, limit);
 
   // Deterministic but varied order: rotate the starting protocol so the same
   // post list from cache can still produce different mixes per request when
@@ -1336,7 +1336,7 @@ async function buildFeedInternal(
       // Flag discovery-mode posts so callers can distinguish injected content.
       const isDiscovery = discoveryProtocols.includes(protocol);
       for (const p of posts) {
-        if (isDiscovery) (p as Record<string, unknown>)._discovery = true;
+        if (isDiscovery) (p as unknown as Record<string, unknown>)._discovery = true;
       }
       allPosts.push(...posts);
     }

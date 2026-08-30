@@ -140,7 +140,7 @@ async function fetchFromInstance(instance: string, limit: number): Promise<Unifi
         ),
       };
     });
-  } catch (err) {
+  } catch {
     // console.log(`[bridge] Castopod error (${instance}): ${(err as Error).message}`);
     return [];
   }

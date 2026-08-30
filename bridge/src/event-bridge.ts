@@ -30,7 +30,7 @@
  */
 
 import { fetchFarcasterEvents } from './providers/farcaster-events';
-import { fetchMobilizonPosts, mobilizonEventToUnified } from './providers/mobilizon';
+import { fetchMobilizonPosts } from './providers/mobilizon';
 import { fetchNostrCalendarEvents } from './providers/nostr-events';
 import {
   createSmokeSignalEvent,
@@ -42,7 +42,6 @@ import type { RSVPCrossProtocol, UnifiedEvent } from './server/types';
 // ─── Constants ─────────────────────────────────────────────────────────
 
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
-const POLL_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
 
 /** Seen event IDs cache: map<protocol:eventId, timestamp> */
 const seenEvents = new Map<string, number>();
@@ -57,7 +56,7 @@ let lastPollTime = 0;
 
 // ─── Logging ──────────────────────────────────────────────────────────
 
-function log(msg: string) {
+function log(_msg: string) {
   // console.log(`[event-bridge] ${msg}`);
 }
 

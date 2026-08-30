@@ -36,7 +36,6 @@ const MAX_SCAN_FIDS = 50;
 /** Per-FID page size for Hubble */
 const DEFAULT_PAGE_SIZE = 5;
 /** Overall fetch timeout */
-const _FETCH_TIMEOUT_MS = 10_000;
 /** Per-request timeout for Hubble calls */
 const HUBBLE_REQUEST_TIMEOUT = 8_000;
 /**
@@ -331,7 +330,7 @@ async function fetchCastsForFid(fid: number, pageSize: number): Promise<UnifiedP
             const url = typeof e === 'string' ? e : e?.url;
             return url ? { kind: 'link' as const, url } : null;
           })
-          .filter((e): e is { kind: 'link'; url: string } => e !== null),
+          .filter((e: any): e is { kind: 'link'; url: string } => e !== null),
         contentType: 'text' as const,
         createdAt: ts,
         metrics: { likes: 0, reposts: 0, replies: 0, quotes: 0 },
@@ -414,7 +413,7 @@ function getNeynarKey(): string {
     //     );
     return '';
   }
-  const key = NEYNAR_KEYS[_neynarKeyIndex];
+  const key = NEYNAR_KEYS[_neynarKeyIndex]!;
   _neynarCallCount++;
   // Rotate every 100 calls to distribute across accounts
   if (_neynarCallCount % 100 === 0) {
@@ -480,7 +479,7 @@ async function fetchFromNeynar(limit: number): Promise<UnifiedPost[]> {
       (cast) => (cast.text || '').trim() || (cast.embeds || []).length > 0,
     );
     return meaningful.slice(0, limit).map((cast) => neynarCastToPost(cast));
-  } catch (err: any) {
+  } catch {
     // console.log(`[farcaster] Neynar fallback failed: ${err?.message || err}`);
     // One bounded retry: Neynar occasionally times out on the first attempt
     // (cold connection / upstream slowness). A single retry is cheap and the
@@ -505,7 +504,7 @@ async function fetchFromNeynar(limit: number): Promise<UnifiedPost[]> {
         (cast) => (cast.text || '').trim() || (cast.embeds || []).length > 0,
       );
       return meaningful.slice(0, limit).map((cast) => neynarCastToPost(cast));
-    } catch (retryErr: any) {
+    } catch {
       // console.log(`[farcaster] Neynar retry failed: ${retryErr?.message || retryErr}`);
       return [];
     }
@@ -583,7 +582,6 @@ export async function fetchFarcasterPosts(limit = 20): Promise<UnifiedPost[]> {
     return [];
   }
 
-  const startTime = Date.now();
   const all: UnifiedPost[] = [];
   const targetLimit = Math.min(Math.max(limit, 10), 100);
 
@@ -599,14 +597,6 @@ export async function fetchFarcasterPosts(limit = 20): Promise<UnifiedPost[]> {
     // Hubble is not usable (unreachable, syncing below threshold, or empty)
     // → PREFER Neynar instead of querying a hub that has almost no data.
     if (!hubbleUsable) {
-      let reason = 'not fully synced';
-      if (!hubbleStatus) {
-        reason = 'unreachable';
-      } else if (hubbleStatus.syncPercentage < HUBBLE_MIN_SYNC_PERCENT) {
-        reason = `only ${hubbleStatus.syncPercentage}% synced (min ${HUBBLE_MIN_SYNC_PERCENT}%)`;
-      }
-      // console.log(`[farcaster] Hubble ${reason} — preferring Neynar API`);
-
       const neynarPosts = await fetchFromNeynar(targetLimit).catch(() => [] as UnifiedPost[]);
       if (neynarPosts.length > 0) {
         // console.log(`[farcaster] Neynar returned ${neynarPosts.length} posts`);
@@ -646,8 +636,7 @@ export async function fetchFarcasterPosts(limit = 20): Promise<UnifiedPost[]> {
     }
 
     return dedupeFarcasterPosts(all, limit);
-  } catch (err: any) {
-    const elapsed = Date.now() - startTime;
+  } catch {
     // console.log(`[farcaster] Fetch failed after ${elapsed}ms: ${err?.message || err}`);
 
     // Final fallback: try Neynar

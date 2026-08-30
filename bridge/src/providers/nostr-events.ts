@@ -28,8 +28,6 @@ import type {
   UnifiedPost,
 } from '../server/types';
 
-const _$fetch = globalThis.fetch;
-
 // ─── Constants ─────────────────────────────────────────────────────────
 
 const RELAYS = [
@@ -41,7 +39,6 @@ const RELAYS = [
 ];
 
 const KIND_CALENDAR_EVENT = 31922;
-const _KIND_CALENDAR = 31923;
 const KIND_TEXT_NOTE = 1;
 
 const FETCH_TIMEOUT_MS = 8000;
@@ -69,7 +66,7 @@ function extractTag(tags: string[][], key: string): string | undefined {
 }
 
 function extractAllTags(tags: string[][], key: string): string[] {
-  return tags.filter((t) => t[0] === key).map((t) => t[1]);
+  return tags.filter((t) => t[0] === key).map((t) => t[1]!);
 }
 
 function hexToBech32(hex: string): string {
@@ -191,7 +188,6 @@ function nostrEventToUnified(event: NostrCalendarEvent): UnifiedEvent | null {
     const startStr = extractTag(event.tags, 'start');
     const endStr = extractTag(event.tags, 'end');
     const location = extractTag(event.tags, 'location');
-    const _geohash = extractTag(event.tags, 'g');
     const refs = extractAllTags(event.tags, 'r');
     const hashtags = extractAllTags(event.tags, 't');
     const participants = extractAllTags(event.tags, 'p');
@@ -229,7 +225,7 @@ function nostrEventToUnified(event: NostrCalendarEvent): UnifiedEvent | null {
         keys: { nostrPubkey: event.pubkey },
       },
       tags: hashtags,
-      picture: refs.length > 0 ? { url: refs[0] } : undefined,
+      picture: refs.length > 0 ? { url: refs[0]! } : undefined,
       url: refs[0] || `nostr:${event.id}`,
       rsvpCount: participants.length,
       status: 'confirmed',
@@ -339,8 +335,8 @@ function fetchTextNotesFromRelay(
  */
 function textNoteToUnifiedPost(event: NostrTextNoteEvent): UnifiedPost {
   // Extract mentions (p tags) and hashtags (t tags)
-  const mentionPubkeys = event.tags.filter((t) => t[0] === 'p').map((t) => t[1]);
-  const hashtags = event.tags.filter((t) => t[0] === 't').map((t) => t[1]);
+  const mentionPubkeys = event.tags.filter((t) => t[0] === 'p').map((t) => t[1]!);
+  const hashtags = event.tags.filter((t) => t[0] === 't').map((t) => t[1]!);
   const rootTag = event.tags.find((t) => t[0] === 'e' && t[3] === 'root');
   const replyTag = event.tags.find((t) => t[0] === 'e' && t[3] === 'reply');
   const firstETag = event.tags.find((t) => t[0] === 'e');

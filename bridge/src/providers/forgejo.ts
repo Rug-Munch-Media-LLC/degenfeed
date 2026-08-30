@@ -52,18 +52,6 @@ interface ForgejoRepo {
   license?: string;
 }
 
-interface ForgejoActivity {
-  id: number;
-  type: string;
-  repo: ForgejoRepo;
-  actor: { login: string; avatar_url: string; html_url: string };
-  created_at: string;
-  payload?: Record<string, unknown>;
-  op_type?: string;
-  content?: string;
-  ref?: string;
-}
-
 // ─── Helpers ──────────────────────────────────────────────────────────
 
 function guessRepoNiches(repo: ForgejoRepo): string[] {
@@ -85,81 +73,6 @@ function guessRepoNiches(repo: ForgejoRepo): string[] {
   if (/\b(security|cryptography|privacy|encryption|auth)\b/.test(all)) niches.push('security');
   if (niches.length === 0) niches.push('opensource');
   return niches;
-}
-
-function _repoActivityToPost(activity: ForgejoActivity): UnifiedPost {
-  const repo = activity.repo;
-  const repoUrl = repo.html_url;
-  const actorName = activity.actor?.login || 'someone';
-  const type = activity.type || activity.op_type || 'activity';
-
-  const activityText = (() => {
-    switch (type.toLowerCase()) {
-      case 'star':
-      case 'starrepo':
-        return `⭐ ${actorName} starred ${repo.full_name}`;
-      case 'fork':
-        return `🔀 ${actorName} forked ${repo.full_name}`;
-      case 'create':
-        return `📦 ${actorName} created ${repo.full_name}`;
-      case 'push':
-        return `📤 ${actorName} pushed to ${repo.full_name}:${activity.ref || repo.default_branch}`;
-      case 'release':
-        return `🏷️ ${actorName} released ${repo.full_name} — ${activity.content || ''}`;
-      case 'issue':
-        return `🐛 ${actorName} opened issue in ${repo.full_name}`;
-      case 'pull_request':
-      case 'pr':
-        return `🔀 ${actorName} opened PR in ${repo.full_name}`;
-      case 'delete':
-        return `🗑️ ${actorName} deleted branch in ${repo.full_name}`;
-      default:
-        return `📌 ${actorName} ${type} — ${repo.full_name}`;
-    }
-  })();
-
-  const text = [
-    activityText,
-    repo.description ? `\n${repo.description}` : '',
-    `\n\n⭐ ${repo.stars_count} forks · 🍴 ${repo.forks_count} issues · 🐛 ${repo.open_issues_count}`,
-    `🖥️ ${repo.language || 'N/A'} | 📝 ${repo.license || 'N/A'}`,
-  ].join('');
-
-  return {
-    id: `forgejo:${activity.id || `${repo.full_name}:${Date.now()}`}`,
-    protocol: 'forgejo',
-    author: {
-      id: `forgejo:user:${activity.actor?.login || 'unknown'}`,
-      primary: { protocol: 'forgejo', id: activity.actor?.login || 'unknown' },
-      handles: { forgejo: activity.actor?.login || null },
-      displayName: activity.actor?.login || 'Developer',
-      bio: '',
-      avatarUrl: activity.actor?.avatar_url || '',
-      followerCount: 0,
-      followingCount: 0,
-      links: [{ label: 'profile', url: activity.actor?.html_url || '' }],
-      keys: {},
-    },
-    text,
-    embeds: [
-      {
-        kind: 'link',
-        url: repoUrl,
-        meta: { title: repo.full_name, description: repo.description },
-      },
-    ],
-    contentType: 'code',
-    createdAt: new Date(activity.created_at || repo.updated_at).getTime(),
-    metrics: { likes: 0, reposts: 0, replies: 0, quotes: 0 },
-    engagement: {
-      viewerLiked: false,
-      viewerReposted: false,
-      viewerBookmarked: false,
-      raw: { likes: 0, reposts: 0, replies: 0, quotes: 0 },
-    },
-    raw: activity,
-    niches: guessRepoNiches(repo),
-  };
 }
 
 // ─── Fetch Logic ──────────────────────────────────────────────────────

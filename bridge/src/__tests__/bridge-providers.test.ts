@@ -52,7 +52,6 @@ vi.stubGlobal(
 );
 
 // Store original fetch before mocking
-const _originalFetch = globalThis.fetch;
 
 beforeEach(() => {
   mockWsInstances.length = 0;
@@ -152,7 +151,6 @@ describe('Nostr provider', () => {
       sig: 'sig',
     };
 
-    // @ts-expect-error - testing with missing profile on purpose
     const post = eventToPost(ev, 'wss://nos.lol', undefined);
     expect(post.text).toBe('Hello world');
     expect(post.author.avatarUrl).toBe('');
@@ -338,9 +336,9 @@ describe('Bluesky provider', () => {
 
     const media = extractMediaFromPost(post as any);
     expect(media.length).toBe(1);
-    expect(media[0].url).toContain('feed_fullsize');
-    expect(media[0].alt).toBe('A cool picture');
-    expect(media[0].aspectRatio).toBeCloseTo(16 / 9);
+    expect(media[0]!.url).toContain('feed_fullsize');
+    expect(media[0]!.alt).toBe('A cool picture');
+    expect(media[0]!.aspectRatio).toBeCloseTo(16 / 9);
   });
 
   it('detectContentType detects image, link, and text types', async () => {
@@ -612,9 +610,9 @@ describe('RSS provider', () => {
     const result = parseFeedXml(xml);
     expect(result.title).toBe('Test Crypto Feed');
     expect(result.items.length).toBe(2);
-    expect(result.items[0].title).toBe('Bitcoin Rally');
-    expect(result.items[0].link).toBe('https://example.com/bitcoin');
-    expect(result.items[1].title).toBe('Ethereum Upgrade');
+    expect(result.items[0]!.title).toBe('Bitcoin Rally');
+    expect(result.items[0]!.link).toBe('https://example.com/bitcoin');
+    expect(result.items[1]!.title).toBe('Ethereum Upgrade');
   });
 
   it('parseFeedXml parses Atom entries', async () => {
@@ -636,8 +634,8 @@ describe('RSS provider', () => {
     const result = parseFeedXml(xml);
     expect(result.title).toBe('Atom Test Feed');
     expect(result.items.length).toBe(1);
-    expect(result.items[0].title).toBe('DeFi Summer Returns');
-    expect(result.items[0].link).toBe('https://example.com/defi');
+    expect(result.items[0]!.title).toBe('DeFi Summer Returns');
+    expect(result.items[0]!.link).toBe('https://example.com/defi');
   });
 
   it('parseFeedXml returns empty items for invalid XML', async () => {
@@ -732,8 +730,8 @@ describe('RSS provider', () => {
 
     const deduped = deduplicatePosts([basePost, dupPost], 10);
     expect(deduped.length).toBe(1);
-    expect(deduped[0].niches).toContain('bitcoin');
-    expect(deduped[0].niches).toContain('ethereum');
+    expect(deduped[0]!.niches).toContain('bitcoin');
+    expect(deduped[0]!.niches).toContain('ethereum');
   });
 
   it('extractMetadata extracts description and keywords', async () => {

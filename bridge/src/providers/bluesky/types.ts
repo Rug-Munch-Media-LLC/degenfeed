@@ -1,6 +1,6 @@
 // ─── Types ───────────────────────────────────────────────────────────
 
-interface BskyAuthor {
+export interface BskyAuthor {
   did: string;
   handle: string;
   displayName?: string;

@@ -1,3 +1,9 @@
+import type { UnifiedPost } from '../../server/types';
+import type { BiasLabel } from './rss-bias';
+import { sourceBias, sourceFactuality } from './rss-bias';
+import { extractLinkUrl, titleSimilarity } from './rss-dedup';
+import { sourceTier } from './rss-sources';
+
 export interface BiasDistribution {
   left: number;
   'center-left': number;

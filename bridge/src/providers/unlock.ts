@@ -230,7 +230,7 @@ async function graphQLQuery<T>(
     });
     if (!res.ok) return {};
     return (await res.json()) as GraphQLResponse<T>;
-  } catch (err) {
+  } catch {
     // console.log(`[bridge] Unlock subgraph error: ${(err as Error).message}`);
     return {};
   }

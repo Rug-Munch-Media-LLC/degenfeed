@@ -25,7 +25,7 @@ export async function fetchPlumePosts(limit = 20): Promise<UnifiedPost[]> {
   try {
     const { fetchPlumePosts: adapterFetch } = await getAdapter();
     return adapterFetch(limit);
-  } catch (err) {
+  } catch {
     // console.log(`[bridge] Plume error: ${(err as Error).message}`);
     return [];
   }
