@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * RugMunch platform navigation — mirrors rmi-frontend/src/components/layout/
+ * Rug Munch Intelligence platform navigation — mirrors rmi-frontend/src/components/layout/
  * SidebarLayout.tsx (the rugmunch.io left-hand nav) exactly: same groups,
  * same items, same labels, same ordering. This makes feed.rugmunch.io read as
  * a sub-page of the Rug Munch Intelligence platform.
