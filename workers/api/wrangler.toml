@@ -199,7 +199,10 @@ BRIDGE_INTERNAL_URL = "https://bridge.degenfeed.xyz"
 FEATURE_FLAGS_DEFAULT = "reply-composer,dark-mode-only,farcaster-frames"
 # Postiz cross-posting API — for scheduled social media publishing
 POSTIZ_BASE_URL = "http://127.0.0.1:3105"
-POSTIZ_API_KEY = "${POSTIZ_API_KEY}"
+# POSTIZ_API_KEY is a SECRET — never commit it here. It is injected at runtime
+# via the wrangler secrets binding (wrangler secret put POSTIZ_API_KEY) and
+# read by the worker as env.POSTIZ_API_KEY. TOML [vars] does not interpolate
+# ${...}; the previous literal placeholder resolved to the string "${POSTIZ_API_KEY}".
 POSTIZ_INTEGRATIONS = ""
 
 # PeerTube — self-hosted video + livestream platform

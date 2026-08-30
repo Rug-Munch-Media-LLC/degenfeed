@@ -62,8 +62,34 @@ services:
       start_period: 15s
       retries: 3
 
+  # Search index backing the unified feed (bridge/feed-worker read MEILI_URL
+  # http://127.0.0.1:7700 + MEILI_KEY = MEILI_MASTER_KEY). Re-index via
+  # scripts/meilisearch-reindex.sh.
+  meilisearch:
+    image: getmeili/meilisearch:v1.10
+    container_name: degenfeed-meilisearch
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:7700:7700"
+    environment:
+      MEILI_MASTER_KEY: ${MEILI_MASTER_KEY:?set MEILI_MASTER_KEY in .env}
+      MEILI_ENV: production
+      MEILI_NO_ANALYTICS: "true"
+    volumes:
+      - meili_data:/meili_data
+    networks:
+      - degenfeed_default
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:7700/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
 networks:
   rmi_network:
     external: true
   degenfeed_default:
     external: true
+
+volumes:
+  meili_data:
