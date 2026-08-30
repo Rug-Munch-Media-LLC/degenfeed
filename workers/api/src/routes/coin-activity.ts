@@ -196,6 +196,4 @@ export async function handleCoinActivity(request: Request, env: Env): Promise<Re
 
 // ─── Mock Data Generator ──────────────────────────────────────────────────
 
-
-
 export type { ActivityType as CoinActivityType };

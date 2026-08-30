@@ -13,6 +13,7 @@ import {
   handleCreatorRewardsLeaderboard,
 } from '../../lib/creator-rewards';
 import { ok, serverError } from '../../response-helpers';
+import { handleCoinActivity } from '../../routes/coin-activity';
 import { coinDiscovery } from '../../routes/coin-discovery';
 import {
   handleCoinStatsGainers,
@@ -150,6 +151,19 @@ export function registerCoinsRoutes(app: Hono<{ Bindings: Env }>): void {
 
   // --- API: Per-Protocol Coin Discovery ---
   app.route('/api/coin', coinDiscovery);
+
+  // --- API: Coin Activity Feed (TASK 1) ---
+  // handleCoinActivity was implemented but never registered — without this
+  // route the Next.js proxy (apps/web/src/app/api/coin/[symbol]/activity)
+  // received upstream 404s. Registered here so the feed is actually served.
+  app.get('/api/coin/:symbol/activity', async (c) => {
+    try {
+      const result = await handleCoinActivity(c.req.raw, c.env);
+      return ok(result);
+    } catch (err) {
+      return serverError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  });
 
   // --- API: Cross-Protocol Holder Identity ---
   app.route('/api/identity', crossProtocolIdentity);

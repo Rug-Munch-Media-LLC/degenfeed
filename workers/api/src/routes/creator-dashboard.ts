@@ -73,7 +73,15 @@ export async function handleCreatorCoinsList(request: Request, env: Env): Promis
     Array<{ address: string; name: string; symbol: string; chain: string; deployedAt: number }>
   >(env.CACHE, CREATOR_COINS_PREFIX + wallet);
 
-  return noCacheJsonResponse({ coins: coins ?? [] });
+  // Honest platform stats: the worker does not track global totals, so these
+  // are reported as 0 (unknown) rather than fabricated. Consumers must treat
+  // 0 as "no data".
+  return noCacheJsonResponse({
+    coins: coins ?? [],
+    totalLaunched: 0,
+    totalVolume: 0,
+    activePrebonding: 0,
+  });
 }
 
 // ─── GET /api/creator/coin/:address/stats ───────────────────────────────
@@ -283,12 +291,19 @@ export async function handleCreatorCoinBurn(request: Request, env: Env): Promise
   // In production: execute on-chain burn via smart contract
   // const tx = await burnTokens(address, amountNum, env);
 
-  return jsonResponse({
-    success: true,
-    burned: amount,
-    txHash: `0x${crypto.randomUUID().replace(/-/g, '')}`,
-    newTotalSupply: String(1_000_000_000 - amountNum),
-  });
+  // FENCE: on-chain burn is NOT implemented. Never fabricate a txHash or
+  // report success — no transaction is ever submitted here.
+  return jsonResponse(
+    {
+      ok: false,
+      success: false,
+      error:
+        'On-chain token burning is not implemented. No tokens were burned and no transaction was submitted.',
+      message:
+        'POST /api/creator/coin/:address/burn is not implemented yet — no on-chain burn was executed.',
+    },
+    501,
+  );
 }
 
 // ─── POST /api/creator/coin/:address/airdrop ───────────────────────────
@@ -330,14 +345,20 @@ export async function handleCreatorCoinAirdrop(request: Request, env: Env): Prom
   }
 
   // In production: execute batch airdrop on-chain
-  const txHash = `0x${crypto.randomUUID().replace(/-/g, '')}`;
 
-  return jsonResponse({
-    success: true,
-    recipients: body.recipients.length,
-    totalTokens: body.recipients.reduce((sum, r) => sum + Number.parseInt(r.amount, 10) || 0, 0),
-    txHash,
-  });
+  // FENCE: on-chain airdrop is NOT implemented. Never fabricate a txHash or
+  // report success — no tokens are ever distributed here.
+  return jsonResponse(
+    {
+      ok: false,
+      success: false,
+      error:
+        'On-chain airdrop is not implemented. No tokens were distributed and no transaction was submitted.',
+      message:
+        'POST /api/creator/coin/:address/airdrop is not implemented yet — no on-chain airdrop was executed.',
+    },
+    501,
+  );
 }
 
 // ─── POST /api/creator/coin/:address/gated-post ────────────────────────
