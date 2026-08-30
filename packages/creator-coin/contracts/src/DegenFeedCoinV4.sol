@@ -150,6 +150,7 @@ contract DegenFeedCoinV4 is ReentrancyGuard {
     uint256 public constant MAX_VESTING_DURATION = 730 days;
     uint256 public constant MAX_PRE_BONDING_DURATION = 72 hours;
     uint256 public constant MAX_WALLET_BPS_HARD = 2000;               // 20% hard max
+    uint256 public constant MAX_PLATFORM_FEE_BPS = 200;               // 2% hard max (matches V2)
     uint256 public constant BONDING_CURVE_K = 20000;                  // Curve steepness
 
     // ── Wormhole Constants ────────────────────────────────────────────
@@ -454,6 +455,10 @@ contract DegenFeedCoinV4 is ReentrancyGuard {
         // ── Store creator parameters ─────────────────────────────────
         params = cParams;
         creatorFeeBps = cParams.feeBps;
+        // Platform fee defaults to 0; the deployer (factory) MUST call
+        // setPlatformFeeBps() before initialization to activate it. This keeps
+        // the constructor ABI unchanged while making the fee explicit and
+        // bounded instead of silently zero forever.
         cooldownPeriod = 30; // Default 30s cooldown
 
         // ── Pre-bonding setup ────────────────────────────────────────
@@ -648,15 +653,16 @@ contract DegenFeedCoinV4 is ReentrancyGuard {
     // ══════════════════════════════════════════════════════════════════
 
     modifier antiExploitV2(address wallet, bool isBuy, uint256 amount) {
-        // ── Anti-whale: max % of supply per single transaction ──────
-        uint256 price = getCurrentPrice();
-        uint256 impliedTokens = (amount * 1e18) / price;
-        uint256 maxBuyTokens = (TOTAL_SUPPLY * params.maxWalletBps) / 10000;
-        require(impliedTokens <= maxBuyTokens || _totalSupply == 0, "V4: AE buy limit");
-
-        // ── Anti-whale: max wallet % ────────────────────────────────
-        uint256 newBalance = _balances[wallet] + impliedTokens;
-        require(newBalance <= (TOTAL_SUPPLY * params.maxWalletBps) / 10000 || _totalSupply == 0, "V4: AE wallet limit");
+        // ── Anti-whale (scoped block: legacy codegen shares modifier locals
+        //    with the guarded function's stack frame) ────────────────────
+        {
+            uint256 price = getCurrentPrice();
+            uint256 impliedTokens = (amount * 1e18) / price;
+            uint256 maxWallet = (TOTAL_SUPPLY * params.maxWalletBps) / 10000;
+            require(impliedTokens <= maxWallet || _totalSupply == 0, "V4: AE buy limit");
+            uint256 newBalance = _balances[wallet] + impliedTokens;
+            require(newBalance <= maxWallet || _totalSupply == 0, "V4: AE wallet limit");
+        }
 
         // ── Anti-sniper: cooldown ────────────────────────────────────
         uint256 currentCooldown = antiSniperActive ? 60 : cooldownPeriod; // 60s during anti-sniper
@@ -665,26 +671,28 @@ contract DegenFeedCoinV4 is ReentrancyGuard {
         }
 
         // ── Bundler detection ────────────────────────────────────────
-        uint256 currentBlock = block.number;
-        if (isBuy) {
-            require(lastBuyBlock[wallet] != currentBlock, "V4: AE same-block buy");
-            buysPerBlock[currentBlock]++;
-            require(buysPerBlock[currentBlock] <= 5, "V4: AE too many buys/block");
-            lastBuyBlock[wallet] = currentBlock;
-        } else {
-            require(lastSellBlock[wallet] != currentBlock, "V4: AE same-block sell");
-            sellsPerBlock[currentBlock]++;
-            require(sellsPerBlock[currentBlock] <= 5, "V4: AE too many sells/block");
-            lastSellBlock[wallet] = currentBlock;
+        {
+            uint256 currentBlock = block.number;
+            if (isBuy) {
+                require(lastBuyBlock[wallet] != currentBlock, "V4: AE same-block buy");
+                buysPerBlock[currentBlock]++;
+                require(buysPerBlock[currentBlock] <= 5, "V4: AE too many buys/block");
+                lastBuyBlock[wallet] = currentBlock;
+            } else {
+                require(lastSellBlock[wallet] != currentBlock, "V4: AE same-block sell");
+                sellsPerBlock[currentBlock]++;
+                require(sellsPerBlock[currentBlock] <= 5, "V4: AE too many sells/block");
+                lastSellBlock[wallet] = currentBlock;
+            }
         }
 
         // ── Sandwich protection ──────────────────────────────────────
         if (params.sandwichProtection && params.minBlockDelay > 0) {
             if (isBuy && lastSellBlock[wallet] > 0) {
-                require(currentBlock >= lastSellBlock[wallet] + params.minBlockDelay, "V4: AE sandwich buy");
+                require(block.number >= lastSellBlock[wallet] + params.minBlockDelay, "V4: AE sandwich buy");
             }
             if (!isBuy && lastBuyBlock[wallet] > 0) {
-                require(currentBlock >= lastBuyBlock[wallet] + params.minBlockDelay, "V4: AE sandwich sell");
+                require(block.number >= lastBuyBlock[wallet] + params.minBlockDelay, "V4: AE sandwich sell");
             }
         }
 
@@ -714,6 +722,35 @@ contract DegenFeedCoinV4 is ReentrancyGuard {
         uint256 old = cooldownPeriod;
         cooldownPeriod = newCooldown;
         emit CooldownUpdated(old, newCooldown);
+    }
+
+    // ══════════════════════════════════════════════════════════════════
+    // ║  PLATFORM FEE & REFERRER CONFIGURATION                        ║
+    // ══════════════════════════════════════════════════════════════════
+
+    event PlatformFeeSet(uint256 oldFeeBps, uint256 newFeeBps);
+    event ReferrerSet(address indexed oldReferrer, address indexed newReferrer);
+
+    /// @notice Set the platform fee (deployer/factory only, before trading starts).
+    /// @dev Fixes the 2026-08 audit finding: platformFeeBps was never assigned,
+    ///      so the platform fee was permanently 0 even when the deploy UI
+    ///      configured 50 bps. The factory must call this right after deploy,
+    ///      before initialBuy() flips `initialized`.
+    function setPlatformFeeBps(uint256 newFeeBps) external onlyFactory {
+        require(!initialized, "V4: already initialized");
+        require(newFeeBps <= MAX_PLATFORM_FEE_BPS, "V4: platform fee > 2%");
+        uint256 old = platformFeeBps;
+        platformFeeBps = newFeeBps;
+        emit PlatformFeeSet(old, newFeeBps);
+    }
+
+    /// @notice Set the global referrer (deployer/factory only, before trading starts).
+    function setReferrer(address referrer_) external onlyFactory {
+        require(!initialized, "V4: already initialized");
+        require(referrer_ != address(0), "V4: invalid referrer");
+        address old = referrer;
+        referrer = referrer_;
+        emit ReferrerSet(old, referrer_);
     }
 
     // ══════════════════════════════════════════════════════════════════
@@ -812,12 +849,9 @@ contract DegenFeedCoinV4 is ReentrancyGuard {
         require(tokens >= minOut, "V4: slippage");
         require(_totalSupply + tokens <= TOTAL_SUPPLY - totalBridgedOut, "V4: supply cap");
 
-        uint256 platformFee = (amount * platformFeeBps) / 10000;
-        uint256 creatorF = (amount * creatorFeeBps) / 10000;
-        uint256 referralFee = (referrer_ != address(0) && referrer_ != address(this))
-            ? (amount * REFERRAL_FEE_BPS) / 10000 : 0;
-
-        uint256 totalFees = platformFee + creatorF + referralFee;
+        // Fee totals only — individual splits are recomputed in _settleBuyFees
+        // (keeps this frame within the legacy codegen stack limit).
+        uint256 totalFees = _totalBuyFees(amount, referrer_);
         require(totalFees <= amount, "V4: fees exceed");
         uint256 netProceeds = amount - totalFees;
         require(netProceeds > 0, "V4: fees consume");
@@ -834,18 +868,41 @@ contract DegenFeedCoinV4 is ReentrancyGuard {
         buyCount[buyer]++;
 
         emit Trade(buyer, true, tokens, amount, block.timestamp);
-        if (totalFees > 0) {
-            emit FeesDistributed(platformFeeReceiver, platformFee, creator, creatorF, referrer_, referralFee);
-        }
+
+        // ── CEI: phase/graduation state transitions BEFORE external calls ──
+        _checkPhaseChange();
+        _checkGraduation();
+
+        _settleBuyFees(amount, referrer_);
+
+        return tokens;
+    }
+
+    /// @dev Total fees charged on a V4 buy: platform + creator + referral.
+    function _totalBuyFees(uint256 amount, address referrer_) internal view returns (uint256) {
+        uint256 platformFee = (amount * platformFeeBps) / 10000;
+        uint256 creatorF = (amount * creatorFeeBps) / 10000;
+        uint256 referralFee = (referrer_ != address(0) && referrer_ != address(this))
+            ? (amount * REFERRAL_FEE_BPS) / 10000
+            : 0;
+        return platformFee + creatorF + referralFee;
+    }
+
+    /// @dev Emit the fee-split event and transfer each fee to its receiver.
+    ///      Split out of _buy into its own frame (stack depth).
+    function _settleBuyFees(uint256 amount, address referrer_) internal {
+        uint256 platformFee = (amount * platformFeeBps) / 10000;
+        uint256 creatorF = (amount * creatorFeeBps) / 10000;
+        uint256 referralFee = (referrer_ != address(0) && referrer_ != address(this))
+            ? (amount * REFERRAL_FEE_BPS) / 10000
+            : 0;
+        if (platformFee + creatorF + referralFee == 0) return;
+
+        emit FeesDistributed(platformFeeReceiver, platformFee, creator, creatorF, referrer_, referralFee);
 
         _sendETH(platformFeeReceiver, platformFee);
         _sendETH(creator, creatorF);
         _sendETH(referrer_, referralFee);
-
-        _checkPhaseChange();
-        _checkGraduation();
-
-        return tokens;
     }
 
     function sell(uint256 tokenAmount, uint256 minOut)
@@ -856,16 +913,11 @@ contract DegenFeedCoinV4 is ReentrancyGuard {
         require(_balances[msg.sender] >= tokenAmount, "V4: insufficient balance");
         require(initialized, "V4: not initialized");
 
-        uint256 price = getCurrentPrice();
-        uint256 ethAmount = (tokenAmount * price) / 1e18;
+        uint256 ethAmount = (tokenAmount * getCurrentPrice()) / 1e18;
         require(ethAmount >= minOut, "V4: slippage");
         require(address(this).balance >= ethAmount, "V4: insufficient ETH");
 
-        uint256 platformFee = (ethAmount * platformFeeBps) / 10000;
-        uint256 creatorF = (ethAmount * creatorFeeBps) / 10000;
-        uint256 referralFee = (referrer != address(0)) ? (ethAmount * REFERRAL_FEE_BPS) / 10000 : 0;
-        uint256 totalFees = platformFee + creatorF + referralFee;
-        uint256 netProceeds = ethAmount - totalFees;
+        uint256 netProceeds = _netSellProceeds(ethAmount);
 
         _burn(msg.sender, tokenAmount);
         totalRaised -= ethAmount;
@@ -873,16 +925,37 @@ contract DegenFeedCoinV4 is ReentrancyGuard {
         lastSellTimestamp[msg.sender] = block.timestamp;
 
         emit Trade(msg.sender, false, tokenAmount, netProceeds, block.timestamp);
-        if (totalFees > 0) {
-            emit FeesDistributed(platformFeeReceiver, platformFee, creator, creatorF, referrer, referralFee);
+
+        _settleSellFees(ethAmount, netProceeds);
+
+        return netProceeds;
+    }
+
+    /// @dev ETH owed to the seller after platform/creator/referral fees.
+    function _netSellProceeds(uint256 ethAmount) internal view returns (uint256) {
+        uint256 totalFees = ((ethAmount * platformFeeBps) / 10000)
+            + ((ethAmount * creatorFeeBps) / 10000)
+            + (referrer != address(0) ? (ethAmount * REFERRAL_FEE_BPS) / 10000 : 0);
+        return ethAmount - totalFees;
+    }
+
+    /// @dev Emit the fee-split event and distribute sell proceeds.
+    ///      Split out of sell into its own frame (stack depth).
+    function _settleSellFees(uint256 ethAmount, uint256 netProceeds) internal {
+        uint256 platformFee = (ethAmount * platformFeeBps) / 10000;
+        uint256 creatorF = (ethAmount * creatorFeeBps) / 10000;
+        uint256 referralFee = (referrer != address(0)) ? (ethAmount * REFERRAL_FEE_BPS) / 10000 : 0;
+        if (platformFee + creatorF + referralFee == 0) {
+            _sendETH(msg.sender, netProceeds);
+            return;
         }
+
+        emit FeesDistributed(platformFeeReceiver, platformFee, creator, creatorF, referrer, referralFee);
 
         _sendETH(platformFeeReceiver, platformFee);
         _sendETH(creator, creatorF);
         _sendETH(referrer, referralFee);
         _sendETH(msg.sender, netProceeds);
-
-        return netProceeds;
     }
 
     function _sendETH(address recipient, uint256 amount) internal {

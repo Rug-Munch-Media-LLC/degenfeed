@@ -40,6 +40,17 @@ contract WrappedTokenBridge {
         uint256 threshold;
     }
 
+    /// @notice Full bridge attestation payload. The guardian signatures commit
+    ///         to EVERY field of this struct via the computed VAA hash.
+    struct BridgeAttestation {
+        uint16 emitterChainId;
+        bytes32 emitterAddress;
+        bytes32 solanaMint;
+        address recipient;
+        uint256 amount;
+        uint64 sequence;
+    }
+
     // ── State ──────────────────────────────────────────────────────────
 
     address public owner;
@@ -49,6 +60,13 @@ contract WrappedTokenBridge {
 
     /// @notice Active guardian set (Wormhole guardians or our own)
     GuardianSet public guardians;
+
+    /// @notice Trusted VAA emitter (Wormhole chain id of the source chain, e.g. 1 = Solana)
+    uint16 public trustedEmitterChain;
+
+    /// @notice Trusted VAA emitter address (32-byte left-padded program/address).
+    /// @dev Zero until the owner configures it — minting is disabled until then.
+    bytes32 public trustedEmitter;
 
     /// @notice Nonce to prevent replay attacks
     uint256 public nonce;
@@ -94,6 +112,7 @@ contract WrappedTokenBridge {
     event BridgeFeeUpdated(uint256 oldFee, uint256 newFee);
     event EmergencyModeSet(bool enabled);
     event GuardianSetUpdated(uint256 newThreshold, uint256 guardianCount);
+    event TrustedEmitterSet(uint16 chainId, bytes32 emitter);
 
     // ── Modifiers ──────────────────────────────────────────────────────
 
@@ -158,39 +177,67 @@ contract WrappedTokenBridge {
 
     // ── Mint (Bridge from Solana → Base) ──────────────────────────────
 
+    /// @notice Domain separator for VAA hash binding. Prevents cross-protocol
+    ///         signature replay: guardians sign hashes that only authenticate
+    ///         mint intents for THIS bridge.
+    bytes32 public constant VAA_DOMAIN = keccak256("DegenFeedWrappedTokenBridge.v1");
+
     /**
-     * @notice Mint wrapped tokens based on a verified VAA.
-     * @param solanaMint The Solana token mint address.
-     * @param recipient Who receives the wrapped tokens.
-     * @param amount Amount to mint (in 18-decimal units).
-     * @param vaaHash The VAA hash that proves the burn on Solana.
-     * @param vaaSignature Guardian signatures for verification.
+     * @notice Mint wrapped tokens based on guardian-signed bridge attestation.
+     *
+     * Security model (fixes the 2026-08 audit findings):
+     *  - The VAA hash is COMPUTED from the full payload (emitter chain/address,
+     *    mint, recipient, amount, sequence) — callers cannot supply an
+     *    unbound hash, so signatures cryptographically commit to every field.
+     *  - Signatures are only valid for the trusted emitter (set by owner).
+     *  - Signers are deduplicated: one guardian signing twice no longer
+     *    satisfies a multi-sig threshold.
+     *  - The hash is marked used BEFORE the external mint call (CEI).
+     *
+     * @param attestation Full bridge payload (emitter, mint, recipient, amount, sequence).
+     * @param signatures Guardian signatures over the computed VAA hash.
      */
     function mintWrapped(
-        bytes32 solanaMint,
-        address recipient,
-        uint256 amount,
-        bytes32 vaaHash,
-        bytes[] calldata vaaSignature
+        BridgeAttestation calldata attestation,
+        bytes[] calldata signatures
     ) external notPaused {
-        require(recipient != address(0), "Invalid recipient");
-        require(amount > 0, "Amount must be > 0");
+        require(attestation.recipient != address(0), "Invalid recipient");
+        require(attestation.amount > 0, "Amount must be > 0");
+        require(
+            trustedEmitter != bytes32(0) &&
+                attestation.emitterChainId == trustedEmitterChain &&
+                attestation.emitterAddress == trustedEmitter,
+            "Untrusted emitter"
+        );
+
+        // Bind the guardian signatures to the FULL payload — no caller-supplied hash.
+        bytes32 vaaHash = keccak256(
+            abi.encode(
+                VAA_DOMAIN,
+                attestation.emitterChainId,
+                attestation.emitterAddress,
+                attestation.solanaMint,
+                attestation.recipient,
+                attestation.amount,
+                attestation.sequence
+            )
+        );
         require(!_isVaaUsed(vaaHash), "VAA already used");
 
-        // Verify guardian signatures
-        require(_verifySignatures(vaaHash, vaaSignature), "Invalid signatures");
-
-        TokenImplementation storage tokenImpl = wrappedTokens[solanaMint];
+        TokenImplementation storage tokenImpl = wrappedTokens[attestation.solanaMint];
         require(tokenImpl.initialized, "Token not registered");
 
-        WrappedERC20(tokenImpl.tokenAddress).mint(recipient, amount);
-        tokenImpl.totalSupplyLocked += amount;
-        totalValueLocked += amount;
+        require(_verifySignatures(vaaHash, signatures), "Invalid signatures");
 
+        // ── CEI: all state changes BEFORE the external mint call ────────
+        tokenImpl.totalSupplyLocked += attestation.amount;
+        totalValueLocked += attestation.amount;
         _markVaaUsed(vaaHash);
         nonce++;
 
-        emit TokensMinted(solanaMint, recipient, amount, vaaHash);
+        WrappedERC20(tokenImpl.tokenAddress).mint(attestation.recipient, attestation.amount);
+
+        emit TokensMinted(attestation.solanaMint, attestation.recipient, attestation.amount, vaaHash);
     }
 
     // ── Burn (Bridge from Base → Solana) ──────────────────────────────
@@ -206,9 +253,11 @@ contract WrappedTokenBridge {
         TokenImplementation storage tokenImpl = wrappedTokens[solanaMint];
         require(tokenImpl.initialized, "Token not registered");
 
-        WrappedERC20(tokenImpl.tokenAddress).burn(msg.sender, amount);
+        // ── CEI: all state changes BEFORE the external burn call ────────
         tokenImpl.totalSupplyLocked -= amount;
         totalValueLocked -= amount;
+
+        WrappedERC20(tokenImpl.tokenAddress).burn(msg.sender, amount);
 
         emit TokensBurned(solanaMint, msg.sender, amount);
     }
@@ -252,6 +301,15 @@ contract WrappedTokenBridge {
         emit GuardianSetUpdated(threshold, newGuardians.length);
     }
 
+    /// @notice Configure the only emitter whose VAAs can mint wrapped tokens.
+    /// @dev Minting is impossible until this is set (trustedEmitter defaults to zero).
+    function setTrustedEmitter(uint16 chainId, bytes32 emitter) external onlyOwner {
+        require(emitter != bytes32(0), "Invalid emitter");
+        trustedEmitterChain = chainId;
+        trustedEmitter = emitter;
+        emit TrustedEmitterSet(chainId, emitter);
+    }
+
     // ── Ownership ─────────────────────────────────────────────────────
 
     function transferOwnership(address newOwner) external onlyOwner {
@@ -278,7 +336,10 @@ contract WrappedTokenBridge {
         _usedVaas[vaaHash] = true;
     }
 
-    /// @dev Simplified VAA signature verification
+    /// @dev Guardian signature verification with signer deduplication.
+    ///      Each guardian may contribute AT MOST ONE valid signature — a single
+    ///      guardian repeating the same (or a malleated) signature can never
+    ///      satisfy a multi-signature threshold.
     function _verifySignatures(
         bytes32 _hash,
         bytes[] calldata signatures
@@ -286,11 +347,27 @@ contract WrappedTokenBridge {
         if (signatures.length < guardians.threshold) return false;
 
         address[] memory guardianSet = guardians.guardians;
+        uint256 guardianCount = guardianSet.length;
         uint256 validCount = 0;
+        address[] memory seenSigners = new address[](signatures.length);
 
         for (uint256 i = 0; i < signatures.length && validCount < guardians.threshold; i++) {
             address signer = _recoverSigner(_hash, signatures[i]);
-            for (uint256 j = 0; j < guardianSet.length; j++) {
+            if (signer == address(0)) continue;
+
+            // ── Dedup: reject a signer already counted in this proof ────
+            bool duplicate = false;
+            for (uint256 k = 0; k < i; k++) {
+                if (seenSigners[k] == signer) {
+                    duplicate = true;
+                    break;
+                }
+            }
+            if (duplicate) continue;
+            seenSigners[i] = signer;
+
+            // ── Count only if the signer is a guardian ──────────────────
+            for (uint256 j = 0; j < guardianCount; j++) {
                 if (guardianSet[j] == signer) {
                     validCount++;
                     break;
@@ -301,7 +378,9 @@ contract WrappedTokenBridge {
         return validCount >= guardians.threshold;
     }
 
-    /// @dev ECDSA signature recovery
+    /// @dev ECDSA signature recovery. Rejects non-canonical (high-s)
+    ///      signatures so malleated variants cannot be used to sidestep
+    ///      signature-level dedup or replay checks.
     function _recoverSigner(bytes32 _hash, bytes memory signature) internal pure returns (address) {
         require(signature.length == 65, "Invalid signature length");
         bytes32 r;
@@ -313,7 +392,12 @@ contract WrappedTokenBridge {
             v := byte(0, mload(add(signature, 96)))
         }
         if (v < 27) v += 27;
-        return ecrecover(_hash, v, r, s);
+        require(v == 27 || v == 28, "Invalid signature v");
+        // Lower half of the secp256k1 group order — canonical s values only.
+        require(uint256(s) <= 0x7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF5D576E7357A4501DDFE92F46681B20A0, "High-s signature");
+        address recovered = ecrecover(_hash, v, r, s);
+        require(recovered != address(0), "Invalid signature");
+        return recovered;
     }
 }
 

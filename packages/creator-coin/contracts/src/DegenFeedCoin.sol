@@ -484,13 +484,9 @@ contract DegenFeedCoin {
         require(_balances[buyer] + tokens + streakBonus <= (TOTAL_SUPPLY * 15) / 100, "Max holder 15%");
         require(_totalSupply + tokens + streakBonus <= TOTAL_SUPPLY, "Exceeds supply");
 
-        // Fees
-        uint256 platformFee = (amount * platformFeeBps) / 10000;
-        uint256 creatorFee  = (amount * creatorFeeBps) / 10000;
-        uint256 referralFee = (referrer_ != address(0) && referrer_ != address(this))
-            ? (amount * REFERRAL_FEE_BPS) / 10000 : 0;
-
-        uint256 totalFees = platformFee + creatorFee + referralFee;
+        // Fees (individual fee splits are recomputed in _settleBuyFees —
+        // keeping only the totals here avoids a codegen stack-too-deep).
+        uint256 totalFees = _totalBuyFees(amount, referrer_);
         require(totalFees <= amount, "Fees exceed purchase");
         uint256 netProceeds = amount - totalFees;
         require(netProceeds > 0, "Fees consume purchase");
@@ -521,15 +517,41 @@ contract DegenFeedCoin {
         }
 
         emit Trade(buyer, true, tokens + streakBonus, amount, block.timestamp);
-        if (totalFees > 0) {
-            emit FeesDistributed(platformFeeReceiver, platformFee, owner, creatorFee, referrer_, referralFee);
-        }
+
+        // ── CEI: graduation state transition BEFORE external fee sends ──
+        _checkGraduation();
+
+        _settleBuyFees(amount, referrer_);
+
+        return tokens + streakBonus;
+    }
+
+    /// @dev Total fees charged on a buy: platform + creator + referral.
+    function _totalBuyFees(uint256 amount, address referrer_) internal view returns (uint256) {
+        uint256 platformFee = (amount * platformFeeBps) / 10000;
+        uint256 creatorFee = (amount * creatorFeeBps) / 10000;
+        uint256 referralFee = (referrer_ != address(0) && referrer_ != address(this))
+            ? (amount * REFERRAL_FEE_BPS) / 10000
+            : 0;
+        return platformFee + creatorFee + referralFee;
+    }
+
+    /// @dev Emit the fee-split event and transfer each fee to its receiver.
+    ///      Split out of _buy into its own frame (stack depth) — the splits
+    ///      are deterministic recomputations of _totalBuyFees.
+    function _settleBuyFees(uint256 amount, address referrer_) internal {
+        uint256 platformFee = (amount * platformFeeBps) / 10000;
+        uint256 creatorFee = (amount * creatorFeeBps) / 10000;
+        uint256 referralFee = (referrer_ != address(0) && referrer_ != address(this))
+            ? (amount * REFERRAL_FEE_BPS) / 10000
+            : 0;
+        uint256 totalFees = platformFee + creatorFee + referralFee;
+        if (totalFees == 0) return;
+
+        emit FeesDistributed(platformFeeReceiver, platformFee, owner, creatorFee, referrer_, referralFee);
 
         _sendFee(platformFeeReceiver, platformFee);
         _sendFee(owner, creatorFee);
-        _checkGraduation();
-
-        return tokens + streakBonus;
     }
 
     // ── Sell ───────────────────────────────────────────────────────────
@@ -542,26 +564,44 @@ contract DegenFeedCoin {
         require(ethAmount >= minOut, "Slippage exceeded");
         require(address(this).balance >= ethAmount, "Insufficient ETH in curve");
 
-        uint256 platformFee = (ethAmount * platformFeeBps) / 10000;
-        uint256 creatorFee  = (ethAmount * creatorFeeBps) / 10000;
-        uint256 referralFee = (referrer != address(0)) ? (ethAmount * REFERRAL_FEE_BPS) / 10000 : 0;
-        uint256 totalFees = platformFee + creatorFee + referralFee;
-        uint256 netProceeds = ethAmount - totalFees;
+        uint256 netProceeds = _netSellProceeds(ethAmount);
 
         _burn(msg.sender, tokenAmount);
         totalRaised -= ethAmount;
 
         emit Trade(msg.sender, false, tokenAmount, netProceeds, block.timestamp);
-        if (totalFees > 0) {
-            emit FeesDistributed(platformFeeReceiver, platformFee, owner, creatorFee, referrer, referralFee);
+
+        _settleSellFees(ethAmount, netProceeds);
+
+        return netProceeds;
+    }
+
+    /// @dev ETH owed to the seller after platform/creator/referral fees.
+    function _netSellProceeds(uint256 ethAmount) internal view returns (uint256) {
+        uint256 totalFees = ((ethAmount * platformFeeBps) / 10000)
+            + ((ethAmount * creatorFeeBps) / 10000)
+            + (referrer != address(0) ? (ethAmount * REFERRAL_FEE_BPS) / 10000 : 0);
+        return ethAmount - totalFees;
+    }
+
+    /// @dev Emit the fee-split event and distribute sell proceeds.
+    ///      Split out of sell into its own frame (stack depth).
+    function _settleSellFees(uint256 ethAmount, uint256 netProceeds) internal {
+        uint256 platformFee = (ethAmount * platformFeeBps) / 10000;
+        uint256 creatorFee = (ethAmount * creatorFeeBps) / 10000;
+        uint256 referralFee = (referrer != address(0)) ? (ethAmount * REFERRAL_FEE_BPS) / 10000 : 0;
+        uint256 totalFees = platformFee + creatorFee + referralFee;
+        if (totalFees == 0) {
+            _sendFee(msg.sender, netProceeds);
+            return;
         }
+
+        emit FeesDistributed(platformFeeReceiver, platformFee, owner, creatorFee, referrer, referralFee);
 
         _sendFee(platformFeeReceiver, platformFee);
         _sendFee(owner, creatorFee);
         _sendFee(referrer, referralFee);
         _sendFee(msg.sender, netProceeds);
-
-        return netProceeds;
     }
 
     // ── Fee Helper ─────────────────────────────────────────────────────
