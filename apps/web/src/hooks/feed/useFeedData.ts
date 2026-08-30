@@ -144,6 +144,11 @@ export function useFeedData({
         );
         const data = swrResult.data;
         const feed = data.data ?? [];
+        // Upstream failures can arrive as 200-with-meta.errors (bridge
+        // "all providers returned empty" notices) OR as non-2xx statuses
+        // (fetchWithSwr throws on those). Either way we must NOT show a
+        // bare "empty" state for a feed that actually errored.
+        const metaErrors = data.meta?.errors;
 
         if (checkOnly && feed.length > 0 && feed[0]?.id !== lastPostIdRef.current) {
           setNewAvailable(true);
@@ -155,7 +160,17 @@ export function useFeedData({
         }
         setPosts(feed);
         setFeedMeta(data.meta || {});
-        setState(feed.length ? 'loaded' : 'empty');
+        if (feed.length > 0) {
+          setState('loaded');
+          setError(metaErrors && metaErrors.length > 0 ? metaErrors[0] : undefined);
+        } else if (metaErrors && metaErrors.length > 0) {
+          // Real failure — surface the error state instead of a fake "empty".
+          setState('error');
+          setError(metaErrors[0]);
+        } else {
+          setState('empty');
+          setError(undefined);
+        }
 
         if (swrResult.stale) {
           setError('Showing cached results. Updating…');

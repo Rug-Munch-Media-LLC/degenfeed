@@ -99,6 +99,9 @@ export {
 
 // ─── NIP-17 (Sealed Direct Messages) ──────────────────────────────────
 
+import { getPublicKey, signEvent } from './event';
+import { RelayPool } from './relay';
+
 /**
  * NIP-17 encrypted direct message type.
  */
@@ -126,14 +129,60 @@ export interface Nip17PublishResult {
 }
 
 /**
- * Publish a NIP-17 sealed direct message.
- * This is a stub — full implementation depends on relay connectivity.
+ * Publish a NIP-17 sealed direct message to the given relays.
+ *
+ * The event content is expected to be pre-encrypted by the caller
+ * (nip17Encrypt / nip44). Transport is real: the event is signed and
+ * fanned out to every relay via RelayPool. Resolves with the event id
+ * once at least one relay acks (OK) or after a 5s cap so a dead relay
+ * never hangs the caller.
  */
 export async function publishNip17(
-  _message: Nip17Message,
-  _options: Nip17PublishOptions,
+  message: Nip17Message,
+  options: Nip17PublishOptions,
 ): Promise<Nip17PublishResult> {
-  throw new Error('NIP-17: not yet implemented in this environment');
+  if (!options.relays || options.relays.length === 0) {
+    throw new Error('NIP-17 publish requires at least one relay');
+  }
+  if (!options.privateKey) {
+    throw new Error('NIP-17 publish requires a private key');
+  }
+  const pool = new RelayPool(options.relays, {
+    connectTimeout: 5000,
+    maxReconnects: 1,
+    logLevel: 'warn',
+  });
+  try {
+    const pubkey = getPublicKey(options.privateKey);
+    const signed = signEvent(
+      {
+        pubkey,
+        created_at: message.created_at ?? Math.floor(Date.now() / 1000),
+        kind: message.kind,
+        tags: message.tags ?? [],
+        content: message.content,
+      },
+      options.privateKey,
+    );
+
+    await new Promise<void>((resolve) => {
+      const timer = setTimeout(resolve, 5000);
+      pool.publish(signed, {
+        onOk: (_url, _id, success) => {
+          if (success) {
+            clearTimeout(timer);
+            resolve();
+          }
+        },
+        onError: () => {
+          // Non-fatal — other relays may still accept the event.
+        },
+      });
+    });
+    return { id: signed.id };
+  } finally {
+    pool.disconnectAll();
+  }
 }
 
 /**

@@ -8,13 +8,14 @@
 // through src/app/api/_proxy.ts (afterFiles fires before dynamic routes).
 //
 // API_PROXY_TARGET is a RUNTIME env var:
-//   - Docker:   http://degenfeed-api:3001 (api-server container, docker DNS — verified)
-//   - local dev: http://127.0.0.1:3101 (default)
+//   - Docker:   http://<bridge-host>:8787 (bridge container/host — reachable
+//     from the web container; pass as build ARG so rewrites() bake it in)
+//   - local dev: http://localhost:8787 (default — the bridge, only live feed server)
 //
 // NOTE: rewrites() is evaluated at BUILD time in standalone output, so the
 // value must also be passed as a build ARG (API_PROXY_TARGET) when building
 // the Docker image. The runtime env var alone does NOT change baked rewrites.
-const apiProxyTarget = process.env.API_PROXY_TARGET ?? 'http://degenfeed-api:3001';
+const apiProxyTarget = process.env.API_PROXY_TARGET ?? 'http://localhost:8787';
 
 const nextConfig = {
   output: process.env.CF_PAGES ? undefined : 'standalone',
