@@ -1,11 +1,7 @@
 'use client';
 
 import { createContext, type ReactNode, useCallback, useContext, useEffect, useState } from 'react';
-import {
-  createSolanaConnection,
-  transferSol,
-  transferSPLToken,
-} from '../lib/solana-spl';
+import { createSolanaConnection, transferSol, transferSPLToken } from '../lib/solana-spl';
 
 interface SolanaWalletProvider {
   isPhantom?: boolean;
@@ -125,7 +121,11 @@ export function SolanaProvider({ children }: { children: ReactNode }) {
   }, [getProvider]);
 
   const signAndSendTransaction = useCallback(
-    async (to: string, amount: number, opts?: SolanaTransferOptions): Promise<{ signature: string }> => {
+    async (
+      to: string,
+      amount: number,
+      opts?: SolanaTransferOptions,
+    ): Promise<{ signature: string }> => {
       const provider = getProvider();
       if (!provider)
         throw new Error('No Solana wallet detected. Install Phantom, Solflare, or Backpack.');
@@ -139,7 +139,7 @@ export function SolanaProvider({ children }: { children: ReactNode }) {
         publicKey: { toString: () => from },
         signTransaction: provider.signTransaction,
       };
-      const connection = createSolanaConnection();
+      const connection = await createSolanaConnection();
 
       // SPL token transfer (USDC / USDT / BONK / any mint).
       if (opts?.mint) {

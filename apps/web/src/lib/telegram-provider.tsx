@@ -7,20 +7,14 @@
  * Detects if running inside Telegram, initializes the SDK,
  * provides Telegram user info, and exposes MainButton/BackButton/HapticFeedback.
  * Falls back gracefully when running outside Telegram (normal web mode).
+ *
+ * Bundle note: `@telegram-apps/sdk` is NOT imported at module scope. It is loaded
+ * lazily (dynamic `import()`) only when the app actually runs inside a Telegram
+ * Mini App webview (detected via the `window.Telegram` / `TelegramWebviewProxy`
+ * globals injected by Telegram). Regular web visitors never fetch the SDK chunk.
  */
 
-import {
-  backButton,
-  hapticFeedback,
-  type InitData,
-  init,
-  initData,
-  mainButton,
-  miniApp,
-  popup,
-  type ThemeParams,
-  themeParams,
-} from '@telegram-apps/sdk';
+import type { InitData, ThemeParams } from '@telegram-apps/sdk';
 import {
   createContext,
   type ReactNode,
@@ -31,6 +25,9 @@ import {
   useRef,
   useState,
 } from 'react';
+
+/** Namespace type of the lazily-loaded SDK module (erased at compile time). */
+type SdkModule = typeof import('@telegram-apps/sdk');
 
 // ─── Types ─────────────────────────────────────────────────────────────
 
@@ -48,13 +45,13 @@ export interface TelegramContextValue {
   /** Current Telegram theme params */
   theme: ThemeParams | undefined;
   /** Mini App API */
-  miniApp: typeof miniApp | undefined;
+  miniApp: SdkModule['miniApp'] | undefined;
   /** MainButton API */
-  mainButton: typeof mainButton | undefined;
+  mainButton: SdkModule['mainButton'] | undefined;
   /** BackButton API */
-  backButton: typeof backButton | undefined;
+  backButton: SdkModule['backButton'] | undefined;
   /** HapticFeedback API */
-  hapticFeedback: typeof hapticFeedback | undefined;
+  hapticFeedback: SdkModule['hapticFeedback'] | undefined;
   /** Show a toast/notification (works in both Telegram and standalone modes) */
   showNotification: (text: string) => void;
   /** Close the Mini App */
@@ -72,67 +69,98 @@ export function TelegramProvider({ children }: { children: ReactNode }) {
   const [isTelegram, setIsTelegram] = useState(false);
   const [isStandalone, setIsStandalone] = useState(true);
   const [data, setData] = useState<InitData | undefined>(undefined);
-  const [miniAppApi, setMiniAppApi] = useState<typeof miniApp | undefined>(undefined);
-  const [mainButtonApi, setMainButtonApi] = useState<typeof mainButton | undefined>(undefined);
-  const [backButtonApi, setBackButtonApi] = useState<typeof backButton | undefined>(undefined);
-  const [hapticFeedbackApi, setHapticFeedbackApi] = useState<typeof hapticFeedback | undefined>(
+  const [miniAppApi, setMiniAppApi] = useState<SdkModule['miniApp'] | undefined>(undefined);
+  const [mainButtonApi, setMainButtonApi] = useState<SdkModule['mainButton'] | undefined>(
     undefined,
   );
+  const [backButtonApi, setBackButtonApi] = useState<SdkModule['backButton'] | undefined>(
+    undefined,
+  );
+  const [hapticFeedbackApi, setHapticFeedbackApi] = useState<
+    SdkModule['hapticFeedback'] | undefined
+  >(undefined);
 
   const initialized = useRef(false);
+  /** Lazily-populated SDK handles (avoid module-scope SDK import). */
+  const popupRef = useRef<SdkModule['popup'] | undefined>(undefined);
+  const themeParamsRef = useRef<SdkModule['themeParams'] | undefined>(undefined);
 
   useEffect(() => {
     if (initialized.current) return;
     initialized.current = true;
 
-    try {
-      // Initialize Telegram Mini App SDK
-      init();
+    const run = async () => {
+      try {
+        // Cheap pre-check for Telegram's injected webview globals. When absent we
+        // skip loading the SDK entirely and report standalone mode.
+        const isTelegramEnv =
+          typeof window !== 'undefined' &&
+          (!!(window as unknown as { Telegram?: { WebApp?: unknown } }).Telegram?.WebApp ||
+            !!(window as unknown as { TelegramWebviewProxy?: unknown }).TelegramWebviewProxy);
 
-      if (!miniApp.ready.isAvailable()) {
-        // Not running inside Telegram — standalone mode
+        if (!isTelegramEnv) {
+          setIsStandalone(true);
+          setIsTelegram(false);
+          setReady(true);
+          return;
+        }
+
+        // Load the SDK only when running inside a Telegram Mini App webview.
+        const sdk = await import('@telegram-apps/sdk');
+        const { backButton, hapticFeedback, init, initData, mainButton, popup, themeParams } = sdk;
+        const { miniApp } = sdk;
+        popupRef.current = popup;
+        themeParamsRef.current = themeParams;
+
+        init();
+
+        if (!miniApp.ready.isAvailable()) {
+          // Not running inside Telegram — standalone mode
+          setIsStandalone(true);
+          setIsTelegram(false);
+          setReady(true);
+          return;
+        }
+
+        // Signal Telegram that the Mini App is ready
+        miniApp.ready();
+        setMiniAppApi(miniApp);
+        setIsTelegram(true);
+        setIsStandalone(false);
+
+        // Get init data (contains user, start params, etc.)
+        const iData = initData.state();
+        setData(iData);
+
+        // Expose MainButton
+        mainButton.mount();
+        setMainButtonApi(mainButton);
+
+        // Expose BackButton
+        if (backButton.isSupported()) {
+          setBackButtonApi(backButton);
+        }
+
+        // Expose HapticFeedback
+        if (hapticFeedback.isSupported()) {
+          setHapticFeedbackApi(hapticFeedback);
+        }
+
+        // Bind Telegram theme params as CSS variables
+        if (themeParams.bindCssVars.isAvailable()) {
+          themeParams.bindCssVars();
+        }
+
+        setReady(true);
+      } catch (err) {
+        console.warn('[TelegramProvider] Failed to initialize Telegram SDK:', err);
         setIsStandalone(true);
         setIsTelegram(false);
         setReady(true);
-        return;
       }
+    };
 
-      // Signal Telegram that the Mini App is ready
-      miniApp.ready();
-      setMiniAppApi(miniApp);
-      setIsTelegram(true);
-      setIsStandalone(false);
-
-      // Get init data (contains user, start params, etc.)
-      const iData = initData.state();
-      setData(iData);
-
-      // Expose MainButton
-      mainButton.mount();
-      setMainButtonApi(mainButton);
-
-      // Expose BackButton
-      if (backButton.isSupported()) {
-        setBackButtonApi(backButton);
-      }
-
-      // Expose HapticFeedback
-      if (hapticFeedback.isSupported()) {
-        setHapticFeedbackApi(hapticFeedback);
-      }
-
-      // Bind Telegram theme params as CSS variables
-      if (themeParams.bindCssVars.isAvailable()) {
-        themeParams.bindCssVars();
-      }
-
-      setReady(true);
-    } catch (err) {
-      console.warn('[TelegramProvider] Failed to initialize Telegram SDK:', err);
-      setIsStandalone(true);
-      setIsTelegram(false);
-      setReady(true);
-    }
+    void run();
   }, []);
 
   const showNotification = useCallback(
@@ -140,7 +168,7 @@ export function TelegramProvider({ children }: { children: ReactNode }) {
       if (miniAppApi) {
         // In Telegram, show a popup
         try {
-          popup.open({ message: text, buttons: [{ type: 'ok' }] });
+          popupRef.current?.open({ message: text, buttons: [{ type: 'ok' }] });
           return;
         } catch {
           // fall through to alert
@@ -170,7 +198,7 @@ export function TelegramProvider({ children }: { children: ReactNode }) {
       isStandalone,
       initData: data,
       user: data?.user,
-      theme: themeParams.state(),
+      theme: themeParamsRef.current?.state(),
       miniApp: miniAppApi,
       mainButton: mainButtonApi,
       backButton: backButtonApi,
