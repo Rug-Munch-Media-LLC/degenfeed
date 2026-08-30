@@ -9,21 +9,15 @@
  * The wallet is expected to be a browser wallet adapter (Phantom / Solflare /
  * Backpack style) exposing `publicKey` + `signTransaction` — the transaction is
  * built here, signed by the wallet, and submitted via the Connection.
+ *
+ * Bundle note: `@solana/web3.js` + `@solana/spl-token` (~228KB) are intentionally
+ * NOT imported at module scope. They are loaded lazily via `await import()` only
+ * when a Solana transfer is actually executed (wallet connect / tip flow), so the
+ * shared first-load chunk stays free of the Solana stack. Only the type imports
+ * below (erased at compile time) keep the module self-describing.
  */
 
-import {
-  createTransferCheckedInstruction,
-  getAssociatedTokenAddress,
-  getMint,
-  TOKEN_PROGRAM_ID,
-} from '@solana/spl-token';
-import {
-  Connection,
-  LAMPORTS_PER_SOL,
-  PublicKey,
-  SystemProgram,
-  Transaction,
-} from '@solana/web3.js';
+import type { Connection, PublicKey, Transaction } from '@solana/web3.js';
 
 // ─── Well-known SPL mints (Solana mainnet) ────────────────────────────────
 
@@ -67,7 +61,10 @@ export function getSolanaRpcUrl(): string {
   return configured || 'https://api.mainnet-beta.solana.com';
 }
 
-export function createSolanaConnection(commitment: 'confirmed' | 'processed' = 'confirmed') {
+export async function createSolanaConnection(
+  commitment: 'confirmed' | 'processed' = 'confirmed',
+): Promise<Connection> {
+  const { Connection } = await import('@solana/web3.js');
   return new Connection(getSolanaRpcUrl(), commitment);
 }
 
@@ -80,7 +77,8 @@ export interface SolanaTransferWallet {
   ) => Promise<{ serialize(): Uint8Array } | Transaction | Uint8Array>;
 }
 
-function toPublicKey(value: PublicKey | { toString(): string } | string): PublicKey {
+async function toPublicKey(value: PublicKey | { toString(): string } | string): Promise<PublicKey> {
+  const { PublicKey } = await import('@solana/web3.js');
   return value instanceof PublicKey ? value : new PublicKey(String(value));
 }
 
@@ -88,9 +86,10 @@ function toPublicKey(value: PublicKey | { toString(): string } | string): Public
  * Serialize a signed transaction returned by a wallet adapter into bytes for
  * `sendRawTransaction`. Handles legacy Transaction and Uint8Array results.
  */
-export function serializeSignedTransaction(
+export async function serializeSignedTransaction(
   signed: { serialize(): Uint8Array } | Transaction | Uint8Array,
-): Uint8Array {
+): Promise<Uint8Array> {
+  const { Transaction } = await import('@solana/web3.js');
   if (signed instanceof Uint8Array) return signed;
   if (signed instanceof Transaction) return signed.serialize();
   return signed.serialize();
@@ -105,7 +104,10 @@ export async function transferSol(
   toAddress: string,
   amountSol: number,
 ): Promise<{ signature: string }> {
-  const fromPubkey = toPublicKey(wallet.publicKey ?? '');
+  const { LAMPORTS_PER_SOL, PublicKey, SystemProgram, Transaction } = await import(
+    '@solana/web3.js'
+  );
+  const fromPubkey = await toPublicKey(wallet.publicKey ?? '');
   const toPubkey = new PublicKey(toAddress);
   const lamports = Math.round(amountSol * LAMPORTS_PER_SOL);
 
@@ -115,7 +117,7 @@ export async function transferSol(
   );
 
   const signed = await wallet.signTransaction(tx);
-  const signature = await connection.sendRawTransaction(serializeSignedTransaction(signed), {
+  const signature = await connection.sendRawTransaction(await serializeSignedTransaction(signed), {
     preflightCommitment: 'confirmed',
   });
   return { signature };
@@ -141,7 +143,16 @@ export async function transferSPLToken(
   mintAddress: string,
   amount: number,
 ): Promise<{ signature: string }> {
-  const fromPubkey = toPublicKey(wallet.publicKey ?? '');
+  const { PublicKey, Transaction } = await import('@solana/web3.js');
+  const {
+    createAssociatedTokenAccountInstruction,
+    createTransferCheckedInstruction,
+    getAssociatedTokenAddress,
+    getMint,
+    TOKEN_PROGRAM_ID,
+  } = await import('@solana/spl-token');
+
+  const fromPubkey = await toPublicKey(wallet.publicKey ?? '');
   const mintPubkey = new PublicKey(mintAddress);
   const toPubkey = new PublicKey(toAddress);
 
@@ -159,7 +170,6 @@ export async function transferSPLToken(
   // getOrCreateAssociatedTokenAccount; the sender pays the rent).
   const toAtaInfo = await connection.getAccountInfo(toAta, 'confirmed');
   if (!toAtaInfo) {
-    const { createAssociatedTokenAccountInstruction } = await import('@solana/spl-token');
     tx.add(
       createAssociatedTokenAccountInstruction(
         fromPubkey, // payer
@@ -185,7 +195,7 @@ export async function transferSPLToken(
   );
 
   const signed = await wallet.signTransaction(tx);
-  const signature = await connection.sendRawTransaction(serializeSignedTransaction(signed), {
+  const signature = await connection.sendRawTransaction(await serializeSignedTransaction(signed), {
     preflightCommitment: 'confirmed',
   });
   return { signature };
