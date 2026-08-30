@@ -9,11 +9,19 @@ import { useCallback, useEffect, useRef, useState } from 'react';
  * when the page is ready. Green gradient to match DegenFeed brand.
  *
  * Uses DOM events emitted by `template.tsx` to coordinate start/finish.
+ *
+ * Bounded: an absolute cap (MAX_LOADING_MS) forces the bar to complete
+ * even if `df-nav-finish` is never dispatched (e.g. a route whose fetch
+ * hangs) — the bar can never crawl forever.
  */
+const MAX_LOADING_MS = 6000; // absolute cap — force complete if no finish event
+
 export function LoadingBar() {
   const [loading, setLoading] = useState(false);
   const [progress, setProgress] = useState(0);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const capRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const hideRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Reset on route change
   useEffect(() => {
@@ -21,9 +29,24 @@ export function LoadingBar() {
     setProgress(0);
   }, []);
 
+  const finish = useCallback(() => {
+    if (timerRef.current) clearInterval(timerRef.current);
+    if (capRef.current) clearTimeout(capRef.current);
+    setProgress(100);
+    if (hideRef.current) clearTimeout(hideRef.current);
+    hideRef.current = setTimeout(() => {
+      setLoading(false);
+      setProgress(0);
+    }, 200);
+  }, []);
+
   const start = useCallback(() => {
     setLoading(true);
     setProgress(0);
+
+    // Hard cap: never leave the bar crawling if finish never arrives
+    if (capRef.current) clearTimeout(capRef.current);
+    capRef.current = setTimeout(finish, MAX_LOADING_MS);
 
     // Quick ramp to ~30%, then slower to 80%
     let p = 0;
@@ -38,17 +61,7 @@ export function LoadingBar() {
       }
       setProgress(Math.min(p, 80));
     }, 150);
-  }, []);
-
-  const finish = useCallback(() => {
-    if (timerRef.current) clearInterval(timerRef.current);
-    setProgress(100);
-    // Brief pause at 100% then hide
-    setTimeout(() => {
-      setLoading(false);
-      setProgress(0);
-    }, 200);
-  }, []);
+  }, [finish]);
 
   // Listen for page-transition events emitted by template.tsx
   useEffect(() => {
@@ -60,6 +73,8 @@ export function LoadingBar() {
       window.removeEventListener('df-nav-start', onStart);
       window.removeEventListener('df-nav-finish', onFinish);
       if (timerRef.current) clearInterval(timerRef.current);
+      if (capRef.current) clearTimeout(capRef.current);
+      if (hideRef.current) clearTimeout(hideRef.current);
     };
   }, [start, finish]);
 
