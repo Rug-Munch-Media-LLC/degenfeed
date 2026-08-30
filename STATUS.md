@@ -15,17 +15,31 @@ traffic. Docker Compose is a self-hosting option, not the production path.
 
 ## Production Topology (verified 2026-08-30)
 
-| Component | Mechanism | Endpoint |
+Real 4-domain architecture:
+
+| Domain | Role | Mechanism |
 |---|---|---|
-| Web app | `degenfeed-web.service` (Next.js standalone) | 127.0.0.1:3100 |
-| Feed API | `degenfeed-bridge.service` | :8787 |
-| Auth sidecar | better-auth sidecar | 127.0.0.1:3011 |
-| TLS/routing | nginx (`deploy/nginx/`) → Cloudflare Tunnel | degenfeed.xyz, app.degenfeed.xyz, social.degenfeed.xyz |
-| Aux services | `degenfeed-aux.service` (MeiliSearch, Redlib, RSS-Bridge) | various |
+| `degenfeed.xyz` | Landing page (app `/`) | `degenfeed-web.service` (Next.js standalone) 127.0.0.1:3100 |
+| `app.degenfeed.xyz` | The app | same unit, nginx route split |
+| `social.degenfeed.xyz` | Mastodon (Elk + GoToSocial) | Docker, `degenfeed_default` network |
+| `api.degenfeed.xyz` | Feed API bridge | `degenfeed-bridge.service` :8787 |
+| TLS/routing | nginx (`deploy/nginx/`) → Cloudflare Tunnel | all 4 domains |
+
+Aux: `degenfeed-aux.service` (MeiliSearch, Redlib, RSS-Bridge), better-auth
+sidecar 127.0.0.1:3011.
 
 Deploy: `.forgejo/workflows/deploy.yml` (push to main → SSH → git reset →
-`pnpm install --frozen-lockfile` → build → `systemctl restart
-degenfeed-web` → health check). See DEPLOYMENT.md.
+`pnpm install --frozen-lockfile` → `deploy/build-standalone.sh` → `systemctl
+restart degenfeed-web` → health check). See DEPLOYMENT.md.
+
+## Static Assets (fixed 2026-08-30)
+
+Next.js standalone output does NOT include `public/` or `.next/static/` — the
+live app served no images/logos. `deploy/build-standalone.sh` now copies both
+into `apps/web/.next/standalone/apps/web/` after `pnpm --filter degenfeed
+build` and is wired into the deploy workflow. The earlier doc claim that the
+systemd unit's ExecStartPre re-links these was FALSE (no such unit file in
+repo; copies are deploy-time only).
 
 ## CI/CD State (fixed 2026-08-30)
 
@@ -52,6 +66,10 @@ degenfeed-web` → health check). See DEPLOYMENT.md.
 
 ## Known Open Items (owned elsewhere — see TODO.md)
 
+- **GoToSocial image missing**: `degenfeed/gotosocial:latest` does not exist —
+  needs a Dockerfile or upstream image (`superseriousbusiness/gotosocial:latest`)
+  + rebuild; Elk must join the `degenfeed_default` Docker network. Mastodon
+  stack (`social.degenfeed.xyz`) is DOWN until then.
 - `apps/web/Dockerfile:22` uses `pnpm install --no-frozen-lockfile` (builds
   can drift from `pnpm-lock.yaml`).
 - `workers/api/wrangler.toml:202` still carries the literal

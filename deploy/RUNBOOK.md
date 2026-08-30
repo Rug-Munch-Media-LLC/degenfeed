@@ -147,8 +147,8 @@ The helper is **dry-run by default** — it prints what it would set (name +
 fingerprint, never values) and only sends with `--apply`:
 
 ```bash
-scripts/forgejo-set-secrets.sh --repo RugMunchMedia/degenfeed-web          # dry-run
-scripts/forgejo-set-secrets.sh --repo RugMunchMedia/degenfeed-web --apply  # LIVE
+scripts/forgejo-set-secrets.sh --repo RugMunchMedia/degenfeed               # dry-run
+scripts/forgejo-set-secrets.sh --repo RugMunchMedia/degenfeed --apply       # LIVE
 ```
 
 Manual alternative: Forgejo UI → repo → Settings → Actions → Secrets → add

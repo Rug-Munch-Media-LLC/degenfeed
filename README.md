@@ -8,8 +8,8 @@
 [![Next.js](https://img.shields.io/badge/Next.js-16-000000?logo=next.js)](https://nextjs.org)
 [![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 
-**🌐 Live at [app.degenfeed.xyz](https://app.degenfeed.xyz) — no account required to browse**  
-**📖 Docs: [docs.degenfeed.xyz](https://docs.degenfeed.xyz)**  
+**🌐 Live at [app.degenfeed.xyz](https://app.degenfeed.xyz) — no account required to browse**
+**📖 Docs: [docs.degenfeed.xyz](https://docs.degenfeed.xyz)**
 **🏠 Self-host: `docker compose up -d`** (production itself runs as a systemd standalone service — see [DEPLOYMENT.md](DEPLOYMENT.md))
 
 > *"DegenFeed exists to unify the fragmented decentralized social web. We don't own your content — we give you the tools to own it yourself."*
@@ -147,18 +147,22 @@
 
 ## Architecture
 
+**Real 4-domain topology (2026-08-30):**
+
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
-│                      EXTERNAL LAYER                                  │
-│  social.degenfeed.xyz  │  pds.degenfeed.xyz  │  video.degenfeed.xyz  │
-│  (GoToSocial)          │  (AT Protocol PDS)  │  (PeerTube)           │
-│  redlib.degenfeed.xyz  │  rss-bridge.xyz     │  chat.degenfeed.xyz   │
-│  (Redlib)              │  (RSS-Bridge)       │  (Prosody XMPP)       │
+│                      PUBLIC DOMAINS (nginx → Cloudflare Tunnel)      │
+│  degenfeed.xyz        → landing page (app `/`)                       │
+│  app.degenfeed.xyz    → the app                                      │
+│  social.degenfeed.xyz → Mastodon: Elk + GoToSocial (Docker,          │
+│                         degenfeed_default network)                   │
+│  api.degenfeed.xyz    → feed API bridge (:8787)                      │
 ├─────────────────────────────────────────────────────────────────────┤
 │                APP LAYER (self-hosted, systemd — LIVE)               │
-│  degenfeed.xyz + app.degenfeed.xyz (nginx)                           │
-│   → degenfeed-web.service   (Next.js 16 standalone, 127.0.0.1:3100)  │
-│   → degenfeed-bridge.service (feed API, :8787 — 11 providers)        │
+│  degenfeed-web.service   (Next.js 16 standalone, 127.0.0.1:3100)     │
+│   runs from apps/web/.next/standalone — deploy copies public/ +      │
+│   .next/static into it (deploy/build-standalone.sh)                  │
+│  degenfeed-bridge.service (feed API, :8787 — 11 providers)           │
 │  Cloudflare Workers/Pages: RETIRED 2026-08-04 (edge → self-hosted)   │
 ├─────────────────────────────────────────────────────────────────────┤
 │                      PACKAGES LAYER (43+)                            │
@@ -169,6 +173,16 @@
 │  Bridge SDKs     │  Matrix Bridge  │  Spaces       │  Monetization   │
 └─────────────────────────────────────────────────────────────────────┘
 ```
+
+> **Mastodon stack status:** `social.degenfeed.xyz` is currently DOWN — the
+> `degenfeed/gotosocial:latest` image is missing (needs a Dockerfile or an
+> upstream image switch) and Elk requires the `degenfeed_default` Docker
+> network. See DEPLOYMENT.md.
+
+> **Repo naming:** the production checkout directory is `degenfeed-web`
+> (`/srv/work/repos/degenfeed-web`) but the git repo / pnpm package is
+> `degenfeed` (`pnpm --filter degenfeed build`). Same repo — don't create a
+> second checkout.
 
 See [ARCHITECTURE.md](ARCHITECTURE.md) for the full architecture documentation.
 
