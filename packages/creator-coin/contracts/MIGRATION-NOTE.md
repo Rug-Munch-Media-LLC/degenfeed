@@ -30,6 +30,15 @@ in a social-feed repo, but they were intentionally **not** moved to `contextcryp
 > (`packages/creator-coin/src/evm/*`) remains self-contained — it embeds the ABI and
 > bytecode as constants, so `pnpm build` / `apps/web` are unaffected. To recompile the
 > Solidity source, restore the Foundry tooling (or wait for the dedicated contracts repo).
+>
+> Test impact (2026-08-30): the vitest drift-guard in
+> `src/__tests__/degenfeed-coin-v4.test.ts` ("bytecode matches the compiled Foundry
+> artifact") now **skips** when `contracts/out/DegenFeedCoinV4.sol/DegenFeedCoinV4.json`
+> is absent, instead of failing the suite. When the contracts are rebuilt out-of-repo
+> and the artifact is dropped back in, the drift-guard re-activates automatically and
+> fails if `src/evm/degenfeed-coin-v4.ts` is stale. The remaining tests in that file
+> (ABI shape, constructor inputs, read-ABI coverage, bytecode well-formedness) run
+> unconditionally against the embedded constants.
 
 ### Other crypto-adjacent items a human should decide on
 - `packages/zora-sdk/foundry.toml` — stray Foundry config in a social SDK (no Solidity source).
