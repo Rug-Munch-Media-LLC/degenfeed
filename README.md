@@ -329,11 +329,11 @@ DegenFeed is open source. You can inspect, fork, and self-host every line of cod
 | [docs/BLOG.md](docs/BLOG.md) | Launch announcement — why we built it, technical deep dive, roadmap |
 | [docs/PRESS.md](docs/PRESS.md) | Press kit — logos, metrics, founder info, contact |
 | [docs/README.md](docs/README.md) | Full documentation index with links to every doc |
-| [DEPLOYMENT.md](DEPLOYMENT.md) | Cloudflare Pages + Workers deployment guide |
+| [DEPLOYMENT.md](DEPLOYMENT.md) | Self-hosted deployment guide (systemd standalone; Workers/Pages retired) |
 | [PRODUCT.md](PRODUCT.md) | Product charter, mission, and goals |
 | [ROADMAP.md](ROADMAP.md) | Next 90 days of feature development |
 | [CHANGELOG.md](CHANGELOG.md) | Release history and version notes |
-| [CLOUDFLARE.md](CLOUDFLARE.md) | Cloudflare-specific configuration and KV setup |
+| [CLOUDFLARE.md](CLOUDFLARE.md) | Historical Cloudflare Workers/Pages config (retired 2026-08-04) |
 | [TESTING.md](TESTING.md) | Testing strategy: unit, integration, E2E, visual regression |
 | [SECURITY.md](SECURITY.md) | Security policy and vulnerability reporting |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | How to contribute code, docs, and bug reports |
