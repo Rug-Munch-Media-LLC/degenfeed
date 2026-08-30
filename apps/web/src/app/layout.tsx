@@ -68,9 +68,9 @@ export const metadata: Metadata = {
   applicationName: 'DegenFeed',
   category: 'social',
   icons: {
-    icon: '/degenfeedlogo.png',
-    shortcut: '/favicon.ico',
-    apple: '/icon-192.png',
+    icon: '/avatar.jpg',
+    shortcut: '/avatar.jpg',
+    apple: '/avatar.jpg',
   },
   metadataBase: new URL('https://app.degenfeed.xyz'),
   title: {
@@ -187,8 +187,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <meta name="apple-mobile-web-app-title" content="DegenFeed" />
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="application-name" content="DegenFeed" />
-        <link rel="icon" href="/favicon-32.png" type="image/png" />
-        <link rel="apple-touch-icon" href="/icon-192.png" />
+        <link rel="icon" href="/avatar.jpg" type="image/jpeg" />
+        <link rel="apple-touch-icon" href="/avatar.jpg" />
         <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon" />
         <link rel="apple-touch-icon" href="/icon-192.png" />
         <link
