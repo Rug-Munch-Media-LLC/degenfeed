@@ -1,24 +1,41 @@
 /**
  * @degenfeed/web — Shared proxy helper for worker/bridge API routes.
  *
- * Forwards requests to the self-hosted API using WORKER_URL.
- * Automatically injects BRIDGE_API_KEY so the API can authenticate.
+ * Forwards requests to the self-hosted API / bridge using WORKER_URL.
  *
- * Environment variable priority for WORKER_URL:
+ * Auth contract:
+ *   - The caller's real user `Authorization` (session token) is forwarded
+ *     UNTOUCHED so user-scoped feeds (for-you, following) can identify the
+ *     caller — it is never overwritten.
+ *   - The bridge's own key (BRIDGE_API_KEY) is sent on a SEPARATE internal
+ *     header `X-Bridge-Api-Key`, which infra (nginx) maps to
+ *     `Authorization: Bearer <key>` when forwarding to the bridge.
+ *   - Backward-compat shim: when the request carries NO user Authorization
+ *     (the common anonymous feed case), we set `Authorization: Bearer <key>`
+ *     so the current bridge auth gate (which only reads Authorization)
+ *     accepts the request without infra changes.
+ *
+ * Environment variable priority for the upstream URL:
  *   1. WORKER_URL
- *   2. NEXT_PUBLIC_WORKER_URL
- *   3. NEXT_PUBLIC_API_BASE
- *   4. NEXT_PUBLIC_API_URL
- *   5. http://host.docker.internal:3101 (fallback — self-hosted API on host)
+ *   2. API_PROXY_TARGET
+ *   3. BRIDGE_URL
+ *   4. NEXT_PUBLIC_WORKER_URL
+ *   5. NEXT_PUBLIC_API_BASE
+ *   6. NEXT_PUBLIC_API_URL
+ *   7. http://localhost:8787 (default — the bridge, the only live feed server)
  */
+
+import { createHash } from 'node:crypto';
 
 function resolveWorkerUrl(): string {
   return (
     process.env.WORKER_URL ??
+    process.env.API_PROXY_TARGET ??
+    process.env.BRIDGE_URL ??
     process.env.NEXT_PUBLIC_WORKER_URL ??
     process.env.NEXT_PUBLIC_API_BASE ??
     process.env.NEXT_PUBLIC_API_URL ??
-    'http://host.docker.internal:3101'
+    'http://localhost:8787'
   );
 }
 
@@ -39,8 +56,33 @@ interface ProxyCacheEntry {
 
 const proxyCache = new Map<string, ProxyCacheEntry>();
 
-function proxyCacheKey(workerPath: string, url: URL): string {
-  return `${workerPath}${url.search}`;
+/**
+ * User/session scope used to isolate cached responses: the Authorization
+ * header plus the Cookie header. Two users with different sessions can
+ * request the same URL but MUST NOT share a cached feed entry (fixes
+ * cross-user feed leakage for user-scoped for-you/following feeds).
+ * Hashed so raw session material never appears in cache keys or logs.
+ */
+function userScopeHash(request: Request): string {
+  const auth = request.headers.get('authorization') ?? '';
+  const cookie = request.headers.get('cookie') ?? '';
+  if (!auth && !cookie) return 'anon';
+  try {
+    return createHash('sha256').update(`${auth}\n${cookie}`).digest('hex').slice(0, 16);
+  } catch {
+    // Non-crypto FNV-1a fallback (32-bit) — never throws, safe on any runtime.
+    let h = 0x811c9dc5;
+    const s = `${auth}\n${cookie}`;
+    for (let i = 0; i < s.length; i += 1) {
+      h ^= s.charCodeAt(i);
+      h = Math.imul(h, 0x01000193);
+    }
+    return `fnv${(h >>> 0).toString(16)}`;
+  }
+}
+
+function proxyCacheKey(workerPath: string, url: URL, request: Request): string {
+  return `${workerPath}${url.search}|u=${userScopeHash(request)}`;
 }
 
 /** Drop expired entries and, if still at capacity, evict the soonest-expiring one. */
@@ -61,37 +103,50 @@ function evictProxyCacheIfNeeded(): void {
 }
 
 /**
- * Extract auth/session headers from the incoming request to forward to the worker.
- * Also injects BRIDGE_API_KEY for bridge-level auth (from server env).
+ * Extract auth/session headers from the incoming request to forward to the
+ * upstream. The user's real `Authorization` is preserved; the bridge key is
+ * sent separately as `X-Bridge-Api-Key` (never overwrites the user token).
+ * When no user token is present, `Authorization` falls back to the bridge key
+ * so the current bridge auth gate still accepts anonymous requests.
  */
 function forwardHeaders(request: Request): Record<string, string> {
   const headers: Record<string, string> = {};
   const cookie = request.headers.get('cookie');
   if (cookie) headers.Cookie = cookie;
+
+  // Real user session token — forwarded untouched for user-scoped feeds.
   const auth = request.headers.get('authorization');
   if (auth) headers.Authorization = auth;
+
   const csrf = request.headers.get('x-csrf-token');
   if (csrf) headers['X-CSRF-Token'] = csrf;
   const forwardedFor = request.headers.get('x-forwarded-for');
   if (forwardedFor) headers['X-Forwarded-For'] = forwardedFor;
-  // Inject bridge API key for local bridge auth (from server env)
+
+  // Bridge-level auth on a SEPARATE internal header (infra maps it to
+  // Authorization for the bridge auth gate).
   const bridgeKey = process.env.BRIDGE_API_KEY;
-  if (bridgeKey) headers.Authorization = `Bearer ${bridgeKey}`;
+  if (bridgeKey) headers['X-Bridge-Api-Key'] = bridgeKey;
+
+  // Backward-compat: anonymous requests authenticate to the bridge directly.
+  if (!auth && bridgeKey) headers.Authorization = `Bearer ${bridgeKey}`;
+
   return headers;
 }
 
 /**
  * Proxy a GET request to the worker backend.
  * Preserves query parameters from the incoming request.
- * Caches successful responses for 30s (skipped when the request carries a
- * real user Authorization header, since those may be user-scoped).
+ * Caches successful responses for 30s, keyed by path + query + user session
+ * (skipped entirely when the request carries a real user Authorization
+ * header, since those may be personalized).
  */
 export async function proxyGet(workerPath: string, request: Request): Promise<Response> {
   const base = resolveWorkerUrl();
   const url = new URL(request.url);
   const cacheable = !request.headers.get('authorization');
 
-  const key = proxyCacheKey(workerPath, url);
+  const key = proxyCacheKey(workerPath, url, request);
 
   // Serve from cache if fresh
   if (cacheable) {

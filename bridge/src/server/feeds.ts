@@ -104,7 +104,24 @@ import {
 } from '../reliability/register-all';
 import { deadLetterQueue } from '../reliability/retry';
 import { feedCache } from './response-cache';
+
 export { getSeedContent } from './seed-content';
+
+// ─── Feed-core / ranking integration ─────────────────────────────────────
+// The aggregation/ranking logic in @degenfeed/feed-core (diversity, quality)
+// and @degenfeed/ranking (unified scorer) was previously orphaned — buildFeed
+// only deduped + interleaved. These imports wire the real pipeline in:
+//   - scorePost() (ranking) scores every post on 8 factors (recency,
+//     engagement, relevance, quality, reputation, diversity, source, velocity)
+//   - rankWithDiversity() (feed-core) orders the scored pool with
+//     protocol/category/creator rotation via greedy slot-filling
+import {
+  DEFAULT_DIVERSITY_CONFIG,
+  type DiversityConfig,
+  rankWithDiversity,
+} from '@degenfeed/feed-core';
+import { scorePost } from '@degenfeed/ranking';
+import type { UnifiedPost as CoreUnifiedPost } from '@degenfeed/types';
 import type { UnifiedPost } from './types';
 
 interface ProviderEntry {
@@ -990,6 +1007,112 @@ export function dedupeAndInterleave(
   return interleaved;
 }
 
+// ─── Feed-core / ranking adapter ────────────────────────────────────────
+
+/**
+ * Bridge posts (server/types.ts) are structurally compatible with
+ * @degenfeed/types UnifiedPost on every field the scoring pipeline reads
+ * (id, protocol as string, author, text, createdAt, metrics, embeds, niches),
+ * except: bridge `protocol` is a plain string, bridge identities have no
+ * required `verified` array, and bridge embed kinds are plain strings.
+ *
+ * The adapter normalizes exactly those three fields so the scorers never
+ * crash on missing data (computeAuthorReputation reads author.verified.length
+ * unconditionally) and the rest is bridged with a localized cast.
+ */
+type CorePost = CoreUnifiedPost;
+
+function toCorePost(p: UnifiedPost): CorePost {
+  return {
+    ...p,
+    protocol: p.protocol as CorePost['protocol'],
+    author: {
+      ...p.author,
+      verified: (p.author as { verified?: CorePost['author']['verified'] }).verified ?? [],
+    },
+    embeds: (p.embeds ?? []).map((e) => ({
+      ...e,
+      kind: e.kind as CorePost['embeds'][number]['kind'],
+    })),
+  } as unknown as CorePost;
+}
+
+function fromCorePost(p: CorePost): UnifiedPost {
+  return p as unknown as UnifiedPost;
+}
+
+/**
+ * Rank a deduped pool with the feed-core/ranking pipeline.
+ *
+ * - Every post is scored with scorePost() (@degenfeed/ranking, standard mode);
+ *   the PostScore breakdown is attached to the post for the "Why this post?"
+ *   UI (serialized through the API).
+ * - Single-protocol pools are ranked purely by score (volume over diversity,
+ *   matching the bridge's single-source exemption in dedupeAndInterleave).
+ * - Multi-protocol pools are ordered by rankWithDiversity() with total caps
+ *   scaled to the pool size so the diversity constraints reorder but never
+ *   drop posts that the old interleave would have kept.
+ *
+ * Any scoring error is swallowed per-post (neutral 0.5 score) and a total
+ * failure falls back to the input order — the feed must never regress to
+ * empty because ranking broke.
+ */
+function rankFeedWithCore(
+  posts: UnifiedPost[],
+  _limit: number,
+): { posts: UnifiedPost[]; scored: number; total: number } {
+  if (posts.length <= 1) return { posts, scored: 0, total: posts.length };
+  const now = Date.now();
+
+  const corePosts: CorePost[] = [];
+  const scores = new Map<string, number>();
+  let scored = 0;
+
+  for (const p of posts) {
+    const core = toCorePost(p);
+    try {
+      const { total, breakdown } = scorePost(core, { mode: 'standard', now });
+      scores.set(p.id, total);
+      // Attach the breakdown so the frontend can render ranking transparency.
+      (core as unknown as { score?: unknown }).score = breakdown;
+      scored++;
+    } catch {
+      scores.set(p.id, 0.5); // neutral — never let scoring break the feed
+    }
+    corePosts.push(core);
+  }
+
+  try {
+    const protocols = new Set(posts.map((p) => p.protocol));
+    if (protocols.size <= 1) {
+      // Single-protocol: pure score ordering, no diversity caps.
+      const ordered = [...corePosts].sort(
+        (a, b) => (scores.get(b.id) ?? 0) - (scores.get(a.id) ?? 0),
+      );
+      return { posts: ordered.map(fromCorePost), scored, total: posts.length };
+    }
+
+    const n = posts.length;
+    const config: DiversityConfig = {
+      ...DEFAULT_DIVERSITY_CONFIG,
+      // Keep the bridge's existing interleave cap (MAX_CONSECUTIVE_SAME_PROTOCOL).
+      maxConsecutiveProtocol: MAX_CONSECUTIVE_SAME_PROTOCOL,
+      // Scale the hard total caps to the pool so diversity reorders but never
+      // drops volume the old interleave would have kept.
+      maxTotalCategory: Math.max(8, n),
+      maxTotalCreator: Math.max(4, n),
+      maxTotalProtocol: Math.max(6, n),
+      // No viewer context server-side — serendipity/filter-bubble off.
+      serendipityFraction: 0,
+      filterBubbleFraction: 0,
+    };
+    const ranked = rankWithDiversity(corePosts, scores, { config });
+    return { posts: ranked.map(fromCorePost), scored, total: posts.length };
+  } catch {
+    return { posts, scored: 0, total: posts.length };
+  }
+}
+
 export async function buildFeed(
   protocols: string[],
   limit: number,
@@ -1221,14 +1344,15 @@ async function buildFeedInternal(
     if (notice) notices.push(`${protocol}: ${notice}`);
   }
 
-  for (const [protocol, count] of Object.entries(perProtocol))
-    // console.log(`[bridge] ${protocol}: ${count} posts`);
+  // console.log(`[bridge] ${protocol}: ${count} posts`);
 
   if (allPosts.length === 0) {
     // Demo/seed content is BANNED. Never fabricate posts — return an
     // explicit empty result with a warning notice so callers know the
     // providers returned nothing.
-    console.warn('[bridge] All content sources returned no data. Returning empty — demo content is banned.');
+    console.warn(
+      '[bridge] All content sources returned no data. Returning empty — demo content is banned.',
+    );
     notices.push('All content sources returned no data. No posts available.');
     return {
       posts: [],
@@ -1265,9 +1389,24 @@ async function buildFeedInternal(
 
   const deduped = dedupeAndInterleave(feedPool, limit);
 
+  // ── Feed-core / ranking pipeline ────────────────────────────────────
+  // Score + diversity-order the deduped pool with @degenfeed/ranking and
+  // @degenfeed/feed-core (previously orphaned dead code). Falls back to the
+  // plain interleaved order on failure — never empty.
+  const rankedResult = rankFeedWithCore(deduped, limit);
+  const ranked = rankedResult.posts;
+  const rankingMeta =
+    rankedResult.scored > 0
+      ? {
+          ranked: rankedResult.scored,
+          total: rankedResult.total,
+          algorithm: 'unified-scorer-v3 + feed-core diversity',
+        }
+      : undefined;
+
   // Ground News-style bias distribution for the returned feed:
   // { bias: { left, center, right } } — counts posts per 3-bucket bias.
-  const bias = computeBiasDistribution(deduped);
+  const bias = computeBiasDistribution(ranked);
 
   const degradedCount = Object.keys(cacheAges).length;
 
@@ -1280,9 +1419,9 @@ async function buildFeedInternal(
   //       (degradedCount > 0 ? ` (${degradedCount} degraded)` : ''),
   //   );
   return {
-    posts: deduped,
+    posts: ranked,
     meta: {
-      total: deduped.length,
+      total: ranked.length,
       limit,
       perProtocol,
       providerSources,
@@ -1292,6 +1431,7 @@ async function buildFeedInternal(
       errors: errors.length > 0 ? errors : undefined,
       notices: notices.length > 0 ? notices : undefined,
       bias,
+      ranking: rankingMeta,
       fetchedAt: Date.now(),
       source: 'live',
     },
@@ -1312,7 +1452,6 @@ async function buildFeedInternal(
  * restart is served from cache instead of triggering a synchronous rebuild.
  */
 export async function prewarmFeedCache(): Promise<void> {
-  const started = Date.now();
   try {
     // console.log('[feeds] Pre-warming feed result cache...');
 

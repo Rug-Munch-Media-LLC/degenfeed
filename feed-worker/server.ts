@@ -26,6 +26,23 @@ const NOSTR_URL = 'http://127.0.0.1:8085';
 const RSS_BRIDGE_URL = 'http://127.0.0.1:8282';
 const REQUEST_TIMEOUT = 8_000;
 
+// Well-known public relays used to supplement the local relay when it is
+// empty or unreachable. The bridge (bridge/src/providers/nostr.ts) maintains
+// the full 17-relay list with per-relay health probing; this worker keeps a
+// minimal 3-relay set because it is a local fallback, not the primary feed.
+const NOSTR_FALLBACK_RELAYS = ['wss://nos.lol', 'wss://relay.primal.net', 'wss://relay.damus.io'];
+
+/** Minimal NIP-01 event shape as delivered over a relay WebSocket. */
+interface NostrEventRecord {
+  id: string;
+  pubkey: string;
+  created_at: number;
+  kind: number;
+  tags: string[][];
+  content: string;
+  sig: string;
+}
+
 // ─── Types ─────────────────────────────────────────────────────────────
 
 interface MeiliDoc {
@@ -371,20 +388,152 @@ async function handleLemmy(limit: number): Promise<FeedResponse> {
   }
 }
 
-async function _handleNostr(limit: number): Promise<FeedResponse> {
-  try {
-    // Nostr relay REQ for recent text notes (kind 1)
-    const subId = `feed-${Date.now().toString(36)}`;
-    const _req = JSON.stringify([subId, { kinds: [1], limit }]);
-    const _wsUrl = NOSTR_URL.replace(/^http/, 'ws');
+/**
+ * Fetch kind-1 text notes from a single Nostr relay over WebSocket.
+ *
+ * Sends a NIP-01 REQ, collects `EVENT` messages, and resolves as soon as
+ * EOSE arrives, the limit is reached, or `timeoutMs` elapses — whichever is
+ * first. The socket is always closed before resolving.
+ */
+function fetchNostrRelayEvents(
+  relayUrl: string,
+  limit: number,
+  timeoutMs: number,
+): Promise<NostrEventRecord[]> {
+  if (typeof WebSocket === 'undefined') {
+    return Promise.resolve([]); // Node <22 / non-browser runtime — no WS global
+  }
+  return new Promise((resolve) => {
+    const events: NostrEventRecord[] = [];
+    let settled = false;
+    let ws: WebSocket | null = null;
 
-    // Try fetching via NIP-11 info first, fall back gracefully
+    const finish = () => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      try {
+        ws?.close();
+      } catch {
+        /* ignore */
+      }
+      resolve(events);
+    };
+
+    const timer = setTimeout(finish, timeoutMs);
+
+    try {
+      ws = new WebSocket(relayUrl);
+    } catch {
+      finish();
+      return;
+    }
+
+    ws.addEventListener('open', () => {
+      const subId = `df-worker-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+      ws?.send(JSON.stringify(['REQ', subId, { kinds: [1], limit }]));
+    });
+    ws.addEventListener('message', (event: MessageEvent) => {
+      try {
+        const msg = JSON.parse(event.data as string) as unknown[];
+        if (msg[0] === 'EVENT' && msg[2]) {
+          const ev = msg[2] as NostrEventRecord;
+          if (ev.kind === 1) {
+            events.push(ev);
+            if (events.length >= limit) finish();
+          }
+        } else if (msg[0] === 'EOSE') {
+          finish();
+        }
+      } catch {
+        /* skip malformed frame */
+      }
+    });
+    ws.addEventListener('error', finish);
+    ws.addEventListener('close', finish);
+  });
+}
+
+/** Map a Nostr kind-1 event to the worker's UnifiedPost shape. */
+function nostrEventToUnifiedPost(ev: NostrEventRecord): UnifiedPost {
+  const pubkeyShort = ev.pubkey.slice(0, 12);
+  const identity: UnifiedIdentity = {
+    id: `nostr:${ev.pubkey}`,
+    primary: { protocol: 'nostr', id: ev.pubkey },
+    handles: { nostr: pubkeyShort },
+    displayName: pubkeyShort,
+    bio: '',
+    avatarUrl: '',
+    followerCount: 0,
+    followingCount: 0,
+    links: [],
+    keys: { nostrPubkey: ev.pubkey },
+  };
+  const metrics: EngagementMetrics = { likes: 0, reposts: 0, replies: 0, quotes: 0 };
+  return {
+    id: `nostr:${ev.id}`,
+    protocol: 'nostr',
+    author: identity,
+    text: ev.content,
+    embeds: [],
+    createdAt: ev.created_at * 1000,
+    metrics,
+    engagement: {
+      viewerLiked: false,
+      viewerReposted: false,
+      viewerBookmarked: false,
+      raw: metrics,
+    },
+    raw: ev,
+    niches: [],
+    contentType: 'text',
+  };
+}
+
+async function _handleNostr(limit: number): Promise<FeedResponse> {
+  const wsUrl = NOSTR_URL.replace(/^http/, 'ws');
+  const relays = [wsUrl, ...NOSTR_FALLBACK_RELAYS];
+  try {
+    // Fan out to the local relay + public fallbacks in parallel, dedupe by
+    // event id, and bound the total wait so this handler can never stall the
+    // request (the route falls back to MeiliSearch when we return nothing).
+    const settled = await Promise.allSettled(
+      relays.map((r) => fetchNostrRelayEvents(r, Math.max(10, Math.ceil(limit * 1.5)), 3000)),
+    );
+    const seen = new Set<string>();
+    const events: NostrEventRecord[] = [];
+    for (const result of settled) {
+      if (result.status !== 'fulfilled') continue;
+      for (const ev of result.value) {
+        if (!seen.has(ev.id)) {
+          seen.add(ev.id);
+          events.push(ev);
+          if (events.length >= limit) break;
+        }
+      }
+      if (events.length >= limit) break;
+    }
+    events.sort((a, b) => b.created_at - a.created_at);
+
+    if (events.length === 0) {
+      return {
+        data: [],
+        meta: {
+          total: 0,
+          limit,
+          notices: ['Nostr relays returned no events — falling back to MeiliSearch'],
+          fetchedAt: Date.now(),
+        },
+      };
+    }
+
+    const posts = events.slice(0, limit).map(nostrEventToUnifiedPost);
     return {
-      data: [],
+      data: posts,
       meta: {
-        total: 0,
+        total: posts.length,
         limit,
-        notices: ['Nostr requires WebSocket connection — falling back to MeiliSearch'],
+        source: 'nostr-relays',
         fetchedAt: Date.now(),
       },
     };
@@ -553,8 +702,13 @@ async function handleRequest(req: http.IncomingMessage, res: http.ServerResponse
       }
 
       case '/api/feed/nostr': {
-        // Nostr uses WebSocket, fall back to MeiliSearch
-        result = await handleMeiliSearch('nostr', limit);
+        // Prefer a real relay fetch (local relay + public fallbacks). When
+        // every relay is unreachable/empty, fall back to MeiliSearch so the
+        // endpoint never serves an empty feed.
+        result = await _handleNostr(limit);
+        if (!result.data || result.data.length === 0) {
+          result = await handleMeiliSearch('nostr', limit);
+        }
         break;
       }
 
@@ -634,7 +788,7 @@ server.listen(PORT, '127.0.0.1', () => {
   console.log(`  Endpoints:`);
   console.log(`  GET /api/feed/mastodon   → GoToSocial :8082`);
   console.log(`  GET /api/feed/lemmy      → Lemmy :8536`);
-  console.log(`  GET /api/feed/nostr      → MeiliSearch (nostr filter)`);
+  console.log(`  GET /api/feed/nostr      → Nostr relays (MeiliSearch fallback)`);
   console.log(`  GET /api/feed/for-you    → MeiliSearch (all sources)`);
   console.log(`  GET /api/feed/home       → MeiliSearch (all sources)`);
   console.log(`  GET /api/feed/news       → MeiliSearch (rss filter)`);

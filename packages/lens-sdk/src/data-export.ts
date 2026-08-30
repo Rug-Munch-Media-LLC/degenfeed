@@ -108,37 +108,74 @@ export interface LensMomokaProofExport {
   proofUrl?: string;
 }
 
+/** Account resolved through the v3 `account` query (or legacy v2 fallback). */
+interface ResolvedLensAccount {
+  address: string;
+  localName: string;
+  displayName: string;
+  bio: string;
+  avatarUrl: string;
+  joinedAt: string;
+}
+
+/** Loose EVM address check — used to pick AccountRequest.address vs legacyProfileId. */
+function isEvmAddress(value: string): boolean {
+  return /^0x[a-fA-F0-9]{40}$/.test(value.trim());
+}
+
 // ─── GraphQL Queries for Data Export ────────────────────────────────────
+//
+// NOTE: The Lens API moved to the v3 schema (api-v2.lens.dev → api.lens.xyz).
+// The old `publications` query + `Post`/`Comment`/`Mirror` types are GONE —
+// `posts` now returns `AnyPost` items where `AnyPost = Post | Repost` and
+// `PostMetadata` is a UNION of per-format metadata types (TextOnlyMetadata,
+// ArticleMetadata, …). The previous fragment set caused the schema mismatch
+// `Unknown field "id" on type "AnyPost"` because fields were selected
+// directly on the union without the correct `... on` member fragments.
+// Both queries below were validated against the live v3 schema (2026-08-30).
+
+const ACCOUNT_QUERY = `
+  query Account($request: AccountRequest!) {
+    account(request: $request) {
+      address
+      username { localName }
+      metadata { name bio picture }
+      createdAt
+    }
+  }
+`;
 
 const PUBLICATIONS_QUERY = `
-  query Publications($request: PublicationsRequest!) {
-    publications(request: $request) {
+  query Publications($request: PostsRequest!) {
+    posts(request: $request) {
       items {
         __typename
         ... on Post {
           id
-          content: metadata { content }
-          media: metadata { media { original { url } } }
-          tags: metadata { tags }
-          stats { reactions comments mirrors quotes }
-          createdAt
-          txHash
-          momoka { daHash }
+          timestamp
+          content: metadata {
+            ... on TextOnlyMetadata { content }
+            ... on ArticleMetadata { content }
+            ... on LinkMetadata { content }
+            ... on ImageMetadata { content }
+            ... on VideoMetadata { content }
+            ... on AudioMetadata { content }
+            ... on EmbedMetadata { content }
+            ... on EventMetadata { content }
+            ... on MintMetadata { content }
+            ... on StoryMetadata { content }
+            ... on TransactionMetadata { content }
+            ... on SpaceMetadata { content }
+            ... on CheckingInMetadata { content }
+            ... on LivestreamMetadata { content }
+            ... on ThreeDMetadata { content }
+          }
+          stats { reactions comments reposts quotes }
         }
-        ... on Comment {
+        ... on Repost {
           id
-          content: metadata { content }
-          media: metadata { media { original { url } } }
-          tags: metadata { tags }
-          stats { reactions comments mirrors quotes }
-          createdAt
-          txHash
-          momoka { daHash }
-        }
-        ... on Mirror {
-          id
-          mirrorOf { ... on Post { id } ... on Comment { id } }
-          createdAt
+          timestamp
+          repostOf { ... on Post { id } }
         }
       }
       pageInfo { next }
@@ -160,6 +197,54 @@ export class LensDataExportService {
   }
 
   /**
+   * Resolve a Lens account on the v3 API.
+   *
+   * Legacy Lens profile ids (e.g. "0x01") map through
+   * `AccountRequest.legacyProfileId`; EVM addresses pass directly. Falls back
+   * to the v2 `getProfile` when the v3 resolution fails so older callers keep
+   * working until the migration is complete.
+   */
+  private async resolveAccount(profileId: string): Promise<ResolvedLensAccount> {
+    const request = isEvmAddress(profileId)
+      ? { address: profileId }
+      : { legacyProfileId: profileId };
+    try {
+      const data = (await this.client.request(ACCOUNT_QUERY, { request })) as {
+        account?: {
+          address: string;
+          username?: { localName?: string } | null;
+          metadata?: { name?: string | null; bio?: string | null; picture?: string | null } | null;
+          createdAt?: string | null;
+        } | null;
+      };
+      const a = data?.account;
+      if (a) {
+        return {
+          address: a.address,
+          localName: a.username?.localName ?? profileId,
+          displayName: a.metadata?.name ?? a.username?.localName ?? profileId,
+          bio: a.metadata?.bio ?? '',
+          avatarUrl: a.metadata?.picture ?? '',
+          joinedAt: a.createdAt ?? '',
+        };
+      }
+    } catch {
+      // v3 resolution failed — fall through to the legacy v2 path below.
+    }
+    const legacy = await this.client.getProfile(profileId);
+    if (!legacy) throw new Error(`Profile ${profileId} not found`);
+    const handle = legacy.handle?.localName ?? profileId;
+    return {
+      address: legacy.id ?? profileId,
+      localName: handle,
+      displayName: legacy.metadata?.displayName ?? handle,
+      bio: legacy.metadata?.bio ?? '',
+      avatarUrl: legacy.metadata?.picture?.optimized?.uri ?? '',
+      joinedAt: '',
+    };
+  }
+
+  /**
    * Export ALL data for a Lens profile.
    *
    * This fetches everything via the free public Lens API:
@@ -177,29 +262,30 @@ export class LensDataExportService {
     env?: { CACHE?: KVNamespace },
     walletAddress?: string,
   ): Promise<LensDataExport> {
-    // 1. Fetch profile
-    const profile = await this.client.getProfile(profileId);
-    if (!profile) throw new Error(`Profile ${profileId} not found`);
+    // 1. Resolve the account on the v3 API. Legacy Lens profile ids (e.g.
+    // "0x01") map through AccountRequest.legacyProfileId; callers that pass
+    // an EVM address use it directly.
+    const account = await this.resolveAccount(profileId);
 
-    const handle = profile.handle?.localName || profileId;
-    const displayName = profile.metadata?.displayName || handle;
+    const handle = account.localName || profileId;
+    const displayName = account.displayName || handle;
 
     // 2. Export profile data
     const profileExport: LensProfileExport = {
       profileId,
       handle,
       displayName,
-      bio: profile.metadata?.bio || '',
-      avatarUrl: profile.metadata?.picture?.optimized?.uri || '',
+      bio: account.bio || '',
+      avatarUrl: account.avatarUrl || '',
       coverUrl: '',
       metadata: {},
       stats: {
-        publications: profile.stats?.followers || 0,
-        followers: profile.stats?.followers || 0,
-        following: profile.stats?.following || 0,
+        publications: 0, // filled in below from the fetched count
+        followers: 0, // v3 Account exposes score, not follower counts
+        following: 0,
         reactions: 0,
       },
-      joinedAt: '',
+      joinedAt: account.joinedAt || '',
     };
 
     // 3. Fetch all publications via pagination
@@ -207,39 +293,49 @@ export class LensDataExportService {
     let cursor: string | undefined;
     do {
       const data = (await this.client.request(PUBLICATIONS_QUERY, {
-        request: { profileId, limit: 50, ...(cursor ? { cursor } : {}) },
+        request: {
+          filter: { authors: [account.address] },
+          pageSize: 'FIFTY',
+          ...(cursor ? { cursor } : {}),
+        },
       })) as {
-        publications?: {
+        posts?: {
           items: Array<Record<string, unknown>>;
           pageInfo?: { next?: string };
         };
       };
-      const items = data?.publications?.items || [];
+      const items = data?.posts?.items || [];
       for (const item of items) {
         const type = (item.__typename as string)?.toLowerCase() || 'post';
+        const contentObj = (item.content ?? {}) as { content?: string };
+        const stats = (item.stats ?? {}) as Record<string, number | undefined>;
         const pub: LensPublicationExport = {
           id: item.id as string,
           type: type as LensPublicationExport['type'],
-          content: ((item.content as { content?: string })?.content || '') as string,
+          content: contentObj.content || '',
           metadata: {},
           media: [],
           tags: [],
           stats: {
-            reactions: ((item.stats as { reactions?: number })?.reactions || 0) as number,
-            comments: ((item.stats as { comments?: number })?.comments || 0) as number,
-            mirrors: ((item.stats as { mirrors?: number })?.mirrors || 0) as number,
-            quotes: ((item.stats as { quotes?: number })?.quotes || 0) as number,
+            reactions: stats.reactions ?? 0,
+            comments: stats.comments ?? 0,
+            // v3 PostStats has no `mirrors` — reposts are the mirror count.
+            mirrors: stats.reposts ?? 0,
+            quotes: stats.quotes ?? 0,
           },
-          createdAt: (item.createdAt as string) || '',
-          momokaDaHash: ((item.momoka as { daHash?: string })?.daHash || undefined) as
-            | string
-            | undefined,
-          onChainTxHash: (item.txHash as string) || undefined,
+          // v3 posts expose `timestamp` (DateTime); createdAt no longer exists.
+          createdAt: (item.timestamp as string) || (item.createdAt as string) || '',
+          // v3 Post has no txHash / momoka proof fields on the base type.
+          momokaDaHash: undefined,
+          onChainTxHash: undefined,
         };
         publications.push(pub);
       }
-      cursor = data?.publications?.pageInfo?.next;
+      cursor = data?.posts?.pageInfo?.next;
     } while (cursor);
+
+    // Publish the real publication count back into the exported profile stats.
+    profileExport.stats.publications = publications.length;
 
     // 4. Fetch followers
     const followers: LensFollowExport[] = [];

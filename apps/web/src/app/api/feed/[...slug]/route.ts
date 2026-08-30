@@ -34,9 +34,12 @@ export async function GET(
     return await proxyGet(path, request);
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Internal server error';
+    // Non-200 on failure: the client must be able to distinguish "feed is
+    // genuinely empty" (200 with data: []) from "the upstream bridge/API
+    // failed" (502 here). 502 = Bad Gateway — this route is a proxy.
     return NextResponse.json(
       { error: message, data: [], meta: { errors: [message] } },
-      { status: 200 },
+      { status: 502 },
     );
   }
 }
