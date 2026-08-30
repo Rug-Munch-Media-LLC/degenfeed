@@ -1,6 +1,6 @@
 'use client';
 
-import { addBookmark, getFollows, removeBookmark } from '@degenfeed/storage';
+import { addBookmark, removeBookmark } from '@degenfeed/storage';
 import type { EngagementAction, UnifiedPost } from '@degenfeed/types';
 import {
   CardSkeleton,
@@ -11,14 +11,12 @@ import {
   PostCardGuard,
   ScrollToTop,
 } from '@degenfeed/ui';
-import dynamic from 'next/dynamic';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAuth } from '../../components/AuthProvider';
 import { FeedComposer } from '../../components/FeedComposer';
 import { FeedLayoutSwitcher } from '../../components/FeedLayoutSwitcher';
 import type { FeedMixConfig, SavedMix } from '../../components/FeedTuner';
 import {
-  encodeTopicWeights,
   FeedTuner,
   getDefaultFeedMixConfig,
   getDefaultWeights,
@@ -32,8 +30,6 @@ import { FeedControls } from '../../components/feed/FeedControls';
 import { FeedFilterBar, FeedTabBar } from '../../components/feed/FeedFilterBar';
 import {
   FeedAuthBanner,
-  FeedEmptyState,
-  FeedErrorState,
   FeedNewPostsBanner,
   FeedProtocolSummary,
 } from '../../components/feed/FeedStates';
@@ -43,6 +39,7 @@ import { GettingStartedChecklist } from '../../components/GettingStartedChecklis
 import { GuidedTour } from '../../components/GuidedTour';
 import { PostContextMenu, useContextMenu } from '../../components/PostContextMenu';
 import { useAnnouncer } from '../../components/ScreenReaderAnnouncer';
+import { type FeedTab, useUnifiedFeed } from '../../hooks/feed/useUnifiedFeed';
 import { useAlgorithmProfile } from '../../hooks/useAlgorithmProfile';
 import { useEdgeSwipeBack } from '../../hooks/useEdgeSwipeBack';
 import { useFeedControls } from '../../hooks/useFeedControls';
@@ -56,18 +53,11 @@ import { useRealtimeFeed } from '../../hooks/useRealtimeFeed';
 import { useReturningUser } from '../../hooks/useReturningUser';
 import { useSwipeTabs } from '../../hooks/useSwipeTabs';
 import type { FeedControls as FeedControlsState } from '../../lib/feedRanking';
-import { fetchWithSwr, getCached } from '../../lib/fetchWithCache';
-import { rankTopAlgo } from '../../lib/topAlgo';
+import { FeedEmptyState } from './components/FeedEmptyState';
+import { FeedErrorState } from './components/FeedErrorState';
+import { FeedNotices } from './components/FeedNotices';
 import { useInitialFeed } from './components/InitialFeedContext';
 import { ReadingProgressBar } from './components/ReadingProgressBar';
-import { ShareSheet } from './components/ShareSheet';
-
-const TipModal = dynamic(
-  () => import('../../components/TipModal').then((m) => ({ default: m.TipModal })),
-  { ssr: false, loading: () => null },
-);
-
-type Tab = 'for-you' | 'following' | 'trending' | 'news' | 'custom-mix';
 
 /**
  * Compact inline fallback for non-critical feed widgets (controls, filter
@@ -97,56 +87,24 @@ const ADMIN_WALLETS = new Set(
 );
 
 const FEED_TABS = [
-  { id: 'for-you' as Tab, label: 'For You' },
-  { id: 'following' as Tab, label: 'Following' },
-  { id: 'trending' as Tab, label: 'Trending' },
-  { id: 'news' as Tab, label: 'News' },
-  { id: 'custom-mix' as Tab, label: 'Custom Mix' },
+  { id: 'for-you' as FeedTab, label: 'For You' },
+  { id: 'following' as FeedTab, label: 'Following' },
+  { id: 'trending' as FeedTab, label: 'Trending' },
+  { id: 'news' as FeedTab, label: 'News' },
+  { id: 'custom-mix' as FeedTab, label: 'Custom Mix' },
 ];
-
-interface FeedMeta {
-  total?: number;
-  limit?: number;
-  page?: number;
-  hasMore?: boolean;
-  perProtocol?: Record<string, number>;
-  errors?: string[];
-  notices?: string[];
-  providerSources?: Record<string, string>;
-  trending?: { topic: string; count: number; score: number }[];
-  topOfHour?: string | null;
-  fetchedAt?: number;
-  personalization?: {
-    hasProfile: boolean;
-    boostApplied: boolean;
-    isOnboarding: boolean;
-    reasons?: string[];
-  };
-}
 
 export default function FeedPage() {
   const { openSignIn, signedInProtocols, engage, publish, ready, walletAddress } = useAuth();
   const isAdmin = walletAddress ? ADMIN_WALLETS.has(walletAddress.toLowerCase()) : false;
 
-  const [activeTab, setActiveTab] = useState<Tab>('for-you');
+  const [activeTab, setActiveTab] = useState<FeedTab>('for-you');
   // Server-rendered initial posts arrive via InitialFeedProvider (feed/layout.tsx
-  // fetches them with a bounded 1.6s budget). Using them as the useState seed
-  // means the very first SSR + hydration render already shows content — no
+  // fetches them with a bounded 1.6s budget). They seed the useUnifiedFeed
+  // hook so the very first SSR + hydration render already shows content — no
   // skeleton flash, no post-hydration DOM swap.
   const initialPosts = useInitialFeed();
-  const [posts, setPosts] = useState<UnifiedPost[]>(initialPosts);
-  const [state, setState] = useState<'loading' | 'loaded' | 'empty' | 'error'>(
-    initialPosts.length > 0 ? 'loaded' : 'loading',
-  );
-  // True while a full feed fetch is in flight. When posts
-  // already exist we keep showing them (SWR stale-while-revalidate) and just
-  // surface a subtle "Loading fresh content…" indicator instead of wiping the
-  // timeline or flashing skeletons over content.
-  const [refreshing, setRefreshing] = useState(false);
 
-  const [error, setError] = useState<string>();
-  const [tipPost, setTipPost] = useState<UnifiedPost | null>(null);
-  const [feedMeta, setFeedMeta] = useState<FeedMeta>({});
   const [hideLowQuality, setHideLowQuality] = useState(false);
   // Fixed quality threshold — surfaced in the fetch URL when hideLowQuality is on.
   const hideThreshold = 1.0;
@@ -174,10 +132,6 @@ export default function FeedPage() {
   // personalization + serendipity; the "Why this?" card explains each post.
   const { profile: algoProfile, recordEngagement: recordAlgoEngagement } = useAlgorithmProfile();
   const [whyPost, setWhyPost] = useState<UnifiedPost | null>(null);
-  // Ref mirrors the latest profile so fetchFeed can personalize without being
-  // re-created (and re-fetching) on every engagement action.
-  const algoProfileRef = useRef(algoProfile);
-  algoProfileRef.current = algoProfile;
   const hasSignedIn = ready && Object.values(signedInProtocols).some(Boolean);
   const { unreadCount, notifications, fetchNotifications, markRead, markAllRead } =
     useNotifications();
@@ -200,57 +154,13 @@ export default function FeedPage() {
   );
   const realtimeInsertedRef = useRef(false);
 
-  // When the user clicks the real-time banner, insert queued posts
-  const handleRealtimeInsert = useCallback(() => {
-    const queued = realtimeFeed.insertQueued();
-    if (queued.length > 0) {
-      realtimeInsertedRef.current = true;
-      setPosts((prev) => {
-        const newPosts = queued.map((q) => q.post);
-        const existingIds = new Set(prev.map((p) => p.id));
-        const trulyNew = newPosts.filter((p) => !existingIds.has(p.id));
-        if (trulyNew.length === 0) return prev;
-        return [...trulyNew, ...prev];
-      });
-      // Scroll to top
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-  }, [realtimeFeed]);
-
-  // Auto-insert posts when user is at the top of the feed
-  useEffect(() => {
-    if (realtimeFeed.newPostCount > 0 && !realtimeInsertedRef.current) {
-      // Check if user is near the top — handled via scroll detection in the hook
-      const checkAndAutoInsert = () => {
-        if (window.scrollY < 80) {
-          handleRealtimeInsert();
-        }
-      };
-      // Give the DOM a moment to render
-      const timer = setTimeout(checkAndAutoInsert, 500);
-      return () => clearTimeout(timer);
-    }
-    return undefined;
-  }, [realtimeFeed.newPostCount, handleRealtimeInsert]);
-
-  // Reset the insertion flag when posts change (e.g., tab switch)
-  useEffect(() => {
-    realtimeInsertedRef.current = false;
-  }, []);
-
   const [topicWeights, setTopicWeights] = useState<Record<string, number>>({});
   const [showTuner, setShowTuner] = useState(false);
-  // Infinite scroll pagination: page N is requested with ?page=N and appended
-  // (deduped) to the timeline. hasMore comes from the API meta.
-  const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(true);
-  const [loadingMore, setLoadingMore] = useState(false);
   const [feedMixConfig, setFeedMixConfig] = useState<FeedMixConfig>(() => loadFeedMixConfig());
   const [savedMixes, setSavedMixes] = useState<SavedMix[]>(() => loadSavedMixes());
   const debounceRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const tuneTopicWeightsDebounce = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const [showComposer, setShowComposer] = useState(false);
-  const [popupPost, setPopupPost] = useState<UnifiedPost | null>(null);
   // Reading progress through the feed timeline — drives the top progress bar.
   const readingProgress = useReadingProgress('feed-scroll-container');
   const { announce } = useAnnouncer();
@@ -414,275 +324,84 @@ export default function FeedPage() {
     announcerRef.current?.(msg, priority);
   }, []);
 
-  // Build the unified-feed URL for a given page. Shared by the main fetch and
-  // the background poller so both hit the same effective feed.
-  const buildFeedUrl = useCallback(
-    (pageNum: number) => {
-      const endpoint = '/api/feed/unified';
-      const url = new URL(endpoint, window.location.origin);
-      // Fixed 50-post pages; ?page=N advances the cursor (offset pagination
-      // implemented on the api-server + bridge).
-      url.searchParams.set('limit', '50');
-      url.searchParams.set('page', String(pageNum));
-      // Only send an explicit `protocols` filter when the user has chosen
-      // one. With no filter, the worker aggregates EVERY registered
-      // protocol (68+) into the master unified feed instead of a small
-      // hard-coded subset.
-      if (controls.protocols.length > 0) {
-        url.searchParams.set('protocols', controls.protocols.join(','));
-      }
-      // User-controlled feed params — forwarded to the bridge feed endpoint.
-      // The bridge honors protocols/limit today; the rest are applied
-      // client-side and ready for server-side adoption.
-      url.searchParams.set('sort', controls.sort);
-      url.searchParams.set('time', controls.timeRange);
-      if (controls.contentTypes.length > 0)
-        url.searchParams.set('contentType', controls.contentTypes.join(','));
-      if (controls.niches.length > 0) url.searchParams.set('niches', controls.niches.join(','));
-      if (controls.algorithm.recencyQuality !== 50)
-        url.searchParams.set('recencyQuality', String(controls.algorithm.recencyQuality));
-      if (controls.algorithm.engagementDiversity !== 50)
-        url.searchParams.set('engagementDiversity', String(controls.algorithm.engagementDiversity));
-      if (controls.algorithm.protocolDiversity !== 50)
-        url.searchParams.set('protocolDiversity', String(controls.algorithm.protocolDiversity));
-      if (controls.algorithm.familiarDiscover !== 50)
-        url.searchParams.set('familiarDiscover', String(controls.algorithm.familiarDiscover));
-      if (controls.algorithm.creatorSize !== 50)
-        url.searchParams.set('creatorSize', String(controls.algorithm.creatorSize));
-      if (activeTab === 'following') url.searchParams.set('filter', 'following');
-      if (hideLowQuality) {
-        url.searchParams.set('hideLowQuality', 'true');
-        url.searchParams.set('hideLowQualityThreshold', String(hideThreshold));
-      }
-      if (allowNonCrypto) url.searchParams.set('allowNonCrypto', 'true');
-      if (showOriginalContent) url.searchParams.set('showOriginalContent', 'true');
-      if (minEngagement > 0) url.searchParams.set('minEngagement', String(minEngagement));
-      if (maxPerNiche < 5) url.searchParams.set('maxPerNiche', String(maxPerNiche));
-      if (recencyWeight !== 1) url.searchParams.set('recencyWeight', String(recencyWeight));
-      if (engagementWeight !== 1)
-        url.searchParams.set('engagementWeight', String(engagementWeight));
-      const tw = encodeTopicWeights(topicWeights);
-      if (tw) url.searchParams.set('topic_weights', tw);
-      if (algorithmTransparent) url.searchParams.set('algorithmTransparent', 'true');
-      if (freshnessPreference !== 50)
-        url.searchParams.set('freshness', String(freshnessPreference));
-      if (creatorDiversity !== 5)
-        url.searchParams.set('creatorDiversity', String(creatorDiversity));
-      if (exploreRatio !== 30) url.searchParams.set('exploreRatio', String(exploreRatio));
-      if (activePreset) url.searchParams.set('preset', activePreset);
-      return url;
-    },
-    [
-      controls,
-      activeTab,
-      hideLowQuality,
-      allowNonCrypto,
-      showOriginalContent,
-      minEngagement,
-      maxPerNiche,
-      recencyWeight,
-      engagementWeight,
-      topicWeights,
-      algorithmTransparent,
-      freshnessPreference,
-      creatorDiversity,
-      exploreRatio,
-      activePreset,
-    ],
-  );
+  // ── Unified feed data hook ──
+  // All fetching, fallback, ranking, and pagination lives in useUnifiedFeed
+  // (extracted from this component) so the page only renders. Re-fetches
+  // automatically when the tab / controls / preferences change.
+  const feedData = useUnifiedFeed({
+    activeTab,
+    hasSignedIn,
+    controls,
+    hideLowQuality,
+    hideThreshold,
+    allowNonCrypto,
+    showOriginalContent,
+    minEngagement,
+    maxPerNiche,
+    recencyWeight,
+    engagementWeight,
+    topicWeights,
+    algorithmTransparent,
+    freshnessPreference,
+    creatorDiversity,
+    exploreRatio,
+    activePreset,
+    feedMixConfig,
+    algoProfile,
+    initialPosts,
+    announceFeed,
+  });
+  // useState-backed stable setter — safe to reference in callbacks without
+  // re-creating them (and their effects) on every render.
+  const feedSetPosts = feedData.setPosts;
+  // When the user clicks the real-time banner, insert queued posts
+  const handleRealtimeInsert = useCallback(() => {
+    const queued = realtimeFeed.insertQueued();
+    if (queued.length > 0) {
+      realtimeInsertedRef.current = true;
+      feedSetPosts((prev) => {
+        const newPosts = queued.map((q) => q.post);
+        const existingIds = new Set(prev.map((p) => p.id));
+        const trulyNew = newPosts.filter((p) => !existingIds.has(p.id));
+        if (trulyNew.length === 0) return prev;
+        return [...trulyNew, ...prev];
+      });
+      // Scroll to top
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [realtimeFeed, feedSetPosts]);
 
-  const fetchFeed = useCallback(
-    async (pageNum = 1, append = false) => {
-      // Skip hard loading state when content already exists — page keeps
-      // showing the current timeline while revalidating in the background.
-      // Only the very first load (no posts yet) falls back to the skeleton.
-      // Append-mode (infinite scroll) shows the sentinel spinner instead.
-      if (!append) setRefreshing(true);
-      try {
-        // Try the unified cross-protocol timeline first. Anonymous and
-        // signed-in users read the same aggregated feed; personalization is
-        // applied client-side below via rankTopAlgo. If the bridge worker is
-        // stale and returns an empty/error payload, fetchFeed falls back to
-        // per-protocol feeds below.
-        // The SWR cache key is derived from the full query string (built by
-        // buildFeedUrl), so every control/preference change gets its own bucket.
-        const url = buildFeedUrl(pageNum);
-        const cacheKey = `feed_${hasSignedIn ? 'signed' : 'anon'}_${activeTab}_${pageNum}_${url.searchParams.toString()}`;
-
-        // Try the unified feed first. If it returns empty or errors (e.g. a
-        // stale bridge worker), fall back to fetching each protocol
-        // individually in parallel so the feed still renders.
-        let feed: UnifiedPost[] = [];
-        let feedMetaData: FeedMeta = {};
-        let swrFromCache = false;
-        let swrStale = false;
-
-        try {
-          const swrResult = await fetchWithSwr<{ data?: UnifiedPost[]; meta?: FeedMeta }>(
-            url.toString(),
-            cacheKey,
-            { credentials: 'include' },
-          );
-          const data = swrResult.data;
-          feed = data.data ?? [];
-          feedMetaData = data.meta ?? {};
-          swrFromCache = swrResult.fromCache;
-          swrStale = swrResult.stale;
-        } catch {
-          // Unified feed errored — fall through to the per-protocol fallback.
+  // Auto-insert posts when user is at the top of the feed
+  useEffect(() => {
+    if (realtimeFeed.newPostCount > 0 && !realtimeInsertedRef.current) {
+      // Check if user is near the top — handled via scroll detection in the hook
+      const checkAndAutoInsert = () => {
+        if (window.scrollY < 80) {
+          handleRealtimeInsert();
         }
+      };
+      // Give the DOM a moment to render
+      const timer = setTimeout(checkAndAutoInsert, 500);
+      return () => clearTimeout(timer);
+    }
+    return undefined;
+  }, [realtimeFeed.newPostCount, handleRealtimeInsert]);
 
-        // ── Per-protocol fallback ──
-        // When the unified feed is empty or errored, fetch each protocol
-        // individually (limit 10 each) in parallel, then merge + dedupe +
-        // sort by date (newest first).
-        let fallbackRan = false;
-        let fallbackAllErrored = false;
-        if (feed.length === 0) {
-          fallbackRan = true;
-          const fallbackProtocols =
-            controls.protocols.length > 0
-              ? controls.protocols
-              : ['nostr', 'farcaster', 'rss', 'mastodon', 'bluesky'];
-          const results = await Promise.allSettled(
-            fallbackProtocols.map((p) =>
-              fetch(`/api/feed/${encodeURIComponent(p)}?limit=10&page=${pageNum}`, {
-                credentials: 'include',
-                cache: 'no-store',
-              }).then((r) => r.json() as Promise<{ data?: UnifiedPost[]; error?: string }>),
-            ),
-          );
-          const successful = fallbackProtocols
-            .map((protocol, i) => {
-              const r = results[i];
-              return r && r.status === 'fulfilled' && !r.value.error && Array.isArray(r.value.data)
-                ? { protocol, posts: r.value.data as UnifiedPost[] }
-                : null;
-            })
-            .filter((x): x is { protocol: string; posts: UnifiedPost[] } => x !== null);
-          const allPosts = successful.flatMap((s) => s.posts);
-          fallbackAllErrored = results.length > 0 && successful.length === 0;
-          if (allPosts.length > 0) {
-            const seen = new Set<string>();
-            feed = allPosts
-              .filter((p) => {
-                if (!p || seen.has(p.id)) return false;
-                seen.add(p.id);
-                return true;
-              })
-              .sort((a, b) => (b.createdAt ?? 0) - (a.createdAt ?? 0));
-            feedMetaData = {
-              ...feedMetaData,
-              perProtocol: Object.fromEntries(successful.map((s) => [s.protocol, s.posts.length])),
-              notices: [
-                ...(feedMetaData.notices ?? []),
-                'Unified feed unavailable — showing per-protocol results.',
-              ],
-            };
-          }
-        }
-
-        if (activeTab === 'following') {
-          try {
-            const follows = await getFollows('self');
-            const ids = new Set(follows.map((f) => f.targetId));
-            feed = feed.filter((p) => ids.has(p.author.id));
-          } catch {
-            /* ignore */
-          }
-        }
-
-        // Apply the top-tier 2026 algorithm: user sliders (recency/quality,
-        // familiar/discover, creator size, protocol weights) blended with the
-        // engagement profile, genre-aware freshness, creator reputation,
-        // engagement velocity, author-diversity caps, cold-start discovery,
-        // and serendipity injection. Every post gets a score + reasons so the
-        // "Why this?" card can explain it.
-        const protocolWeights = Object.fromEntries(
-          Object.entries(feedMixConfig.protocols).map(([id, p]) => [id, p.weight]),
-        );
-        feed = rankTopAlgo(feed, controls, {
-          profile: algoProfileRef.current,
-          protocolWeights,
-        });
-
-        const nextHasMore = feedMetaData.hasMore ?? feed.length >= 50;
-        if (append) {
-          // Infinite scroll: merge the next page at the end, deduping by id.
-          // Existing posts keep their position so the scroll stays put.
-          setPosts((prev) => {
-            if (feed.length === 0) return prev;
-            const seen = new Set(prev.map((p) => p.id));
-            return [...prev, ...feed.filter((p) => !seen.has(p.id))];
-          });
-          setHasMore(nextHasMore);
-          if (feed.length > 0) setState('loaded');
-          setLoadingMore(false);
-          return;
-        }
-        setPosts(feed);
-        setHasMore(nextHasMore);
-        setFeedMeta(feedMetaData);
-        // Show the error state only when the unified feed AND every protocol
-        // fallback failed. A partially successful fallback renders as loaded;
-        // an all-empty result renders as empty.
-        setState(feed.length ? 'loaded' : fallbackRan && fallbackAllErrored ? 'error' : 'empty');
-        if (feed.length === 0 && fallbackRan && fallbackAllErrored) {
-          setError('All feed sources are unavailable right now.');
-        } else if (swrStale) {
-          setError('Showing cached results. Updating…');
-        } else {
-          setError(undefined);
-        }
-        if (!append && feed.length > 0)
-          announceFeed(`${feed.length} posts loaded${swrFromCache ? ' (cached)' : ''}`, 'polite');
-      } catch (err) {
-        setLoadingMore(false);
-        if (!append) {
-          const cached = getCached<{ data?: UnifiedPost[]; meta?: FeedMeta }>(`feed_${activeTab}`);
-          if (cached && (cached.data ?? []).length > 0) {
-            setPosts(cached.data ?? []);
-            setFeedMeta(cached.meta ?? {});
-            setState('loaded');
-            setError("Couldn't load feed. Showing cached version.");
-          } else {
-            setError(err instanceof Error ? err.message : 'Failed');
-            setState('error');
-          }
-        }
-      } finally {
-        if (!append) setRefreshing(false);
-      }
-    },
-    [activeTab, hasSignedIn, feedMixConfig, controls, buildFeedUrl, announceFeed],
-  );
+  // Reset the insertion flag when posts change (e.g., tab switch)
+  useEffect(() => {
+    realtimeInsertedRef.current = false;
+  }, []);
 
   // ── Background polling (useFeedPoller) ──
   // Replaces the old hand-rolled setInterval: polls page 1 of the same
   // effective feed, detects newly-arrived post ids, and pauses while the tab
   // is hidden (resumes with an immediate poll on return).
-  const pollFeed = useCallback(async () => {
-    const res = await fetch(buildFeedUrl(1).toString(), { credentials: 'include' });
-    const data = (await res.json()) as { data?: UnifiedPost[] };
-    return data.data ?? [];
-  }, [buildFeedUrl]);
-  const feedPoller = useFeedPoller(pollFeed, 60000);
-
-  /** Load the next page of posts (infinite scroll / "Load more" button). */
-  const loadMore = useCallback(() => {
-    if (loadingMore || !hasMore || state !== 'loaded') return;
-    setLoadingMore(true);
-    const next = page + 1;
-    setPage(next);
-    void fetchFeed(next, true);
-  }, [loadingMore, hasMore, state, page, fetchFeed]);
+  const feedPoller = useFeedPoller(feedData.pollFeed, 60000);
 
   const refreshNow = useCallback(() => {
     feedPoller.refresh();
-    setPage(1);
-    setHasMore(true);
-    fetchFeed(1);
-  }, [fetchFeed, feedPoller]);
+    void feedData.refresh();
+  }, [feedPoller, feedData.refresh]);
 
   // Composing requires auth — anonymous visitors are prompted to sign in
   // instead of hitting a dead-end composer with no connected protocols.
@@ -699,7 +418,7 @@ export default function FeedPage() {
     postId: string,
     content?: string,
   ): Promise<{ ok: boolean; error?: string }> => {
-    const post = posts.find((p) => p.id === postId);
+    const post = feedData.posts.find((p) => p.id === postId);
     if (!post) return { ok: false, error: 'Post not found' };
     // Bookmark/unbookmark work locally without an account; all other
     // engagement (like, repost, reply) requires signing in first.
@@ -738,17 +457,13 @@ export default function FeedPage() {
     return engageResult;
   };
 
-  useEffect(() => {
-    fetchFeed();
-  }, [fetchFeed]);
-
   // No auth gate: the unified feed is public and renders for ALL users
   // (logged in or not). Auth is only required for posting/engaging, which is
   // handled by FeedAuthBanner (above), handleComposeClick, and handleEngage.
   return (
     <ErrorBoundary>
       <ReadingProgressBar progress={readingProgress} />
-      <PullToRefresh onRefresh={refreshNow} disabled={state === 'loading'}>
+      <PullToRefresh onRefresh={refreshNow} disabled={feedData.state === 'loading'}>
         <div
           ref={feedContainerRef}
           id="feed-scroll-container"
@@ -769,7 +484,7 @@ export default function FeedPage() {
             <FeedControls
               controls={controls}
               onChange={handleControlsChange}
-              resultCount={state === 'loaded' ? posts.length : undefined}
+              resultCount={feedData.state === 'loaded' ? feedData.posts.length : undefined}
             />
           </WidgetErrorBoundary>
 
@@ -804,7 +519,7 @@ export default function FeedPage() {
             <FeedTabBar
               tabs={FEED_TABS}
               activeTab={activeTab}
-              onTabChange={(id) => setActiveTab(id as Tab)}
+              onTabChange={(id) => setActiveTab(id as FeedTab)}
             />
             <div className="flex items-center gap-2">
               <NotificationBell
@@ -868,17 +583,8 @@ export default function FeedPage() {
             />
           </WidgetErrorBoundary>
 
-          <FeedProtocolSummary meta={feedMeta} />
-          {feedMeta?.notices?.map((n, i) => (
-            <div key={i} className="mb-3 rounded-lg bg-blue-500/5 px-3 py-2 text-xs text-blue-400">
-              {n}
-            </div>
-          ))}
-          {feedMeta?.errors?.map((e, i) => (
-            <div key={i} className="mb-3 rounded-lg bg-red-500/5 px-3 py-2 text-xs text-red-400">
-              {e}
-            </div>
-          ))}
+          <FeedProtocolSummary meta={feedData.feedMeta} />
+          <FeedNotices meta={feedData.feedMeta} />
           {/* Real-time new posts banner (WebSocket) */}
           {realtimeFeed.newPostCount > 0 && (
             <div className="mb-4 animate-slideDown">
@@ -898,7 +604,7 @@ export default function FeedPage() {
 
           {/* Stale-while-revalidate indicator: fresh data is being fetched in
               the background but the current timeline stays visible. */}
-          {refreshing && state === 'loaded' && posts.length > 0 && (
+          {feedData.refreshing && feedData.state === 'loaded' && feedData.posts.length > 0 && (
             <div
               className="mb-3 flex items-center justify-center gap-2 rounded-lg border border-degen-500/20 bg-degen-500/5 px-3 py-1.5"
               role="status"
@@ -909,7 +615,7 @@ export default function FeedPage() {
             </div>
           )}
 
-          {state === 'loading' && (
+          {feedData.state === 'loading' && (
             <div role="status" aria-live="polite">
               <div className="mb-3 flex items-center justify-center gap-2 rounded-lg border border-degen-500/20 bg-degen-500/5 px-3 py-1.5">
                 <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-degen-400" />
@@ -923,17 +629,20 @@ export default function FeedPage() {
               <CardSkeleton count={5} avatar lines={3} />
             </div>
           )}
-          {state === 'empty' && (
-            <FeedEmptyState activeTab={activeTab} onRefresh={() => fetchFeed()} />
+          {feedData.state === 'empty' && (
+            <FeedEmptyState activeTab={activeTab} onRefresh={() => feedData.fetchFeed()} />
           )}
-          {state === 'error' && (
-            <FeedErrorState error={error || 'Unknown error'} onRetry={() => fetchFeed()} />
+          {feedData.state === 'error' && (
+            <FeedErrorState
+              error={feedData.error || 'Unknown error'}
+              onRetry={() => feedData.fetchFeed()}
+            />
           )}
 
-          {state === 'loaded' && (
+          {feedData.state === 'loaded' && (
             <>
               <div className="stagger-enter">
-                {posts.map((post, i) => (
+                {feedData.posts.map((post, i) => (
                   <div
                     key={post.id}
                     className="relative"
@@ -951,9 +660,13 @@ export default function FeedPage() {
                   </div>
                 ))}
               </div>
-              {hasMore && posts.length > 0 && (
+              {feedData.hasMore && feedData.posts.length > 0 && (
                 <div className="mt-8 text-center">
-                  <button type="button" onClick={loadMore} className="btn-secondary text-sm">
+                  <button
+                    type="button"
+                    onClick={feedData.loadMore}
+                    className="btn-secondary text-sm"
+                  >
                     Load more
                   </button>
                 </div>
@@ -1003,27 +716,6 @@ export default function FeedPage() {
                 onPost={publish}
                 onRequestSignIn={openSignIn}
               />
-            </WidgetErrorBoundary>
-          )}
-
-          {/* Tip modal */}
-          {tipPost && (
-            <WidgetErrorBoundary>
-              <TipModal
-                open={true}
-                onClose={() => setTipPost(null)}
-                recipientProtocol={tipPost.protocol}
-                recipientAuthorId={tipPost.author.id}
-                recipientDisplayName={tipPost.author.displayName}
-                publicationId={tipPost.id}
-              />
-            </WidgetErrorBoundary>
-          )}
-
-          {/* Share sheet */}
-          {popupPost && (
-            <WidgetErrorBoundary>
-              <ShareSheet post={popupPost} open={!!popupPost} onClose={() => setPopupPost(null)} />
             </WidgetErrorBoundary>
           )}
 
