@@ -9,9 +9,11 @@
  * - Wallet connection requirement for trading
  * - Trading confirmation modal with gas estimate
  * - Holder leaderboard with wallet labels
- * - Transparency Tools: vesting tracker, fee breakdown, supply pie chart,
- *   bundling detection, lock proof, audit trail
- * - Community Trust: fair launch badge, pre-bonding timer, creator verification
+ * - Transparency tab: platform fee breakdown + real on-chain facts only.
+ *   Fabricated vesting/bundling/lock-proof/audit-trail panels were removed
+ *   2026-08-30 — no on-chain source exists for them, so the tab shows an
+ *   explicit "data unavailable" note instead of invented data.
+ * - Wallet connection uses the real useWalletConnect hook (EIP-1193).
  */
 
 // ══════════════════════════════════════════════════════════════════════
@@ -28,6 +30,7 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { CreatorCoinComingSoon } from '@/components/creator-coin/CreatorCoinComingSoon';
+import { useWalletConnect } from '@/hooks/useWalletConnect';
 import { CREATOR_COIN_ENABLED } from '@/lib/creatorCoinConfig';
 
 // ══════════════════════════════════════════════════════════════════════
@@ -76,28 +79,6 @@ interface OnchainInfo {
   graduated?: boolean;
   creator?: string;
   error?: string;
-}
-
-interface VestingInfo {
-  totalLocked: number;
-  totalUnlocked: number;
-  unlockedPct: number;
-  cliffEndDate: string;
-  vestingEndDate: string;
-  nextUnlockDate: string;
-  nextUnlockAmount: number;
-}
-
-function generateVestingInfo(): VestingInfo {
-  return {
-    totalLocked: 80000000,
-    totalUnlocked: 20000000,
-    unlockedPct: 20,
-    cliffEndDate: new Date(Date.now() + 86400000 * 30).toISOString(),
-    vestingEndDate: new Date(Date.now() + 86400000 * 365).toISOString(),
-    nextUnlockDate: new Date(Date.now() + 86400000 * 7).toISOString(),
-    nextUnlockAmount: 1538461,
-  };
 }
 
 // ══════════════════════════════════════════════════════════════════════
@@ -166,14 +147,6 @@ function formatCompact(n: number): string {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
   if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`;
   return String(n);
-}
-
-function countdownStr(ms: number): string {
-  if (ms <= 0) return 'Complete!';
-  const d = Math.floor(ms / 86400000);
-  const h = Math.floor((ms % 86400000) / 3600000);
-  const m = Math.floor((ms % 3600000) / 60000);
-  return `${d}d ${h}h ${m}m`;
 }
 
 // ══════════════════════════════════════════════════════════════════════
@@ -250,59 +223,12 @@ function PriceChart({
   );
 }
 
-/* ── Pie Chart ─────────────────────────────────────── */
-function MiniPie({
-  data,
-  size = 100,
-}: {
-  data: Array<{ label: string; value: number; color: string }>;
-  size?: number;
-}) {
-  const total = data.reduce((s, d) => s + d.value, 0) || 1;
-  const r = size / 2 - 8;
-  const cx = size / 2;
-  const cy = size / 2;
-  let cumulative = 0;
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox={`0 0 ${size} ${size}`}
-      aria-label="Supply breakdown"
-      role="img"
-    >
-      {data.map((d) => {
-        const pct = d.value / total;
-        const startAngle = cumulative * 360;
-        cumulative += pct;
-        const endAngle = cumulative * 360;
-        const startRad = ((startAngle - 90) * Math.PI) / 180;
-        const endRad = ((endAngle - 90) * Math.PI) / 180;
-        const x1 = cx + r * Math.cos(startRad);
-        const y1 = cy + r * Math.sin(startRad);
-        const x2 = cx + r * Math.cos(endRad);
-        const y2 = cy + r * Math.sin(endRad);
-        return (
-          <path
-            key={d.label}
-            d={`M ${cx} ${cy} L ${x1} ${y1} A ${r} ${r} 0 ${pct > 0.5 ? 1 : 0} 1 ${x2} ${y2} Z`}
-            fill={d.color}
-            stroke="var(--color-card)"
-            strokeWidth="1"
-          />
-        );
-      })}
-    </svg>
-  );
-}
-
 /* ── Trade Confirm Modal ──────────────────────────── */
 function TradeConfirmModal({
   type,
   amount,
   symbol,
   price,
-  gasEstimate,
   slippage,
   onConfirm,
   onClose,
@@ -311,7 +237,6 @@ function TradeConfirmModal({
   amount: string;
   symbol: string;
   price: number;
-  gasEstimate: string;
   slippage: number;
   onConfirm: () => void;
   onClose: () => void;
@@ -368,10 +293,6 @@ function TradeConfirmModal({
             <span className="font-mono text-[var(--color-muted)]">{slippage}%</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-[var(--color-muted)]">Est. Gas</span>
-            <span className="font-mono text-[var(--color-muted)]">{gasEstimate}</span>
-          </div>
-          <div className="flex justify-between">
             <span className="text-[var(--color-muted)]">Platform Fee</span>
             <span className="font-mono text-[var(--color-muted)]">0.5%</span>
           </div>
@@ -408,48 +329,9 @@ function TradeConfirmModal({
 // TRANSPARENCY TOOLS
 // ══════════════════════════════════════════════════════════════════════
 
-/* ── Vesting Tracker ─────────────────────────────── */
-function VestingTracker({ vesting }: { vesting: VestingInfo }) {
-  return (
-    <div className="rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-4">
-      <h3 className="mb-3 text-xs font-bold text-[var(--color-fg)]">🔒 Vesting Tracker</h3>
-      <div className="flex items-center justify-between text-xs mb-2">
-        <span className="text-degen-400 font-semibold">{vesting.unlockedPct}% Unlocked</span>
-        <span className="text-[var(--color-muted)]">
-          {(vesting.totalUnlocked / 1e6).toFixed(0)}M / {(vesting.totalLocked / 1e6).toFixed(0)}M
-        </span>
-      </div>
-      <div className="h-2.5 overflow-hidden rounded-full bg-[var(--color-glass-border)]">
-        <div
-          className="h-full rounded-full bg-gradient-to-r from-red-500 via-yellow-500 to-degen-400 transition-all duration-700"
-          style={{ width: `${vesting.unlockedPct}%` }}
-        />
-      </div>
-      <div className="mt-3 grid grid-cols-3 gap-2 text-[9px]">
-        <div>
-          <span className="text-[var(--color-muted)]">Cliff</span>
-          <p className="font-mono text-[var(--color-fg)]">
-            {new Date(vesting.cliffEndDate).toLocaleDateString()}
-          </p>
-        </div>
-        <div>
-          <span className="text-[var(--color-muted)]">Next unlock</span>
-          <p className="font-mono text-degen-400">
-            {new Date(vesting.nextUnlockDate).toLocaleDateString()}
-          </p>
-        </div>
-        <div>
-          <span className="text-[var(--color-muted)]">Vesting ends</span>
-          <p className="font-mono text-[var(--color-fg)]">
-            {new Date(vesting.vestingEndDate).toLocaleDateString()}
-          </p>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 /* ── Fee Transparency ────────────────────────────── */
+// Static platform fee configuration — the same constants the trade route
+// applies. Not per-coin on-chain data.
 function FeeTransparency() {
   return (
     <div className="rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-4">
@@ -467,144 +349,49 @@ function FeeTransparency() {
           </span>
           <span className="font-mono text-amber-400">0.5%</span>
         </div>
-        <div className="flex items-center justify-between text-[10px] py-1">
-          <span className="flex items-center gap-1.5 text-[var(--color-fg)]">
-            <span className="h-2 w-2 rounded-full bg-purple-400" /> Treasury
-          </span>
-          <span className="font-mono text-purple-400">0.3%</span>
-        </div>
-        <div className="flex items-center justify-between text-[10px] py-1">
-          <span className="flex items-center gap-1.5 text-[var(--color-fg)]">
-            <span className="h-2 w-2 rounded-full bg-blue-400" /> Liquidity
-          </span>
-          <span className="font-mono text-blue-400">0.2%</span>
-        </div>
       </div>
       <p className="mt-2 text-[9px] text-[var(--color-muted)] border-t border-[var(--color-glass-border)] pt-2">
-        Total fees: 2.0% — All fees are transparent and on-chain verifiable.
+        Platform fee configuration. Creator fee is set at deployment.
       </p>
     </div>
   );
 }
 
-/* ── Supply Breakdown ─────────────────────────────── */
-function SupplyBreakdownChart() {
-  const data = [
-    { label: 'Creator', value: 50000000, color: '#00ff41' },
-    { label: 'Team', value: 25000000, color: '#3b82f6' },
-    { label: 'LP', value: 45000000, color: '#a855f7' },
-    { label: 'DAO', value: 25000000, color: '#f59e0b' },
-    { label: 'Bundled', value: 47000000, color: '#ef4444' },
-    { label: 'Community', value: 620000000, color: '#334155' },
-    { label: 'Burned', value: 50000000, color: '#dc2626' },
-  ];
-  const total = 1000000000;
-  return (
-    <div className="rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-4">
-      <h3 className="mb-3 text-xs font-bold text-[var(--color-fg)]">📊 Supply Breakdown</h3>
-      <div className="flex items-center gap-4">
-        <MiniPie data={data} size={100} />
-        <div className="flex-1 space-y-1">
-          {data.map((d) => (
-            <div key={d.label} className="flex items-center gap-1.5 text-[8px]">
-              <span className="h-1.5 w-1.5 rounded-full shrink-0" style={{ background: d.color }} />
-              <span className="w-12 text-[var(--color-fg)]">{d.label}</span>
-              <div className="flex-1 h-1 rounded-full bg-[var(--color-glass-border)] overflow-hidden">
-                <div
-                  className="h-full rounded-full"
-                  style={{ width: `${(d.value / total) * 100}%`, background: d.color }}
-                />
-              </div>
-              <span className="w-10 text-right font-mono text-[var(--color-muted)]">
-                {((d.value / total) * 100).toFixed(1)}%
-              </span>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/* ── Bundling Detection ──────────────────────────── */
-function BundlingWarning() {
-  return (
-    <div className="rounded-xl border border-red-500/20 bg-red-500/[0.03] p-4">
-      <div className="flex items-center gap-2 mb-2">
-        <span className="text-sm">⚠️</span>
-        <span className="text-xs font-semibold text-red-400">Bundling Detected</span>
-        <span className="ml-auto rounded bg-yellow-500/15 px-1.5 py-0.5 text-[8px] font-semibold text-yellow-400">
-          Low Risk
-        </span>
-      </div>
-      <p className="text-[9px] text-[var(--color-muted)]">
-        3 bundled wallets identified holding ~4.7% of supply. All bundled wallets are labeled below.
-      </p>
-    </div>
-  );
-}
-
-/* ── Lock Proof ───────────────────────────────────── */
-function LockProofBadge() {
-  return (
-    <div className="rounded-xl border border-degen-500/20 bg-degen-500/[0.03] p-4">
-      <div className="flex items-center gap-2">
-        <span className="flex h-7 w-7 items-center justify-center rounded-full bg-degen-500/20">
-          <span className="text-[10px]">🔒</span>
-        </span>
-        <div>
-          <div className="flex items-center gap-1.5">
-            <span className="text-[10px] font-semibold text-degen-400">Lock Proof Verified</span>
-            <span className="rounded-full bg-degen-500/15 px-1.5 py-0.5 text-[7px] text-degen-400">
-              On-chain
-            </span>
-          </div>
-          <p className="text-[8px] text-[var(--color-muted)]">
-            80M tokens locked in audited vesting contract · Linear vesting · Weekly unlocks
-          </p>
-        </div>
-        <button
-          type="button"
-          className="ml-auto rounded-lg bg-degen-500/15 px-2 py-1 text-[8px] font-medium text-degen-400 hover:bg-degen-500/25"
-        >
-          View ↗
-        </button>
-      </div>
-    </div>
-  );
-}
-
-/* ── Audit Trail ──────────────────────────────────── */
-function AuditTrail() {
-  const entries = [
+/* ── On-Chain Facts ───────────────────────────────── */
+// Renders ONLY values returned by /api/creator-coin/onchain (real contract
+// reads when DEPLOYED_COIN_ADDRESS is configured). Missing fields show "—".
+function OnchainFacts({ onchain }: { onchain: OnchainInfo | null }) {
+  const rows: { label: string; value: string }[] = [
+    { label: 'Contract', value: onchain?.address ? shortenAddress(onchain.address) : '—' },
     {
-      action: 'Creator Fee Updated',
-      value: '100 bps → 150 bps',
-      time: '10d ago',
-      by: 'DAO Vote #42',
+      label: 'Chain',
+      value: onchain?.chain === 'solana' ? 'Solana' : onchain?.chain === 'base' ? 'Base' : '—',
     },
-    { action: 'Vesting Cliff Extended', value: '30d → 45d', time: '5d ago', by: 'DAO Vote #47' },
-    { action: 'Treasury Grant', value: '500,000 tokens', time: '2d ago', by: 'Multi-sig' },
+    { label: 'Bonding Phase', value: onchain?.phaseName ?? '—' },
+    { label: 'Total Raised', value: onchain?.totalRaised ?? '—' },
+    {
+      label: 'Unique Buyers',
+      value: onchain?.uniqueBuyers != null ? String(onchain.uniqueBuyers) : '—',
+    },
+    {
+      label: 'Graduated',
+      value: onchain?.graduated != null ? (onchain.graduated ? 'Yes' : 'No') : '—',
+    },
   ];
   return (
     <div className="rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-4">
-      <h3 className="mb-3 text-xs font-bold text-[var(--color-fg)]">📋 Audit Trail</h3>
-      <div className="space-y-1.5">
-        {entries.map((e) => (
-          <div
-            key={e.action}
-            className="flex items-start gap-2 rounded-lg border border-[var(--color-glass-border)] p-2"
-          >
-            <span className="mt-0.5 text-[8px]">📝</span>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center justify-between">
-                <span className="text-[9px] font-medium text-[var(--color-fg)]">{e.action}</span>
-                <span className="text-[7px] text-[var(--color-muted)]">{e.time}</span>
-              </div>
-              <p className="text-[8px] text-[var(--color-muted)]">
-                {e.value} · by {e.by}
-              </p>
-            </div>
+      <h3 className="mb-3 text-xs font-bold text-[var(--color-fg)]">⛓️ On-Chain Facts</h3>
+      {!onchain?.configured && (
+        <p className="text-[9px] text-[var(--color-muted)]">
+          On-chain contract data is not available — no deployed contract is configured for this
+          coin. Values below show "—" until a contract is deployed and read on-chain.
+        </p>
+      )}
+      <div className="mt-2 space-y-1.5 text-[10px]">
+        {rows.map((r) => (
+          <div key={r.label} className="flex justify-between">
+            <span className="text-[var(--color-muted)]">{r.label}</span>
+            <span className="font-mono text-[var(--color-fg)]">{r.value}</span>
           </div>
         ))}
       </div>
@@ -612,173 +399,18 @@ function AuditTrail() {
   );
 }
 
-/* ── Community Trust Features ──────────────────────── */
-function CommunityTrust({ detail }: { detail: CoinDetail }) {
-  const [voteOpen, _setVoteOpen] = useState(true);
-  const [voted, setVoted] = useState<'for' | 'against' | null>(null);
-  const [preBondingEnds] = useState(Date.now() + 86400000 * 3);
-  const countdown = countdownStr(preBondingEnds - Date.now());
-  const preBondingComplete = Date.now() > preBondingEnds;
-
+/* ── Unavailable Data Notice ──────────────────────── */
+function TransparencyUnavailable() {
   return (
-    <div className="space-y-4">
-      {/* Trust Score */}
-      <div className="rounded-xl border border-degen-500/20 bg-gradient-to-r from-degen-500/5 to-purple-500/5 p-4">
-        <div className="flex items-center gap-3">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-degen-400 bg-degen-500/10">
-            <span className="text-lg">🔍</span>
-          </div>
-          <div>
-            <h3 className="text-sm font-bold text-[var(--color-fg)]">Community Trust Dashboard</h3>
-            <p className="text-[9px] text-[var(--color-muted)]">
-              Full transparency · Wallets labeled · Vesting on-chain · Fees disclosed · No hidden
-              supply
-            </p>
-          </div>
-          <div className="ml-auto text-center">
-            <div className="text-xl font-black text-degen-400">87</div>
-            <div className="text-[8px] text-[var(--color-muted)]">Trust Score</div>
-            <div className="h-1 w-16 rounded-full bg-[var(--color-glass-border)] mt-0.5 overflow-hidden">
-              <div className="h-full rounded-full bg-degen-400" style={{ width: '87%' }} />
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Pre-Bonding Timer */}
-      <div className="rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-4">
-        <div className="flex items-center justify-between mb-2">
-          <h3 className="text-xs font-bold text-[var(--color-fg)]">⏱️ Pre-Bonding Period</h3>
-          {preBondingComplete && (
-            <span className="rounded-full bg-degen-500/15 px-2 py-0.5 text-[8px] font-semibold text-degen-400">
-              ✅ Fair Launch Badge
-            </span>
-          )}
-        </div>
-        <div className="flex items-center gap-3">
-          <div className="flex-1">
-            <div className="h-2 rounded-full bg-[var(--color-glass-border)] overflow-hidden">
-              <div
-                className="h-full rounded-full bg-gradient-to-r from-amber-500 to-degen-400"
-                style={{ width: preBondingComplete ? '100%' : '60%' }}
-              />
-            </div>
-          </div>
-          <span className="font-mono text-xs font-bold text-[var(--color-fg)]">
-            {preBondingComplete ? 'Complete' : countdown}
-          </span>
-        </div>
-        {!preBondingComplete && (
-          <p className="mt-1 text-[8px] text-[var(--color-muted)]">
-            Trading starts when pre-bonding completes or target raised.
-          </p>
-        )}
-        {preBondingComplete && (
-          <p className="mt-1 text-[8px] text-degen-400">
-            Pre-bonding completed without issues. Fair launch badge earned.
-          </p>
-        )}
-      </div>
-
-      {/* Creator Verification */}
-      <div className="rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-4">
-        <h3 className="mb-2 text-xs font-bold text-[var(--color-fg)]">✅ Creator Verification</h3>
-        <div className="grid grid-cols-2 gap-2">
-          {[
-            { protocol: 'Twitter', status: true, handle: `@${detail.symbol.toLowerCase()}` },
-            { protocol: 'Farcaster', status: true, handle: `${detail.symbol.toLowerCase()}.eth` },
-            { protocol: 'Discord', status: true, handle: `${detail.creatorName}#0001` },
-            { protocol: 'Gitcoin Passport', status: true, score: '85' },
-            { protocol: 'ENS', status: true, handle: `${detail.symbol.toLowerCase()}.eth` },
-            { protocol: 'DegenFeed', status: true, badge: 'Creator' },
-          ].map((v) => (
-            <div
-              key={v.protocol}
-              className="flex items-center gap-1.5 rounded-lg border border-[var(--color-glass-border)] p-1.5"
-            >
-              <span className="text-degen-400 text-[8px]">✓</span>
-              <span className="text-[8px] text-[var(--color-fg)]">{v.protocol}</span>
-              <span className="ml-auto text-[7px] text-[var(--color-muted)] font-mono">
-                {v.handle || v.score || v.badge}
-              </span>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Community Vote */}
-      {voteOpen && (
-        <div className="rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-4">
-          <div className="flex items-center justify-between mb-2">
-            <h3 className="text-xs font-bold text-[var(--color-fg)]">🗳️ Community Vote</h3>
-            <span className="rounded bg-amber-500/15 px-1.5 py-0.5 text-[8px] text-amber-400">
-              Active
-            </span>
-          </div>
-          <p className="text-[9px] text-[var(--color-muted)] mb-2">
-            Should the creator fee be reduced from 1.0% to 0.5%?
-          </p>
-          <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={() => setVoted('for')}
-              className={`flex-1 rounded-lg py-2 text-[9px] font-semibold transition-all ${voted === 'for' ? 'bg-degen-500/20 text-degen-400' : 'bg-[var(--color-overlay)] text-[var(--color-muted)] hover:text-[var(--color-fg)]'}`}
-            >
-              👍 For (72%)
-            </button>
-            <button
-              type="button"
-              onClick={() => setVoted('against')}
-              className={`flex-1 rounded-lg py-2 text-[9px] font-semibold transition-all ${voted === 'against' ? 'bg-red-500/20 text-red-400' : 'bg-[var(--color-overlay)] text-[var(--color-muted)] hover:text-[var(--color-fg)]'}`}
-            >
-              👎 Against (28%)
-            </button>
-          </div>
-          {voted && (
-            <p className="mt-2 text-[8px] text-degen-400">
-              ✓ Vote cast. 342 holders voted (34% turnout). 2d remaining.
-            </p>
-          )}
-        </div>
-      )}
-
-      {/* Revenue Sharing */}
-      <div className="rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-4">
-        <h3 className="mb-2 text-xs font-bold text-[var(--color-fg)]">💎 Revenue Sharing</h3>
-        <div className="flex items-center gap-2">
-          <span
-            className={`flex h-8 w-8 items-center justify-center rounded-full text-xs ${detail.graduated ? 'bg-degen-500/20 text-degen-400' : 'bg-[var(--color-overlay)] text-[var(--color-muted)]'}`}
-          >
-            {detail.graduated ? '✓' : '✗'}
-          </span>
-          <div>
-            <span className="text-[10px] font-medium text-[var(--color-fg)]">
-              {detail.graduated ? 'Revenue Sharing Active' : 'Revenue Sharing Not Enabled'}
-            </span>
-            <p className="text-[8px] text-[var(--color-muted)]">
-              {detail.graduated
-                ? 'Creator shares 10% of fees with top 100 holders. Claimable weekly.'
-                : 'Creator has not enabled revenue sharing. Requires DAO vote.'}
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* Transparency stats row */}
-      <div className="grid grid-cols-3 gap-2">
-        <div className="rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-3 text-center">
-          <div className="text-lg font-black text-degen-400">95</div>
-          <div className="text-[8px] text-[var(--color-muted)]">Wallet Labeling</div>
-        </div>
-        <div className="rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-3 text-center">
-          <div className="text-lg font-black text-degen-400">90</div>
-          <div className="text-[8px] text-[var(--color-muted)]">Vesting Clarity</div>
-        </div>
-        <div className="rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-3 text-center">
-          <div className="text-lg font-black text-amber-400">100</div>
-          <div className="text-[8px] text-[var(--color-muted)]">Fee Disclosure</div>
-        </div>
-      </div>
+    <div className="rounded-xl border border-dashed border-[var(--color-glass-border)] bg-[var(--color-card)] p-4">
+      <h3 className="mb-2 text-xs font-bold text-[var(--color-fg)]">
+        🔒 Vesting · Bundling · Audit
+      </h3>
+      <p className="text-[9px] text-[var(--color-muted)]">
+        Vesting schedules, bundling detection, lock proofs, and audit trails require on-chain
+        vesting-contract reads and an indexer that are not connected yet. This data is intentionally
+        not shown rather than estimated.
+      </p>
     </div>
   );
 }
@@ -787,16 +419,20 @@ function CommunityTrust({ detail }: { detail: CoinDetail }) {
 // MAIN PAGE
 // ══════════════════════════════════════════════════════════════════════
 
-type DetailTab = 'info' | 'transparency' | 'trust';
+type DetailTab = 'info' | 'transparency';
 
 export default function CoinDetailPage() {
   const params = useParams();
   const symbol = typeof params.symbol === 'string' ? params.symbol.toUpperCase() : '';
 
+  // Real wallet connection (EIP-1193 injected providers). The former
+  // `setIsConnected(true)` button faked a connection with no wallet.
+  const wallet = useWalletConnect();
+  const isConnected = wallet.isConnected;
+
   const [detail, setDetail] = useState<CoinDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [dataError, setDataError] = useState<string | null>(null);
-  const [vesting] = useState<VestingInfo>(generateVestingInfo);
   const [timeframe, setTimeframe] = useState('24H');
   const [priceHistory, setPriceHistory] = useState<number[]>([]);
 
@@ -808,7 +444,6 @@ export default function CoinDetailPage() {
   const [tradeAmount, setTradeAmount] = useState('');
   const [slippage, setSlippage] = useState(1.0);
   const [showConfirm, setShowConfirm] = useState(false);
-  const [isConnected, setIsConnected] = useState(false);
   const [showSlippageConfig, setShowSlippageConfig] = useState(false);
   const [trading, setTrading] = useState(false);
   const [tradeError, setTradeError] = useState<string | null>(null);
@@ -857,12 +492,13 @@ export default function CoinDetailPage() {
             priceChange30d: data.priceChange30d || 0,
             marketCap: data.marketCap || 0,
             volume24h: data.volume24h || 0,
-            totalSupply: data.totalSupply || 1_000_000_000,
+            totalSupply: data.totalSupply || 0,
             holderCount: 0,
             graduated: false,
             bondingPhase: 0,
             creator: '',
-            creatorName: `${symbol.toLowerCase()}.eth`,
+            // No verified creator identity source — never fabricate an ENS/handle.
+            creatorName: '',
             createdAt: Date.now(),
             isLive: false,
             tags: [],
@@ -1128,7 +764,9 @@ export default function CoinDetailPage() {
               <div className="mt-2 flex items-center gap-3 text-[10px] text-[var(--color-muted)]">
                 <span>
                   by{' '}
-                  <span className="font-medium text-[var(--color-fg)]">{detail.creatorName}</span>
+                  <span className="font-medium text-[var(--color-fg)]">
+                    {detail.creatorName || 'Unknown creator'}
+                  </span>
                 </span>
                 <span>{shortenAddress(detail.creator)}</span>
                 {detail.isLive && (
@@ -1184,7 +822,6 @@ export default function CoinDetailPage() {
               {[
                 { id: 'info' as DetailTab, label: 'Info', icon: 'ℹ️' },
                 { id: 'transparency' as DetailTab, label: 'Transparency', icon: '🔍' },
-                { id: 'trust' as DetailTab, label: 'Trust', icon: '🛡️' },
               ].map((tab) => (
                 <button
                   key={tab.id}
@@ -1251,7 +888,7 @@ export default function CoinDetailPage() {
                     <div className="flex justify-between">
                       <span className="text-[var(--color-muted)]">Total Supply</span>
                       <span className="font-mono text-[var(--color-fg)]">
-                        {formatCompact(detail.totalSupply)}
+                        {detail.totalSupply > 0 ? formatCompact(detail.totalSupply) : '—'}
                       </span>
                     </div>
                     <div className="flex justify-between">
@@ -1268,7 +905,9 @@ export default function CoinDetailPage() {
                     </div>
                     <div className="flex justify-between">
                       <span className="text-[var(--color-muted)]">Creator</span>
-                      <span className="text-[var(--color-fg)]">{detail.creatorName}</span>
+                      <span className="text-[var(--color-fg)]">
+                        {detail.creatorName || 'Unverified'}
+                      </span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-[var(--color-muted)]">Platform Fee</span>
@@ -1300,17 +939,11 @@ export default function CoinDetailPage() {
               {/* ── TRANSPARENCY TAB ── */}
               {activeTab === 'transparency' && (
                 <div className="space-y-3">
-                  <SupplyBreakdownChart />
-                  <VestingTracker vesting={vesting} />
+                  <OnchainFacts onchain={onchain} />
                   <FeeTransparency />
-                  <BundlingWarning />
-                  <LockProofBadge />
-                  <AuditTrail />
+                  <TransparencyUnavailable />
                 </div>
               )}
-
-              {/* ── TRUST TAB ── */}
-              {activeTab === 'trust' && <CommunityTrust detail={detail} />}
             </div>
           </div>
         </div>
@@ -1432,7 +1065,7 @@ export default function CoinDetailPage() {
               {!isConnected ? (
                 <button
                   type="button"
-                  onClick={() => setIsConnected(true)}
+                  onClick={() => wallet.connect()}
                   className="w-full rounded-xl bg-gradient-to-r from-purple-600 to-blue-600 py-3 text-xs font-bold text-white transition-all hover:from-purple-500 hover:to-blue-500 active:scale-[0.98]"
                 >
                   Connect Wallet to Trade
@@ -1493,33 +1126,24 @@ export default function CoinDetailPage() {
           <div className="rounded-xl border border-[var(--color-glass-border)] bg-[var(--color-card)] p-3">
             <div className="flex items-center gap-3">
               <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-degen-500/20 to-purple-500/20 text-[10px] font-bold text-degen-400">
-                {detail.creatorName.charAt(0).toUpperCase()}
+                {(detail.creatorName || '?').charAt(0).toUpperCase()}
               </div>
               <div>
                 <div className="text-xs font-semibold text-[var(--color-fg)]">
-                  {detail.creatorName}
+                  {detail.creatorName || 'Unknown creator'}
                 </div>
                 <div className="text-[9px] text-[var(--color-muted)]">
-                  {shortenAddress(detail.creator)}
+                  {detail.creator ? shortenAddress(detail.creator) : 'Address unavailable'}
                 </div>
               </div>
-              <Link
-                href={`/coins?q=${detail.creatorName}`}
-                className="ml-auto text-[9px] text-degen-400 hover:underline"
-              >
-                View coins →
-              </Link>
-            </div>
-            <div className="mt-2 flex gap-1 flex-wrap">
-              <span className="rounded bg-degen-500/15 px-1.5 py-0.5 text-[7px] text-degen-400">
-                ✓ Twitter
-              </span>
-              <span className="rounded bg-degen-500/15 px-1.5 py-0.5 text-[7px] text-degen-400">
-                ✓ Farcaster
-              </span>
-              <span className="rounded bg-degen-500/15 px-1.5 py-0.5 text-[7px] text-degen-400">
-                ✓ ENS
-              </span>
+              {detail.creatorName && (
+                <Link
+                  href={`/coins?q=${encodeURIComponent(detail.creatorName)}`}
+                  className="ml-auto text-[9px] text-degen-400 hover:underline"
+                >
+                  View coins →
+                </Link>
+              )}
             </div>
           </div>
 
@@ -1545,18 +1169,6 @@ export default function CoinDetailPage() {
               </div>
             </div>
           )}
-
-          {/* Pre-bonding timer (for non-graduated) */}
-          {!detail.graduated && (
-            <div className="rounded-xl border border-amber-500/20 bg-amber-500/[0.03] p-3">
-              <div className="flex items-center justify-between">
-                <span className="text-[10px] font-medium text-[var(--color-fg)]">
-                  ⏱️ Trading starts in
-                </span>
-                <span className="font-mono text-xs font-bold text-amber-400">2d 14h 30m</span>
-              </div>
-            </div>
-          )}
         </div>
       </div>
 
@@ -1567,7 +1179,6 @@ export default function CoinDetailPage() {
           amount={tradeAmount}
           symbol={detail.symbol}
           price={detail.price}
-          gasEstimate={detail.chain === 'solana' ? '~0.005 SOL' : '~0.001 ETH'}
           slippage={slippage}
           onConfirm={executeTrade}
           onClose={() => setShowConfirm(false)}

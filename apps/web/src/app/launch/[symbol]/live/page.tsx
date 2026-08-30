@@ -152,8 +152,13 @@ export default function CoinLaunchStreamPage() {
 
   const [coinMeta, setCoinMeta] = useState<CoinMeta | null>(null);
   const [metaLoading, setMetaLoading] = useState(true);
+  const [metaError, setMetaError] = useState<string | null>(null);
   const [showGoLive, setShowGoLive] = useState(false);
-  const [isCreator, setIsCreator] = useState(false);
+  // Creator-only actions (Go Live / End stream) require a real auth check.
+  // The former `setIsCreator(true)` unconditionally granted creator powers
+  // to every visitor — fabricated authorization. Until session-based
+  // creator verification is wired, no one is treated as the creator.
+  const [isCreator] = useState(false);
 
   // Fetch coin metadata
   useEffect(() => {
@@ -168,23 +173,14 @@ export default function CoinLaunchStreamPage() {
           const data = (await res.json()) as CoinMeta;
           if (!cancelled) setCoinMeta(data);
         } else {
-          // Dev fallback
+          // No fabricated fallback: the former code generated a random
+          // 0x… contract address on API failure. Show an honest error.
           if (!cancelled) {
-            setCoinMeta({
-              address: `0x${Math.random().toString(16).slice(2, 42)}`,
-              symbol: symbol.toUpperCase(),
-              name: `${symbol.charAt(0).toUpperCase() + symbol.slice(1)} Token`,
-            });
+            setMetaError(`Coin metadata unavailable (HTTP ${res.status})`);
           }
         }
       } catch {
-        if (!cancelled) {
-          setCoinMeta({
-            address: `0x${Math.random().toString(16).slice(2, 42)}`,
-            symbol: symbol.toUpperCase(),
-            name: symbol.charAt(0).toUpperCase() + symbol.slice(1),
-          });
-        }
+        if (!cancelled) setMetaError('Coin metadata unavailable — network error.');
       } finally {
         if (!cancelled) setMetaLoading(false);
       }
@@ -212,12 +208,6 @@ export default function CoinLaunchStreamPage() {
   const isLive = stream?.isActive ?? peertube.isLive ?? false;
   const loading = metaLoading || streamLoading;
 
-  // Determine if current user is the creator (simplified — wire to auth in real app)
-  useEffect(() => {
-    // In real app, compare with auth context
-    setIsCreator(true); // Simplified for dev
-  }, []);
-
   const handleGoLive = useCallback(() => {
     setShowGoLive(true);
   }, []);
@@ -230,9 +220,13 @@ export default function CoinLaunchStreamPage() {
         <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-red-500/10">
           <span className="text-2xl">⚠️</span>
         </div>
-        <h1 className="mb-2 text-xl font-bold text-[var(--color-fg)]">Coin Not Found</h1>
+        <h1 className="mb-2 text-xl font-bold text-[var(--color-fg)]">
+          {metaError ? 'Coin Data Unavailable' : 'Coin Not Found'}
+        </h1>
         <p className="mb-6 text-sm text-[var(--color-muted)]">
-          Could not find coin with symbol &ldquo;{symbol}&rdquo;
+          {metaError
+            ? `${metaError}. The launch stream needs real coin metadata — no fallback data is shown.`
+            : `Could not find coin with symbol “${symbol}”`}
         </p>
         <Link href="/launch" className="btn-primary">
           ← Browse Coins

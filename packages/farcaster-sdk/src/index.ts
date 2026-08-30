@@ -35,13 +35,35 @@ export {
 } from './frames-v2';
 export type { Protocol, UnifiedIdentity };
 
-export const DEFAULT_HUB_URL = 'http://127.0.0.1:2281';
+/**
+ * Hub URL resolution — env first, never a hardcoded localhost.
+ *
+ * The former default `http://127.0.0.1:2281` silently sent hub traffic to
+ * the caller's own machine when no explicit URL was passed. Now:
+ *   1. FARCASTER_HUB_URL (server) / NEXT_PUBLIC_FARCASTER_HUB_URL (client)
+ *   2. explicit constructor argument
+ *   3. otherwise HubClient throws — no silent localhost fallback.
+ */
+function resolveHubUrlFromEnv(): string | null {
+  // Look `process` up on globalThis so this module stays isomorphic
+  // (Node / Next.js / Cloudflare Workers / browser) without requiring
+  // @types/node — a bare `process` identifier throws in runtimes that
+  // don't define it, and the package must not depend on Node types.
+  const proc = (globalThis as { process?: { env?: Record<string, string | undefined> } }).process;
+  const raw = proc?.env?.FARCASTER_HUB_URL ?? proc?.env?.NEXT_PUBLIC_FARCASTER_HUB_URL;
+  const trimmed = raw?.trim();
+  return trimmed ? trimmed : null;
+}
+
+/** Env-resolved hub URL, or null when unconfigured (no localhost default). */
+export const DEFAULT_HUB_URL: string | null = resolveHubUrlFromEnv();
+
+/** Public hubs used only when a caller explicitly opts into fallbacks. */
 export const FALLBACK_HUB_URLS = [
-  DEFAULT_HUB_URL,
   'https://hubble.degenfeed.xyz',
   'https://hub.farcaster.standardcrypto.vc:2281',
   'https://hub.pinata.cloud',
-];
+] as const;
 
 export const CURATED_FARCASTER_FIDS = [
   1, 2, 3, 99, 100, 200, 500, 1000, 1234, 2000, 5000, 5650, 11276, 215, 320, 602, 1337, 4242, 69420,
@@ -76,8 +98,14 @@ export interface HubCastMessage {
 export class HubClient {
   private baseUrl: string;
 
-  constructor(hubUrl: string = DEFAULT_HUB_URL) {
-    this.baseUrl = hubUrl.replace(/\/$/, '');
+  constructor(hubUrl?: string | null) {
+    const resolved = hubUrl?.trim() || DEFAULT_HUB_URL;
+    if (!resolved) {
+      throw new Error(
+        'Farcaster hub URL is not configured — set the FARCASTER_HUB_URL env var (or NEXT_PUBLIC_FARCASTER_HUB_URL) or pass an explicit hubUrl to HubClient. No localhost default is provided.',
+      );
+    }
+    this.baseUrl = resolved.replace(/\/$/, '');
   }
 
   private async getOne<T>(path: string, params?: Record<string, string>): Promise<T> {

@@ -64,14 +64,6 @@ function formatCompactNum(n: number): string {
   return String(n);
 }
 
-function generateSparklineData(): number[] {
-  let price = 30 + Math.random() * 40;
-  return Array.from({ length: 7 }, () => {
-    price = Math.max(5, Math.min(95, price + (Math.random() - 0.48) * 10));
-    return price;
-  });
-}
-
 // ─── Animated Counter ─────────────────────────────────────────────────
 
 function AnimatedCounter({
@@ -114,60 +106,6 @@ function AnimatedCounter({
       {decimals > 0 ? display.toFixed(decimals) : display.toLocaleString()}
       {suffix}
     </span>
-  );
-}
-
-// ─── Sparkline SVG ────────────────────────────────────────────────────
-
-function MiniSparkline({
-  data,
-  width = 64,
-  height = 24,
-}: {
-  data: number[];
-  width?: number;
-  height?: number;
-}) {
-  if (data.length < 2) {
-    return (
-      <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} aria-hidden="true">
-        <line
-          x1={0}
-          y1={height / 2}
-          x2={width}
-          y2={height / 2}
-          stroke="var(--color-glass-border)"
-          strokeWidth="1"
-        />
-      </svg>
-    );
-  }
-  const max = Math.max(...data, 1);
-  const min = Math.min(...data, 0);
-  const range = max - min || 1;
-  const isUp = data[data.length - 1]! >= data[0]!;
-  const color = isUp ? '#00ff41' : '#ff4444';
-
-  const points = data
-    .map((v, i) => `${(i / (data.length - 1)) * width},${height - ((v - min) / range) * height}`)
-    .join(' ');
-
-  const lastY = height - ((data[data.length - 1]! - min) / range) * height;
-  const fillPoints = `${points} ${width},${height} 0,${height}`;
-
-  return (
-    <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} aria-hidden="true">
-      <polygon points={fillPoints} fill={color} opacity="0.08" />
-      <polyline
-        fill="none"
-        stroke={color}
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        points={points}
-      />
-      <circle cx={width} cy={lastY} r="1.5" fill={color} />
-    </svg>
   );
 }
 
@@ -227,6 +165,18 @@ function PhaseBadge({ phase }: { phase: number }) {
 // ─── Market Overview Line Chart ───────────────────────────────────────
 
 function MarketOverviewChart({ data }: { data: number[] }) {
+  // No historical market-cap time series is available from the stats API yet.
+  // Render an explicit "unavailable" state instead of an empty/fake chart.
+  if (data.length < 2) {
+    return (
+      <div className="rounded-xl border border-dashed border-[var(--color-glass-border)] bg-[var(--color-card)] p-4">
+        <h3 className="mb-2 text-xs font-bold text-[var(--color-fg)]">Total Market Cap (7d)</h3>
+        <p className="text-[10px] text-[var(--color-muted)]">
+          Market overview chart unavailable — no historical time-series data source is connected.
+        </p>
+      </div>
+    );
+  }
   const max = Math.max(...data, 1);
   const min = Math.min(...data, 0);
   const range = max - min || 1;
@@ -365,7 +315,6 @@ function PieChart({
 
 // ─── Mock Data ────────────────────────────────────────────────────────
 
-
 // ══════════════════════════════════════════════════════════════════════
 // MAIN PAGE
 // ══════════════════════════════════════════════════════════════════════
@@ -376,13 +325,13 @@ export default function CoinStatsPage() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<TabKey>('top');
   const [gainersPeriod, setGainersPeriod] = useState<GainerPeriod>('24h');
-
-  // Store sparkline data per coin address
-  const [sparklines, setSparklines] = useState<Record<string, number[]>>({});
+  const [dataError, setDataError] = useState<string | null>(null);
 
   useEffect(() => {
+    let cancelled = false;
     const fetchData = async () => {
       setLoading(true);
+      setDataError(null);
       try {
         const [overviewRes, coinsRes] = await Promise.all([
           fetch('/api/coins/stats/overview'),
@@ -393,27 +342,26 @@ export default function CoinStatsPage() {
 
         if (overviewRes.ok) {
           const ov = await overviewRes.json();
-          setOverview(ov);
+          if (!cancelled) setOverview(ov);
         }
 
         if (coinsRes.ok) {
           const data = await coinsRes.json();
           const coinList: CoinStatsItem[] = data.coins || [];
-          setCoins(coinList);
-
-          // Generate sparkline data for each coin
-          const sp: Record<string, number[]> = {};
-          for (const c of coinList) {
-            sp[c.address] = generateSparklineData();
-          }
-          setSparklines(sp);
+          if (!cancelled) setCoins(coinList);
+        } else if (!cancelled) {
+          const body = (await coinsRes.json().catch(() => ({}))) as { error?: string };
+          setDataError(body.error || `Coin stats unavailable (HTTP ${coinsRes.status})`);
         }
       } catch {
-        // Fallback to empty state
+        if (!cancelled) setDataError('Coin stats unavailable — network error.');
       }
-      setLoading(false);
+      if (!cancelled) setLoading(false);
     };
     fetchData();
+    return () => {
+      cancelled = true;
+    };
   }, [activeTab, gainersPeriod]);
 
   const overviewData = overview || {
@@ -425,9 +373,6 @@ export default function CoinStatsPage() {
     graduatedCount: 0,
     bondingCount: 0,
   };
-
-  // Real price data only — mock data banned
-  const mockPriceData: number[] = [];
 
   // Volume bar chart data (top 10 by volume)
   const volumeBarData = useMemo(() => {
@@ -519,6 +464,16 @@ export default function CoinStatsPage() {
         </div>
       </div>
 
+      {/* ─── Data unavailable banner ────────────────────────── */}
+      {dataError && (
+        <div
+          className="mb-6 rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-xs text-red-400"
+          role="alert"
+        >
+          ⚠️ {dataError} Overview cards show zeros until the stats API responds.
+        </div>
+      )}
+
       {/* ─── Overview Cards ─────────────────────────────────── */}
       <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
         <OverviewCard label="Total Coins" value={overviewData.totalCoins} />
@@ -570,7 +525,7 @@ export default function CoinStatsPage() {
       <div className="mb-6 grid grid-cols-1 gap-4 lg:grid-cols-2 xl:grid-cols-4">
         {/* Market overview — spans 2 cols */}
         <div className="lg:col-span-2">
-          <MarketOverviewChart data={mockPriceData} />
+          <MarketOverviewChart data={[]} />
         </div>
         {/* Volume bar chart */}
         <div>
@@ -692,7 +647,6 @@ export default function CoinStatsPage() {
               {coins.map((coin) => {
                 const isUp24 = coin.priceChange24h >= 0;
                 const isUp7d = coin.priceChange7d >= 0;
-                const spData = sparklines[coin.address] || [];
                 return (
                   <tr
                     key={coin.address}
@@ -753,8 +707,11 @@ export default function CoinStatsPage() {
                     <td className="px-3 py-3 text-center">
                       <PhaseBadge phase={coin.bondingCurvePhase} />
                     </td>
-                    <td className="px-3 py-3 text-center">
-                      <MiniSparkline data={spData} />
+                    <td
+                      className="px-3 py-3 text-center text-[var(--color-muted)]"
+                      title="No historical trend data source connected"
+                    >
+                      —
                     </td>
                   </tr>
                 );
