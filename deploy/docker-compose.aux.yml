@@ -1,0 +1,199 @@
+# DegenFeed AUX services — minimal set (2026-08-31).
+# Replaces the retired 15-service docker-compose.yml for degenfeed-aux.service.
+# Kept: meilisearch (unified feed search), rss-bridge, redlib (Reddit proxy,
+# bridge expects 127.0.0.1:8281), nostr-relay (bridge health-checks ws://127.0.0.1:8085).
+# Everything else (degenfeed-web/api, lens/zora indexers, pixelfed, castopod,
+# hubble, arena/firehose/mirror/paragraph bridges) is RETIRED — app runs via
+# systemd from the repo; the bridge is its own systemd unit.
+# MEILI_MASTER_KEY comes from /srv/degenfeed/.env (compose default env file).
+
+services:
+  meilisearch:
+    image: getmeili/meilisearch:v1.49
+    container_name: degenfeed-meilisearch
+    restart: always
+    ports:
+      - 127.0.0.1:7700:7700
+    environment:
+      - MEILI_MASTER_KEY=${MEILI_MASTER_KEY}
+      - MEILI_ENV=production
+      - MEILI_NO_ANALYTICS=true
+      - MEILI_DB_PATH=/meili_data
+      - MEILI_MAX_INDEXING_MEMORY=1G
+      - MEILI_MAX_INDEX_SIZE=16G
+    volumes:
+      - meili_data:/meili_data
+    deploy:
+      resources:
+        limits:
+          cpus: '1.5'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+    healthcheck:
+      test:
+        - CMD
+        - wget
+        - --no-verbose
+        - --tries=1
+        - --spider
+        - '--header=Authorization: Bearer ${MEILI_MASTER_KEY}'
+        - http://127.0.0.1:7700/health
+      interval: 60s
+      timeout: 60s
+      retries: 6
+      start_period: 60s
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /tmp:noexec,nosuid,size=2g
+    security_opt:
+      - no-new-privileges:true
+    labels:
+      - app.rugmunch.io/name=degenfeed-meilisearch
+      - app.rugmunch.io/role=database
+      - app.rugmunch.io/description=Meilisearch full-text search engine
+
+  redlib:
+    image: quay.io/redlib/redlib:sha-5265ccb
+    container_name: degenfeed-redlib
+    restart: always
+    ports:
+      - 127.0.0.1:8281:8080
+    environment:
+      - LIBREDDIT_DEFAULT_THEME=dark
+      - LIBREDDIT_DEFAULT_SHOW_NSFW=off
+      - LIBREDDIT_DEFAULT_USE_HLS=on
+      - LIBREDDIT_DEFAULT_FRONT_PAGE=popular
+      - LIBREDDIT_DEFAULT_LAYOUT=card
+      - LIBREDDIT_DEFAULT_WIDE=on
+      - LIBREDDIT_DEFAULT_COMMENT_SORT=confidence
+      - LIBREDDIT_DEFAULT_POST_SORT=hot
+      - LIBREDDIT_DEFAULT_BLUR_SPOILER=off
+      - LIBREDDIT_SFW_ONLY=on
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 2G
+        reservations:
+          cpus: '0.25'
+          memory: 128M
+    healthcheck:
+      test:
+        - CMD
+        - wget
+        - --no-verbose
+        - --tries=1
+        - --spider
+        - http://127.0.0.1:8080/settings
+      interval: 60s
+      timeout: 15s
+      retries: 3
+      start_period: 30s
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /tmp:noexec,nosuid,size=64m
+    security_opt:
+      - no-new-privileges:true
+    labels:
+      - app.rugmunch.io/name=degenfeed-redlib
+      - app.rugmunch.io/role=web
+      - app.rugmunch.io/description=Redlib Reddit frontend
+
+  rss-bridge:
+    image: rssbridge/rss-bridge:2025-08-05
+    # HARD-CODED ROOT: entrypoint needs root to create /run/php directory and chown cache
+    entrypoint: /bin/sh -c "mkdir -p /run/php /app/cache && chown www-data:www-data /app/cache && exec /app/docker-entrypoint.sh"
+    container_name: degenfeed-rss-bridge
+    restart: always
+    ports:
+      - 127.0.0.1:8282:80
+    environment:
+      - RSSBRIDGE_DEBUG=false
+      - RSSBRIDGE_CACHE_TIMEOUT=3600
+      - RSSBRIDGE_HTTP_TIMEOUT=30
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - "bash -c ': > /dev/tcp/localhost/80'"
+      interval: 30s
+      timeout: 15s
+      retries: 3
+      start_period: 30s
+    cap_drop:
+      - ALL
+    tmpfs:
+      - /tmp:noexec,nosuid,size=64m
+      - /var/lib/nginx:noexec,nosuid,size=32m
+      - /run:noexec,nosuid,size=32m
+    volumes:
+      - rssbridge_cache:/app/cache
+    security_opt:
+      - no-new-privileges:true
+    cap_add:
+      - SETUID
+      - SETGID
+      - CHOWN
+      - DAC_OVERRIDE
+    read_only: true
+    labels:
+      - app.rugmunch.io/name=degenfeed-rss-bridge
+      - app.rugmunch.io/role=api
+      - app.rugmunch.io/description=RSS bridge aggregator
+
+  nostr-relay:
+    image: scsibug/nostr-rs-relay:0.10.0
+    container_name: degenfeed-nostr-relay
+    restart: always
+    ports:
+      - 127.0.0.1:8085:8080
+    volumes:
+      - ./nostr-relay/config.toml:/usr/src/app/config.toml:ro
+      - nostr_data:/usr/src/app/db
+    environment:
+      - RUST_LOG=info,nostr_rs_relay=info
+      - APP_DATA=/usr/src/app/db
+    command: ["./nostr-rs-relay", "--config", "config.toml", "--db", "/usr/src/app/db"]
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c 'exec 3<>/dev/tcp/127.0.0.1/8080'"]
+      interval: 30s
+      timeout: 15s
+      retries: 3
+      start_period: 30s
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    tmpfs:
+      - /tmp:noexec,nosuid,size=32m
+    labels:
+      - app.rugmunch.io/name=degenfeed-nostr-relay
+      - app.rugmunch.io/role=node
+      - app.rugmunch.io/description=Nostr relay node
+
+volumes:
+  meili_data:
+  rssbridge_cache:
+  nostr_data:
+
+networks:
+  default:
+    name: degenfeed_aux_default
