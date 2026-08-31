@@ -24,8 +24,10 @@ const PEERTUBE_BASE = process.env.PEERTUBE_BASE_URL || 'http://127.0.0.1:9011';
  * pull recent videos from public federated instances to keep the feed
  * populated with fresh content.
  *
- * Verified reachable public instances (2026-08-04) spanning makers/DIY,
- * science & tech, activism, crypto (Monero Talk) and general content.
+ * Verified reachable public instances (2026-08-31) spanning makers/DIY,
+ * science & tech, activism, crypto (Monero Talk), Blender official and
+ * general content. Added since 2026-08-04: tilvids.com,
+ * video.infosec.exchange, video.blender.org.
  */
 const PEERTUBE_FEDERATED = [
   'https://framatube.org',
@@ -37,6 +39,9 @@ const PEERTUBE_FEDERATED = [
   'https://peertube.lightnode.ru',
   'https://watch.monerotalk.live',
   'https://spectra.video',
+  'https://tilvids.com',
+  'https://video.infosec.exchange',
+  'https://video.blender.org',
 ];
 
 interface PeerTubeVideo {

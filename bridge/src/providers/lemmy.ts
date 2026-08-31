@@ -55,11 +55,22 @@ const LOCAL_COMMUNITIES = ['crypto', 'defi', 'nfts', 'tech', 'meme', 'web3'];
 
 /** External Lemmy instances for content diversity */
 const EXTERNAL_INSTANCES = [
-  { url: 'https://lemmy.world', communities: ['cryptocurrency', 'technology', 'web3'] },
-  { url: 'https://lemmy.ml', communities: ['bitcoin', 'ethereum', 'technology'] },
-  { url: 'https://sh.itjust.works', communities: ['cryptocurrency'] },
-  { url: 'https://programming.dev', communities: ['programming', 'rust'] },
-  { url: 'https://lemm.ee', communities: ['technology'] },
+  {
+    url: 'https://lemmy.world',
+    communities: ['cryptocurrency', 'technology', 'web3', 'ai', 'ethereum', 'bitcoin'],
+  },
+  { url: 'https://lemmy.ml', communities: ['bitcoin', 'ethereum', 'technology', 'cryptocurrency'] },
+  { url: 'https://sh.itjust.works', communities: ['cryptocurrency', 'technology', 'ai'] },
+  {
+    url: 'https://programming.dev',
+    communities: ['programming', 'rust', 'python', 'machinelearning'],
+  },
+  { url: 'https://lemm.ee', communities: ['technology', 'crypto', 'ai'] },
+  { url: 'https://lemmy.ca', communities: ['technology', 'ai', 'crypto'] },
+  { url: 'https://beehaw.org', communities: ['technology'] },
+  { url: 'https://infosec.pub', communities: ['cybersecurity', 'security', 'ai'] },
+  { url: 'https://feddit.nl', communities: ['technology', 'ai'] },
+  { url: 'https://discuss.tchncs.de', communities: ['technology', 'ai', 'linux'] },
 ];
 
 // ─── Types ───────────────────────────────────────────────────────────
@@ -455,7 +466,7 @@ export const schema: SchemaGuard = {
   contentType: 'mixed',
 };
 
-export async function fetchLemmyPosts(limit = 20): Promise<UnifiedPost[]> {
+export async function fetchLemmyPosts(limit = 40): Promise<UnifiedPost[]> {
   // Rate limit: 60 requests/minute per instance
   if (!checkRateLimit('lemmy', { maxRequests: 60, windowMs: 60_000 })) {
     // console.log('[lemmy] Rate limited, skipping fetch');

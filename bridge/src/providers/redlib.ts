@@ -58,14 +58,34 @@ let redditInFlight: Promise<UnifiedPost[]> | null = null;
  */
 const ROTATION_WINDOW_MS = 15_000;
 
-/** The task-specified rotation set (deduped, case-insensitive). */
+/**
+ * The task-specified rotation set (deduped, lowercase). Expanded 2026-08-31
+ * with crypto/AI/tech subreddits so the 15s rotation surfaces more variety.
+ * Case-duplicate entries (cryptocurrency/CryptoCurrency) were collapsed into
+ * one so every slot rotates a distinct subreddit.
+ */
 const ROTATION_SUBS = [
   'cryptocurrency',
   'ethereum',
   'bitcoin',
   'defi',
-  'CryptoCurrency',
   'ethtrader',
+  'solana',
+  'bitcoinmarkets',
+  'CryptoMarkets',
+  'MachineLearning',
+  'LocalLLaMA',
+  'artificial',
+  'ChatGPT',
+  'StableDiffusion',
+  'singularity',
+  'technology',
+  'programming',
+  'webdev',
+  'cybersecurity',
+  'CryptoMoonShots',
+  'altcoin',
+  'web3',
 ];
 
 function pickRotatingSubreddit(now = Date.now()): string {
@@ -533,7 +553,7 @@ export const schema: SchemaGuard = {
   contentType: 'mixed',
 };
 
-export async function fetchRedditPosts(limit = 20): Promise<UnifiedPost[]> {
+export async function fetchRedditPosts(limit = 40): Promise<UnifiedPost[]> {
   // 1) Serve from the short TTL cache first so repeated feed-build calls
   // (prewarm + refresher + user requests) don't burn the in-process budget
   // or hammer Reddit's CDN.
@@ -554,11 +574,11 @@ export async function fetchRedditPosts(limit = 20): Promise<UnifiedPost[]> {
       return [];
     }
 
-    // 3) ONE rotating subreddit per cycle, higher limit (25 posts). A single
+    // 3) ONE rotating subreddit per cycle, higher limit (50 posts). A single
     // request per 15s+ window is the only cadence Reddit tolerates.
     const sub = pickRotatingSubreddit();
     const posts: UnifiedPost[] = [];
-    const perSub = 25;
+    const perSub = 50;
 
     try {
       const rssPosts = await fetchFromRedditRss(sub, perSub);

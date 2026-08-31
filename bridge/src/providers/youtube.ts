@@ -1,7 +1,7 @@
 /**
  * YouTube Provider
  *
- * Rate Limit: 15 channel feeds per refresh (no API key required)
+ * Rate Limit: 50 channel feeds per refresh (no API key required)
  *
  * Fetches the latest videos from top crypto / tech / AI channels using
  * YouTube's public RSS feeds (no API key needed):
@@ -64,12 +64,21 @@ export interface YouTubeChannel {
 }
 
 /**
- * Top crypto / tech / AI channels — verified channel IDs (2026-08-03).
+ * Top crypto / tech / AI channels — verified channel IDs (2026-08-31).
+ * Every channel was resolved from its @handle and the RSS feed fetched
+ * (HTTP 200 + 15 entries) before being added; feeds with zero entries
+ * would be silently skipped by the provider.
  *
- * Crypto (9): Coin Bureau, Bankless, Finematics, Whiteboard Crypto,
- *   Benjamin Cowen, DataDash, Ivan on Tech, Altcoin Daily, CoinGecko
- * AI (4): Two Minute Papers, Yannic Kilcher, AI Explained, Matt Wolfe
- * Tech (2): Fireship, Theo - t3.gg
+ * Crypto (21): Coin Bureau, Bankless, Finematics, Whiteboard Crypto,
+ *   Benjamin Cowen, DataDash, Ivan on Tech, Altcoin Daily, CoinGecko,
+ *   a16z crypto, The Defiant, Blockworks, Unchained, Lark Davis,
+ *   Cointelegraph, CoinDesk, Bitcoin Magazine, Real Vision,
+ *   Paul Barron Network, InvestAnswers, CryptosRUs
+ * AI (9): Two Minute Papers, Yannic Kilcher, AI Explained, Matt Wolfe,
+ *   Andrej Karpathy, Lex Fridman, DotCSV, Matthew Berman, Wes Roth
+ * Tech (14): Fireship, Theo - t3.gg, TechCrunch, Y Combinator, a16z,
+ *   MKBHD, Linus Tech Tips, Veritasium, 3Blue1Brown, ColdFusion,
+ *   Mrwhosetheboss, Dave2D, Jeff Geerling, NetworkChuck
  */
 export const YOUTUBE_CHANNELS: YouTubeChannel[] = [
   // ── Crypto ──────────────────────────────────────────────────────
@@ -127,6 +136,78 @@ export const YOUTUBE_CHANNELS: YouTubeChannel[] = [
     handle: 'CoinGecko',
     category: 'crypto',
   },
+  {
+    channelId: 'UCTHq3W46BiAYjKUYZq2qm-Q',
+    name: 'a16z crypto',
+    handle: 'a16zcrypto',
+    category: 'crypto',
+  },
+  {
+    channelId: 'UCL0J4MLEdLP0-UyLu0hCktg',
+    name: 'The Defiant',
+    handle: 'TheDefiant',
+    category: 'crypto',
+  },
+  {
+    channelId: 'UCBqSFQyXr_b5BHWF_e5oNXw',
+    name: 'Blockworks',
+    handle: 'blockworks',
+    category: 'crypto',
+  },
+  {
+    channelId: 'UCWiiMnsnw5Isc2PP1to9nNw',
+    name: 'Unchained',
+    handle: 'UnchainedCrypto',
+    category: 'crypto',
+  },
+  {
+    channelId: 'UCpulpCvDDHmA5iO2DkPmaPQ',
+    name: 'Lark Davis',
+    handle: 'LarkDavis',
+    category: 'crypto',
+  },
+  {
+    channelId: 'UCRqBu-grVX1p97WaX4d-OuQ',
+    name: 'Cointelegraph',
+    handle: 'Cointelegraph',
+    category: 'crypto',
+  },
+  {
+    channelId: 'UC7TghOL755nBk7HelHoi9LQ',
+    name: 'CoinDesk',
+    handle: 'CoinDesk',
+    category: 'crypto',
+  },
+  {
+    channelId: 'UCtOV5M-T3GcsJAq8QKaf0lg',
+    name: 'Bitcoin Magazine',
+    handle: 'BitcoinMagazine',
+    category: 'crypto',
+  },
+  {
+    channelId: 'UCwSVtQvURxiyn1CQeyoExZg',
+    name: 'Real Vision',
+    handle: 'realvision',
+    category: 'crypto',
+  },
+  {
+    channelId: 'UC4VPa7EOvObpyCRI4YKRQRw',
+    name: 'Paul Barron Network',
+    handle: 'PaulBarronNetwork',
+    category: 'crypto',
+  },
+  {
+    channelId: 'UClgJyzwGs-GyaNxUHcLZrkg',
+    name: 'InvestAnswers',
+    handle: 'InvestAnswers',
+    category: 'crypto',
+  },
+  {
+    channelId: 'UCI7M65p3A-D3P4v5qW8POxQ',
+    name: 'CryptosRUs',
+    handle: 'CryptosRUs',
+    category: 'crypto',
+  },
   // ── AI ─────────────────────────────────────────────────────────
   {
     channelId: 'UCbfYPyITQ-7l4upoX8nvctg',
@@ -152,12 +233,109 @@ export const YOUTUBE_CHANNELS: YouTubeChannel[] = [
     handle: 'mattwolfe',
     category: 'ai',
   },
+  {
+    channelId: 'UCXUPKJO5MZQN11PqgIvyuvQ',
+    name: 'Andrej Karpathy',
+    handle: 'AndrejKarpathy',
+    category: 'ai',
+  },
+  {
+    channelId: 'UCSHZKyawb77ixDdsGog4iWA',
+    name: 'Lex Fridman',
+    handle: 'lexfridman',
+    category: 'ai',
+  },
+  {
+    channelId: 'UCy5znSnfMsDwaLlROnZ7Qbg',
+    name: 'DotCSV',
+    handle: 'DotCSV',
+    category: 'ai',
+  },
+  {
+    channelId: 'UCawZsQWqfGSbCI5yjkdVkTA',
+    name: 'Matthew Berman',
+    handle: 'matthew_berman',
+    category: 'ai',
+  },
+  {
+    channelId: 'UCqcbQf6yw5KzRoDDcZ_wBSw',
+    name: 'Wes Roth',
+    handle: 'wesroth',
+    category: 'ai',
+  },
   // ── Tech ───────────────────────────────────────────────────────
   { channelId: 'UCsBjURrPoezykLs9EqgamOA', name: 'Fireship', handle: 'Fireship', category: 'tech' },
   {
     channelId: 'UCbRP3c757lWg9M-U7TyEkXA',
     name: 'Theo - t3.gg',
     handle: 't3dotgg',
+    category: 'tech',
+  },
+  {
+    channelId: 'UCCjyq_K1Xwfg8Lndy7lKMpA',
+    name: 'TechCrunch',
+    handle: 'TechCrunch',
+    category: 'tech',
+  },
+  {
+    channelId: 'UCcefcZRL2oaA_uBNeo5UOWg',
+    name: 'Y Combinator',
+    handle: 'ycombinator',
+    category: 'tech',
+  },
+  {
+    channelId: 'UC9cn0TuPq4dnbTY-CBsm8XA',
+    name: 'a16z',
+    handle: 'a16z',
+    category: 'tech',
+  },
+  { channelId: 'UCBJycsmduvYEL83R_U4JriQ', name: 'MKBHD', handle: 'mkbhd', category: 'tech' },
+  {
+    channelId: 'UCXuqSBlHAE6Xw-yeJA0Tunw',
+    name: 'Linus Tech Tips',
+    handle: 'LinusTechTips',
+    category: 'tech',
+  },
+  {
+    channelId: 'UCHnyfMqiRRG1u-2MsSQLbXA',
+    name: 'Veritasium',
+    handle: 'veritasium',
+    category: 'tech',
+  },
+  {
+    channelId: 'UCYO_jab_esuFRV4b17AJtAw',
+    name: '3Blue1Brown',
+    handle: '3blue1brown',
+    category: 'tech',
+  },
+  {
+    channelId: 'UC4QZ_LsYcvcq7qOsOhpAX4A',
+    name: 'ColdFusion',
+    handle: 'ColdFusion',
+    category: 'tech',
+  },
+  {
+    channelId: 'UCMiJRAwDNSNzuYeN2uWa0pA',
+    name: 'Mrwhosetheboss',
+    handle: 'Mrwhosetheboss',
+    category: 'tech',
+  },
+  {
+    channelId: 'UCVYamHliCI9rw1tHR1xbkfw',
+    name: 'Dave2D',
+    handle: 'Dave2D',
+    category: 'tech',
+  },
+  {
+    channelId: 'UCR-DXc1voovS8nhAvccRZhg',
+    name: 'Jeff Geerling',
+    handle: 'jeffgeerling',
+    category: 'tech',
+  },
+  {
+    channelId: 'UC9x0AN7BWHpCDHSm9NiJFJQ',
+    name: 'NetworkChuck',
+    handle: 'NetworkChuck',
     category: 'tech',
   },
 ];
@@ -320,7 +498,9 @@ async function fetchChannelVideos(
  */
 export async function fetchYouTubePosts(limit = 30): Promise<UnifiedPost[]> {
   const key = 'provider:youtube';
-  if (!checkRateLimit(key, { maxRequests: 30, windowMs: 60_000 })) return [];
+  // 44 channels × 1 feed each — budget above that (50/min) so a full refresh
+  // plus the cached prewarmer never trips the window.
+  if (!checkRateLimit(key, { maxRequests: 50, windowMs: 60_000 })) return [];
 
   // Serve from cache first — the prewarmer + refresher call this repeatedly.
   const cached = youtubeCache && Date.now() < youtubeCache.expiresAt ? youtubeCache.posts : null;
@@ -330,7 +510,7 @@ export async function fetchYouTubePosts(limit = 30): Promise<UnifiedPost[]> {
   const posts: UnifiedPost[] = [];
 
   // Fetch channels with a small concurrency window + gentle pacing to avoid
-  // hammering YouTube (15 feeds per refresh is well inside any rate limit).
+  // hammering YouTube (44 feeds per refresh is well inside any rate limit).
   // Concurrency kept low (3) because the service runs CPU-quota-limited and
   // parallel TLS handshakes otherwise time out.
   const CONCURRENCY = 3;
@@ -449,7 +629,7 @@ export const schema: SchemaGuard = {
   id: 'youtube',
   name: 'YouTube',
   description:
-    'Top crypto, tech & AI videos — Coin Bureau, Bankless, Finematics, Fireship, Two Minute Papers and 11 more',
+    'Top crypto, tech & AI videos — Coin Bureau, Bankless, Finematics, Fireship, Two Minute Papers and 40 more',
   endpoint: '/api/feed/youtube',
   requiresAuth: false,
   contentType: 'video',

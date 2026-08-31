@@ -380,7 +380,11 @@ async function fetchMediumFeed(feed: FeedSource, limit: number): Promise<Unified
 }
 
 /**
- * Fetch from Mirror.xyz writer feed (JSON API).
+ * Fetch from Mirror.xyz writer feed.
+ * Legacy writers expose a JSON API; the Atom endpoint ({blog}.mirror.xyz/
+ * feed/atom) is XML. Detect XML and delegate to the standard feed path so
+ * both formats work. (Mirror Cloudflare-challenges datacenter IPs as of
+ * 2026-08-31 — non-OK responses degrade to empty.)
  */
 async function fetchMirrorFeed(feed: FeedSource, limit: number): Promise<UnifiedPost[]> {
   try {
@@ -390,7 +394,13 @@ async function fetchMirrorFeed(feed: FeedSource, limit: number): Promise<Unified
     });
     if (!res.ok) return [];
 
-    const data = (await res.json()) as { data?: Array<Record<string, unknown>> };
+    const text = await res.text();
+    const trimmed = text.trimStart();
+    if (trimmed.startsWith('<?xml') || trimmed.startsWith('<rss') || trimmed.startsWith('<feed')) {
+      return fetchSingleFeed(feed, limit);
+    }
+
+    const data = JSON.parse(text) as { data?: Array<Record<string, unknown>> };
     if (!data.data || !Array.isArray(data.data)) return [];
 
     return data.data.slice(0, limit).map((item, i) => {

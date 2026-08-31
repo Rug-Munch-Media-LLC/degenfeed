@@ -228,6 +228,52 @@ export const CURATED_NEWSLETTERS: NewsletterSource[] = [
     category: 'research',
     niches: ['crypto', 'research'],
   },
+  // ── In-niche expansion (verified 2026-08-31) ─────────────────────────
+  {
+    name: 'Week in Ethereum',
+    author: 'Evan Van Ness',
+    platform: 'substack',
+    feedUrl: 'https://weekinethereum.substack.com/feed',
+    homeUrl: 'https://weekinethereum.substack.com',
+    category: 'ethereum',
+    niches: ['ethereum', 'research'],
+  },
+  {
+    name: 'Token Terminal',
+    author: 'Token Terminal',
+    platform: 'substack',
+    feedUrl: 'https://tokenterminal.substack.com/feed',
+    homeUrl: 'https://tokenterminal.substack.com',
+    category: 'research',
+    niches: ['crypto', 'research', 'defi'],
+  },
+  {
+    name: 'Solana Daily',
+    author: 'Solana Daily',
+    platform: 'substack',
+    feedUrl: 'https://solanadaily.substack.com/feed',
+    homeUrl: 'https://solanadaily.substack.com',
+    category: 'solana',
+    niches: ['solana', 'crypto'],
+  },
+  {
+    name: 'TokenSmart',
+    author: 'TokenSmart',
+    platform: 'substack',
+    feedUrl: 'https://tokensmart.substack.com/feed',
+    homeUrl: 'https://tokensmart.substack.com',
+    category: 'security',
+    niches: ['crypto', 'security', 'education'],
+  },
+  {
+    name: 'The Rundown AI',
+    author: 'The Rundown AI',
+    platform: 'substack',
+    feedUrl: 'https://www.therundown.ai/feed',
+    homeUrl: 'https://www.therundown.ai',
+    category: 'ai',
+    niches: ['ai', 'news'],
+  },
 ];
 
 /** Medium publications (RSS: https://medium.com/feed/{publication}) */
@@ -258,6 +304,24 @@ export const MEDIUM_SOURCES: NewsletterSource[] = [
     homeUrl: 'https://medium.com/ethglobal',
     category: 'ethereum',
     niches: ['ethereum', 'dev'],
+  },
+  {
+    name: 'AI in Plain English',
+    author: 'AI in Plain English',
+    platform: 'medium',
+    feedUrl: 'https://medium.com/feed/ai-in-plain-english',
+    homeUrl: 'https://medium.com/ai-in-plain-english',
+    category: 'ai',
+    niches: ['ai', 'tech'],
+  },
+  {
+    name: 'Level Up Coding',
+    author: 'Level Up Coding',
+    platform: 'medium',
+    feedUrl: 'https://medium.com/feed/gitconnected',
+    homeUrl: 'https://levelup.gitconnected.com',
+    category: 'dev',
+    niches: ['tech', 'dev'],
   },
 ];
 

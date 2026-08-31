@@ -321,6 +321,38 @@ export const CRYPTO_NEWS_FEEDS: FeedSource[] = [
     category: 'crypto-news',
     niches: ['crypto'],
   },
+  // ── In-niche crypto news expansion (verified 2026-08-31) ────────────
+  {
+    url: 'https://www.dlnews.com/rss/',
+    label: 'DLNews',
+    category: 'crypto-news',
+    niches: ['crypto', 'policy', 'markets'],
+    featured: true,
+  },
+  {
+    url: 'https://cointelegraph.com/rss/tag/research',
+    label: 'CoinTelegraph Research',
+    category: 'crypto-news',
+    niches: ['crypto', 'research'],
+  },
+  {
+    url: 'https://protos.com/feed/',
+    label: 'Protos',
+    category: 'crypto-news',
+    niches: ['crypto', 'investigation'],
+  },
+  {
+    url: 'https://www.trustnodes.com/feed/',
+    label: 'Trustnodes',
+    category: 'crypto-news',
+    niches: ['crypto', 'bitcoin'],
+  },
+  {
+    url: 'https://coinjournal.net/feed/',
+    label: 'CoinJournal',
+    category: 'crypto-news',
+    niches: ['crypto', 'markets'],
+  },
 ];
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -893,6 +925,88 @@ export const AI_FEEDS: FeedSource[] = [
     label: 'Hugging Face Blog',
     category: 'ai',
     niches: ['ai', 'dev', 'research'],
+  },
+  // ── AI/ML news & newsletters expansion (verified 2026-08-31) ─────────
+  {
+    url: 'https://techcrunch.com/category/artificial-intelligence/feed/',
+    label: 'TechCrunch AI',
+    category: 'ai',
+    niches: ['ai', 'tech', 'startups'],
+    featured: true,
+  },
+  {
+    url: 'https://venturebeat.com/category/ai/feed/',
+    label: 'VentureBeat AI',
+    category: 'ai',
+    niches: ['ai', 'tech', 'startups'],
+    featured: true,
+  },
+  {
+    url: 'https://www.therundown.ai/feed',
+    label: 'The Rundown AI',
+    category: 'ai',
+    niches: ['ai', 'newsletter'],
+    platform: 'substack',
+  },
+  {
+    url: 'https://importai.substack.com/feed',
+    label: 'Import AI',
+    category: 'ai',
+    niches: ['ai', 'research', 'newsletter'],
+    platform: 'substack',
+  },
+  {
+    url: 'https://www.latent.space/feed',
+    label: 'Latent Space',
+    category: 'ai',
+    niches: ['ai', 'research', 'dev'],
+  },
+  {
+    url: 'https://www.interconnects.ai/feed',
+    label: 'Interconnects',
+    category: 'ai',
+    niches: ['ai', 'research'],
+  },
+  {
+    url: 'https://magazine.sebastianraschka.com/feed',
+    label: 'Sebastian Raschka',
+    category: 'ai',
+    niches: ['ai', 'ml', 'dev'],
+  },
+  {
+    url: 'https://thesequence.substack.com/feed',
+    label: 'The Sequence',
+    category: 'ai',
+    niches: ['ai', 'newsletter'],
+    platform: 'substack',
+  },
+  {
+    url: 'https://simonwillison.net/atom/everything/',
+    label: 'Simon Willison',
+    category: 'ai',
+    niches: ['ai', 'dev', 'llm'],
+    featured: true,
+  },
+  {
+    url: 'https://aibreakfast.substack.com/feed',
+    label: 'AI Breakfast',
+    category: 'ai',
+    niches: ['ai', 'newsletter'],
+    platform: 'substack',
+  },
+  {
+    url: 'https://thereboot.substack.com/feed',
+    label: 'The Reboot',
+    category: 'ai',
+    niches: ['ai', 'newsletter'],
+    platform: 'substack',
+  },
+  {
+    url: 'https://www.tbray.org/ongoing/ongoing.atom',
+    label: 'Tim Bray',
+    category: 'ai',
+    niches: ['ai', 'tech', 'dev'],
+    platform: 'atom',
   },
 ];
 
@@ -1803,6 +1917,57 @@ export const SUBSTACK_WRITERS: FeedSource[] = [
     niches: ['crypto', 'web3'],
     platform: 'substack',
   },
+  // ── Crypto/DeFi Substack expansion (verified 2026-08-31) ─────────────
+  {
+    url: 'https://weekinethereum.substack.com/feed',
+    label: 'Week in Ethereum',
+    category: 'newsletter',
+    niches: ['ethereum', 'research'],
+    platform: 'substack',
+    featured: true,
+  },
+  {
+    url: 'https://gwart.substack.com/feed',
+    label: 'Gwart',
+    category: 'newsletter',
+    niches: ['crypto', 'macro', 'research'],
+    platform: 'substack',
+  },
+  {
+    url: 'https://solanadaily.substack.com/feed',
+    label: 'Solana Daily',
+    category: 'newsletter',
+    niches: ['solana', 'crypto'],
+    platform: 'substack',
+  },
+  {
+    url: 'https://tokensmart.substack.com/feed',
+    label: 'TokenSmart',
+    category: 'newsletter',
+    niches: ['crypto', 'security', 'education'],
+    platform: 'substack',
+  },
+  {
+    url: 'https://cryptohayes.substack.com/feed',
+    label: 'Crypto Hayes',
+    category: 'newsletter',
+    niches: ['crypto', 'macro', 'trading'],
+    platform: 'substack',
+  },
+  {
+    url: 'https://tokenterminal.substack.com/feed',
+    label: 'Token Terminal',
+    category: 'newsletter',
+    niches: ['crypto', 'research', 'defi'],
+    platform: 'substack',
+  },
+  {
+    url: 'https://banklessafrica.substack.com/feed',
+    label: 'Bankless Africa',
+    category: 'newsletter',
+    niches: ['crypto', 'africa', 'web3'],
+    platform: 'substack',
+  },
 ];
 
 /**
@@ -1905,22 +2070,184 @@ export const MEDIUM_PUBLICATIONS: FeedSource[] = [
     niches: ['crypto', 'research'],
     platform: 'substack',
   },
+  // ── Medium crypto/AI/tech publication expansion (verified 2026-08-31) ─
+  // Note: Medium rate-limits datacenter IPs (429 Cloudflare challenge);
+  // feeds degrade gracefully to empty when challenged.
+  {
+    url: 'https://medium.com/feed/datadriveninvestor',
+    label: 'DataDrivenInvestor',
+    category: 'newsletter',
+    niches: ['crypto', 'finance', 'data'],
+    platform: 'medium',
+  },
+  {
+    url: 'https://medium.com/feed/swlh',
+    label: 'The Startup',
+    category: 'newsletter',
+    niches: ['tech', 'startups'],
+    platform: 'medium',
+  },
+  {
+    url: 'https://medium.com/feed/ai-in-plain-english',
+    label: 'AI in Plain English',
+    category: 'newsletter',
+    niches: ['ai', 'tech'],
+    platform: 'medium',
+  },
+  {
+    url: 'https://medium.com/feed/gitconnected',
+    label: 'Level Up Coding',
+    category: 'newsletter',
+    niches: ['tech', 'dev'],
+    platform: 'medium',
+  },
+  {
+    url: 'https://medium.com/feed/towardsdev',
+    label: 'Towards Dev',
+    category: 'newsletter',
+    niches: ['tech', 'dev'],
+    platform: 'medium',
+  },
+  {
+    url: 'https://medium.com/feed/geekculture',
+    label: 'Geek Culture',
+    category: 'newsletter',
+    niches: ['tech', 'culture'],
+    platform: 'medium',
+  },
+  {
+    url: 'https://medium.com/feed/python-in-plain-english',
+    label: 'Python in Plain English',
+    category: 'newsletter',
+    niches: ['tech', 'dev'],
+    platform: 'medium',
+  },
+  {
+    url: 'https://medium.com/feed/mlearning',
+    label: 'MLearning.ai',
+    category: 'newsletter',
+    niches: ['ai', 'ml', 'data'],
+    platform: 'medium',
+  },
 ];
 
 /**
- * Top Mirror.xyz writers. API: https://mirror.xyz/{address}/feed/updates
- * Mirror uses Ethereum addresses for identity.
- * NOTE: All Mirror feeds were returning 403 (Cloudflare) as of 2026-08-03
- * audit — disabled. Re-add when Mirror lifts the bot challenge.
+ * Top Mirror.xyz writers. Atom feed: https://{blog}.mirror.xyz/feed/atom
+ * Re-added 2026-08-31. NOTE: as of the 2026-08-31 audit, Mirror endpoints
+ * return 403/429 (Cloudflare challenge) from datacenter IPs — feeds degrade
+ * gracefully to empty when challenged. rss-fetcher.ts detects the Atom XML
+ * response and parses it via the standard feed path.
  */
-export const MIRROR_WRITERS: FeedSource[] = [];
+export const MIRROR_WRITERS: FeedSource[] = [
+  {
+    url: 'https://dankrad.mirror.xyz/feed/atom',
+    label: 'Dankrad',
+    category: 'newsletter',
+    niches: ['ethereum', 'research', 'crypto'],
+    platform: 'mirror',
+  },
+  {
+    url: 'https://nouns.mirror.xyz/feed/atom',
+    label: 'Nouns Mirror',
+    category: 'newsletter',
+    niches: ['nft', 'dao', 'crypto'],
+    platform: 'mirror',
+  },
+  {
+    url: 'https://jessewalden.mirror.xyz/feed/atom',
+    label: 'Jesse Walden',
+    category: 'newsletter',
+    niches: ['crypto', 'vc', 'web3'],
+    platform: 'mirror',
+  },
+  {
+    url: 'https://betterideas.mirror.xyz/feed/atom',
+    label: 'BetterIdeas',
+    category: 'newsletter',
+    niches: ['crypto', 'web3', 'culture'],
+    platform: 'mirror',
+  },
+  {
+    url: 'https://lore.mirror.xyz/feed/atom',
+    label: 'Lore',
+    category: 'newsletter',
+    niches: ['nft', 'art', 'crypto'],
+    platform: 'mirror',
+  },
+  {
+    url: 'https://digitalax.mirror.xyz/feed/atom',
+    label: 'Digitalax',
+    category: 'newsletter',
+    niches: ['nft', 'fashion', 'web3'],
+    platform: 'mirror',
+  },
+];
 
 /**
- * Paragraph.xyz web3 newsletters. Uses GraphQL API.
- * NOTE: All Paragraph RSS endpoints were returning 429/404 as of 2026-08-03
- * audit — removed. Re-add if Paragraph restores its public feed endpoints.
+ * Paragraph.xyz web3 newsletters. RSS: https://paragraph.xyz/@handle/rss
+ * Re-added 2026-08-31. NOTE: as of the 2026-08-31 audit, Paragraph RSS
+ * returns 429 (Cloudflare "error code: 1015") from datacenter IPs — feeds
+ * degrade gracefully to empty when rate-limited. The newsletter provider
+ * also pulls Paragraph via the official keyless API (public.api.paragraph.com).
  */
-export const PARAGRAPH_NEWSLETTERS: FeedSource[] = [];
+export const PARAGRAPH_NEWSLETTERS: FeedSource[] = [
+  {
+    url: 'https://paragraph.xyz/@metacartel/rss',
+    label: 'MetaCartel',
+    category: 'newsletter',
+    niches: ['dao', 'web3', 'crypto'],
+    platform: 'paragraph',
+  },
+  {
+    url: 'https://paragraph.xyz/@citydao/rss',
+    label: 'CityDAO',
+    category: 'newsletter',
+    niches: ['dao', 'rwa', 'web3'],
+    platform: 'paragraph',
+  },
+  {
+    url: 'https://paragraph.xyz/@gitcoin/rss',
+    label: 'Gitcoin',
+    category: 'newsletter',
+    niches: ['web3', 'public-goods', 'crypto'],
+    platform: 'paragraph',
+  },
+  {
+    url: 'https://paragraph.xyz/@seedclub/rss',
+    label: 'Seed Club',
+    category: 'newsletter',
+    niches: ['crypto', 'vc', 'web3'],
+    platform: 'paragraph',
+  },
+  {
+    url: 'https://paragraph.xyz/@sipher/rss',
+    label: 'Sipher',
+    category: 'newsletter',
+    niches: ['gaming', 'gamefi', 'nft'],
+    platform: 'paragraph',
+  },
+  {
+    url: 'https://paragraph.xyz/@ethcc/rss',
+    label: 'EthCC',
+    category: 'newsletter',
+    niches: ['ethereum', 'events', 'web3'],
+    platform: 'paragraph',
+  },
+  {
+    url: 'https://paragraph.xyz/@nouns/rss',
+    label: 'Nouns',
+    category: 'newsletter',
+    niches: ['nft', 'dao', 'crypto'],
+    platform: 'paragraph',
+  },
+  {
+    url: 'https://paragraph.xyz/@artblocks/rss',
+    label: 'Art Blocks',
+    category: 'newsletter',
+    niches: ['nft', 'art', 'generative'],
+    platform: 'paragraph',
+  },
+];
 
 /**
  * Ghost blogs with public RSS feeds.
