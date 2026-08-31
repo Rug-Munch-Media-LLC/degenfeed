@@ -239,7 +239,7 @@ export function FeedControls({
   return (
     <section
       aria-label="Feed controls"
-      className={`mb-4 rounded-2xl border border-[var(--color-glass-border)] bg-[var(--color-card-bg)] p-3 ${className}`}
+      className={`mb-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-card-bg)] p-2.5 ${className}`}
     >
       {/* Row 1 — sort + algorithm + reset */}
       <div className="flex flex-wrap items-center justify-between gap-2">
@@ -392,8 +392,8 @@ export function FeedControls({
             </button>
           </div>
           <p className="text-[10px] leading-relaxed text-[var(--color-muted)]">
-            Your feed is ranked by your weights, not a hidden formula. Sliders apply to
-            Trending/Quality/Engaged sorts — Latest stays chronological.
+            Your feed is ranked by your weights, not a hidden formula. Sliders apply to For You /
+            Trending / Quality / Engaged sorts — New stays chronological.
           </p>
           <AlgoSlider
             label="Recency ↔ Quality"

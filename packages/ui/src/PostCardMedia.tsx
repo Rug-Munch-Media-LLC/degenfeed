@@ -54,16 +54,22 @@ function LinkPreview({
   embed,
   authorName,
   mediaPriority = false,
+  fallbackImage,
 }: {
   embed: Embed;
   authorName?: string;
   /** Eager-load the preview image for above-the-fold cards. */
   mediaPriority?: boolean;
+  /** Poster from `post.image` — used when the embed has no og:image (Reddit/Lemmy/RSS). */
+  fallbackImage?: string;
 }) {
   const meta = embed.meta as { title?: string; description?: string; image?: string } | undefined;
   const title = meta?.title;
   const description = meta?.description;
-  const image = meta?.image;
+  // Prefer the embed's own og:image; fall back to the provider-enriched
+  // `post.image` so link cards from protocols that don't ship meta.image
+  // (some Reddit/Lemmy/RSS bridges) still render a thumbnail.
+  const image = meta?.image || fallbackImage;
   // Some protocol bridges emit `{ kind: 'link' }` embeds without a URL (e.g.
   // Farcaster casts with text-only embeds). Never call .replace() on undefined.
   const url = embed.url || '';
@@ -125,15 +131,34 @@ function LinkPreview({
 
 // ─── Video Embed ───────────────────────────────────────────────────
 
-function VideoEmbedCard({ videoInfo }: { videoInfo: VideoInfo }) {
-  const isShort = isShortFormVideo(videoInfo);
-  const [open, setOpen] = useState(false);
+const YT_THUMBNAIL_URL = (videoId: string): string =>
+  `https://i.ytimg.com/vi/${encodeURIComponent(videoId)}/hqdefault.jpg`;
 
-  if (videoInfo.platform === 'youtube') {
+/**
+ * YouTube: click-to-play thumbnail instead of an eager iframe.
+ *
+ * Rendering the embed up front pulls the full player (and tracker) for every
+ * video in the feed; a lazy-loaded poster with a play overlay matches the
+ * dedicated /feed/youtube cards and keeps the timeline light. The bridge
+ * supplies the poster via `embed.meta.thumbnail` / `post.image` — we prefer
+ * that, then fall back to the conventional i.ytimg.com URL.
+ */
+function YouTubeThumbCard({
+  videoId,
+  isShort,
+  posterUrl,
+}: {
+  videoId: string;
+  isShort: boolean;
+  posterUrl?: string;
+}) {
+  const [playing, setPlaying] = useState(false);
+
+  if (playing) {
     return (
-      <div className={isShort ? 'max-w-[360px] mx-auto' : ''}>
+      <div className={isShort ? 'mx-auto max-w-[360px]' : ''}>
         <VideoPlayer
-          youtubeId={videoInfo.id}
+          youtubeId={videoId}
           platform="youtube"
           aspectRatio={isShort ? '9:16' : '16:9'}
           className="mt-2"
@@ -142,13 +167,71 @@ function VideoEmbedCard({ videoInfo }: { videoInfo: VideoInfo }) {
     );
   }
 
+  return (
+    <div
+      className={`relative mt-2 overflow-hidden rounded-xl bg-black ${isShort ? 'mx-auto max-w-[360px]' : ''}`}
+      style={{ aspectRatio: isShort ? '9/16' : '16/9' }}
+    >
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      {/* biome-ignore lint/performance/noImgElement: external YT thumb — matches poster convention below */}
+      <img
+        src={posterUrl || YT_THUMBNAIL_URL(videoId)}
+        alt="YouTube video thumbnail"
+        className="absolute inset-0 h-full w-full object-cover opacity-80 transition-transform duration-500 group-hover:scale-105"
+        loading="lazy"
+        decoding="async"
+        onError={(e) => {
+          (e.target as HTMLImageElement).style.display = 'none';
+        }}
+      />
+      <button
+        type="button"
+        onClick={() => setPlaying(true)}
+        aria-label="Play YouTube video"
+        className="absolute inset-0 z-10 flex items-center justify-center bg-black/20 transition-colors hover:bg-black/30"
+      >
+        <span className="flex h-14 w-14 items-center justify-center rounded-full bg-[#ff0000]/90 text-white shadow-xl backdrop-blur-sm transition-transform hover:scale-105 active:scale-95">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path d="M8 5v14l11-7z" />
+          </svg>
+        </span>
+      </button>
+    </div>
+  );
+}
+
+function VideoEmbedCard({
+  videoInfo,
+  posterUrl,
+}: {
+  videoInfo: VideoInfo;
+  /** Poster/thumbnail from the bridge (embed.meta.thumbnail / og:image / post.image). */
+  posterUrl?: string;
+}) {
+  const isShort = isShortFormVideo(videoInfo);
+  const [open, setOpen] = useState(false);
+
+  if (videoInfo.platform === 'youtube') {
+    return <YouTubeThumbCard videoId={videoInfo.id} isShort={isShort} posterUrl={posterUrl} />;
+  }
+
   // Direct (mp4/webm) and PeerTube videos: show a poster thumbnail with a
   // play button overlay; tapping opens the full player in a modal/lightbox.
-  const poster = proxyMediaUrl(videoInfo.url);
+  // The poster is the bridge-supplied thumbnail (never the video FILE — an
+  // mp4/webm URL can't render as an <img>), falling back to the PeerTube
+  // thumbnail convention for instances that don't ship one in the embed.
+  const poster =
+    posterUrl ||
+    (videoInfo.platform === 'peertube'
+      ? `https://${videoInfo.instance}/static/thumbnails/${videoInfo.uuid}.jpg`
+      : undefined);
 
   return (
     <>
-      <div className="relative mt-2 overflow-hidden rounded-xl bg-black" style={{ aspectRatio: isShort ? '9/16' : '16/9' }}>
+      <div
+        className="relative mt-2 overflow-hidden rounded-xl bg-black"
+        style={{ aspectRatio: isShort ? '9/16' : '16/9' }}
+      >
         <button
           type="button"
           onClick={() => setOpen(true)}
@@ -156,15 +239,20 @@ function VideoEmbedCard({ videoInfo }: { videoInfo: VideoInfo }) {
           aria-label="Play video"
         >
           {/* Poster frame (proxy URL keeps hotlink-protected hosts working) */}
-          <img
-            src={poster}
-            alt=""
-            className="absolute inset-0 h-full w-full object-cover opacity-70"
-            loading="lazy"
-            onError={(e) => {
-              (e.target as HTMLImageElement).style.display = 'none';
-            }}
-          />
+          {poster ? (
+            <img
+              src={proxyMediaUrl(poster)}
+              alt=""
+              className="absolute inset-0 h-full w-full object-cover opacity-70"
+              loading="lazy"
+              decoding="async"
+              onError={(e) => {
+                (e.target as HTMLImageElement).style.display = 'none';
+              }}
+            />
+          ) : (
+            <div className="absolute inset-0 bg-gradient-to-br from-gray-900 via-gray-950 to-black" />
+          )}
           <span className="relative flex h-14 w-14 items-center justify-center rounded-full bg-white/90 text-black shadow-xl backdrop-blur-sm transition-transform hover:scale-105 active:scale-95">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
               <path d="M8 5v14l11-7z" />
@@ -185,6 +273,8 @@ function VideoEmbedCard({ videoInfo }: { videoInfo: VideoInfo }) {
             if (e.key === 'Escape') setOpen(false);
           }}
         >
+          {/* biome-ignore lint/a11y/noStaticElementInteractions: modal click-catcher; Escape handled on parent overlay */}
+          {/* biome-ignore lint/a11y/useKeyWithClickEvents: dismiss-on-click overlay, keyboard handled by parent */}
           <div
             className="w-full max-w-4xl overflow-hidden rounded-xl bg-black"
             onClick={(e) => e.stopPropagation()}
@@ -203,7 +293,15 @@ function VideoEmbedCard({ videoInfo }: { videoInfo: VideoInfo }) {
             className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white transition-colors hover:bg-white/20"
             aria-label="Close video"
           >
-            <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 20 20"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              aria-hidden="true"
+            >
               <path d="M15 5L5 15M5 5l10 10" />
             </svg>
           </button>
@@ -230,6 +328,7 @@ function AudioEmbedCard({ embed }: { embed: Embed }) {
         : undefined;
 
   return (
+    // biome-ignore lint/a11y/useSemanticElements: role="group" + aria-label groups the audio player controls
     <div
       className="mt-2 rounded-[12px] border border-[var(--color-border)] bg-[var(--color-card)] p-3"
       role="group"
@@ -260,13 +359,20 @@ function AudioEmbedCard({ embed }: { embed: Embed }) {
             style={{
               height: `${30 + Math.abs(Math.sin(i * 1.7)) * 60}%`,
               backgroundColor: 'var(--color-accent)55',
-              opacity: 0.4 + (Math.abs(Math.sin(i * 1.7)) * 0.6),
+              opacity: 0.4 + Math.abs(Math.sin(i * 1.7)) * 0.6,
             }}
           />
         ))}
       </div>
 
-      <audio src={embed.url} controls preload="none" className="w-full" style={{ maxWidth: '100%' }} />
+      {/* biome-ignore lint/a11y/useMediaCaption: native audio element; no caption track exists for these clips */}
+      <audio
+        src={embed.url}
+        controls
+        preload="none"
+        className="w-full"
+        style={{ maxWidth: '100%' }}
+      />
     </div>
   );
 }
@@ -356,6 +462,7 @@ function ImageGrid({
 
   if (images.length === 1) {
     return (
+      // biome-ignore lint/a11y/useSemanticElements: image grid container; role="group" + aria-label
       <div
         className="image-grid mt-2 max-h-80 overflow-hidden rounded-[12px] border border-[var(--color-border)]"
         role="group"
@@ -367,6 +474,7 @@ function ImageGrid({
   }
   if (images.length === 2) {
     return (
+      // biome-ignore lint/a11y/useSemanticElements: image grid container; role="group" + aria-label
       <div
         className="mt-2 grid grid-cols-2 gap-1 overflow-hidden rounded-xl"
         role="group"
@@ -381,6 +489,7 @@ function ImageGrid({
     );
   }
   return (
+    // biome-ignore lint/a11y/useSemanticElements: image grid container; role="group" + aria-label
     <div
       className="mt-2 grid grid-cols-2 gap-1 overflow-hidden rounded-xl"
       role="group"
@@ -471,11 +580,4 @@ export interface MediaSectionProps {
   embed: Embed;
 }
 
-export {
-  AudioEmbedCard,
-  FrameCard,
-  ImageGrid,
-  LinkPreview,
-  PermanenceBadge,
-  VideoEmbedCard,
-};
+export { AudioEmbedCard, FrameCard, ImageGrid, LinkPreview, PermanenceBadge, VideoEmbedCard };

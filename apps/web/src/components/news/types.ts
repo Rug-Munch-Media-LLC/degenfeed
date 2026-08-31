@@ -69,6 +69,8 @@ export interface NewsStory {
   };
   // Ground News-style rating fields
   bias?: 'left' | 'center-left' | 'center' | 'center-right' | 'right';
+  /** Numeric SOURCE_BIAS_SCORE value (-1.0..+1.0, 0 = neutral) from the worker */
+  biasScore?: number;
   sentimentScore?: number; // -100 to +100
   sentimentLabel?: 'bullish' | 'slightly_bullish' | 'neutral' | 'slightly_bearish' | 'bearish';
   factualRating?: 'high' | 'medium' | 'low' | 'unrated';

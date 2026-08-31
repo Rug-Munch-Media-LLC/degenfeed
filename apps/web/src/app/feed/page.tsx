@@ -467,7 +467,7 @@ export default function FeedPage() {
         <div
           ref={feedContainerRef}
           id="feed-scroll-container"
-          className="mx-auto max-w-2xl px-4 py-6"
+          className="mx-auto max-w-2xl px-4 pt-4 pb-10"
           {...swipeHandlers}
         >
           {isAdmin && (
@@ -515,7 +515,7 @@ export default function FeedPage() {
           {/* Network ownership — the user's linked federated/social identities */}
           <ConnectedNetworks />
 
-          <div className="mb-4 flex items-center justify-between">
+          <div className="mb-3 flex items-center justify-between">
             <FeedTabBar
               tabs={FEED_TABS}
               activeTab={activeTab}

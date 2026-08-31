@@ -30,7 +30,25 @@ export const PostMedia = memo(function PostMedia({
   // no URL). Never pass undefined into Image/Link/Video renderers.
   const hasUrl = (e: Embed) => Boolean(e.url);
 
-  const images = embeds.filter((e) => e.kind === 'image' && hasUrl(e)).map((e) => e.url);
+  // Bridge video embeds carry a thumbnail on `meta.thumbnail` (Threads, DTube,
+  // Bluesky), an og:image on `meta.image`, or `preview_url` (Threads video
+  // previews). Index by embed URL so both the link-video and video branches
+  // can pass a real poster into VideoEmbedCard instead of dropping it.
+  const embedMetaByUrl = new Map<string, Record<string, unknown>>();
+  for (const e of embeds) {
+    if (e.url && e.meta) embedMetaByUrl.set(e.url, e.meta);
+  }
+  const videoThumb = (url: string): string | undefined => {
+    const meta = embedMetaByUrl.get(url);
+    if (!meta) return undefined;
+    const t = meta.thumbnail ?? meta.image ?? meta.preview_url;
+    return typeof t === 'string' && t ? t : undefined;
+  };
+
+  const images = embeds
+    .filter((e) => e.kind === 'image')
+    .map((e) => e.url || (typeof e.meta?.image === 'string' ? e.meta.image : undefined))
+    .filter((u): u is string => Boolean(u));
   const links = embeds.filter((e) => e.kind === 'link' && hasUrl(e));
   const videoUrls = embeds.filter((e) => e.kind === 'video' && hasUrl(e)).map((e) => e.url);
   const frames = embeds.filter((e) => e.kind === 'frame' && hasUrl(e));
@@ -56,11 +74,28 @@ export const PostMedia = memo(function PostMedia({
   const mergedVideos = [...new Set([...videoUrls, ...attachmentVideos])];
   const mergedAudio = [...new Set([...audioUrls, ...attachmentAudio])];
 
+  // Media from ALL protocols: some bridges only enrich the convenience
+  // `post.image` field (provider/og:image) without emitting a `kind:'image'`
+  // embed or a `media` attachment (Pixelfed image posts, some Nostr image
+  // notes, Reddit/Lemmy link thumbnails). Surface it whenever nothing else
+  // would render an image — never duplicate it next to a real embed.
+  const postImage = typeof post.image === 'string' && post.image ? post.image : undefined;
+  const fallbackImage =
+    postImage &&
+    allImages.length === 0 &&
+    mergedVideos.length === 0 &&
+    mergedAudio.length === 0 &&
+    links.length === 0 &&
+    frames.length === 0
+      ? postImage
+      : undefined;
+
   if (
     embeds.length === 0 &&
     allImages.length === 0 &&
     mergedVideos.length === 0 &&
-    mergedAudio.length === 0
+    mergedAudio.length === 0 &&
+    !fallbackImage
   ) {
     return null;
   }
@@ -69,6 +104,9 @@ export const PostMedia = memo(function PostMedia({
     <>
       {allImages.length > 0 && (
         <ImageGrid images={allImages} authorName={authorName} mediaPriority={mediaPriority} />
+      )}
+      {fallbackImage && (
+        <ImageGrid images={[fallbackImage]} authorName={authorName} mediaPriority={mediaPriority} />
       )}
       {frames.map((embed) => (
         <FrameCard key={`frame-${embed.url}`} url={embed.url} />
@@ -83,7 +121,13 @@ export const PostMedia = memo(function PostMedia({
       {links.map((embed) => {
         const linkVideoInfo = parseVideoUrl(embed.url);
         if (linkVideoInfo) {
-          return <VideoEmbedCard key={`link-video-${embed.url}`} videoInfo={linkVideoInfo} />;
+          return (
+            <VideoEmbedCard
+              key={`link-video-${embed.url}`}
+              videoInfo={linkVideoInfo}
+              posterUrl={videoThumb(embed.url) || post.image}
+            />
+          );
         }
         return (
           <LinkPreview
@@ -91,6 +135,7 @@ export const PostMedia = memo(function PostMedia({
             embed={embed}
             authorName={authorName}
             mediaPriority={mediaPriority}
+            fallbackImage={postImage}
           />
         );
       })}
@@ -111,7 +156,13 @@ export const PostMedia = memo(function PostMedia({
             </a>
           );
         }
-        return <VideoEmbedCard key={`video-${url}`} videoInfo={videoInfo} />;
+        return (
+          <VideoEmbedCard
+            key={`video-${url}`}
+            videoInfo={videoInfo}
+            posterUrl={videoThumb(url) || post.image}
+          />
+        );
       })}
     </>
   );

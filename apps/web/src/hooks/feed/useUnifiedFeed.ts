@@ -184,7 +184,13 @@ export function useUnifiedFeed(options: UseUnifiedFeedOptions): UseUnifiedFeedRe
       // User-controlled feed params — forwarded to the bridge feed endpoint.
       // The bridge honors protocols/limit today; the rest are applied
       // client-side and ready for server-side adoption.
-      url.searchParams.set('sort', controls.sort);
+      //
+      // Bridge sort contract: `new` (chronological) | `trending` (default,
+      // score + diversity). Map the richer client sort set onto it — `latest`
+      // is the only chronological mode; every other client sort is a ranking
+      // mode, so the server serves the trending pool and rankTopAlgo applies
+      // the fine-grained ordering + personalization after fetch.
+      url.searchParams.set('sort', controls.sort === 'latest' ? 'new' : 'trending');
       url.searchParams.set('time', controls.timeRange);
       if (controls.contentTypes.length > 0)
         url.searchParams.set('contentType', controls.contentTypes.join(','));

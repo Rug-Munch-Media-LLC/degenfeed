@@ -512,7 +512,7 @@ function PostCardComponent({
   return (
     <>
       <article
-        className={`post-card protocol-${post.protocol} group cursor-pointer border-b border-[var(--color-border)] px-4 py-3 transition-all duration-150 hover:bg-[var(--color-overlay)] hover:border-[color-mix(in_srgb,var(--color-accent)_15%,var(--color-border))] hover:shadow-sm`}
+        className={`post-card protocol-${post.protocol} group cursor-pointer border-b border-[var(--color-border)] px-4 py-3 transition-colors duration-150 hover:bg-[var(--color-overlay)] hover:border-[color-mix(in_srgb,var(--color-accent)_18%,var(--color-border))]`}
         onClick={() => onClick?.(post.id)}
         onContextMenu={(e) => onContextMenu?.(e, post.id)}
         onKeyDown={(e) => {

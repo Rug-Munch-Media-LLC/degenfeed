@@ -159,6 +159,28 @@ function setProfile(pubkey: string, profile: NostrProfile): void {
   profileCache.set(pubkey, { profile, at: Date.now() });
 }
 
+/**
+ * Cache kind-0 events, deduplicated per pubkey keeping the NEWEST event.
+ *
+ * Relays apply the REQ `limit` to kind-0 EVENTS, not distinct authors —
+ * every profile update is a new kind-0 event, so a busy author's updates can
+ * flood the quota and starve every other requested author (verified: a
+ * 3-author query against purplepag.es returned the same author 3 times).
+ * Caching without dedupe therefore poisoned the profile cache with dupes of
+ * a few active authors and left the rest unresolved.
+ */
+function cacheProfiles(profiles: NostrEvent[]): void {
+  const newest = new Map<string, NostrEvent>();
+  for (const p of profiles) {
+    const existing = newest.get(p.pubkey);
+    if (!existing || p.created_at > existing.created_at) newest.set(p.pubkey, p);
+  }
+  for (const p of newest.values()) {
+    const parsed = parseProfile(p.content);
+    if (parsed) setProfile(p.pubkey, parsed);
+  }
+}
+
 // ─── Helpers ───────────────────────────────────────────────────────────
 
 export function guessNiches(text: string): string[] {
@@ -282,7 +304,12 @@ function fetchFromRelay(
             const ev = msg[2] as NostrEvent;
             if (ev.kind === 0) profiles.push(ev);
             else if (ev.kind === 1) events.push(ev);
-            if (events.length >= filter.limit) maybeResolve();
+            // Count BOTH kinds toward the limit. Relays apply `limit` per
+            // subscription across all kinds in the filter, and kind-0-only
+            // requests (profile enrichment) would otherwise never early-exit
+            // because `events` only counts kind-1 — forcing a full timeout
+            // per relay and starving avatars inside the 4.5s budget.
+            if (events.length + profiles.length >= filter.limit) maybeResolve();
           } else if (msg[0] === 'EOSE') {
             maybeResolve();
           }
@@ -533,9 +560,17 @@ export async function fetchNostrPosts(limit = 20): Promise<UnifiedPost[]> {
     // console.log('[nostr] Rate limited, skipping fetch');
     return [];
   }
-  const perRelay = Math.max(6, Math.ceil(limit / RELAYS.length));
-  const curatedShare = Math.max(3, Math.ceil(perRelay * 0.6));
-  const generalShare = Math.max(3, Math.ceil(perRelay * 0.4));
+  // Per-relay kind-1 limits are deliberately generous. Relays apply `limit`
+  // per subscription across ALL kinds in the filter, so the old single REQ
+  // with `kinds:[0,1]` and limit N returned at most N events total — usually
+  // kind-1 — starving profiles AND capping volume. Kind-1 and kind-0 are now
+  // fetched with SEPARATE subscriptions so each kind gets its own quota.
+  const perRelayCurated = Math.max(25, Math.ceil(limit * 0.6));
+  const perRelayGeneral = Math.max(25, Math.ceil(limit * 1.5));
+  // Kind-0 quota must exceed the author count: relays count profile-update
+  // events against `limit`, so a busy author can flood the whole quota (see
+  // cacheProfiles). 3x authors gives the dedupe a buffer to cover everyone.
+  const curatedProfileLimit = Math.min(CURATED_PUBKEYS.length * 3, 300);
 
   // Total budget for the whole relay fan-out. The feed builder (feeds.ts)
   // kills provider fetches after 5s (FETCH_TIMEOUT_MS), so we must always
@@ -543,7 +578,9 @@ export async function fetchNostrPosts(limit = 20): Promise<UnifiedPost[]> {
   //
   // Hybrid query per relay: (1) curated npubs via `authors` filter for
   // quality content, (2) unfiltered recent notes so the feed stays full
-  // of fresh global activity even when curated authors are quiet.
+  // of fresh global activity even when curated authors are quiet, and
+  // (3) kind-0 metadata for the curated authors so their avatars resolve
+  // without a second round-trip.
   //
   // Phase 2 (profile enrichment): relays frequently resolve the kind-1
   // query before sending kind-0 events, which left avatarUrl empty on most
@@ -551,119 +588,157 @@ export async function fetchNostrPosts(limit = 20): Promise<UnifiedPost[]> {
   // `authors` filter for every pubkey we still miss — all inside the same
   // 4.5s budget, and cached in profileCache for subsequent fetches.
   //
-  // firstResults is assigned the moment the first pass settles so that, even
+  // firstEvents is assigned the moment the first pass settles so that, even
   // if the enrichment phase pushes the total past the 4.5s budget, the
   // provider returns real events instead of an empty array (which would make
   // the single-provider route fall back to demo content).
-  let firstResults: PromiseSettledResult<{
-    events: NostrEvent[];
-    profiles: NostrEvent[];
-  }>[] = [];
+  let firstEvents: NostrEvent[] = [];
+
+  const dedupeEvents = (events: NostrEvent[], cap: number): NostrEvent[] => {
+    const seen = new Set<string>();
+    const unique: NostrEvent[] = [];
+    for (const ev of [...events].sort((a, b) => b.created_at - a.created_at)) {
+      if (!seen.has(ev.id) && !isSpamContent(ev.content)) {
+        seen.add(ev.id);
+        unique.push(ev);
+        if (unique.length >= cap) break;
+      }
+    }
+    return unique;
+  };
+
   const settled = await withTotalBudget(
     (async () => {
       const first = await Promise.allSettled(
         RELAYS.flatMap((r) => [
-          fetchFromRelay(r.url, {
-            kinds: [0, 1],
-            authors: CURATED_PUBKEYS,
-            limit: curatedShare,
-          }),
-          fetchFromRelay(r.url, {
-            kinds: [0, 1],
-            limit: generalShare,
-          }),
+          fetchFromRelay(
+            r.url,
+            { kinds: [1], authors: CURATED_PUBKEYS, limit: perRelayCurated },
+            2000,
+          ),
+          fetchFromRelay(r.url, { kinds: [1], limit: perRelayGeneral }, 2000),
+          fetchFromRelay(
+            r.url,
+            { kinds: [0], authors: CURATED_PUBKEYS, limit: curatedProfileLimit },
+            2000,
+          ),
         ]),
       );
-      firstResults = first;
 
-      // Cache whatever kind-0 metadata the first pass collected.
-      for (const result of first) {
-        if (result.status !== 'fulfilled') continue;
-        for (const p of result.value.profiles) {
-          const parsed = parseProfile(p.content);
-          if (parsed) setProfile(p.pubkey, parsed);
-        }
+      // Split the flatMap results by slot (per relay: 0=curated kind-1,
+      // 1=general kind-1, 2=curated kind-0) so the pool can hold a curated
+      // share. The raw global kind-1 feed is dominated by anonymous authors
+      // with no kind-0 metadata anywhere — a pure recency pool would push
+      // the avatar-bearing curated posts out of the top-100 and starve the
+      // avatar-priority selection below.
+      const curatedEvents: NostrEvent[] = [];
+      const generalEvents: NostrEvent[] = [];
+      for (let ri = 0; ri < first.length; ri++) {
+        const result = first[ri];
+        if (!result || result.status !== 'fulfilled') continue;
+        const slot = ri % 3;
+        if (slot === 0) curatedEvents.push(...result.value.events);
+        else if (slot === 1) generalEvents.push(...result.value.events);
+        else cacheProfiles(result.value.profiles);
       }
 
-      // Enrich: fetch kind-0 events for authors we still have no profile for,
-      // OR whose cached profile is missing a `picture` (avatar). A cached
+      // Pool = curated share (avatar-bearing by construction — REQ C resolves
+      // their kind-0) + general share (fresh global activity), capped at 100
+      // so profile enrichment stays within a single chunk and the 4.5s budget.
+      const poolCap = Math.min(Math.max(limit * 2, 60), 100);
+      const curatedCap = Math.ceil(poolCap * 0.6);
+      const generalCap = poolCap - curatedCap;
+      firstEvents = [
+        ...dedupeEvents(curatedEvents, curatedCap),
+        ...dedupeEvents(generalEvents, generalCap),
+      ];
+
+      // Enrich: fetch kind-0 events for the authors of the pool, but only
+      // when the cached profile is missing a `picture` (avatar). A cached
       // profile without a picture is not "complete" — re-requesting kind-0
       // for those authors is how avatars eventually resolve when the first
       // pass only received partial metadata (e.g. name/bio but no picture).
-      const missingPubkeys = [
-        ...new Set(
-          first
-            .filter(
-              (r): r is PromiseFulfilledResult<{ events: NostrEvent[]; profiles: NostrEvent[] }> =>
-                r.status === 'fulfilled',
-            )
-            .flatMap((r) => r.value.events.map((ev) => ev.pubkey)),
-        ),
-      ].filter((pk) => {
+      // Authors are chunked at 100 pubkeys per REQ (a safe relay bound) and
+      // fanned out across the whole relay set.
+      const missingPubkeys = [...new Set(firstEvents.map((ev) => ev.pubkey))].filter((pk) => {
         const profile = getProfile(pk);
         return !profile || !profile.picture;
       });
 
       if (missingPubkeys.length > 0) {
-        // Use the fastest/verified relays (local + curated set) and cap the
-        // authors filter at 100 pubkeys — a safe bound for relay limits.
-        const enrich = await Promise.allSettled(
-          RELAYS.slice(0, 6).map((r) =>
-            fetchFromRelay(r.url, {
-              kinds: [0],
-              authors: missingPubkeys.slice(0, 100),
-              limit: missingPubkeys.length,
-            }),
-          ),
-        );
-        for (const result of enrich) {
-          if (result.status !== 'fulfilled') continue;
-          for (const p of result.value.profiles) {
-            const parsed = parseProfile(p.content);
-            if (parsed) setProfile(p.pubkey, parsed);
+        // Query EVERY relay for the missing authors, not just the first
+        // slice: the relay that delivered an author's kind-1 note is the one
+        // most likely to also store their kind-0 metadata, and global-feed
+        // authors are spread across the whole working relay set. The 1500ms
+        // per-relay cap is safe — relays EOSE empty author-filter queries in
+        // ~1s, and relays WITH the data stream it immediately.
+        const fastRelays = RELAYS;
+        for (let i = 0; i < missingPubkeys.length; i += 100) {
+          const chunk = missingPubkeys.slice(i, i + 100);
+          const enrich = await Promise.allSettled(
+            fastRelays.map((r) =>
+              fetchFromRelay(
+                r.url,
+                { kinds: [0], authors: chunk, limit: Math.min(chunk.length * 3, 500) },
+                1500,
+              ),
+            ),
+          );
+          for (const result of enrich) {
+            if (result.status !== 'fulfilled') continue;
+            cacheProfiles(result.value.profiles);
           }
         }
       }
 
-      return first;
+      return firstEvents;
     })(),
     4500,
   );
-  // Budget may elapse before allSettled finishes — treat missing results as
+  // Budget may elapse before the closure settles — treat missing results as
   // empty, BUT never discard the first-pass events: they are the reason this
   // provider exists and dropping them on a slow enrichment is what caused
   // intermittent 0-post (→ demo content) responses.
-  const results: PromiseSettledResult<{ events: NostrEvent[]; profiles: NostrEvent[] }>[] =
-    Array.isArray(settled) && settled.length > 0 ? settled : firstResults;
+  const pool =
+    Array.isArray(settled) && settled.length > 0 ? (settled as NostrEvent[]) : firstEvents;
 
-  const allEvents: NostrEvent[] = [];
-  const allProfiles: NostrEvent[] = [];
+  // Final selection: prefer posts whose author has a resolved avatar, then
+  // backfill with the newest anonymous posts so the requested limit is
+  // always reached. The raw global feed is full of authors with no kind-0
+  // metadata on any reachable relay; ordering avatar-bearing posts first
+  // means /api/feed/nostr?limit=50 returns a feed that is mostly avatars
+  // instead of mostly hex-prefix placeholders. Avatar posts are round-robin
+  // interleaved by author so one prolific account can't dominate the feed.
+  const withAvatar: NostrEvent[] = [];
+  const withoutAvatar: NostrEvent[] = [];
+  for (const ev of pool) {
+    const profile = getProfile(ev.pubkey);
+    if (profile?.picture) withAvatar.push(ev);
+    else withoutAvatar.push(ev);
+  }
 
-  for (const result of results) {
-    if (result.status === 'fulfilled') {
-      allEvents.push(...result.value.events);
-      allProfiles.push(...result.value.profiles);
+  const interleavedByAuthor: NostrEvent[] = [];
+  {
+    const byAuthor = new Map<string, NostrEvent[]>();
+    for (const ev of withAvatar) {
+      const list = byAuthor.get(ev.pubkey) ?? [];
+      list.push(ev);
+      byAuthor.set(ev.pubkey, list);
+    }
+    let added = true;
+    while (interleavedByAuthor.length < limit && added) {
+      added = false;
+      for (const list of byAuthor.values()) {
+        const next = list.shift();
+        if (next) {
+          interleavedByAuthor.push(next);
+          added = true;
+          if (interleavedByAuthor.length >= limit) break;
+        }
+      }
     }
   }
-
-  // Cache profiles
-  for (const p of allProfiles) {
-    const parsed = parseProfile(p.content);
-    if (parsed) setProfile(p.pubkey, parsed);
-  }
-
-  // Sort by created_at descending, deduplicate by id
-  const seen = new Set<string>();
-  const unique: NostrEvent[] = [];
-  const sorted = allEvents.sort((a, b) => b.created_at - a.created_at);
-
-  for (const ev of sorted) {
-    if (!seen.has(ev.id) && !isSpamContent(ev.content)) {
-      seen.add(ev.id);
-      unique.push(ev);
-      if (unique.length >= limit) break;
-    }
-  }
+  const unique = [...interleavedByAuthor, ...withoutAvatar].slice(0, limit);
 
   const posts = unique.map((ev) => {
     const profile = getProfile(ev.pubkey);
@@ -671,7 +746,7 @@ export async function fetchNostrPosts(limit = 20): Promise<UnifiedPost[]> {
   });
 
   //   console.log(
-  //     `[bridge] Nostr: ${posts.length} posts from ${RELAYS.length} relays (${allEvents.length} raw events)`,
+  //     `[bridge] Nostr: ${posts.length} posts from ${RELAYS.length} relays`,
   //   );
   return posts;
 }

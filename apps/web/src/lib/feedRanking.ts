@@ -16,7 +16,7 @@ import type { UnifiedPost } from '@degenfeed/types';
 
 // ─── Types ─────────────────────────────────────────────────────────────
 
-export type FeedSort = 'latest' | 'trending' | 'quality' | 'zapped' | 'engaged';
+export type FeedSort = 'latest' | 'trending' | 'for-you' | 'quality' | 'zapped' | 'engaged';
 export type FeedContentType = 'posts' | 'media' | 'links' | 'longform' | 'polls';
 export type FeedTimeRange = '1h' | '24h' | '7d' | 'all';
 
@@ -70,8 +70,13 @@ export const DEFAULT_FEED_CONTROLS: FeedControls = {
 // ─── Labels (single source of truth for the UI) ────────────────────────
 
 export const SORT_LABELS: Record<FeedSort, { label: string; icon: string; hint: string }> = {
-  latest: { label: 'Latest', icon: '⏱', hint: 'Newest posts first' },
+  latest: { label: 'New', icon: '⏱', hint: 'Newest posts first — mirrors X’s “Latest”' },
   trending: { label: 'Trending', icon: '🔥', hint: 'Fast-moving engagement' },
+  'for-you': {
+    label: 'For You',
+    icon: '✨',
+    hint: 'Personalized ranking from your engagement profile',
+  },
   quality: { label: 'Quality', icon: '💎', hint: 'Highest signal content' },
   zapped: { label: 'Most Zapped', icon: '⚡', hint: 'Most tips / zaps received' },
   engaged: { label: 'Most Engaged', icon: '💬', hint: 'Most likes, reposts & replies' },
@@ -262,6 +267,7 @@ function baseScore(post: UnifiedPost, sort: FeedSort, now: number): number {
     case 'latest':
       return post.createdAt;
     case 'trending':
+    case 'for-you':
       return trendingScore(post, now);
     case 'quality':
       return qualityRatio(post);
@@ -343,6 +349,7 @@ export function blendAlgorithm(
         score = wQ * quality + (1 - wQ) * recency;
         break;
       case 'trending':
+      case 'for-you':
         score = wQ * quality + (1 - wQ) * (0.5 * recency + 0.5 * score);
         break;
       case 'engaged':
@@ -353,8 +360,8 @@ export function blendAlgorithm(
         break;
     }
 
-    // Engagement ↔ diversity blend for trending/engaged.
-    if (sort === 'trending' || sort === 'engaged') {
+    // Engagement ↔ diversity blend for trending/engaged/for-you.
+    if (sort === 'trending' || sort === 'for-you' || sort === 'engaged') {
       score = (1 - wD) * score + wD * (divNorm.get(p.id) ?? 0.5);
     }
 

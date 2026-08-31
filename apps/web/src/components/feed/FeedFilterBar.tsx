@@ -24,7 +24,7 @@ export function FeedFilterBar({
   onOpenTuner: () => void;
 }) {
   return (
-    <div className="mb-4 flex flex-wrap items-center gap-2">
+    <div className="mb-3 flex flex-wrap items-center gap-2">
       <label className="flex items-center gap-1.5 cursor-pointer">
         <input
           type="checkbox"
@@ -85,7 +85,7 @@ export function FeedTabBar({
   onTabChange: (id: string) => void;
 }) {
   return (
-    <div className="mb-6 flex border-b border-[var(--color-border)]" role="tablist">
+    <div className="flex border-b border-[var(--color-border)]" role="tablist">
       {tabs.map((tab) => (
         <button
           key={tab.id}
@@ -93,7 +93,11 @@ export function FeedTabBar({
           role="tab"
           aria-selected={activeTab === tab.id}
           onClick={() => onTabChange(tab.id)}
-          className={`relative px-4 py-2.5 text-sm font-medium transition-colors ${activeTab === tab.id ? 'text-degen-400' : 'text-[var(--color-muted)] hover:text-[var(--color-fg)]'}`}
+          className={`relative px-4 py-2 text-sm transition-colors ${
+            activeTab === tab.id
+              ? 'font-semibold text-[var(--color-fg)]'
+              : 'font-medium text-[var(--color-muted)] hover:text-[var(--color-fg)]'
+          }`}
         >
           {tab.label}
           {activeTab === tab.id && (
