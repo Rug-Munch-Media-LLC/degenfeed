@@ -1485,7 +1485,27 @@ export async function prewarmFeedCache(): Promise<void> {
     //     fan-out while the event loop is still quiet.
     // Each direct warm is individually fire-and-forget with allSettled so a
     // slow provider can never block the rest of the prewarm or crash it.
-    await Promise.allSettled([fetchRssPosts(100), fetchPeerTubePosts(20), fetchNostrPosts(20)]);
+    // Sequential warm-up: each provider gets full bandwidth. Parallel
+    // allSettled caused the slow providers (lemmy 10 instances, lens 8s,
+    // threads 12s) to time out when 9+ providers competed for bandwidth.
+    const slowWarmups: Array<[string, () => Promise<unknown>]> = [
+      ['rss', () => fetchRssPosts(100)],
+      ['peertube', () => fetchPeerTubePosts(20)],
+      ['nostr', () => fetchNostrPosts(20)],
+      ['lemmy', () => fetchLemmyPosts(20)],
+      ['threads', () => fetchThreadsPosts(20)],
+      ['lens', () => fetchLensPosts(20)],
+      ['farcaster', () => fetchFarcasterPosts(20)],
+      ['zora', () => fetchZoraPosts(20)],
+      ['pixelfed', () => fetchPixelfedPosts(20)],
+    ];
+    for (const [name, warm] of slowWarmups) {
+      try {
+        await warm();
+      } catch (err) {
+        console.warn(`[feeds] prewarm ${name} failed:`, err instanceof Error ? err.message : err);
+      }
+    }
     // console.log(`[feeds] Slow-protocol caches pre-warmed in ${Date.now() - started}ms`);
 
     const targets: Array<{ protocols: string[]; limit: number }> = [
