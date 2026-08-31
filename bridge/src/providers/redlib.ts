@@ -208,7 +208,8 @@ async function fetchFromRedlib(subreddit: string, limit: number): Promise<Unifie
     const url = `${redlibBase}/r/${encodeURIComponent(subreddit)}/hot.json?limit=${Math.min(limit, 25)}`;
     const res = await $fetch(url, {
       headers: {
-        'User-Agent': 'Mozilla/5.0 (compatible; DegenFeed-Bridge/0.1; +https://degenfeed.xyz)',
+        'User-Agent':
+          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
         Accept: 'application/json',
       },
       signal: AbortSignal.timeout(2000),
@@ -287,7 +288,8 @@ async function fetchFromRedditRss(subreddit: string, limit: number): Promise<Uni
       `${REDDIT_RSS}/r/${encodeURIComponent(subreddit)}/hot/.rss?limit=${limit}`,
       {
         headers: {
-          'User-Agent': 'Mozilla/5.0 (compatible; DegenFeed-Bridge/0.1; +https://degenfeed.xyz)',
+          'User-Agent':
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
         },
         signal: AbortSignal.timeout(2000),
       },
