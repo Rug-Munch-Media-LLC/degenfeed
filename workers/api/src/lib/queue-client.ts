@@ -18,7 +18,21 @@ export interface QueueItem<T = unknown> {
   payload: T;
 }
 
-const API_BASE = 'https://api.rugmunch.io/api/v1';
+/**
+ * Resolve the rmi-backend queue API base URL from env — NO literal default.
+ * Clear product separation (2026-08-31): degenfeed is a standalone app; the
+ * RMI queue API is an OPTIONAL integration configured per-deployment via
+ * the RMI_API_URL var. Unset → callers' existing try/catch fall back to
+ * the legacy KV-backed queues (fail-open, same contract as pryscraper's
+ * DataBus bridge).
+ */
+export function getApiBase(env?: { RMI_API_URL?: string } | null): string {
+  const url = (env?.RMI_API_URL ?? '').replace(/\/+$/, '');
+  if (!url) {
+    throw new Error('[queue-client] RMI_API_URL not configured — queue API disabled');
+  }
+  return `${url}/api/v1`;
+}
 
 /**
  * Queue names accepted by the rmi-backend queue API.
@@ -31,9 +45,7 @@ const VALID_QUEUES = new Set(['sync', 'offline', 'premium']);
  * Unknown queue names are mapped to "sync" and the original name is
  * embedded in the payload as `_queue` so the backend can inspect it.
  */
-function normalizeQueue(
-  queue: string,
-): { queue: string; embedOriginal: boolean } {
+function normalizeQueue(queue: string): { queue: string; embedOriginal: boolean } {
   if (VALID_QUEUES.has(queue)) return { queue, embedOriginal: false };
   return { queue: 'sync', embedOriginal: true };
 }
@@ -57,6 +69,7 @@ export function getApiKey(env?: { RMI_API_KEY?: string } | null): string {
  * (e.g. fall back to KV, or count the item as failed).
  */
 export async function enqueue(
+  baseUrl: string,
   queue: string,
   key: string,
   payload: unknown,
@@ -67,10 +80,15 @@ export async function enqueue(
     queue: normalizedQueue,
     key,
     payload: embedOriginal
-      ? { _queue: queue, ...(typeof payload === 'object' && payload !== null ? (payload as Record<string, unknown>) : { _data: payload }) }
+      ? {
+          _queue: queue,
+          ...(typeof payload === 'object' && payload !== null
+            ? (payload as Record<string, unknown>)
+            : { _data: payload }),
+        }
       : payload,
   };
-  const res = await fetch(`${API_BASE}/queue/enqueue`, {
+  const res = await fetch(`${baseUrl}/queue/enqueue`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'X-API-Key': apiKey },
     body: JSON.stringify(body),
@@ -86,12 +104,13 @@ export async function enqueue(
  * from "empty queue" (return []).
  */
 export async function dequeueRaw(
+  baseUrl: string,
   queue: string,
   limit = 50,
   apiKey: string,
 ): Promise<Array<QueueItem<unknown>>> {
   const { queue: normalizedQueue } = normalizeQueue(queue);
-  const res = await fetch(`${API_BASE}/queue/dequeue?queue=${normalizedQueue}&limit=${limit}`, {
+  const res = await fetch(`${baseUrl}/queue/dequeue?queue=${normalizedQueue}&limit=${limit}`, {
     headers: { 'X-API-Key': apiKey },
   });
   if (!res.ok) {
@@ -106,12 +125,13 @@ export async function dequeueRaw(
  * Use when a failed poll should simply be treated as "nothing to do".
  */
 export async function dequeue(
+  baseUrl: string,
   queue: string,
   limit = 50,
   apiKey: string,
 ): Promise<Array<QueueItem<unknown>>> {
   try {
-    return await dequeueRaw(queue, limit, apiKey);
+    return await dequeueRaw(baseUrl, queue, limit, apiKey);
   } catch (err) {
     console.warn(`[queue-client] dequeue ${queue} failed:`, err);
     return [];

@@ -33,6 +33,8 @@ import {
   VIDEO_SOURCES,
   type VideoCategoryId,
 } from '../lib/video-categories';
+import type { UnifiedVideo as WrapperUnifiedVideo } from '../lib/video-platform-wrapper';
+import { aggregateAllVideos } from '../lib/video-platform-wrapper';
 import { createWatchHistoryStore } from '../lib/watch-history';
 import { jsonResponse, noCacheJsonResponse } from '../response-helpers';
 import { requireSession } from '../session';
@@ -64,6 +66,8 @@ export interface UnifiedVideo {
   isLive: boolean;
   language?: string;
 }
+
+type RouteUnifiedVideo = UnifiedVideo;
 
 export interface UnifiedVideoFeed {
   videos: UnifiedVideo[];
@@ -214,50 +218,88 @@ function _formatViews(views: number): string {
   return String(views);
 }
 
-// ─── Fallback mock data generators (REMOVED) ─────────────────────────────
-// Demo/seed content is BANNED. The video hub never fabricates videos —
-// when real feeds are unavailable it returns an explicit empty result
-// with a warning notice. This stub exists to preserve call sites while
-// guaranteeing no fake content is ever served.
+// ─── Unified feed assembly (real data only) ─────────────────────────────
+// Demo/seed content is BANNED: the hub aggregates REAL videos from the
+// registered platform wrappers. When sources return nothing the feed is
+// honestly empty — no fabricated videos, ever.
 
- = params;
-  const limit = params.limit ?? HUB_PAGE_SIZE;
+/** Adapter: wrapper UnifiedVideo (platform truth) → route UnifiedVideo. */
+function toRouteVideo(v: WrapperUnifiedVideo): UnifiedVideo {
+  const srcMeta = VIDEO_SOURCES[v.source] ?? { label: v.source, color: '#888888' };
+  return {
+    id: v.id,
+    title: v.title,
+    description: v.description ?? '',
+    thumbnailUrl: v.thumbnailUrl,
+    videoUrl: v.videoUrl,
+    embedUrl: v.embedUrl,
+    duration: v.duration,
+    durationLabel: _formatDuration(v.duration),
+    source: v.source as RouteUnifiedVideo['source'],
+    sourceLabel: srcMeta.label,
+    sourceColor: srcMeta.color,
+    channelName: v.creator?.displayName || v.creator?.handle || 'unknown',
+    channelUrl: v.creator ? `https://warpcast.com/${v.creator.handle}` : undefined,
+    channelAvatar: v.creator?.avatarUrl,
+    publishedAt: v.createdAt,
+    publishedLabel: _timeAgo(v.createdAt),
+    views: v.views,
+    category: (v.category ?? 'all') as VideoCategoryId,
+    tags: v.tags ?? [],
+    isLive: v.isLive,
+  };
+}
+
+interface HubFeedParams {
+  category: VideoCategoryId;
+  source: VideoSource | null;
+  sort: SortMode | null;
+  cursor?: string;
+  limit: number;
+  wallet?: string;
+  env: Env;
+}
+
+async function getUnifiedVideoFeed(params: HubFeedParams): Promise<UnifiedVideoFeed> {
+  const { category, source, sort, cursor, limit, wallet, env } = params;
   const page = cursor ? Number(cursor) || 1 : 1;
 
-  // Get trending categories for sidebar
-  const trendingCategories = await categorizer.getTrendingCategories(env);
+  const [trendingCategories, userCategories] = await Promise.all([
+    categorizer.getTrendingCategories(env),
+    wallet ? categorizer.getUserCategories(wallet, env) : Promise.resolve([]),
+  ]);
 
-  // Get user categories for personalization
-  const userCategories = wallet ? await categorizer.getUserCategories(wallet, env) : [];
+  // Real aggregation from platform wrappers (Farcaster, Lens, Nostr, ...).
+  // VideoQueryOptions has no source filter — filter client-side.
+  const all = await aggregateAllVideos(env, {
+    category: category === 'all' ? undefined : category,
+    limit: limit * page,
+  });
+  const filtered = source ? all.filter((v) => v.source === source) : all;
 
-  // Demo/seed content is BANNED — never fabricate videos. The stub
-  // generator returns empty + logs a warning; callers surface an empty feed.
-  const videos = [];
-
-  // Sort
-  const sorted = [...videos];
-  if (sort === 'newest') sorted.sort((a, b) => b.publishedAt - a.publishedAt);
+  const sorted = [...filtered];
+  if (sort === 'newest') sorted.sort((a, b) => b.createdAt - a.createdAt);
   else if (sort === 'popular') sorted.sort((a, b) => b.views - a.views);
   else if (sort === 'trending') {
     sorted.sort((a, b) => {
-      const scoreA = a.views / Math.max(1, (Date.now() - a.publishedAt) / 3600000);
-      const scoreB = b.views / Math.max(1, (Date.now() - b.publishedAt) / 3600000);
+      const scoreA = a.views / Math.max(1, (Date.now() - a.createdAt) / 3600000);
+      const scoreB = b.views / Math.max(1, (Date.now() - b.createdAt) / 3600000);
       return scoreB - scoreA;
     });
   } else if (sort === 'recommended' && userCategories.length > 0) {
-    // Boost user-relevant categories
     sorted.sort((a, b) => {
-      const aBoost = userCategories.includes(a.category) ? 2 : 1;
-      const bBoost = userCategories.includes(b.category) ? 2 : 1;
+      const aBoost = a.category && userCategories.includes(a.category) ? 2 : 1;
+      const bBoost = b.category && userCategories.includes(b.category) ? 2 : 1;
       return b.views * bBoost - a.views * aBoost;
     });
   }
 
-  const hasMore = sorted.length >= limit;
+  const paged = sorted.slice((page - 1) * limit, page * limit);
+  const hasMore = sorted.length > page * limit;
   const nextCursor = hasMore ? String(page + 1) : null;
 
   return {
-    videos: sorted,
+    videos: paged.map(toRouteVideo),
     categories: VIDEO_CATEGORIES.map((c) => ({
       id: c.id as VideoCategoryId,
       label: c.label,
@@ -356,40 +398,52 @@ videoHub.get('/category/:id', async (c) => {
 
   try {
     const page = cursor ? Number(cursor) || 1 : 1;
-    const videos = []
-      source,
-      category: id as VideoCategoryId,
-      sort,
-      page,
+    // Real aggregation — no fabricated videos, ever.
+    const all = await aggregateAllVideos(c.env, {
+      category: id,
+      limit: limit * page,
     });
+    const filtered = source ? all.filter((v) => v.source === source) : all;
 
-    const sorted = [...videos];
-    if (sort === 'newest') sorted.sort((a, b) => b.publishedAt - a.publishedAt);
+    const sorted = [...filtered];
+    if (sort === 'newest') sorted.sort((a, b) => b.createdAt - a.createdAt);
     else if (sort === 'popular') sorted.sort((a, b) => b.views - a.views);
     else if (sort === 'trending') {
       sorted.sort((a, b) => {
-        const scoreA = a.views / Math.max(1, (Date.now() - a.publishedAt) / 3600000);
-        const scoreB = b.views / Math.max(1, (Date.now() - b.publishedAt) / 3600000);
+        const scoreA = a.views / Math.max(1, (Date.now() - a.createdAt) / 3600000);
+        const scoreB = b.views / Math.max(1, (Date.now() - b.createdAt) / 3600000);
         return scoreB - scoreA;
       });
     }
 
-    const hasMore = sorted.length >= limit;
+    const paged = sorted.slice((page - 1) * limit, page * limit);
+    const hasMore = sorted.length > page * limit;
     const nextCursor = hasMore ? String(page + 1) : null;
 
-    // Mock top creators for this category
-    const topCreators = Array.from({ length: 6 }, (_, i) => ({
-      name: `Creator ${String.fromCharCode(65 + i)}`,
-      channelUrl: `https://example.com/c/${id}/${i}`,
-      videoCount: Math.round(Math.random() * 50 + 5),
-    }));
+    // Top creators derived HONESTLY from the actual videos in this page —
+    // never fabricated (the old Math.random() mock is banned).
+    const byCreator = new Map<string, { name: string; channelUrl?: string; videoCount: number }>();
+    for (const v of sorted) {
+      const key = v.creator?.handle || v.creator?.displayName;
+      if (!key) continue;
+      const entry = byCreator.get(key) ?? {
+        name: v.creator?.displayName || v.creator?.handle || key,
+        channelUrl: v.creator?.handle ? `https://warpcast.com/${v.creator.handle}` : undefined,
+        videoCount: 0,
+      };
+      entry.videoCount += 1;
+      byCreator.set(key, entry);
+    }
+    const topCreators = [...byCreator.values()]
+      .sort((a, b) => b.videoCount - a.videoCount)
+      .slice(0, 6);
 
     const result: CategoryPage = {
       category: id as VideoCategoryId,
       label: categoryMeta.label,
-      videos: sorted,
+      videos: paged.map(toRouteVideo),
       subCategories: (await import('../lib/video-categories')).SUB_CATEGORIES[id] ?? [],
-      topCreators,
+      topCreators: topCreators.map((c) => ({ ...c, channelUrl: c.channelUrl ?? '' })),
       total: sorted.length,
       cursor: nextCursor,
       hasMore,
@@ -416,32 +470,33 @@ videoHub.get('/recommended', async (c) => {
     const userCategories = await categorizer.getUserCategories(session.address, c.env);
     const page = cursor ? Number(cursor) || 1 : 1;
 
-    // Generate videos weighted toward user's categories
+    // Real aggregation weighted toward the user's categories — no
+    // fabricated content, ever. 70% preferred / 30% discovery split.
     const videos: UnifiedVideo[] = [];
     const userCatSet = new Set(userCategories);
 
-    // 70% from user's preferred categories
     const prefCount = Math.round(limit * 0.7);
     for (const cat of userCategories) {
-      const catVideos = []
+      if (videos.length >= prefCount) break;
+      const catVideos = await aggregateAllVideos(c.env, {
         category: cat as VideoCategoryId,
-        page,
+        limit: prefCount,
       });
-      videos.push(...catVideos);
+      videos.push(...catVideos.map(toRouteVideo));
     }
 
-    // 30% discovery — from other categories
+    // Discovery — from categories outside the user's preferences.
     const discoveryCount = limit - videos.length;
     if (discoveryCount > 0) {
       const otherCats = VIDEO_CATEGORIES.filter((c) => c.id !== 'all' && !userCatSet.has(c.id));
       if (otherCats.length > 0) {
         const discoveryCat = otherCats[page % otherCats.length];
         if (discoveryCat) {
-          const discovery = []
+          const discovery = await aggregateAllVideos(c.env, {
             category: discoveryCat.id as VideoCategoryId,
-            page: page + 1,
+            limit: discoveryCount,
           });
-          videos.push(...discovery);
+          videos.push(...discovery.map(toRouteVideo));
         }
       }
     }
@@ -477,16 +532,19 @@ videoHub.get('/search', async (c) => {
 
   try {
     const page = cursor ? Number(cursor) || 1 : 1;
-    const allVideos = [];
+    // Real aggregation — search across ALL platform sources.
+    const allVideos = await aggregateAllVideos(c.env, { search: query, limit: 500 });
+    const sourceFiltered = source ? allVideos.filter((v) => v.source === source) : allVideos;
 
     // Simple text filter
     const q = query.toLowerCase();
-    const filtered = allVideos.filter(
+    const filtered = sourceFiltered.filter(
       (v) =>
         v.title.toLowerCase().includes(q) ||
-        v.description.toLowerCase().includes(q) ||
-        v.tags.some((t) => t.includes(q)) ||
-        v.channelName.toLowerCase().includes(q),
+        (v.description ?? '').toLowerCase().includes(q) ||
+        (v.tags ?? []).some((t) => t.includes(q)) ||
+        (v.creator?.displayName ?? '').toLowerCase().includes(q) ||
+        (v.creator?.handle ?? '').toLowerCase().includes(q),
     );
 
     const results = filtered.slice(0, limit);
@@ -494,7 +552,7 @@ videoHub.get('/search', async (c) => {
     const nextCursor = hasMore ? String(page + 1) : null;
 
     const result: SearchResults = {
-      videos: results,
+      videos: results.map(toRouteVideo),
       total: filtered.length,
       cursor: nextCursor,
       hasMore,
@@ -564,12 +622,13 @@ videoHub.get('/trending', async (c) => {
   const page = cursor ? Number(cursor) || 1 : 1;
 
   try {
-    const allVideos = []
-      source,
-      category: category !== 'all' ? (category as VideoCategoryId) : 'all',
-      sort: 'trending',
-      page,
+    // Real aggregation — no fabricated videos, ever.
+    const aggregated = await aggregateAllVideos(c.env, {
+      category: category !== 'all' ? (category as VideoCategoryId) : undefined,
+      limit: limit * page,
     });
+    const aggregatedFiltered = source ? aggregated.filter((v) => v.source === source) : aggregated;
+    const allVideos = aggregatedFiltered.map(toRouteVideo);
 
     // Use discovery engine for trending if category is specified
     const trending = await discoveryEngine.getTrendingVideos(allVideos, {
@@ -626,8 +685,10 @@ videoHub.get('/recommendations', async (c) => {
     const history = await watchHistory.getHistory(wallet, { limit: 10 });
     const recentWatched = history.events.map((e) => e.videoId);
 
-    // Fetch all available videos (mock data for now)
-    const allVideos = [];
+    // Real aggregation — discovery runs over actual platform videos.
+    const allVideos: UnifiedVideo[] = (await aggregateAllVideos(c.env, { limit: 500 })).map(
+      toRouteVideo,
+    );
 
     const discoveryPage = await discoveryEngine.generateDiscoveryPage(
       {
@@ -667,11 +728,11 @@ videoHub.get('/recommendations/related', async (c) => {
   }
 
   const limit = Math.min(Number(c.req.query('limit')) || 10, 30);
-  const cursor = c.req.query('cursor');
-  const page = cursor ? Number(cursor) || 1 : 1;
 
   try {
-    const allVideos = [];
+    const allVideos: UnifiedVideo[] = (await aggregateAllVideos(c.env, { limit: 500 })).map(
+      toRouteVideo,
+    );
     const sourceVideo = allVideos.find((v) => v.id === videoId);
 
     if (!sourceVideo) {
@@ -732,7 +793,9 @@ videoHub.get('/creators/:creatorId', async (c) => {
   const page = cursor ? Number(cursor) || 1 : 1;
 
   try {
-    const allVideos = [];
+    const allVideos: UnifiedVideo[] = (await aggregateAllVideos(c.env, { limit: 500 })).map(
+      toRouteVideo,
+    );
     const creatorVideos = allVideos.filter(
       (v) =>
         v.channelName.toLowerCase().replace(/\s+/g, '-') === creatorId.toLowerCase() ||
@@ -759,36 +822,10 @@ videoHub.get('/creators/:creatorId', async (c) => {
 // GET /api/video/playlists/:playlistId — Playlist with autoplay queue
 // ═══════════════════════════════════════════════════════════════════════════
 
-videoHub.get('/playlists/:playlistId', async (c) => {
-  const { playlistId } = c.req.param();
-  const cursor = c.req.query('cursor');
-  const limit = Math.min(Number(c.req.query('limit')) || 20, 50);
-  const page = cursor ? Number(cursor) || 1 : 1;
-
-  try {
-    // Mock playlist data — in production, fetch from KV or database
-    const allVideos = [] page });
-    const playlistVideos = allVideos.slice(0, limit);
-
-    // Build autoplay queue (all videos in playlist order)
-    const autoplayQueue = playlistVideos.length > 1 ? playlistVideos.slice(1) : [];
-
-    const hasMore = playlistVideos.length >= limit;
-    const nextCursor = hasMore ? String(page + 1) : null;
-
-    return noCacheJsonResponse({
-      playlistId,
-      name: `Playlist #${playlistId}`,
-      videos: playlistVideos,
-      total: playlistVideos.length,
-      cursor: nextCursor,
-      hasMore,
-      currentIndex: 0,
-      autoplayQueue,
-    } satisfies PlaylistResponse);
-  } catch (e) {
-    return jsonResponse({ error: String(e) }, 500);
-  }
+videoHub.get('/playlists/:playlistId', async (_c) => {
+  // Playlists have no real store yet — honest 501 instead of fabricated
+  // playlist data (the old Math.random mock is banned).
+  return jsonResponse({ error: 'Playlists not yet available — no persistent playlist store' }, 501);
 });
 
 // ═══════════════════════════════════════════════════════════════════════════
