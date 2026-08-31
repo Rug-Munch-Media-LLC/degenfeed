@@ -53,24 +53,28 @@ async function isLocalLemmyUp(): Promise<boolean> {
 /** Local DegenFeed communities */
 const LOCAL_COMMUNITIES = ['crypto', 'defi', 'nfts', 'tech', 'meme', 'web3'];
 
-/** External Lemmy instances for content diversity */
+/**
+ * External Lemmy instances for content diversity.
+ *
+ * Audited 2026-08-31 by probing `/api/v3/post/list?community_name=...` on each
+ * candidate. Pruned dead/empty combos: lemm.ee (unreachable), lemmy.ca/crypto,
+ * infosec.pub/cybersecurity, feddit.nl/technology, discuss.tchncs.de/technology,
+ * sh.itjust.works/cryptocurrency, lemmy.world/{defi,ai}. Kept combos verified
+ * to return posts. lemmy.world is the largest instance, so it leads with the
+ * most crypto communities.
+ */
 const EXTERNAL_INSTANCES = [
   {
     url: 'https://lemmy.world',
-    communities: ['cryptocurrency', 'technology', 'web3', 'ai', 'ethereum', 'bitcoin'],
+    communities: ['cryptocurrency', 'bitcoin', 'ethereum', 'crypto', 'technology', 'web3'],
   },
-  { url: 'https://lemmy.ml', communities: ['bitcoin', 'ethereum', 'technology', 'cryptocurrency'] },
-  { url: 'https://sh.itjust.works', communities: ['cryptocurrency', 'technology', 'ai'] },
+  { url: 'https://lemmy.ml', communities: ['bitcoin', 'cryptocurrency', 'ethereum', 'technology'] },
+  { url: 'https://sh.itjust.works', communities: ['technology'] },
   {
     url: 'https://programming.dev',
-    communities: ['programming', 'rust', 'python', 'machinelearning'],
+    communities: ['programming', 'rust', 'machinelearning'],
   },
-  { url: 'https://lemm.ee', communities: ['technology', 'crypto', 'ai'] },
-  { url: 'https://lemmy.ca', communities: ['technology', 'ai', 'crypto'] },
   { url: 'https://beehaw.org', communities: ['technology'] },
-  { url: 'https://infosec.pub', communities: ['cybersecurity', 'security', 'ai'] },
-  { url: 'https://feddit.nl', communities: ['technology', 'ai'] },
-  { url: 'https://discuss.tchncs.de', communities: ['technology', 'ai', 'linux'] },
 ];
 
 // ─── Types ───────────────────────────────────────────────────────────
@@ -301,7 +305,10 @@ export async function fetchCommunityPosts(
 
 /**
  * Fetch posts from a Lemmy instance's RSS feed.
- * Lemmy exposes RSS at /feeds/{community}.xml or /feeds/{community}.atom
+ * Lemmy exposes RSS at /feeds/c/{community}.xml (RSS 2.0) or
+ * /feeds/{community}.xml on older versions. Verified 2026-08-31:
+ * `/feeds/c/{community}.xml` returns 200 with <item> entries on lemmy.world,
+ * lemmy.ml, programming.dev. The un-prefixed path 404s — tried last.
  */
 async function fetchRssFromInstance(
   baseUrl: string,
@@ -311,8 +318,12 @@ async function fetchRssFromInstance(
 ): Promise<UnifiedPost[]> {
   try {
     const hostname = new URL(baseUrl).hostname;
-    // Try RSS first, then Atom
-    const feedUrls = [`${baseUrl}/feeds/${community}.xml`, `${baseUrl}/feeds/${community}.atom`];
+    // /feeds/c/{community}.xml first (verified live), then legacy paths
+    const feedUrls = [
+      `${baseUrl}/feeds/c/${community}.xml`,
+      `${baseUrl}/feeds/${community}.xml`,
+      `${baseUrl}/feeds/${community}.atom`,
+    ];
 
     let xmlText: string | null = null;
     let usedUrl = '';
@@ -515,24 +526,37 @@ export async function fetchLemmyPosts(limit = 40): Promise<UnifiedPost[]> {
     }
   }
 
-  // If local gave us little, try external instances via API
-  if (all.length < 5) {
+  // If local gave us little (or is down), fill from ALL external instances via
+  // API. Each community gets a per-community share of the remaining budget
+  // (capped at 10) so a few busy communities don't swallow the whole feed.
+  if (all.length < limit) {
     const externalTasks: Array<{ url: string; community: string }> = [];
-    for (const inst of EXTERNAL_INSTANCES.slice(0, 3)) {
+    for (const inst of EXTERNAL_INSTANCES) {
       for (const comm of inst.communities) {
         externalTasks.push({ url: inst.url, community: comm });
       }
     }
-    const externalPromises = externalTasks.map((t) => fetchCommunityPosts(t.url, t.community, 3));
-    const externalResults = await Promise.allSettled(externalPromises);
-    for (const r of externalResults) {
-      if (r.status === 'fulfilled') all.push(...r.value);
-    }
+    const perCommunity = Math.min(Math.max(4, Math.ceil((limit - all.length) / 4)), 10);
+    const externalResults = await Promise.allSettled(
+      externalTasks.map((t) => fetchCommunityPosts(t.url, t.community, perCommunity)),
+    );
+    const emptyTasks: typeof externalTasks = [];
+    externalResults.forEach((r, i) => {
+      const task = externalTasks[i];
+      if (!task) return;
+      if (r.status === 'fulfilled') {
+        all.push(...r.value);
+        if (r.value.length === 0) emptyTasks.push(task);
+      } else {
+        emptyTasks.push(task);
+      }
+    });
 
-    // Also try external RSS feeds
-    if (all.length < 5) {
-      const externalRssPromises = externalTasks.map((t) =>
-        fetchRssFromInstance(t.url, t.community, 3),
+    // RSS fallback ONLY for communities whose API returned nothing — avoids
+    // burning the per-instance rate budget and re-fetching near-duplicates.
+    if (all.length < limit && emptyTasks.length > 0) {
+      const externalRssPromises = emptyTasks.map((t) =>
+        fetchRssFromInstance(t.url, t.community, perCommunity),
       );
       const externalRssResults = await Promise.allSettled(externalRssPromises);
       for (const r of externalRssResults) {
