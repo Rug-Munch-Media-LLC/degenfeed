@@ -97,7 +97,7 @@ export function NewsStoryCard({
 
   return (
     <article
-      className={`group relative flex flex-col overflow-hidden rounded-xl border border-gray-800/80 bg-gradient-to-b from-gray-900/90 to-gray-950/90 transition-all duration-300 hover:border-degen-500/20 hover:shadow-[0_0_16px_rgba(34,197,94,0.06)] dark ${masonry ? 'break-inside-avoid mb-4' : ''}`}
+      className={`group relative flex flex-col overflow-hidden rounded-xl border border-gray-800/80 bg-gradient-to-b from-gray-900/90 to-gray-950/90 transition-all duration-300 hover:border-degen-500/30 hover:shadow-[0_0_16px_rgba(29,155,240,0.12)] dark ${masonry ? 'break-inside-avoid mb-4' : ''}`}
     >
       {/* ALWAYS show image section — with gradient fallback if no image */}
       <a
@@ -166,6 +166,16 @@ export function NewsStoryCard({
               style={{ color: biasStyle.color }}
             >
               {biasStyle.label}
+            </span>
+          )}
+          {/* Numeric SOURCE_BIAS_SCORE (-1..+1) — the Ground News-style value */}
+          {typeof story.biasScore === 'number' && Number.isFinite(story.biasScore) && (
+            <span
+              className="rounded bg-gray-800/70 px-1 py-0.5 font-mono text-[8px] font-semibold tabular-nums text-gray-400 ring-1 ring-white/10"
+              title="SOURCE_BIAS_SCORE — −1.0 (left) to +1.0 (right), 0 = neutral"
+            >
+              {story.biasScore > 0 ? '+' : ''}
+              {story.biasScore.toFixed(2)}
             </span>
           )}
           {/* Factual Rating Badge */}

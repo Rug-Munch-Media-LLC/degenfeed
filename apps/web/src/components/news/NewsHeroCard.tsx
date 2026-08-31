@@ -59,7 +59,7 @@ export function NewsHeroCard({
       href={story.url}
       target="_blank"
       rel="noopener"
-      className="group relative flex flex-col overflow-hidden rounded-xl border border-degen-500/20 bg-gradient-to-b from-gray-800/90 to-gray-900/90 transition-all duration-300 hover:border-degen-500/40 hover:shadow-[0_0_32px_rgba(34,197,94,0.12)] md:flex-row"
+      className="group relative flex flex-col overflow-hidden rounded-xl border border-degen-500/20 bg-gradient-to-b from-gray-800/90 to-gray-900/90 transition-all duration-300 hover:border-degen-500/40 hover:shadow-[0_0_32px_rgba(29,155,240,0.18)] md:flex-row"
     >
       {/* Image: either og:image or gradient fallback */}
       <div
@@ -109,6 +109,16 @@ export function NewsHeroCard({
               style={{ color: biasStyle.color }}
             >
               {biasStyle.label}
+            </span>
+          )}
+          {/* Numeric SOURCE_BIAS_SCORE (-1..+1) — the Ground News-style value */}
+          {typeof story.biasScore === 'number' && Number.isFinite(story.biasScore) && (
+            <span
+              className="rounded-md bg-gray-800/70 px-1.5 py-0.5 font-mono text-[9px] font-semibold tabular-nums text-gray-400 ring-1 ring-white/10"
+              title="SOURCE_BIAS_SCORE — −1.0 (left) to +1.0 (right), 0 = neutral"
+            >
+              {story.biasScore > 0 ? '+' : ''}
+              {story.biasScore.toFixed(2)}
             </span>
           )}
           {/* Factual Rating Badge */}

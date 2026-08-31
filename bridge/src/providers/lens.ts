@@ -24,6 +24,7 @@
  */
 
 import { FALLBACK_LENS_URLS } from '@degenfeed/lens-sdk';
+import { normalizeDedupText } from '../lib/dedup';
 import { filterFreshPosts } from '../lib/freshness';
 import { checkRateLimit } from '../rate-limiter';
 import type { SchemaGuard, UnifiedPost } from '../server/types';
@@ -251,9 +252,144 @@ function selectTrendingMix(pubs: IndexerPublication[], limit: number): IndexerPu
   return out.slice(0, limit);
 }
 
+// ─── Spam / quality filtering ──────────────────────────────────────────
+
+/** URL hosts that indicate link-in-bio, redirect, shortener or "gallery"
+ *  spam destinations. Matched against the registered host and subdomains. */
+const SPAM_URL_HOSTS: readonly string[] = [
+  'go.cbrop.com',
+  'onlyfuns.win',
+  'ca75.top',
+  'taplink.cc',
+  'linktr.ee',
+  'bio.link',
+  'beacons.ai',
+  'allmylinks.com',
+  'msha.ke',
+  'lit.link',
+  'many.link',
+  'lynkfire.com',
+  'linkin.bio',
+  'lnk.bio',
+  'bit.ly',
+  'tinyurl.com',
+  't.co',
+  'rb.gy',
+  'is.gd',
+  'cutt.ly',
+  'rebrand.ly',
+  'shorturl.at',
+  'goo.gl',
+  'ow.ly',
+  'buff.ly',
+  'qrco.de',
+  '0x0.st',
+];
+
+/** Text markers for "gallery" redirect posts (aggregation / spam pages). */
+const GALLERY_SPAM_RE = /\b(full\s+gallery|view\s+(the\s+)?(full\s+)?gallery|gallery\s+link)\b/i;
+
+/** Matches URLs in post text; stops at markdown link closers. */
+const URL_IN_TEXT_RE = /https?:\/\/[^\s<>"\])]+/g;
+
+/** Strip URLs from text, leaving the real (non-link) content. */
+function stripUrls(text: string): string {
+  return (text || '').replace(URL_IN_TEXT_RE, ' ').replace(/\s+/g, ' ').trim();
+}
+
+function extractUrls(text: string): string[] {
+  return (text || '').match(URL_IN_TEXT_RE) ?? [];
+}
+
+/** True when a URL points at a known spam/redirect/link-in-bio host. */
+function isSpamUrlHost(url: string): boolean {
+  try {
+    const host = new URL(url).hostname.toLowerCase().replace(/^www\./, '');
+    return SPAM_URL_HOSTS.some((h) => host === h || host.endsWith(`.${h}`));
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Spam / low-quality heuristic. A post is spam when it is:
+ *   (a) a LINK post whose destination is a shortener, link-in-bio, redirect
+ *       or "gallery" spam page (e.g. taplink.cc, linktr.ee, bio.link,
+ *       go.cbrop.com), or a post that carries a "full gallery" marker next
+ *       to a URL;
+ *   (b) a near-empty engagement-farming post (no real text, no media);
+ *   (c) a zero-engagement pure-link post (aggregation / repost spam).
+ */
+function isSpamPost(post: UnifiedPost): boolean {
+  const text = post.text || '';
+  const urls = extractUrls(text).concat(post.embeds.map((e) => e.url));
+  const hasMedia = post.embeds.some((e) => e.kind === 'image' || e.kind === 'video');
+
+  // (a) gallery / redirect / shortener / link-in-bio destinations.
+  if (urls.some((u) => isSpamUrlHost(u))) return true;
+  if (GALLERY_SPAM_RE.test(text) && urls.length > 0) return true;
+
+  // (b) engagement farming: no real text and no media.
+  if (!hasMedia && stripUrls(text).length < 24) return true;
+
+  // (c) zero-engagement pure-link posts (aggregation / repost spam).
+  const m = post.metrics;
+  const engagement = (m.likes || 0) + (m.reposts || 0) + (m.replies || 0) + (m.quotes || 0);
+  if (post.contentType === 'link' && engagement <= 0) return true;
+
+  return false;
+}
+
+/** Media/content-type preference for the quality feed. */
+const CONTENT_TYPE_PREFERENCE: Record<string, number> = {
+  article: 4,
+  video: 4,
+  image: 3,
+  text: 2,
+  link: 1,
+};
+
+/** Rank a post for the quality feed: content type + real text + engagement. */
+function qualityScore(post: UnifiedPost): number {
+  const typeRank = CONTENT_TYPE_PREFERENCE[post.contentType || 'text'] ?? 1;
+  const realTextLen = stripUrls(post.text || '').length;
+  const m = post.metrics;
+  const engagement = (m.likes || 0) * 2 + (m.reposts || 0) * 3 + (m.replies || 0) + (m.quotes || 0);
+  return typeRank * 100 + Math.min(50, realTextLen) + Math.min(40, Math.log1p(engagement) * 10);
+}
+
+/**
+ * Filter a wide batch of posts down to a quality ~limit feed: spam is
+ * removed, near-duplicates (same author + same text) collapse, and no single
+ * author contributes more than 3 posts so one spammer can't flood the feed.
+ * Survivors are ranked by content type (video/article/image > text > link),
+ * real-text length and engagement; ties go to the newest post.
+ */
+function selectQualityPosts(posts: UnifiedPost[], limit: number): UnifiedPost[] {
+  const quality = posts.filter((p) => !isSpamPost(p));
+  const ranked = quality
+    .map((p) => ({ p, score: qualityScore(p) }))
+    .sort((a, b) => b.score - a.score || b.p.createdAt - a.p.createdAt);
+
+  const out: UnifiedPost[] = [];
+  const seenKey = new Set<string>();
+  const perAuthor = new Map<string, number>();
+  for (const { p } of ranked) {
+    if (out.length >= limit) break;
+    const dupKey = `${p.author.id}::${normalizeDedupText(p.text)}`;
+    if (seenKey.has(dupKey)) continue;
+    const authorCount = perAuthor.get(p.author.id) || 0;
+    if (authorCount >= 3) continue;
+    seenKey.add(dupKey);
+    perAuthor.set(p.author.id, authorCount + 1);
+    out.push(p);
+  }
+  return out;
+}
+
 async function fetchPosts(limit: number): Promise<UnifiedPost[]> {
-  // Pull a wider batch (capped) so we have room to rank a trending mix.
-  const fetchLimit = Math.min(Math.max(limit * 3, limit + 10), 100);
+  // Pull a wide batch (capped) so spam filtering + ranking has room.
+  const fetchLimit = Math.min(Math.max(limit * 4, limit + 20), 200);
   const url = `${LENS_INDEXER_URL}/api/publications?limit=${fetchLimit}`;
 
   try {
@@ -277,7 +413,8 @@ async function fetchPosts(limit: number): Promise<UnifiedPost[]> {
       return fetchExternalLensPosts(limit);
     }
 
-    const selected = selectTrendingMix(data.data, limit);
+    // Select a broader trending+recent pool, map, then quality-filter down.
+    const selected = selectTrendingMix(data.data, Math.min(Math.max(limit * 3, limit + 10), 150));
 
     const posts: UnifiedPost[] = [];
     for (const pub of selected) {
@@ -288,8 +425,9 @@ async function fetchPosts(limit: number): Promise<UnifiedPost[]> {
     //     console.log(
     //       `[bridge] Lens Indexer: ${posts.length} posts (trending mix of ${data.meta.total} local)`,
     //     );
-    // Freshness: discard posts outside the FEED_MAX_AGE_HOURS window (48h).
-    return filterFreshPosts(posts).slice(0, limit);
+    // Freshness: discard posts outside the FEED_MAX_AGE_HOURS window (48h),
+    // then drop spam and rank the rest down to the requested limit.
+    return selectQualityPosts(filterFreshPosts(posts), limit);
   } catch (err) {
     console.warn(
       '[bridge] Lens Indexer: Error fetching posts:',
@@ -321,6 +459,8 @@ interface ExternalLensPost {
     content?: string | null;
     image?: { item?: string | null } | null;
     video?: { item?: string | null } | null;
+    /** LinkMetadata destination URL — used to detect redirect/gallery spam. */
+    sharingLink?: string | null;
   };
   author?: ExternalLensAccount;
   stats?: { reactions?: number; comments?: number; reposts?: number; quotes?: number };
@@ -357,6 +497,7 @@ function mapExternalLensPost(pub: ExternalLensPost): UnifiedPost | null {
   const embeds: Array<{ kind: string; url: string; meta?: Record<string, unknown> }> = [];
   if (pub.metadata?.image?.item) embeds.push({ kind: 'image', url: pub.metadata.image.item });
   if (pub.metadata?.video?.item) embeds.push({ kind: 'video', url: pub.metadata.video.item });
+  if (pub.metadata?.sharingLink) embeds.push({ kind: 'link', url: pub.metadata.sharingLink });
   return {
     id: `lens:${pub.id}`,
     protocol: 'lens',
@@ -375,7 +516,13 @@ function mapExternalLensPost(pub: ExternalLensPost): UnifiedPost | null {
     },
     text: content,
     embeds,
-    contentType: pub.metadata?.video?.item ? 'video' : pub.metadata?.image?.item ? 'image' : 'text',
+    contentType: pub.metadata?.video?.item
+      ? 'video'
+      : pub.metadata?.image?.item
+        ? 'image'
+        : pub.metadata?.sharingLink
+          ? 'link'
+          : 'text',
     createdAt: pub.timestamp ? new Date(pub.timestamp).getTime() : Date.now(),
     metrics: {
       likes: pub.stats?.reactions ?? 0,
@@ -413,14 +560,16 @@ function mapExternalLensPost(pub: ExternalLensPost): UnifiedPost | null {
  * `posts.items` is the AnyPost union (Post | Repost) → fragment on ... on Post.
  */
 async function fetchExternalLensPosts(limit: number): Promise<UnifiedPost[]> {
-  const POSTS_QUERY = `query {
+  const POSTS_QUERY = `query($cursor: Cursor) {
     posts(request: {
       pageSize: FIFTY
+      cursor: $cursor
       filter: {
         postTypes: [ROOT]
         metadata: { mainContentFocus: [TEXT_ONLY, IMAGE, VIDEO, LINK, ARTICLE] }
       }
     }) {
+      pageInfo { next }
       items {
         ... on Post {
           id
@@ -429,7 +578,7 @@ async function fetchExternalLensPosts(limit: number): Promise<UnifiedPost[]> {
             ... on TextOnlyMetadata { content }
             ... on ImageMetadata { content image { item } }
             ... on VideoMetadata { content video { item } }
-            ... on LinkMetadata { content }
+            ... on LinkMetadata { content sharingLink }
             ... on ArticleMetadata { content }
           }
           author {
@@ -444,17 +593,34 @@ async function fetchExternalLensPosts(limit: number): Promise<UnifiedPost[]> {
   }`;
 
   try {
-    const data = (await lensGql(LENS_API_URL, POSTS_QUERY)) as {
-      posts?: { items?: ExternalLensPost[] };
-    };
-    const items = data?.posts?.items ?? [];
+    // Fetch MORE than we need (up to 3 pages) so the spam filter has room to
+    // still return a quality ~limit feed.
+    const needed = Math.min(Math.max(limit * 3, limit + 20), 150);
+    const raw: ExternalLensPost[] = [];
+    const seenIds = new Set<string>();
+    let cursor: string | null | undefined;
+
+    for (let page = 0; page < 3 && raw.length < needed; page += 1) {
+      const data = (await lensGql(LENS_API_URL, POSTS_QUERY, { cursor })) as {
+        posts?: { items?: ExternalLensPost[]; pageInfo?: { next?: string | null } };
+      };
+      const items = data?.posts?.items ?? [];
+      for (const pub of items) {
+        if (!pub.id || seenIds.has(pub.id)) continue;
+        seenIds.add(pub.id);
+        raw.push(pub);
+      }
+      cursor = data?.posts?.pageInfo?.next ?? null;
+      if (!cursor) break;
+    }
+
     const posts: UnifiedPost[] = [];
-    for (const pub of items) {
+    for (const pub of raw) {
       const post = mapExternalLensPost(pub);
       if (post) posts.push(post);
     }
     if (posts.length > 0) {
-      return filterFreshPosts(posts).slice(0, limit);
+      return selectQualityPosts(filterFreshPosts(posts), limit);
     }
   } catch (err) {
     console.warn('[bridge] Lens external posts failed:', err instanceof Error ? err.message : err);

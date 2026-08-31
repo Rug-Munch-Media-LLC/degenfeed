@@ -12,7 +12,9 @@
  * Failure tracking: per-request failure count with staggered retry
  *
  * Endpoints consumed:
- *   Neynar:  GET /v2/farcaster/feed           — casts from curated FIDs
+ *   Neynar:  GET /v2/farcaster/feed           — filter_type=channel_id casts from
+ *                                               high-activity channels (primary),
+ *                                               filter_type=fids fallback
  *   Hubble:  GET /v1/info                     — hub sync status & health
  *            GET /v1/castsByFid               — fetch casts for a given FID
  *            GET /v1/userDataByFid            — fetch user profile data for a given FID
@@ -39,6 +41,14 @@ const DEFAULT_PAGE_SIZE = 5;
 /** Overall fetch timeout */
 /** Per-request timeout for Hubble calls */
 const HUBBLE_REQUEST_TIMEOUT = 8_000;
+/**
+ * Short timeout for the /v1/info health probe. A blackholed/unreachable
+ * Hubble address (e.g. hubble.degenfeed.xyz) would otherwise hang for the
+ * full HUBBLE_REQUEST_TIMEOUT before Neynar is even contacted, blowing past
+ * the feed builder's 12s per-provider budget and starving the feed. A hub
+ * that can't answer /v1/info in 2s isn't usable anyway.
+ */
+const HUBBLE_PROBE_TIMEOUT_MS = parseInt(process.env.HUBBLE_PROBE_TIMEOUT_MS || '2000', 10);
 /**
  * Minimum Hubble sync percentage before we trust it as the primary source.
  * Below this threshold (syncing/unsynced) we prefer the Neynar API instead,
@@ -169,7 +179,7 @@ export interface HubbleSyncInfo {
  * Returns null if Hubble is unreachable.
  */
 export async function getHubbleStatus(): Promise<HubbleSyncInfo | null> {
-  const result = await hubbleFetch('/v1/info');
+  const result = await hubbleFetch('/v1/info', HUBBLE_PROBE_TIMEOUT_MS);
   if (!result) return null;
 
   const info = result as {
@@ -221,13 +231,16 @@ interface HubbleResponse {
   [key: string]: unknown;
 }
 
-async function hubbleFetch(path: string): Promise<HubbleResponse | null> {
+async function hubbleFetch(
+  path: string,
+  timeoutMs: number = HUBBLE_REQUEST_TIMEOUT,
+): Promise<HubbleResponse | null> {
   // Try primary Hubble first, then alternate
   const bases = [HUBBLE_BASE, HUBBLE_ALT_BASE];
   for (const base of bases) {
     try {
       const res = await gfetch(`${base}${path}`, {
-        signal: AbortSignal.timeout(HUBBLE_REQUEST_TIMEOUT),
+        signal: AbortSignal.timeout(timeoutMs),
         headers: { 'User-Agent': 'DegenFeed-Bridge/1.0' },
       });
       if (!res.ok) {
@@ -425,6 +438,22 @@ function getNeynarKey(): string {
 
 const NEYNAR_API = 'https://api.neynar.com';
 
+/**
+ * High-activity Farcaster channels fetched for the Neynar feed.
+ * These channels produce a continuous stream of fresh casts (unlike the
+ * curated FID filter, whose members post rarely — see root-cause note in
+ * fetchFromNeynar). Overridable via NEYNAR_FEED_CHANNELS.
+ */
+const NEYNAR_FEED_CHANNELS = (
+  process.env.NEYNAR_FEED_CHANNELS || 'base,farcaster,degen,eth,solana,ai,memes'
+)
+  .split(',')
+  .map((c) => c.trim())
+  .filter(Boolean);
+
+/** Per-channel page size. Neynar caps feed limits at 50; we always request 50. */
+const NEYNAR_CHANNEL_PAGE_SIZE = 50;
+
 interface NeynarCast {
   hash: string;
   author: {
@@ -456,60 +485,120 @@ async function fetchFromNeynar(limit: number): Promise<UnifiedPost[]> {
   }
 
   try {
-    // Fetch recent casts from curated FIDs via Neynar's casts API. More FIDs
-    // = more diverse casters per page; Neynar accepts up to 100 comma-separated
-    // FIDs. We scan 30 so a single call yields a wide, fresh mix.
-    const fids = CURATED_FIDS.slice(0, 30).join(',');
-    const url = `${NEYNAR_API}/v2/farcaster/feed?feed_type=filter&filter_type=fids&fids=${fids}&limit=${Math.min(limit, 50)}`;
-    const res = await fetch(url, {
-      headers: {
-        accept: 'application/json',
-        'x-api-key': apiKey,
-      },
-      signal: AbortSignal.timeout(9000),
-    });
-    if (!res.ok) {
-      // console.log(`[farcaster] Neynar returned ${res.status}`);
-      return [];
-    }
-    const data = (await res.json()) as { casts?: NeynarCast[] };
-    if (!data.casts?.length) return [];
+    const posts = await fetchNeynarChannelFeed(apiKey, limit);
+    if (posts.length > 0) return posts;
 
-    // Skip casts with neither text nor embeds (blank cards).
-    const meaningful = data.casts.filter(
-      (cast) => (cast.text || '').trim() || (cast.embeds || []).length > 0,
-    );
-    return meaningful.slice(0, limit).map((cast) => neynarCastToPost(cast));
+    // Honest fallback: no channel returned anything. Fall back to the curated
+    // FID filter (real accounts, low volume) rather than returning fake data.
+    const fidPosts = await fetchNeynarFidsFeed(apiKey, limit);
+    if (fidPosts.length > 0) return fidPosts;
+    return [];
   } catch {
-    // console.log(`[farcaster] Neynar fallback failed: ${err?.message || err}`);
     // One bounded retry: Neynar occasionally times out on the first attempt
     // (cold connection / upstream slowness). A single retry is cheap and the
     // caller still respects the feed builder's 5s provider budget.
     try {
-      const fids = CURATED_FIDS.slice(0, 30).join(',');
-      const url = `${NEYNAR_API}/v2/farcaster/feed?feed_type=filter&filter_type=fids&fids=${fids}&limit=${Math.min(limit, 50)}`;
-      const res = await fetch(url, {
-        headers: {
-          accept: 'application/json',
-          'x-api-key': apiKey,
-        },
-        signal: AbortSignal.timeout(6000),
-      });
-      if (!res.ok) {
-        // console.log(`[farcaster] Neynar retry returned ${res.status}`);
-        return [];
-      }
-      const data = (await res.json()) as { casts?: NeynarCast[] };
-      if (!data.casts?.length) return [];
-      const meaningful = data.casts.filter(
-        (cast) => (cast.text || '').trim() || (cast.embeds || []).length > 0,
-      );
-      return meaningful.slice(0, limit).map((cast) => neynarCastToPost(cast));
+      const posts = await fetchNeynarChannelFeed(apiKey, limit);
+      if (posts.length > 0) return posts;
+      const fidPosts = await fetchNeynarFidsFeed(apiKey, limit);
+      if (fidPosts.length > 0) return fidPosts;
+      return [];
     } catch {
       // console.log(`[farcaster] Neynar retry failed: ${retryErr?.message || retryErr}`);
       return [];
     }
   }
+}
+
+/**
+ * Fetch casts from high-activity channels (Neynar filter_type=channel_id).
+ *
+ * ROOT CAUSE (why the old feed returned ~1 post): the previous implementation
+ * used `filter_type=fids` over 30 curated OG accounts. Those accounts post
+ * rarely, so most returned casts were older than FEED_MAX_AGE_HOURS (48h) and
+ * `filterFreshPosts` collapsed the feed to ~1 cast. Channels like /base,
+ * /farcaster, /degen, /eth, /solana, /ai and /memes emit a continuous stream
+ * of fresh casts — 50/50 survive the freshness window in practice.
+ *
+ * Requests are fired in parallel (one per channel, pageSize 50), deduped by
+ * cast hash, sorted newest-first and sliced to the requested limit.
+ */
+async function fetchNeynarChannelFeed(apiKey: string, limit: number): Promise<UnifiedPost[]> {
+  const channels = NEYNAR_FEED_CHANNELS.length > 0 ? NEYNAR_FEED_CHANNELS : ['base'];
+  const perChannel = Math.max(25, Math.min(NEYNAR_CHANNEL_PAGE_SIZE, Math.max(limit, 25)));
+
+  const results = await Promise.allSettled(
+    channels.map((channelId) => fetchNeynarFeedPage(apiKey, channelId, perChannel)),
+  );
+
+  const casts: NeynarCast[] = [];
+  for (const result of results) {
+    if (result.status === 'fulfilled') casts.push(...result.value);
+  }
+  if (casts.length === 0) return [];
+
+  return castsToUnifiedPosts(casts, limit);
+}
+
+/**
+ * Fetch casts for the curated FIDs (Neynar filter_type=fids). Low-volume
+ * fallback kept only for honest coverage when every channel request fails.
+ */
+async function fetchNeynarFidsFeed(apiKey: string, limit: number): Promise<UnifiedPost[]> {
+  const fids = CURATED_FIDS.slice(0, 30).join(',');
+  const casts = await fetchNeynarFeedPageRaw(
+    apiKey,
+    `${NEYNAR_API}/v2/farcaster/feed?feed_type=filter&filter_type=fids&fids=${fids}&limit=${Math.min(limit, 50)}`,
+  );
+  if (casts.length === 0) return [];
+  return castsToUnifiedPosts(casts, limit);
+}
+
+/** GET one channel feed page; returns raw casts (empty on any error). */
+async function fetchNeynarFeedPage(
+  apiKey: string,
+  channelId: string,
+  pageSize: number,
+): Promise<NeynarCast[]> {
+  const url = `${NEYNAR_API}/v2/farcaster/feed?feed_type=filter&filter_type=channel_id&channel_id=${encodeURIComponent(channelId)}&limit=${pageSize}`;
+  return fetchNeynarFeedPageRaw(apiKey, url);
+}
+
+/** GET a Neynar feed URL and return raw casts (empty on error). */
+async function fetchNeynarFeedPageRaw(apiKey: string, url: string): Promise<NeynarCast[]> {
+  const res = await fetch(url, {
+    headers: {
+      accept: 'application/json',
+      'x-api-key': apiKey,
+    },
+    signal: AbortSignal.timeout(9000),
+  });
+  if (!res.ok) {
+    // console.log(`[farcaster] Neynar returned ${res.status}`);
+    return [];
+  }
+  const data = (await res.json()) as { casts?: NeynarCast[] };
+  if (!data.casts?.length) return [];
+  return data.casts;
+}
+
+/** Filter meaningful casts, dedupe by hash, sort newest-first, map to posts. */
+function castsToUnifiedPosts(casts: NeynarCast[], limit: number): UnifiedPost[] {
+  // Skip casts with neither text nor embeds (blank cards).
+  const meaningful = casts.filter(
+    (cast) => (cast.text || '').trim() || (cast.embeds || []).length > 0,
+  );
+
+  // A cast can surface from multiple channels (quote/frame embeds) — dedupe by hash.
+  const seen = new Set<string>();
+  const unique = meaningful.filter((cast) => {
+    if (seen.has(cast.hash)) return false;
+    seen.add(cast.hash);
+    return true;
+  });
+
+  unique.sort((a, b) => Date.parse(b.timestamp) - Date.parse(a.timestamp));
+  return unique.slice(0, limit).map((cast) => neynarCastToPost(cast));
 }
 
 /** Map a Neynar cast to a UnifiedPost (shared by primary fetch and retry). */

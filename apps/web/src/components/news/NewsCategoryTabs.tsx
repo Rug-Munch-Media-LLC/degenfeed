@@ -43,7 +43,7 @@ export function NewsCategoryTabs({
           onClick={() => onCategoryChange(c.id)}
           className={`shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium whitespace-nowrap transition-all ${
             activeCategory === c.id
-              ? 'border-degen-500 bg-degen-500/20 text-degen-400 shadow-[0_0_12px_rgba(34,197,94,0.2)]'
+              ? 'border-degen-500 bg-degen-500/20 text-degen-400 shadow-[0_0_12px_rgba(29,155,240,0.25)]'
               : 'border-gray-700 text-gray-400 hover:border-gray-600 hover:text-white'
           }`}
         >
