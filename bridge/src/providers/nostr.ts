@@ -56,6 +56,29 @@ export const RELAYS: { url: string; local: boolean }[] = [
   { url: 'wss://relay.damus.io', local: false },
   { url: 'wss://relay.nostr.band', local: false },
   { url: 'wss://purplepag.es', local: false },
+  // Verified live 2026-08-31 from this host (WS connect + kind-1 EVENT):
+  { url: 'wss://nostr.data.haus', local: false },
+  { url: 'wss://relay.utxo.one', local: false },
+  { url: 'wss://nostr.8777.ch', local: false },
+  { url: 'wss://nostr.oxtr.dev', local: false },
+  { url: 'wss://nostr-pub.wellorder.net', local: false },
+  // Well-known relays — unreachable from this host at probe time (2026-08-31)
+  // but established network fixtures; kept last so timeouts never starve the
+  // fast set (a dead relay contributes zero events at zero cost).
+  { url: 'wss://nostr.moe', local: false },
+  { url: 'wss://nostr.milana.lol', local: false },
+  { url: 'wss://no1ton.com', local: false },
+  { url: 'wss://nostrich.ly', local: false },
+  { url: 'wss://relay.nostr.bg', local: false },
+  { url: 'wss://nostr.mutinywallet.com', local: false },
+  { url: 'wss://nostr.fmt.wiz.biz', local: false },
+  { url: 'wss://relay.current.fyi', local: false },
+  { url: 'wss://nostr.cercatrova.me', local: false },
+  { url: 'wss://nostr.zebedee.cloud', local: false },
+  { url: 'wss://relay.nostr.com.au', local: false },
+  { url: 'wss://nostr.zaprite.io', local: false },
+  { url: 'wss://relay.orangepill.dev', local: false },
+  { url: 'wss://relay.nostrati.com', local: false },
 ];
 
 /**

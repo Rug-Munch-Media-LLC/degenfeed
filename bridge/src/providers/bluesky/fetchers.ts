@@ -103,6 +103,16 @@ const CUSTOM_FEEDS = [
 const CRYPTO_FEEDS = [
   'at://did:plc:z72i7hdynmk6r22z27z2q6yo/app.bsky.feed.generator/crypto',
   'at://did:plc:q6gjnaw2blty4crtr3nm2f6o/app.bsky.feed.generator/whats-crypto',
+  // "Bitcoin & Crypto" style topical feeds (resolved via
+  // getPopularFeedGenerators 2026-08-31)
+  'at://did:plc:tenurhgjptubkk5zf5qhi3og/app.bsky.feed.generator/h-bitcoin',
+  'at://did:plc:3awqkacz33aitph7ojbzv24l/app.bsky.feed.generator/aaacg5mlmmibi',
+];
+
+// AI / tech topical feeds (resolved via getPopularFeedGenerators 2026-08-31)
+const AI_FEEDS = [
+  'at://did:plc:rwvx7nvhwavvyi75m43lup6z/app.bsky.feed.generator/criticalai',
+  'at://did:plc:yb37rlld5hddptt5dfywfgpz/app.bsky.feed.generator/aaaaauafsopbm',
 ];
 
 const CURATED_ACTORS = [
@@ -561,55 +571,60 @@ export async function fetchBlueskyPosts(limit = 20): Promise<UnifiedPost[]> {
     // console.log('[bluesky] Rate limited, skipping fetch');
     return [];
   }
-  const all: UnifiedPost[] = [];
 
-  // 0. Real-time firehose posts (Jetstream — no API rate cost)
+  // Real-time firehose posts (Jetstream — no API rate cost)
   startFirehose();
   const firehosePosts = getFirehosePosts(Math.max(2, Math.ceil(limit / 6)));
-  all.push(...firehosePosts);
 
-  // 1. Authenticated home timeline (Popular with Friends equivalent)
-  const timeline = await fetchHomeTimeline(Math.max(3, Math.ceil(limit / 5)));
-  all.push(...timeline);
+  // Per-source budget: every source gets a full share (50+ at limit=50) so
+  // the merged pool is deep enough to survive freshness + dedupe trimming.
+  const perSource = Math.max(50, limit);
 
-  // 1b. Popular with Friends feed (explicit feed generator, auth-gated)
-  const withFriends = await fetchWithFriends(Math.max(3, Math.ceil(limit / 6)));
-  all.push(...withFriends);
+  // All independent sources run CONCURRENTLY — the bridge provider timeout
+  // is 12s and a sequential fan-out across ~20 upstream calls blows it.
+  const [
+    timelineRes,
+    withFriendsRes,
+    whatsHotRes,
+    customRes,
+    cryptoRes,
+    aiRes,
+    trendingRes,
+    pdsRes,
+    curatedRes,
+  ] = await Promise.allSettled([
+    fetchHomeTimeline(perSource),
+    fetchWithFriends(perSource),
+    fetchFeedByUri(WHATS_HOT_FEED, perSource),
+    Promise.allSettled(CUSTOM_FEEDS.map((f) => fetchFeedByUri(f, perSource))),
+    Promise.allSettled(CRYPTO_FEEDS.map((f) => fetchFeedByUri(f, perSource))),
+    Promise.allSettled(AI_FEEDS.map((f) => fetchFeedByUri(f, perSource))),
+    fetchTrendingTopics(perSource),
+    fetchFromPds(Math.max(2, Math.ceil(limit / 6))),
+    fetchAllCuratedPosts(Math.ceil(limit / 2)),
+  ]);
 
-  // 2. What's Hot / Discover feed — the primary global surface
-  const whatsHot = await fetchFeedByUri(WHATS_HOT_FEED, Math.max(5, Math.ceil(limit / 3)));
-  all.push(...whatsHot);
-
-  // 3. Custom algorithmic feeds
-  const perCustom = Math.max(3, Math.ceil(limit / (CUSTOM_FEEDS.length + 2)));
-  const customResults = await Promise.allSettled(
-    CUSTOM_FEEDS.map((f) => fetchFeedByUri(f, perCustom)),
-  );
-  for (const r of customResults) if (r.status === 'fulfilled') all.push(...r.value);
-
-  // 3b. Crypto feed generator subscriptions — on-niche content is boosted
-  // with a larger per-feed share so it competes with the general feeds.
-  const perCryptoFeed = Math.max(3, Math.ceil(limit / (CRYPTO_FEEDS.length + 2)));
-  const cryptoFeedResults = await Promise.allSettled(
-    CRYPTO_FEEDS.map((f) => fetchFeedByUri(f, perCryptoFeed)),
-  );
-  for (const r of cryptoFeedResults) if (r.status === 'fulfilled') all.push(...r.value);
-
-  // 4. Trending topics (live feed generators)
-  if (all.length < limit) {
-    const trending = await fetchTrendingTopics(Math.ceil(limit / 3));
-    all.push(...trending);
+  const all: UnifiedPost[] = [...firehosePosts];
+  const collect = (r: PromiseSettledResult<UnifiedPost[]>) => {
+    if (r.status === 'fulfilled') all.push(...r.value);
+  };
+  collect(timelineRes);
+  collect(withFriendsRes);
+  collect(whatsHotRes);
+  if (customRes.status === 'fulfilled') {
+    for (const r of customRes.value) collect(r);
   }
+  if (cryptoRes.status === 'fulfilled') {
+    for (const r of cryptoRes.value) collect(r);
+  }
+  if (aiRes.status === 'fulfilled') {
+    for (const r of aiRes.value) collect(r);
+  }
+  collect(trendingRes);
+  collect(pdsRes);
+  collect(curatedRes);
 
-  // 5. Local PDS repos (federation: content hosted on OUR PDS)
-  const pdsPosts = await fetchFromPds(Math.max(2, Math.ceil(limit / 6)));
-  all.push(...pdsPosts);
-
-  // 6. Curated crypto actors
-  const curated = await fetchAllCuratedPosts(Math.ceil(limit / 4));
-  all.push(...curated);
-
-  // 7. Search fallback — only if we still need content
+  // Search fallback — only if the parallel fan-out still came up short
   if (all.length < limit / 2) {
     const searchResults = await Promise.allSettled(
       SEARCH_QUERIES.slice(0, 4).map((q) => searchPosts(q, Math.max(3, Math.ceil(limit / 4)))),

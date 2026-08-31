@@ -101,7 +101,7 @@ interface ZoraCoin {
 interface ZoraExploreResponse {
   exploreList?: {
     edges?: Array<{ node?: ZoraCoin }>;
-    pageInfo?: { endCursor?: string };
+    pageInfo?: { endCursor?: string; hasNextPage?: boolean };
   };
 }
 
@@ -480,15 +480,28 @@ function formatUsdcPrice(price: number): string {
  * Fetch coins from Zora's public REST API (keyless; ZORA_API_KEY raises the
  * rate limit). listType values: NEW, LAST_TRADED, TOP_GAINERS, TOP_VOLUME_24H,
  * MOST_VALUABLE, FEATURED, NEW_CREATORS, MOST_VALUABLE_CREATORS.
+ *
+ * Pagination (verified 2026-08-31): the response carries
+ * `exploreList.pageInfo.{endCursor, hasNextPage}`; passing the endCursor as
+ * the `after` query param returns the NEXT page (the `cursor`/`afterCursor`
+ * param names are ignored by the API). NEW/LAST_TRADED cap at 20/page, so
+ * deep pulls page through with `after`.
  */
-async function fetchExternalCoins(listType: string, limit: number): Promise<ZoraCoin[]> {
+async function fetchExternalCoins(
+  listType: string,
+  limit: number,
+  after?: string,
+): Promise<{ coins: ZoraCoin[]; endCursor?: string; hasNextPage: boolean }> {
   const headers: Record<string, string> = {
     'User-Agent': 'DegenFeed-Bridge/0.1',
     Accept: 'application/json',
   };
   if (ZORA_API_KEY) headers['api-key'] = ZORA_API_KEY;
 
-  const url = `${ZORA_API_URL}/explore?listType=${encodeURIComponent(listType)}&count=${Math.min(Math.max(limit, 1), 50)}`;
+  const url = new URL(`${ZORA_API_URL}/explore`);
+  url.searchParams.set('listType', listType);
+  url.searchParams.set('count', String(Math.min(Math.max(limit, 1), 50)));
+  if (after) url.searchParams.set('after', after);
 
   try {
     const res = await fetch(url, {
@@ -499,19 +512,23 @@ async function fetchExternalCoins(listType: string, limit: number): Promise<Zora
       console.warn(
         `[bridge] Zora API: HTTP ${res.status} ${res.statusText} (listType=${listType})`,
       );
-      return [];
+      return { coins: [], hasNextPage: false };
     }
     const data = (await res.json()) as ZoraExploreResponse;
     const coins = (data.exploreList?.edges ?? [])
       .map((e) => e.node)
-      .filter((n): n is ZoraCoin => Boolean(n?.name && n.address));
+      .filter((n): n is ZoraCoin => Boolean(n?.name && n?.address));
     if (coins.length === 0) {
       console.warn(`[bridge] Zora API: no coins for listType=${listType}`);
     }
-    return coins;
+    return {
+      coins,
+      endCursor: data.exploreList?.pageInfo?.endCursor,
+      hasNextPage: data.exploreList?.pageInfo?.hasNextPage ?? false,
+    };
   } catch (err) {
     console.warn('[bridge] Zora API: Error fetching:', err instanceof Error ? err.message : err);
-    return [];
+    return { coins: [], hasNextPage: false };
   }
 }
 
@@ -625,18 +642,47 @@ function coinToPost(coin: ZoraCoin): UnifiedPost | null {
   };
 }
 
-/** External fallback: recent/trending Zora coins (NEW first, then LAST_TRADED). */
+/**
+ * External fallback: recent/trending Zora coins.
+ *
+ * Capacity strategy (2026-08-31): NEW/LAST_TRADED cap at 20/page, so for
+ * large limits we paginate NEW via the `after` cursor (up to 3 pages = 60
+ * coins) and top up with complementary listTypes (TOP_GAINERS,
+ * TOP_VOLUME_24H, MOST_VALUABLE) which surface coins the NEW stream misses.
+ */
+const ZORA_PAGINATED_LISTTYPES = ['NEW', 'TOP_GAINERS', 'TOP_VOLUME_24H', 'MOST_VALUABLE'] as const;
+const ZORA_MAX_PAGES_PER_LIST = 3;
+
 async function fetchExternalCoinPosts(limit: number): Promise<UnifiedPost[]> {
   if (zoraExternalCache && Date.now() < zoraExternalCache.expiresAt) {
     return zoraExternalCache.posts.slice(0, limit);
   }
-  const want = Math.min(Math.max(limit, 1), 50);
-  const fresh = await fetchExternalCoins('NEW', want);
-  let coins = fresh;
-  if (coins.length < want) {
-    const traded = await fetchExternalCoins('LAST_TRADED', want - coins.length);
-    coins = [...coins, ...traded];
+  const want = Math.min(Math.max(limit, 1), 100);
+
+  // 1. Paginate through listTypes via the `after` cursor until satisfied.
+  const coins: ZoraCoin[] = [];
+  const seenAddresses = new Set<string>();
+  const pushCoins = (list: ZoraCoin[]): void => {
+    for (const c of list) {
+      if (c.address && !seenAddresses.has(c.address)) {
+        seenAddresses.add(c.address);
+        coins.push(c);
+      }
+    }
+  };
+
+  for (const listType of ZORA_PAGINATED_LISTTYPES) {
+    if (coins.length >= want) break;
+    let after: string | undefined;
+    for (let page = 0; page < ZORA_MAX_PAGES_PER_LIST; page++) {
+      const res = await fetchExternalCoins(listType, 20, after);
+      pushCoins(res.coins);
+      if (!res.hasNextPage || !res.endCursor || res.coins.length === 0) break;
+      after = res.endCursor;
+      if (coins.length >= want) break;
+    }
   }
+
   const posts = coins
     .slice(0, limit)
     .map(coinToPost)

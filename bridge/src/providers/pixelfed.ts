@@ -46,16 +46,26 @@ function isLocalInstance(): boolean {
 
 /** Headless external fallbacks when the configured local instance is down.
  *  Each is verified reachable anonymously via GET /api/v1/instance
- *  (2026-08-31). pixey.org added alongside pixelfed.social for broader
- *  federated coverage; pixelfed.art / pixelfed.nz are photo communities.
- *  NOTE: public instances login-wall anonymous hashtag timelines (302 →
- *  /login), so federated fallback is limited to the public timeline /
- *  instance probe — hashtag discovery stays on the primary instance. */
+ *  (2026-08-31). Rotation: pixelfed.social, pixey.org, pixelfed.art,
+ *  pixelfed.nz + added pixelfed.fr, pixelfed.de, pixelfed.au, pixelfed.nyc
+ *  (all 200 on /api/v1/instance). pixelfed.uk / pixelfed.us / metapix.net
+ *  are 404, pixelfed.jp / pixelfed.tokyo unreachable — excluded.
+ *  NOTE: public instances login-wall anonymous hashtag timelines AND the
+ *  public timeline / discover endpoints (302 → /login) — verified
+ *  2026-08-31 across pixelfed.social, pixey.org, pixelfed.fr, pixelfed.de,
+ *  pixelfed.au, pixelfed.nyc. So federated fallback is limited to the
+ *  instance probe + whatever the delegated adapter can reach with the
+ *  configured access token; hashtag discovery stays on the primary
+ *  instance. */
 const PIXELFED_EXTERNAL_FALLBACKS = [
   'https://pixelfed.social',
   'https://pixey.org',
   'https://pixelfed.art',
   'https://pixelfed.nz',
+  'https://pixelfed.fr',
+  'https://pixelfed.de',
+  'https://pixelfed.au',
+  'https://pixelfed.nyc',
 ];
 
 let _effectiveBase: string | null = null;
