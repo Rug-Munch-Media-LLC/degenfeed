@@ -674,6 +674,7 @@ export const DEFAULT_HOME_PROTOCOLS = [
   'lens',
   'pixelfed',
   'zora',
+  'threads',
 ];
 
 /**

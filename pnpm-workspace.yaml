@@ -13,6 +13,7 @@ allowBuilds:
   bigint-buffer: true
   blake-hash: true
   bufferutil: true
+  core-js: false
   core-js-pure: set this to true or false
   esbuild: true
   msw: set this to true or false
