@@ -18,6 +18,7 @@ import { kvGetJson } from './kv-json';
  */
 import {
   dequeueRaw,
+  getApiBase,
   getApiKey,
   parsePayload,
   enqueue as queueEnqueue,
@@ -286,9 +287,10 @@ export class BridgyFedService {
 
     // API mode: mirror the config into the rmi-backend queue so reads can
     // dequeue instead of KV list().
-    if (useRmiQueueApi(this.env)) {
+    if (useRmiQueueApi()) {
       try {
         await queueEnqueue(
+          getApiBase(this.env),
           'bridgy:config',
           `${KV_BRIDGY_CONFIG_PREFIX}${config.id}`,
           config,
@@ -320,9 +322,14 @@ export class BridgyFedService {
     // re-enqueued after being read.
     // [REVIEW] A dedicated non-destructive list/read endpoint on the backend
     // would be cleaner than dequeue+re-enqueue for config-like data.
-    if (useRmiQueueApi(this.env)) {
+    if (useRmiQueueApi()) {
       try {
-        const items = await dequeueRaw('bridgy:users', limit, getApiKey(this.env));
+        const items = await dequeueRaw(
+          getApiBase(this.env),
+          'bridgy:users',
+          limit,
+          getApiKey(this.env),
+        );
         const seen = new Set<string>();
         for (const item of items) {
           const user = parsePayload<BridgyUserBridge>(item.payload);
@@ -335,7 +342,13 @@ export class BridgyFedService {
         }
         for (const item of items) {
           try {
-            await queueEnqueue('bridgy:users', item.key, item.payload, getApiKey(this.env));
+            await queueEnqueue(
+              getApiBase(this.env),
+              'bridgy:users',
+              item.key,
+              item.payload,
+              getApiKey(this.env),
+            );
           } catch {
             /* best effort — non-destructive read */
           }
@@ -482,9 +495,10 @@ export class BridgyFedService {
 
     // API mode: mirror the bridge into the rmi-backend queue so reads can
     // dequeue instead of KV list().
-    if (useRmiQueueApi(this.env)) {
+    if (useRmiQueueApi()) {
       try {
         await queueEnqueue(
+          getApiBase(this.env),
           'bridgy:users',
           `${KV_BRIDGY_USERS_PREFIX}${bridge.sourceInstance}:${bridge.userId}`,
           bridge,
@@ -685,9 +699,14 @@ export class BridgyFedService {
    * cleaner for config-like data.
    */
   private async getAllConfiguredInstances(): Promise<BridgyFedConfig[]> {
-    if (useRmiQueueApi(this.env)) {
+    if (useRmiQueueApi()) {
       try {
-        const items = await dequeueRaw('bridgy:config', 100, getApiKey(this.env));
+        const items = await dequeueRaw(
+          getApiBase(this.env),
+          'bridgy:config',
+          100,
+          getApiKey(this.env),
+        );
         const instances: BridgyFedConfig[] = [];
         const seen = new Set<string>();
         for (const item of items) {
@@ -699,7 +718,13 @@ export class BridgyFedService {
         }
         for (const item of items) {
           try {
-            await queueEnqueue('bridgy:config', item.key, item.payload, getApiKey(this.env));
+            await queueEnqueue(
+              getApiBase(this.env),
+              'bridgy:config',
+              item.key,
+              item.payload,
+              getApiKey(this.env),
+            );
           } catch {
             /* best effort — non-destructive read */
           }

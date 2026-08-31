@@ -30,9 +30,10 @@
 import type { QueueItem } from '../lib/queue-client';
 import {
   dequeueRaw,
-  enqueue as queueEnqueue,
+  getApiBase,
   getApiKey,
   parsePayload,
+  enqueue as queueEnqueue,
   useRmiQueueApi,
 } from '../lib/queue-client';
 import { type SessionPayload, signSession } from '../session';
@@ -78,7 +79,7 @@ export async function executeScheduledPosts(
     // The cron still fires every minute; the executor runs at most once
     // per SCHEDULED_EXECUTOR_INTERVAL_MINUTES (default 5).
     const intervalMinutes =
-      (Number.parseInt(env.SCHEDULED_EXECUTOR_INTERVAL_MINUTES ?? '5', 10)) || 5;
+      Number.parseInt(env.SCHEDULED_EXECUTOR_INTERVAL_MINUTES ?? '5', 10) || 5;
     const now = Date.now();
     const lastRunRaw = await env.CACHE.get(LAST_RUN_KEY);
     if (lastRunRaw) {
@@ -114,7 +115,7 @@ async function processViaQueueApi(
   }
   let items: Array<QueueItem<unknown>>;
   try {
-    items = await dequeueRaw('scheduled', 50, getApiKey(env));
+    items = await dequeueRaw(getApiBase(env), 'scheduled', 50, getApiKey(env));
   } catch (err) {
     console.warn('[scheduled-executor] Queue API unavailable — falling back to KV scan:', err);
     return processViaKv(env, authSecret);
@@ -133,11 +134,9 @@ async function processViaQueueApi(
 
       if (outcome.success) {
         // Mark published in KV (keep audit record), record user history
-        await env.CACHE.put(
-          item.key,
-          JSON.stringify({ ...entry, status: 'published' }),
-          { expirationTtl: 60 * 60 * 24 * 30 },
-        );
+        await env.CACHE.put(item.key, JSON.stringify({ ...entry, status: 'published' }), {
+          expirationTtl: 60 * 60 * 24 * 30,
+        });
         await recordPublished(env.CACHE, entry.wallet, entry);
 
         const { removeFromUserIndex } = await import('./scheduled');
@@ -162,12 +161,15 @@ async function processViaQueueApi(
         if (newStatus === 'pending') {
           // Re-schedule via the queue API (the dequeue already consumed it).
           try {
-            await queueEnqueue('scheduled', item.key, updatedEntry, getApiKey(env));
-          } catch (enqErr) {
-            console.error(
-              `[scheduled-executor] Re-enqueue failed for ${entry.id}:`,
-              enqErr,
+            await queueEnqueue(
+              getApiBase(env),
+              'scheduled',
+              item.key,
+              updatedEntry,
+              getApiKey(env),
             );
+          } catch (enqErr) {
+            console.error(`[scheduled-executor] Re-enqueue failed for ${entry.id}:`, enqErr);
           }
         } else {
           // Terminal failure — keep a KV audit copy.
@@ -233,11 +235,9 @@ async function processViaKv(
 
         if (outcome.success) {
           // Mark published in-place (keep KV entry for audit, change status)
-          await env.CACHE.put(
-            key.name,
-            JSON.stringify({ ...entry, status: 'published' }),
-            { expirationTtl: 60 * 60 * 24 * 30 },
-          );
+          await env.CACHE.put(key.name, JSON.stringify({ ...entry, status: 'published' }), {
+            expirationTtl: 60 * 60 * 24 * 30,
+          });
 
           // Record in user's published history
           await recordPublished(env.CACHE, entry.wallet, entry);

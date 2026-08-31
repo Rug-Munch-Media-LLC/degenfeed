@@ -67,6 +67,13 @@ export interface Env {
   PIXELFED_INSTANCES?: string;
   /** Optional bearer for rmi-backend if gated */
   RMI_API_KEY?: string;
+  /** Optional rmi-backend queue API base URL (env-only, no literal default —
+   * unset disables the queue-API lane and callers fall back to KV). */
+  RMI_API_URL?: string;
+  /** Set to "false" to fall back to legacy KV-backed queues. */
+  USE_RMI_QUEUE_API?: string;
+  /** Scheduled-executor poll interval in minutes (default 5). */
+  SCHEDULED_EXECUTOR_INTERVAL_MINUTES?: string;
   /** Optional Sentry DSN for error reporting */
   SENTRY_DSN?: string;
   /** API key for MeiliSearch (production requires Authorization: Bearer <key>) */

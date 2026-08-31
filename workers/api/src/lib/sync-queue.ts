@@ -19,14 +19,15 @@
  */
 
 import type { Protocol } from '@degenfeed/types';
+import type { Env } from '../types';
 import {
   dequeueRaw,
-  enqueue as queueEnqueue,
+  getApiBase,
   getApiKey,
   parsePayload,
+  enqueue as queueEnqueue,
   useRmiQueueApi,
 } from './queue-client';
-import type { Env } from '../types';
 
 // ─── Types ────────────────────────────────────────────────────────────────
 
@@ -112,7 +113,7 @@ export async function enqueue(env: Env, action: SyncAction): Promise<string> {
 
   if (useRmiQueueApi(env)) {
     try {
-      await queueEnqueue('sync', key, entry, getApiKey(env));
+      await queueEnqueue(getApiBase(env), 'sync', key, entry, getApiKey(env));
     } catch (err) {
       // API unavailable — fall back to KV so the action isn't lost.
       console.error('[sync-queue] Queue API enqueue failed, falling back to KV:', err);
@@ -195,7 +196,13 @@ async function failEntry(env: Env, entry: SyncQueueEntry, error: string): Promis
     entry.nextRetryAt = Date.now() + getBackoffMs(entry.retryCount);
     if (useRmiQueueApi(env)) {
       try {
-        await queueEnqueue('sync', `${QUEUE_PREFIX}${entry.action.id}`, entry, getApiKey(env));
+        await queueEnqueue(
+          getApiBase(env),
+          'sync',
+          `${QUEUE_PREFIX}${entry.action.id}`,
+          entry,
+          getApiKey(env),
+        );
       } catch (err) {
         console.error(`[sync-queue] Re-enqueue failed for ${entry.action.id}:`, err);
       }
@@ -240,7 +247,7 @@ export async function listPending(env: Env, limit = 100): Promise<SyncQueueEntry
 
   if (useRmiQueueApi(env)) {
     try {
-      const items = await dequeueRaw('sync', limit, getApiKey(env));
+      const items = await dequeueRaw(getApiBase(env), 'sync', limit, getApiKey(env));
       const entries: SyncQueueEntry[] = [];
       for (const item of items) {
         const entry = parsePayload<SyncQueueEntry>(item.payload);
@@ -404,9 +411,12 @@ export async function retryDeadLetters(env: Env, limit = 50): Promise<number> {
           const queueKey = `${QUEUE_PREFIX}${entry.action.id}`;
           if (useRmiQueueApi(env)) {
             try {
-              await queueEnqueue('sync', queueKey, entry, getApiKey(env));
+              await queueEnqueue(getApiBase(env), 'sync', queueKey, entry, getApiKey(env));
             } catch (err) {
-              console.error(`[sync-queue] Dead-letter re-enqueue failed for ${entry.action.id}:`, err);
+              console.error(
+                `[sync-queue] Dead-letter re-enqueue failed for ${entry.action.id}:`,
+                err,
+              );
             }
           } else {
             await env.CACHE.put(queueKey, JSON.stringify(entry), {

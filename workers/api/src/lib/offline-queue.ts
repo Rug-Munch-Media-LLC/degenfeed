@@ -28,15 +28,16 @@
  *   queue:cache:{cacheKey}      → CachedData (typed value)
  */
 
+import type { Env } from '../types';
 import {
-  type QueueItem,
   dequeueRaw,
-  enqueue as queueEnqueue,
+  getApiBase,
   getApiKey,
   parsePayload,
+  type QueueItem,
+  enqueue as queueEnqueue,
   useRmiQueueApi,
 } from './queue-client';
-import type { Env } from '../types';
 
 // ─── Types ─────────────────────────────────────────────────────────────────
 
@@ -132,7 +133,7 @@ export async function enqueueOperation<T>(
     if (useRmiQueueApi(env)) {
       // API mode — the backend queue owns the item. The pending list in KV
       // is not needed anymore (dequeue replaces the list() scan).
-      await queueEnqueue('offline', opKey, record, getApiKey(env));
+      await queueEnqueue(getApiBase(env), 'offline', opKey, record, getApiKey(env));
       return true;
     }
 
@@ -209,7 +210,7 @@ async function processQueueViaApi<T>(
 }> {
   let items: Array<QueueItem<unknown>>;
   try {
-    items = await dequeueRaw('offline', batchSize, getApiKey(env));
+    items = await dequeueRaw(getApiBase(env), 'offline', batchSize, getApiKey(env));
   } catch (err) {
     console.warn('[offline-queue] Queue API unavailable — falling back to KV:', err);
     return processQueueViaKv(handler, env, batchSize);
@@ -245,7 +246,13 @@ async function processQueueViaApi<T>(
           deadLettered++;
         } else {
           try {
-            await queueEnqueue('offline', `${OP_PREFIX}${record.key}`, record, getApiKey(env));
+            await queueEnqueue(
+              getApiBase(env),
+              'offline',
+              `${OP_PREFIX}${record.key}`,
+              record,
+              getApiKey(env),
+            );
           } catch (enqErr) {
             console.error(`[offline-queue] Re-enqueue failed for ${record.key}:`, enqErr);
           }
@@ -263,7 +270,13 @@ async function processQueueViaApi<T>(
         deadLettered++;
       } else {
         try {
-          await queueEnqueue('offline', `${OP_PREFIX}${record.key}`, record, getApiKey(env));
+          await queueEnqueue(
+            getApiBase(env),
+            'offline',
+            `${OP_PREFIX}${record.key}`,
+            record,
+            getApiKey(env),
+          );
         } catch (enqErr) {
           console.error(`[offline-queue] Re-enqueue failed for ${record.key}:`, enqErr);
         }
@@ -437,7 +450,13 @@ export async function retryDeadLetters(env?: Env, max = 50): Promise<number> {
       // Re-enqueue
       if (useRmiQueueApi(env)) {
         try {
-          await queueEnqueue('offline', `${OP_PREFIX}${key}`, record, getApiKey(env));
+          await queueEnqueue(
+            getApiBase(env),
+            'offline',
+            `${OP_PREFIX}${key}`,
+            record,
+            getApiKey(env),
+          );
         } catch (err) {
           console.error(`[offline-queue] Dead-letter re-enqueue failed for ${key}:`, err);
         }
