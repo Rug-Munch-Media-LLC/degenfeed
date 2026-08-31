@@ -1085,26 +1085,32 @@ const server = http.createServer(async (req, res) => {
         '/v1/feed/home',
       ].includes(path)
     ) {
-      const limit = Math.min(parseInt(searchParams.get('limit') || '50', 10), 200);
+      const limit = Math.min(parseInt(searchParams.get('limit') || '100', 10), 200);
       // Real offset pagination: page N slices [ (N-1)*limit, N*limit ) from a
       // pool fetched large enough to cover it. The pool is cached per
       // fetchLimit so every page of the same feed shares one provider build.
       const page = Math.max(parseInt(searchParams.get('page') || '1', 10), 1);
       const fetchLimit = Math.min(limit * page, 200);
+      // Sort mode: 'new' (recency) or 'trending' (score + diversity, default).
+      // Any unknown/invalid value falls back to 'trending'.
+      const sortRaw = searchParams.get('sort') || 'trending';
+      const sort = sortRaw === 'new' ? 'new' : 'trending';
       const protocolsRaw = searchParams.get('protocols') || DEFAULT_HOME_PROTOCOLS.join(',');
       const protocols = protocolsRaw
         .split(',')
         .map((p) => p.trim())
         .filter(Boolean);
 
-      // Build a cache key from the feed params (fetchLimit-aware so each
-      // page's pool is built once and reused by smaller pages of the same pool).
-      const cacheKey = `feed:${protocols.sort().join(',')}:${fetchLimit}`;
+      // Build a cache key from the feed params (sort + fetchLimit-aware so each
+      // sort mode and page pool is built once and reused by smaller pages of
+      // the same pool — sort must be part of the key or a cached `?sort=new`
+      // build could be served for `?sort=trending` and vice versa).
+      const cacheKey = `feed:${sort}:${protocols.sort().join(',')}:${fetchLimit}`;
 
       const result = await feedCache.getOrFetch(
         cacheKey,
         async () => {
-          const feedResult = await buildFeed(protocols, fetchLimit);
+          const feedResult = await buildFeed(protocols, fetchLimit, sort);
           // Demo/seed content is BANNED — if buildFeed returned empty, keep
           // it empty (buildFeed already emits a warning notice). Never
           // fabricate posts to fill the feed.
@@ -1129,6 +1135,7 @@ const server = http.createServer(async (req, res) => {
       // pool smaller than fetchLimit means the sources are nearly exhausted.
       const meta = {
         ...result.meta,
+        sort,
         page,
         limit,
         total: pool.length,
