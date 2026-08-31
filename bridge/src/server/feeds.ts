@@ -773,11 +773,13 @@ const feedResultCache = new Map<string, FeedCacheEntry>();
 const feedInFlight = new Map<string, Promise<FeedResult>>();
 
 /**
- * Cache key is the protocol set only (limit-agnostic) — a cached result built
- * at a given limit can serve any request with a smaller limit via slicing.
+ * Cache key is the protocol set + sort mode only (limit-agnostic) — a cached
+ * result built at a given limit can serve any request with a smaller limit
+ * via slicing. Sort is part of the key because 'new' (chronological) and
+ * 'trending' (score+diversity) produce different orderings of the same pool.
  */
-function feedCacheKey(protocols: string[]): string {
-  return `feed:${[...protocols].sort().join(',')}`;
+function feedCacheKey(protocols: string[], sort: FeedSort = 'trending'): string {
+  return `feed:${sort}:${[...protocols].sort().join(',')}`;
 }
 
 function resolveActiveProtocols(protocols: string[]): string[] {
@@ -1113,15 +1115,19 @@ function rankFeedWithCore(
   }
 }
 
+/** Feed sort modes — 'trending' (score + diversity, default) or 'new' (recency). */
+export type FeedSort = 'trending' | 'new';
+
 export async function buildFeed(
   protocols: string[],
-  limit: number,
+  limit = 100,
+  sort: FeedSort = 'trending',
 ): Promise<{ posts: UnifiedPost[]; meta: Record<string, unknown> }> {
   // Lazy-initialize reliability on first data request (not at module import)
   initializeReliability();
 
   const activeProtocols = resolveActiveProtocols(protocols);
-  const key = feedCacheKey(activeProtocols);
+  const key = feedCacheKey(activeProtocols, sort);
 
   // 1) Fresh cache hit — serve immediately (sliced to the requested limit)
   const cached = getCachedFeed(key);
@@ -1144,7 +1150,7 @@ export async function buildFeed(
   const inFlight = feedInFlight.get(key);
   if (inFlight) return inFlight;
 
-  const promise = buildFeedInternal(activeProtocols, limit);
+  const promise = buildFeedInternal(activeProtocols, limit, sort);
   feedInFlight.set(key, promise);
   try {
     const result = await promise;
@@ -1159,6 +1165,7 @@ export async function buildFeed(
 async function buildFeedInternal(
   activeProtocols: string[],
   limit: number,
+  sort: FeedSort = 'trending',
 ): Promise<{ posts: UnifiedPost[]; meta: Record<string, unknown> }> {
   const perProtocol: Record<string, number> = {};
   const errors: string[] = [];
@@ -1178,7 +1185,7 @@ async function buildFeedInternal(
 
   const perProviderLimit = Math.max(
     3,
-    Math.ceil((limit * 1.2) / Math.max(fetchProtocols.length, 1)),
+    Math.ceil((limit * 1.5) / Math.max(fetchProtocols.length, 1)),
   );
   // Global per-provider timeout. Bounds cold-start aggregation latency while
   // slow/broken providers get cut instead of stalling the whole feed. The RSS
@@ -1359,6 +1366,7 @@ async function buildFeedInternal(
       meta: {
         total: 0,
         limit,
+        sort,
         perProtocol,
         providerSources,
         cacheAges,
@@ -1389,20 +1397,29 @@ async function buildFeedInternal(
 
   const deduped = dedupeAndInterleave(feedPool, limit);
 
-  // ── Feed-core / ranking pipeline ────────────────────────────────────
-  // Score + diversity-order the deduped pool with @degenfeed/ranking and
-  // @degenfeed/feed-core (previously orphaned dead code). Falls back to the
-  // plain interleaved order on failure — never empty.
-  const rankedResult = rankFeedWithCore(deduped, limit);
-  const ranked = rankedResult.posts;
-  const rankingMeta =
-    rankedResult.scored > 0
-      ? {
-          ranked: rankedResult.scored,
-          total: rankedResult.total,
-          algorithm: 'unified-scorer-v3 + feed-core diversity',
-        }
-      : undefined;
+  // ── Feed ordering: 'new' (chronological) vs 'trending' (score+diversity) ─
+  // 'new' is a plain newest-first sort of the deduped pool — no engagement or
+  // diversity reordering, mirroring X's "Latest" tab.
+  // 'trending' (default) runs the feed-core/ranking pipeline:
+  // @degenfeed/ranking scorePost() + @degenfeed/feed-core rankWithDiversity()
+  // (previously orphaned dead code). Falls back to the plain interleaved
+  // order on failure — never empty.
+  let ranked: UnifiedPost[];
+  let rankingMeta: { ranked: number; total: number; algorithm: string } | undefined;
+  if (sort === 'new') {
+    ranked = [...deduped].sort((a, b) => (b.createdAt ?? 0) - (a.createdAt ?? 0));
+  } else {
+    const rankedResult = rankFeedWithCore(deduped, limit);
+    ranked = rankedResult.posts;
+    rankingMeta =
+      rankedResult.scored > 0
+        ? {
+            ranked: rankedResult.scored,
+            total: rankedResult.total,
+            algorithm: 'unified-scorer-v3 + feed-core diversity',
+          }
+        : undefined;
+  }
 
   // Ground News-style bias distribution for the returned feed:
   // { bias: { left, center, right } } — counts posts per 3-bucket bias.
@@ -1431,6 +1448,7 @@ async function buildFeedInternal(
       errors: errors.length > 0 ? errors : undefined,
       notices: notices.length > 0 ? notices : undefined,
       bias,
+      sort,
       ranking: rankingMeta,
       fetchedAt: Date.now(),
       source: 'live',
@@ -1469,18 +1487,18 @@ export async function prewarmFeedCache(): Promise<void> {
     //     fan-out while the event loop is still quiet.
     // Each direct warm is individually fire-and-forget with allSettled so a
     // slow provider can never block the rest of the prewarm or crash it.
-    await Promise.allSettled([fetchRssPosts(50), fetchPeerTubePosts(20), fetchNostrPosts(20)]);
+    await Promise.allSettled([fetchRssPosts(100), fetchPeerTubePosts(20), fetchNostrPosts(20)]);
     // console.log(`[feeds] Slow-protocol caches pre-warmed in ${Date.now() - started}ms`);
 
     const targets: Array<{ protocols: string[]; limit: number }> = [
-      // limit=50: RSS provider early-exits after ~50 raw posts (~3s total build),
-      // and the limit-agnostic cache serves any request with limit <= 50.
-      { protocols: DEFAULT_HOME_PROTOCOLS, limit: 50 },
+      // limit=100: RSS provider early-exits after ~100 raw posts (~3s total build),
+      // and the limit-agnostic cache serves any request with limit <= 100.
+      { protocols: DEFAULT_HOME_PROTOCOLS, limit: 100 },
       {
         protocols: ['nostr', 'farcaster', 'lens', 'bluesky', 'mastodon', 'reddit', 'rss'],
-        limit: 50,
+        limit: 100,
       },
-      { protocols: ['mastodon', 'reddit', 'rss', 'nostr', 'farcaster', 'lens'], limit: 50 },
+      { protocols: ['mastodon', 'reddit', 'rss', 'nostr', 'farcaster', 'lens'], limit: 100 },
     ];
     for (const target of targets) {
       await buildFeed(target.protocols, target.limit);
