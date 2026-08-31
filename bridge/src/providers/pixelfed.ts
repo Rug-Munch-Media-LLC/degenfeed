@@ -44,15 +44,27 @@ function isLocalInstance(): boolean {
   }
 }
 
-/** Headless external fallback when the configured local instance is down. */
-const PIXELFED_EXTERNAL_FALLBACK = 'https://pixelfed.social';
+/** Headless external fallbacks when the configured local instance is down.
+ *  Each is verified reachable anonymously via GET /api/v1/instance
+ *  (2026-08-31). pixey.org added alongside pixelfed.social for broader
+ *  federated coverage; pixelfed.art / pixelfed.nz are photo communities.
+ *  NOTE: public instances login-wall anonymous hashtag timelines (302 →
+ *  /login), so federated fallback is limited to the public timeline /
+ *  instance probe — hashtag discovery stays on the primary instance. */
+const PIXELFED_EXTERNAL_FALLBACKS = [
+  'https://pixelfed.social',
+  'https://pixey.org',
+  'https://pixelfed.art',
+  'https://pixelfed.nz',
+];
 
 let _effectiveBase: string | null = null;
 
 /**
  * Dead-local fast-fail: when PIXELFED_BASE_URL points at the local container
  * (bridge/.env currently configures 127.0.0.1:8096) and that container is
- * down, resolve to a public Pixelfed instance so the provider never burns
+ * down, resolve to the first public Pixelfed instance that answers an
+ * anonymous GET /api/v1/instance probe so the provider never burns
  * multi-second timeouts on a dead loopback. Result cached for the process
  * lifetime — the local container coming back requires a bridge restart
  * (same tradeoff as other cached local probes in this codebase).
@@ -63,19 +75,21 @@ async function effectiveBaseUrl(): Promise<string> {
     _effectiveBase = PIXELFED_BASE_URL;
     return _effectiveBase;
   }
-  try {
-    const res = await globalThis.fetch(`${PIXELFED_BASE_URL}/api/v1/instance`, {
-      headers: { 'User-Agent': 'DegenFeed-Bridge/0.1' },
-      signal: AbortSignal.timeout(1500),
-    });
-    if (res.ok) {
-      _effectiveBase = PIXELFED_BASE_URL;
-      return _effectiveBase;
+  for (const fallback of PIXELFED_EXTERNAL_FALLBACKS) {
+    try {
+      const res = await globalThis.fetch(`${fallback}/api/v1/instance`, {
+        headers: { 'User-Agent': 'DegenFeed-Bridge/0.1' },
+        signal: AbortSignal.timeout(1500),
+      });
+      if (res.ok) {
+        _effectiveBase = fallback;
+        return _effectiveBase;
+      }
+    } catch {
+      // Local unreachable — try the next fallback.
     }
-  } catch {
-    // Local unreachable — fall through to external fallback below.
   }
-  _effectiveBase = PIXELFED_EXTERNAL_FALLBACK;
+  _effectiveBase = PIXELFED_EXTERNAL_FALLBACKS[0] ?? 'https://pixelfed.social';
   return _effectiveBase;
 }
 

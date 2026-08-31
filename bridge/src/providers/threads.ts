@@ -97,6 +97,10 @@ export const CURATED_THREADS_HANDLES: string[] = [
   'chainlink',
   'uniswap',
   'aave',
+  // Added 2026-08-31 — tech/VC accounts reachable via AP federation. The
+  // resolver skips non-federated handles honestly, so additions are additive.
+  'paulg',
+  'a16z',
 ];
 
 // ─── IP rotation (optional) ─────────────────────────────────────────────
@@ -608,7 +612,11 @@ function setCachedPosts(posts: UnifiedPost[]): void {
 // datacenter-IP blocking (verified: mastodon.social serves real zuck/mosseri
 // Threads posts with threads.com permalinks).
 
-const AP_INSTANCES_DEFAULT = ['https://mastodon.social'];
+const AP_INSTANCES_DEFAULT = [
+  'https://mastodon.social',
+  'https://mastodon.online',
+  'https://mstdn.social',
+];
 const AP_ACCOUNT_CACHE_TTL_MS = 3_600_000;
 
 function readEnv(key: string): string | undefined {
@@ -902,7 +910,7 @@ export const schema: SchemaGuard = {
   contentType: 'mixed',
 };
 
-export async function fetchThreadsPosts(limit = 20): Promise<UnifiedPost[]> {
+export async function fetchThreadsPosts(limit = 40): Promise<UnifiedPost[]> {
   // Serve from cache first — repeated feed-build calls must not hammer Meta.
   const cached = getCachedPosts();
   if (cached) return cached.slice(0, limit);

@@ -63,6 +63,30 @@ const PUBLIC_INSTANCES = [
   'https://mastodon.scot',
   'https://phpc.social',
   'https://journa.host',
+  // Additional crypto/AI/tech-friendly instances (2026-08-31) — dev,
+  // AI-research, security and hacker communities for broader feed volume.
+  // Unreachable instances are skipped gracefully by the per-instance catch,
+  // so adding more sources is strictly additive.
+  'https://mastodon.technology',
+  'https://mstdn.io',
+  'https://chaos.social',
+  'https://fedi.simonwillison.net',
+  'https://ruby.social',
+  'https://front-end.social',
+  'https://tech.lgbt',
+  'https://sigmoid.social',
+  'https://mastodon.sdf.org',
+  'https://tilde.zone',
+  'https://mathstodon.xyz',
+  'https://mastodonapp.uk',
+  'https://mastodon.de',
+  'https://mastodon.au',
+  'https://mastodon.lol',
+  'https://ohai.social',
+  'https://noauthority.social',
+  'https://data-folks.masto.host',
+  'https://merveilles.town',
+  'https://social.coop',
 ];
 
 // ─── Helpers ──────────────────────────────────────────────────────────
@@ -287,7 +311,7 @@ export const schema: SchemaGuard = {
   contentType: 'mixed',
 };
 
-export async function fetchMastodonPosts(limit = 20): Promise<UnifiedPost[]> {
+export async function fetchMastodonPosts(limit = 40): Promise<UnifiedPost[]> {
   // Rate limit: 300 requests/5 minutes (public Mastodon API)
   if (!checkRateLimit('mastodon', { maxRequests: 300, windowMs: 300_000 })) {
     // console.log('[mastodon] Rate limited, skipping fetch');
