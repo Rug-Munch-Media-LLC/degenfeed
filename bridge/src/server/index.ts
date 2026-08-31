@@ -475,8 +475,8 @@ async function handleBridgeImageProxy(
       return true;
     }
     const contentType = (upstream.headers.get('Content-Type') || 'image/jpeg')
-      .split(';')[0]!
-      .trim();
+      .split(';')[0]
+      ?.trim();
     if (!BRIDGE_IMAGE_TYPES.includes(contentType)) {
       res.writeHead(415, { 'Content-Type': 'text/plain' });
       res.end('Not an image');
@@ -1085,12 +1085,12 @@ const server = http.createServer(async (req, res) => {
         '/v1/feed/home',
       ].includes(path)
     ) {
-      const limit = Math.min(parseInt(searchParams.get('limit') || '100', 10), 200);
+      const limit = Math.min(parseInt(searchParams.get('limit') || '200', 10), 400);
       // Real offset pagination: page N slices [ (N-1)*limit, N*limit ) from a
       // pool fetched large enough to cover it. The pool is cached per
       // fetchLimit so every page of the same feed shares one provider build.
       const page = Math.max(parseInt(searchParams.get('page') || '1', 10), 1);
-      const fetchLimit = Math.min(limit * page, 200);
+      const fetchLimit = Math.min(limit * page, 400);
       // Sort mode: 'new' (recency) or 'trending' (score + diversity, default).
       // Any unknown/invalid value falls back to 'trending'.
       const sortRaw = searchParams.get('sort') || 'trending';
