@@ -180,7 +180,15 @@ const nextConfig = {
   // analytics, creator earnings, etc.) and forwards them to the self-hosted
   // API at apiProxyTarget. See the API_PROXY_TARGET note at the top.
   async rewrites() {
-    return [{ source: '/api/:path*', destination: `${apiProxyTarget}/api/:path*` }];
+    // REMOVED the /api/:path* -> API_PROXY_TARGET rewrite (2026-08-31):
+    // afterFiles rewrites run BEFORE dynamic route segments, so this rewrite
+    // intercepted /api/feed/{catch-all} paths (rss, nostr, threads, peertube)
+    // and forwarded them to the bridge WITHOUT the BRIDGE_API_KEY -> 401.
+    // Dedicated routes (home, mastodon) matched first and worked, which made
+    // the bug invisible for the most-used feeds. Every /api/* path now has a
+    // route handler (dedicated or [...slug] catch-all) that proxies via
+    // _proxy.ts with proper bridge auth.
+    return [];
   },
 };
 
