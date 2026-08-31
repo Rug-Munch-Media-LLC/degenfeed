@@ -445,7 +445,10 @@ const NEYNAR_API = 'https://api.neynar.com';
  * fetchFromNeynar). Overridable via NEYNAR_FEED_CHANNELS.
  */
 const NEYNAR_FEED_CHANNELS = (
-  process.env.NEYNAR_FEED_CHANNELS || 'base,farcaster,degen,eth,solana,ai,memes'
+  process.env.NEYNAR_FEED_CHANNELS ||
+  // All channel IDs verified live against the Neynar API (HTTP 200 on
+  // filter_type=channel_id, 2026-08-31). "solana-memes" 404s — use "memecoins".
+  'base,farcaster,degen,eth,solana,ai,memes,bitcoin,crypto,defi,nft,web3,tech,ai-art,llm,trading,altcoin,ethereum,onchain,memecoins,builders,products,design,gaming'
 )
   .split(',')
   .map((c) => c.trim())

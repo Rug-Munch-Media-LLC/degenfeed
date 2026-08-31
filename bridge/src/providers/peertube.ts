@@ -27,11 +27,14 @@ const PEERTUBE_BASE = process.env.PEERTUBE_BASE_URL || 'http://127.0.0.1:9011';
  * Verified reachable public instances (2026-08-31) spanning makers/DIY,
  * science & tech, activism, crypto (Monero Talk), Blender official and
  * general content. Added since 2026-08-04: tilvids.com,
- * video.infosec.exchange, video.blender.org.
+ * video.infosec.exchange, video.blender.org. Added 2026-08-31 (verified
+ * /api/v1/videos → 200): tube.tchncs.de, video.antopie.org, peertube.wtf.
+ * diode.zone currently 502s (kept — recovers intermittently).
  */
 const PEERTUBE_FEDERATED = [
   'https://framatube.org',
   'https://peertube.tv',
+  'https://tube.tchncs.de',
   'https://makertube.net',
   'https://diode.zone',
   'https://video.tedomum.net',
@@ -42,6 +45,8 @@ const PEERTUBE_FEDERATED = [
   'https://tilvids.com',
   'https://video.infosec.exchange',
   'https://video.blender.org',
+  'https://video.antopie.org',
+  'https://peertube.wtf',
 ];
 
 interface PeerTubeVideo {

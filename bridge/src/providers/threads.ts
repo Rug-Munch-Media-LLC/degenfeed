@@ -101,6 +101,19 @@ export const CURATED_THREADS_HANDLES: string[] = [
   // resolver skips non-federated handles honestly, so additions are additive.
   'paulg',
   'a16z',
+  // Added 2026-08-31 (second pass) — VERIFIED federated via
+  // mastodon.social/api/v1/accounts/lookup?acct={h}@threads.net (id +
+  // statuses_count returned): mkbhd (943), anildash (19332),
+  // ethanzuckerman (104), theinformation (25326), evanprodromou (3082),
+  // threads (14955). Everything else tested (coindesk, cointelegraph,
+  // wired, arstechnica, caseynewton, naval, balajis, vitalikbuterin, …)
+  // does NOT resolve — only these are additive.
+  'mkbhd',
+  'anildash',
+  'ethanzuckerman',
+  'theinformation',
+  'evanprodromou',
+  'threads',
 ];
 
 // ─── IP rotation (optional) ─────────────────────────────────────────────
@@ -614,6 +627,14 @@ function setCachedPosts(posts: UnifiedPost[]): void {
 
 const AP_INSTANCES_DEFAULT = [
   'https://mastodon.social',
+  // Verified 2026-08-31: these instances resolve zuck@threads.net via
+  // /api/v1/accounts/lookup (mastodon.world, infosec.exchange,
+  // fosstodon.org, techhub.social). mastodon.online and mstdn.social do
+  // NOT resolve threads.net accounts (kept as last-resort fallbacks).
+  'https://mastodon.world',
+  'https://infosec.exchange',
+  'https://fosstodon.org',
+  'https://techhub.social',
   'https://mastodon.online',
   'https://mstdn.social',
 ];
