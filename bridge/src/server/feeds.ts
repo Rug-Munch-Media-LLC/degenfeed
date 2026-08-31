@@ -962,7 +962,7 @@ export function dedupeAndInterleave(
   const nonEmpty = [...byProtocol.entries()].filter(([, arr]) => arr.length > 0);
   if (nonEmpty.length === 0) return [];
   // Single-source feed — the diversity cap does not apply; return up to limit.
-  if (nonEmpty.length === 1) return nonEmpty[0]![1].slice(0, limit);
+  if (nonEmpty.length === 1) return nonEmpty[0]?.[1].slice(0, limit);
 
   // Deterministic but varied order: rotate the starting protocol so the same
   // post list from cache can still produce different mixes per request when
@@ -1184,10 +1184,7 @@ async function buildFeedInternal(
     activeProtocols.length >= 3 ? selectDiscoveryProtocols(activeProtocols) : [];
   const fetchProtocols = [...new Set([...activeProtocols, ...discoveryProtocols])];
 
-  const perProviderLimit = Math.max(
-    3,
-    Math.ceil((limit * 1.5) / Math.max(fetchProtocols.length, 1)),
-  );
+  const perProviderLimit = Math.max(3, Math.ceil((limit * 3) / Math.max(fetchProtocols.length, 1)));
   // Global per-provider timeout. Bounds cold-start aggregation latency while
   // slow/broken providers get cut instead of stalling the whole feed. The RSS
   // provider fans out over 281 feeds (13.5s cold), so the default is 12s —
@@ -1494,7 +1491,7 @@ export async function prewarmFeedCache(): Promise<void> {
     const targets: Array<{ protocols: string[]; limit: number }> = [
       // limit=100: RSS provider early-exits after ~100 raw posts (~3s total build),
       // and the limit-agnostic cache serves any request with limit <= 100.
-      { protocols: DEFAULT_HOME_PROTOCOLS, limit: 100 },
+      { protocols: DEFAULT_HOME_PROTOCOLS, limit: 200 },
       {
         protocols: ['nostr', 'farcaster', 'lens', 'bluesky', 'mastodon', 'reddit', 'rss'],
         limit: 100,
