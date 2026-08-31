@@ -756,7 +756,7 @@ export function selectDiscoveryProtocols(active: string[], now = Date.now()): st
   return selected;
 }
 
-const FEED_CACHE_TTL_MS = 60_000; // 60s — matches HTTP-level response cache TTL
+const FEED_CACHE_TTL_MS = 300_000; // 5min — fewer rebuilds = stable protocol mix
 const FEED_CACHE_MAX_ENTRIES = 20;
 
 interface FeedResult {
@@ -1490,14 +1490,14 @@ export async function prewarmFeedCache(): Promise<void> {
     // threads 12s) to time out when 9+ providers competed for bandwidth.
     const slowWarmups: Array<[string, () => Promise<unknown>]> = [
       ['rss', () => fetchRssPosts(100)],
-      ['peertube', () => fetchPeerTubePosts(20)],
-      ['nostr', () => fetchNostrPosts(20)],
-      ['lemmy', () => fetchLemmyPosts(20)],
-      ['threads', () => fetchThreadsPosts(20)],
-      ['lens', () => fetchLensPosts(20)],
-      ['farcaster', () => fetchFarcasterPosts(20)],
-      ['zora', () => fetchZoraPosts(20)],
-      ['pixelfed', () => fetchPixelfedPosts(20)],
+      ['peertube', () => fetchPeerTubePosts(50)],
+      ['nostr', () => fetchNostrPosts(50)],
+      ['lemmy', () => fetchLemmyPosts(50)],
+      ['threads', () => fetchThreadsPosts(50)],
+      ['lens', () => fetchLensPosts(50)],
+      ['farcaster', () => fetchFarcasterPosts(50)],
+      ['zora', () => fetchZoraPosts(50)],
+      ['pixelfed', () => fetchPixelfedPosts(50)],
     ];
     for (const [name, warm] of slowWarmups) {
       try {
