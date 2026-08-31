@@ -61,7 +61,7 @@ const $fetch = globalThis.fetch;
 const THREADS_BASE = 'https://www.threads.net';
 const THREADS_FRONT = 'https://www.threads.net';
 const DEFAULT_TIMEOUT_MS = 10_000;
-const THREADS_CACHE_TTL_MS = 90_000;
+const THREADS_CACHE_TTL_MS = 300_000;
 
 // ─── Curated crypto/web3 Threads accounts ───────────────────────────────
 // Public, non-private accounts active on Threads. Override at runtime by

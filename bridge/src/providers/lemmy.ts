@@ -468,14 +468,14 @@ function extractXmlValue(xml: string, tag: string): string {
   const match = regex.exec(xml);
   if (!match) return '';
   // Strip CDATA
-  return match[1]!.replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, '$1').trim();
+  return match[1]?.replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, '$1').trim();
 }
 
 /** Extract XML attribute value */
 function extractXmlAttr(xml: string, tag: string, attr: string): string {
   const regex = new RegExp(`<${tag}[^>]*${attr}=["']([^"']*)["']`, 'i');
   const match = regex.exec(xml);
-  return match ? match[1]!.trim() : '';
+  return match ? match[1]?.trim() : '';
 }
 
 // ─── Main ────────────────────────────────────────────────────────────
@@ -489,7 +489,15 @@ export const schema: SchemaGuard = {
   contentType: 'mixed',
 };
 
+// 5-min post cache — the prewarm fills this at startup and the home build
+// hits it instead of re-fetching from 10+ instances (which times out).
+let lemmyCache: { posts: UnifiedPost[]; expiresAt: number } | null = null;
+const LEMMY_CACHE_TTL_MS = 300_000;
+
 export async function fetchLemmyPosts(limit = 40): Promise<UnifiedPost[]> {
+  if (lemmyCache && Date.now() - (lemmyCache.expiresAt - LEMMY_CACHE_TTL_MS) < LEMMY_CACHE_TTL_MS) {
+    return lemmyCache.posts.slice(0, limit);
+  }
   // Rate limit: 60 requests/minute per instance
   if (!checkRateLimit('lemmy', { maxRequests: 60, windowMs: 60_000 })) {
     // console.log('[lemmy] Rate limited, skipping fetch');
@@ -595,6 +603,7 @@ export async function fetchLemmyPosts(limit = 40): Promise<UnifiedPost[]> {
   //   console.log(
   //     `[bridge] Lemmy: ${deduped.length} posts (API: ${localCount}, RSS fallback: ${all.length - localCount})`,
   //   );
+  lemmyCache = { posts: deduped, expiresAt: Date.now() + LEMMY_CACHE_TTL_MS };
   return deduped;
 }
 

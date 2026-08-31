@@ -426,7 +426,17 @@ export const schema: SchemaGuard = {
   contentType: 'video',
 };
 
+// 5-min post cache — prewarm fills this, home build hits it.
+let peertubeCache: { posts: UnifiedPost[]; expiresAt: number } | null = null;
+const PEERTUBE_POST_CACHE_TTL_MS = 300_000;
+
 export async function fetchPeerTubePosts(limit = 20): Promise<UnifiedPost[]> {
+  if (
+    peertubeCache &&
+    Date.now() - (peertubeCache.expiresAt - PEERTUBE_POST_CACHE_TTL_MS) < PEERTUBE_POST_CACHE_TTL_MS
+  ) {
+    return peertubeCache.posts.slice(0, limit);
+  }
   // Rate limit: 50 requests/minute
   if (!checkRateLimit('peertube', { maxRequests: 50, windowMs: 60_000 })) {
     // console.log('[peertube] Rate limited, skipping fetch');
@@ -510,6 +520,7 @@ export async function fetchPeerTubePosts(limit = 20): Promise<UnifiedPost[]> {
   }
 
   // console.log(`[bridge] PeerTube: ${deduped.length} posts`);
+  peertubeCache = { posts: deduped, expiresAt: Date.now() + PEERTUBE_POST_CACHE_TTL_MS };
   return deduped;
 }
 
