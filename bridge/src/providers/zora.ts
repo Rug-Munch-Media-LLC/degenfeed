@@ -650,8 +650,14 @@ function coinToPost(coin: ZoraCoin): UnifiedPost | null {
  * coins) and top up with complementary listTypes (TOP_GAINERS,
  * TOP_VOLUME_24H, MOST_VALUABLE) which surface coins the NEW stream misses.
  */
-const ZORA_PAGINATED_LISTTYPES = ['NEW', 'TOP_GAINERS', 'TOP_VOLUME_24H', 'MOST_VALUABLE'] as const;
-const ZORA_MAX_PAGES_PER_LIST = 3;
+const ZORA_PAGINATED_LISTTYPES = [
+  'NEW',
+  'TOP_GAINERS',
+  'TOP_VOLUME_24H',
+  'MOST_VALUABLE',
+  'LAST_TRADED',
+] as const;
+const ZORA_MAX_PAGES_PER_LIST = 4;
 
 async function fetchExternalCoinPosts(limit: number): Promise<UnifiedPost[]> {
   if (zoraExternalCache && Date.now() < zoraExternalCache.expiresAt) {

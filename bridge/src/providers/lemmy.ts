@@ -66,9 +66,21 @@ const LOCAL_COMMUNITIES = ['crypto', 'defi', 'nfts', 'tech', 'meme', 'web3'];
 const EXTERNAL_INSTANCES = [
   {
     url: 'https://lemmy.world',
-    communities: ['cryptocurrency', 'bitcoin', 'ethereum', 'crypto', 'technology', 'web3'],
+    communities: [
+      'cryptocurrency',
+      'bitcoin',
+      'ethereum',
+      'crypto',
+      'technology',
+      'web3',
+      'memes',
+      'news',
+    ],
   },
-  { url: 'https://lemmy.ml', communities: ['bitcoin', 'cryptocurrency', 'ethereum', 'technology'] },
+  {
+    url: 'https://lemmy.ml',
+    communities: ['bitcoin', 'cryptocurrency', 'ethereum', 'technology', 'opensource', 'linux'],
+  },
   { url: 'https://sh.itjust.works', communities: ['technology'] },
   {
     url: 'https://programming.dev',
@@ -283,7 +295,7 @@ export async function fetchCommunityPosts(
 ): Promise<UnifiedPost[]> {
   try {
     const hostname = new URL(baseUrl).hostname;
-    const url = `${baseUrl}/api/v3/post/list?community_name=${encodeURIComponent(community)}&sort=Hot&limit=${Math.min(limit, 20)}`;
+    const url = `${baseUrl}/api/v3/post/list?community_name=${encodeURIComponent(community)}&sort=Hot&limit=${Math.min(limit, 50)}`;
     const res = await globalThis.fetch(url, {
       headers: { 'User-Agent': 'DegenFeed-Bridge/0.1' },
       signal: AbortSignal.timeout(timeoutMs),
@@ -536,7 +548,7 @@ export async function fetchLemmyPosts(limit = 40): Promise<UnifiedPost[]> {
         externalTasks.push({ url: inst.url, community: comm });
       }
     }
-    const perCommunity = Math.min(Math.max(4, Math.ceil((limit - all.length) / 4)), 10);
+    const perCommunity = Math.min(Math.max(8, Math.ceil((limit - all.length) / 2)), 20);
     const externalResults = await Promise.allSettled(
       externalTasks.map((t) => fetchCommunityPosts(t.url, t.community, perCommunity)),
     );

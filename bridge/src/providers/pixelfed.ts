@@ -66,6 +66,11 @@ const PIXELFED_EXTERNAL_FALLBACKS = [
   'https://pixelfed.de',
   'https://pixelfed.au',
   'https://pixelfed.nyc',
+  // Added 2026-08-31 (volume expansion) — verified 200 on /api/v1/instance.
+  'https://pixelfed.ie',
+  'https://pixelfed.pl',
+  'https://pixelfed.dk',
+  'https://pixelfed.no',
 ];
 
 let _effectiveBase: string | null = null;
@@ -205,7 +210,7 @@ export async function fetchPixelfedPosts(limit = 20): Promise<UnifiedPost[]> {
   // ── 3. Local public timeline (media-only first) ──
   try {
     const statuses = await getPublicTimeline(base, {
-      limit: Math.min(limit, 40),
+      limit: Math.min(limit, 50),
       onlyMedia: true,
       local: true,
       accessToken,
@@ -217,8 +222,8 @@ export async function fetchPixelfedPosts(limit = 20): Promise<UnifiedPost[]> {
 
   // ── 4. Hashtag timelines on the local instance (best-effort) ──
   const tagResults = await Promise.allSettled(
-    HASHTAGS.slice(0, 8).map(async (tag) => {
-      const statuses = await getTagTimeline(base, tag, 5, accessToken);
+    HASHTAGS.slice(0, 12).map(async (tag) => {
+      const statuses = await getTagTimeline(base, tag, 10, accessToken);
       return statuses.map((s) => toUnified(s, base));
     }),
   );

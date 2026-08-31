@@ -844,8 +844,8 @@ function sleepUntil(deadline: number): Promise<void> {
  * rest are skipped honestly. Returns [] + a descriptive notice when the
  * backend is unavailable or nothing is federated. NEVER fabricates content.
  *
- * Bounded by an internal 9s deadline so this path always returns well inside
- * the feed layer's 12s provider timeout, even on a cold cache.
+ * Bounded by an internal 12s deadline so this path always returns well inside
+ * the feed layer's 25s provider timeout, even on a cold cache.
  */
 async function fetchThreadsViaActivityPub(limit: number): Promise<ActivityPubResult> {
   if (!activityPubEnabled()) {
@@ -862,7 +862,7 @@ async function fetchThreadsViaActivityPub(limit: number): Promise<ActivityPubRes
   const perAccount = Math.max(1, Math.ceil(limit / 5));
   const all: UnifiedPost[] = [];
   const seen = new Set<string>();
-  const deadline = Date.now() + 8_000;
+  const deadline = Date.now() + 12_000;
   let lastError = '';
 
   for (const instance of instances) {
