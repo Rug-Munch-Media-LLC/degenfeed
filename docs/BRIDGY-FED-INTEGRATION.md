@@ -119,10 +119,19 @@ certbot --nginx -d bridgy.degenfeed.xyz
 
 ### Dependencies
 
-- **rmi-redis** (Redis on `rmi-net:6379`) — rate limiting store (DB 5)
-- **rmi-net** Docker network — must exist before compose up
+- **degenfeed-bridgy-redis** (Redis `redis:7-alpine`, owned by DegenFeed, on `degenfeed_default`) — rate limiting store (DB 0)
+- **degenfeed_default** Docker network — degenfeed-owned; must exist before compose up
 - **GotoSocial** at `social.degenfeed.xyz` — must be running and federating
 - **Nginx** — must have the config symlinked in `/etc/nginx/sites-enabled/`
+
+### DegenFeed owned data layer (no rmi dependency)
+
+DegenFeed owns all of its own data stores and does not share any rmi store:
+- **Postgres** — degenfeed's own instances (stoat / peertube / pixelfed / writefreely / glitchtip / lemmy), each on degenfeed networks. No `rmi-postgres`.
+- **Redis** — degenfeed-owned. The prod/self-host compose defines `redis`; Bridgy Fed now uses its own `degenfeed-bridgy-redis` (DB 0) instead of the retired shared Dragonfly.
+- **Meilisearch** — `degenfeed-meilisearch` (search index), on `degenfeed_default`.
+- **Qdrant / ClickHouse** — not used; DegenFeed's intelligence surfaces via rmi-backend HTTP (DataBus/`/api/rmi`), never a direct store connection.
+- **Network** — everything joins the degenfeed-owned `degenfeed_default` network, not rmi's.
 
 ## Design Decisions
 
@@ -159,7 +168,7 @@ public for protocol compliance.
 | Bridgy Fed not detecting GtS posts | Verify GotoSocial is federating (`curl -H 'Accept: application/activity+json' https://social.degenfeed.xyz/@user`) |
 | Bluesky cross-posts failing | Check Bluesky app password in Bridgy Fed `/data` config |
 | Nostr cross-posts failing | Verify Nostr relays are reachable from [HOST-1] |
-| Rate limit errors | Check Redis connection (`docker exec rmi-redis redis-cli -n 5 DBSIZE`) |
+| Rate limit errors | Check Redis connection (`docker exec degenfeed-bridgy-redis redis-cli -n 0 DBSIZE`) |
 | Container doesn't start | `docker logs bridgy-fed` — check for missing env vars or volume permissions |
 
 ## References

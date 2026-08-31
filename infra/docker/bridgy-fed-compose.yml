@@ -20,7 +20,7 @@ services:
     ports:
       - "127.0.0.1:8089:8089"
     networks:
-      - rmi-net
+      - degenfeed_default
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8089/"]
       interval: 10s
@@ -48,6 +48,8 @@ services:
     depends_on:
       firestore-emulator:
         condition: service_healthy
+      redis:
+        condition: service_healthy
     ports:
       - "127.0.0.1:8285:8080"
     volumes:
@@ -71,10 +73,10 @@ services:
       NOSTR_RELAYS: wss://relay.damus.io,wss://relay.primal.net
       # Farcaster
       FARCASTER_HUB: https://hub.farcaster.standardcrypto.vc:2281
-      # Rate limiting via shared Redis
-      RATELIMIT_STORAGE_URI: redis://rmi-redis:6379/5
+      # Rate limiting via degenfeed-owned Redis (replaces decommissioned Dragonfly shared-redis)
+      RATELIMIT_STORAGE_URI: redis://degenfeed-bridgy-redis:6379/0
     networks:
-      - rmi-net
+      - degenfeed_default
     healthcheck:
       test: ["CMD-SHELL", "curl -f -s -o /dev/null http://localhost:8080/ || exit 1"]
       interval: 30s
@@ -100,12 +102,41 @@ services:
       - app.rugmunch.io/name=bridgy-fed
       - app.rugmunch.io/role=api
       - app.rugmunch.io/description=Bridgy Fed bridge
+  # Owned Redis for Bridgy Fed rate-limiting storage (replaces the
+  # decommissioned Dragonfly shared-redis). DegenFeed owns this Redis instance
+  # on degenfeed's own network — no rmi dependency.
+  redis:
+    image: redis:7-alpine
+    container_name: degenfeed-bridgy-redis
+    hostname: degenfeed-bridgy-redis
+    restart: unless-stopped
+    command:
+      - redis-server
+      - --appendonly
+      - "yes"
+    volumes:
+      - bridgy-fed-redis-data:/data
+    networks:
+      - degenfeed_default
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: "0.25"
 volumes:
   bridgy-fed-data:
     name: bridgy-fed-data
     driver: local
+  bridgy-fed-redis-data:
+    name: bridgy-fed-redis-data
+    driver: local
 
 networks:
-  rmi-net:
-    name: rmi-net
+  degenfeed_default:
+    name: degenfeed_default
     external: true
