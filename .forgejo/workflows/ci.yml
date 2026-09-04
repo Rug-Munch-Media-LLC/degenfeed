@@ -359,12 +359,6 @@ jobs:
     runs-on: docker-x64
     timeout-minutes: 30
     needs: [lint, typecheck]
-    # [REVIEW] continue-on-error is TEMPORARY and known: playwright.config.ts
-    # webServer hardcodes port 3000, but the docker-x64 runner uses host
-    # networking where 127.0.0.1:3000 is Forgejo → EADDRINUSE → guaranteed
-    # red. One-line port fix needed in playwright.config.ts (apps/web owners);
-    # remove this flag once applied. Tracked in TODO.md.
-    continue-on-error: true
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - uses: pnpm/action-setup@v4
@@ -467,10 +461,6 @@ jobs:
     runs-on: docker-x64
     timeout-minutes: 30
     needs: [lint, typecheck]
-    # [REVIEW] continue-on-error is TEMPORARY — same playwright.config.ts
-    # port-3000 conflict as the e2e job (host :3000 is Forgejo on the runner's
-    # host network). Remove once the config port is fixed.
-    continue-on-error: true
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - uses: pnpm/action-setup@v4
