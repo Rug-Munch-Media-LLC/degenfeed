@@ -138,6 +138,9 @@ routes = [
 #   wrangler secret put THREADS_APP_SECRET
 #   wrangler secret put REDDIT_CLIENT_SECRET
 #   wrangler secret put GOOGLE_CLIENT_SECRET
+#   wrangler secret put YOUTUBE_API_KEY
+#   wrangler secret put TENOR_API_KEY
+#   wrangler secret put GIPHY_API_KEY
 #   wrangler secret put GITHUB_CLIENT_SECRET
 #   wrangler secret put DISCORD_CLIENT_SECRET
 #   wrangler secret put TWITTER_CLIENT_SECRET
@@ -242,6 +245,12 @@ BSKY_DID = ""
 
 # YouTube Data API v3 key
 YOUTUBE_API_KEY = ""
+
+# Tenor GIF search API key — set via wrangler secret: wrangler secret put TENOR_API_KEY
+TENOR_API_KEY = ""
+
+# Giphy GIF search API key — set via wrangler secret: wrangler secret put GIPHY_API_KEY
+GIPHY_API_KEY = ""
 
 # Solana — RPC URL for wallet verification, Blinks, and billing
 SOLANA_RPC_URL = "https://api.mainnet-beta.solana.com"
