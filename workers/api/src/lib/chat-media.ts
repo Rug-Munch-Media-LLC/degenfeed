@@ -671,8 +671,9 @@ export async function searchGifs(
 
     if (provider === 'tenor') {
       // Tenor free tier — no API key needed for basic search
+      const tenorKey = env.TENOR_API_KEY ?? '';
       const res = await fetch(
-        `https://tenor.googleapis.com/v2/search?q=${encodeURIComponent(query)}&key=AIzaSyDy81EbOqBqUoPJ6f6E3BbEJQ_zgJ0LKlI&limit=${limit}&contentfilter=medium`,
+        `https://tenor.googleapis.com/v2/search?q=${encodeURIComponent(query)}&key=${encodeURIComponent(tenorKey)}&limit=${limit}&contentfilter=medium`,
         { signal: AbortSignal.timeout(3000) },
       );
       if (res.ok) {
@@ -694,8 +695,9 @@ export async function searchGifs(
       }
     } else {
       // Giphy free tier
+      const giphyKey = env.GIPHY_API_KEY ?? '';
       const res = await fetch(
-        `https://api.giphy.com/v1/gifs/search?api_key=GlVGYHkrB1kYXfPXz8LmGJ2bQERzWc4B&q=${encodeURIComponent(query)}&limit=${limit}`,
+        `https://api.giphy.com/v1/gifs/search?api_key=${encodeURIComponent(giphyKey)}&q=${encodeURIComponent(query)}&limit=${limit}`,
         { signal: AbortSignal.timeout(3000) },
       );
       if (res.ok) {

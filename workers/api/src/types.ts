@@ -190,6 +190,10 @@ export interface Env {
   BSKY_DID?: string;
   /** YouTube Data API v3 key for channel discovery */
   YOUTUBE_API_KEY?: string;
+  /** Google Tenor API key for GIF search */
+  TENOR_API_KEY?: string;
+  /** Giphy API key for GIF search */
+  GIPHY_API_KEY?: string;
   /** Twitch Client ID for Helix API (app access token flow) */
   TWITCH_CLIENT_ID?: string;
   /** Twitch Client Secret for Helix API */
