@@ -449,7 +449,6 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - name: Run Stryker mutation tests
         run: npx stryker run --reporter json --reporter html
-        continue-on-error: true
       - uses: actions/upload-artifact@v3
         if: always()
         with:
