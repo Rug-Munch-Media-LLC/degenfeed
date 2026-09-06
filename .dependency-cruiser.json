@@ -1,0 +1,54 @@
+{
+  "$schema": "https://dependency-cruiser.dev/schema.json",
+  "forbidden": [
+    {
+      "name": "no-circular",
+      "comment": "Circular dependencies are forbidden — fix the dependency graph",
+      "severity": "error",
+      "from": {},
+      "to": { "circular": true }
+    },
+    {
+      "name": "no-app-to-app",
+      "comment": "Apps should not import from each other — use shared packages",
+      "severity": "error",
+      "from": { "path": "^apps/([^/]+)/" },
+      "to": { "path": "^apps/(?!\\1)", "pathNot": "^apps/\\1/" }
+    },
+    {
+      "name": "no-package-to-app",
+      "comment": "Packages must not import from apps — packages are shared, apps consume them",
+      "severity": "error",
+      "from": { "path": "^packages/" },
+      "to": { "path": "^apps/" }
+    },
+    {
+      "name": "no-component-to-page",
+      "comment": "Components must not import from pages — dependencies flow down only",
+      "severity": "error",
+      "from": { "path": "components/" },
+      "to": { "path": "pages/" }
+    }
+  ],
+  "allowed": [
+    {
+      "from": { "path": "^apps/" },
+      "to": { "path": "^packages/" }
+    },
+    {
+      "from": { "path": "^apps/web/src/pages/" },
+      "to": { "path": "^apps/web/src/" }
+    },
+    {
+      "from": {},
+      "to": { "path": "^packages/" }
+    }
+  ],
+  "options": {
+    "doNotFollow": { "path": "node_modules" },
+    "tsPreCompilationDeps": true,
+    "enhancedResolveOptions": {
+      "extensions": [".ts", ".tsx", ".js", ".jsx", ".json"]
+    }
+  }
+}
