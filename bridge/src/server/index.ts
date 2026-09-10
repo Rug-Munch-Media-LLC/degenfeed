@@ -705,10 +705,7 @@ async function crossProtocolSearch(
   // Try Meilisearch first (unified index with `source` field)
   try {
     const meiliUrl = process.env.MEILISEARCH_URL || 'http://127.0.0.1:7700';
-    const meiliKey =
-      process.env.MEILI_SEARCH_KEY ||
-      process.env.MEILI_MASTER_KEY ||
-      '01b9dbb2adc08f7aba179b30e0f215a76604180a4b736b0899204bf0f6f397fb';
+    const meiliKey = process.env.MEILI_SEARCH_KEY || process.env.MEILI_MASTER_KEY || '';
 
     const filterClause = (() => {
       const filters: string[] = [];

@@ -20,9 +20,7 @@ import type { UnifiedPost } from './server/types';
 // ─── Configuration ─────────────────────────────────────────────────────
 
 const MEILI_URL = process.env.MEILISEARCH_URL || 'http://127.0.0.1:7700';
-const MEILI_KEY =
-  process.env.MEILI_MASTER_KEY ||
-  '01b9dbb2adc08f7aba179b30e0f215a76604180a4b736b0899204bf0f6f397fb';
+const MEILI_KEY = process.env.MEILI_MASTER_KEY || '';
 const INDEX_NAME = 'posts';
 
 const indexedIds = new Set<string>();
