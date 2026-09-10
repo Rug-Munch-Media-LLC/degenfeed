@@ -155,8 +155,8 @@ const openSourceRepos = [
     desc: 'Open source web scraping framework powering RSS and source aggregation.',
   },
   {
-    href: 'https://git.rugmunch.io/RugMunchMedia/rmi-rag',
-    name: 'rmi-rag',
+    href: 'https://git.rugmunch.io/RugMunchMedia/rugbrain',
+    name: 'rugbrain',
     desc: 'Retrieval-augmented generation for the DegenFeed knowledge layer.',
   },
 ];
