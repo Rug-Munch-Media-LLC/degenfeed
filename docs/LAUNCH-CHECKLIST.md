@@ -11,7 +11,7 @@
 
 - [x] app.degenfeed.xyz → Cloudflare (104.21.11.201 / 172.67.167.66), HTTP 200 ✅
 - [x] community.degenfeed.xyz → Cloudflare → Lemmy (API `/api/v3/site` responds) ✅
-- [x] video.degenfeed.xyz → 152.53.80.39 direct → PeerTube (root 200) ✅
+- [x] video.degenfeed.xyz → [INTERNAL_IP] direct → PeerTube (root 200) ✅
 - [x] social.degenfeed.xyz → Cloudflare → GotoSocial (instance API responds) ✅
 - [x] n8n.rugmunch.io → Cloudflare, HTTP 200 ✅
 - [x] All domains have valid SSL ✅
