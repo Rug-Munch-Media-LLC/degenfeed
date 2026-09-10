@@ -80,7 +80,7 @@ declare -A REPOS=(
   ["rugmaps"]="RugMaps — Geo visualization for crypto data. (Archived)"
   ["x402-gateway"]="x402 Gateway — x402 payment protocol gateway. Digital content monetization."
   ["rmi-mcp-x402"]="RMI MCP x402 — MCP server for x402 payment verification."
-  ["rmi-rag"]="RMI RAG — Retrieval-Augmented Generation for RMI knowledge base."
+  ["rugbrain"]="RugBrain — Retrieval-Augmented Generation for RMI knowledge base."
 )
 
 BASE_PATH="/srv/work/repos"
@@ -88,20 +88,20 @@ BASE_PATH="/srv/work/repos"
 for repo in "${!REPOS[@]}"; do
   repo_path="$BASE_PATH/$repo"
   desc="${REPOS[$repo]}"
-  
+
   if [ ! -d "$repo_path" ]; then
     echo "  ${repo}: SKIP (not found at $repo_path)"
     continue
   fi
-  
+
   cd "$repo_path"
-  
+
   # Check if radicle is initialized
   if [ ! -d ".radicle" ]; then
     echo "  ${repo}: SKIP (not a Radicle repo — run 'rad init')"
     continue
   fi
-  
+
   # Update Radicle project metadata
   rad update \
     --name "$repo" \
