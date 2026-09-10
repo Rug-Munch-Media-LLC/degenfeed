@@ -1,0 +1,44 @@
+name: Contract Security Analysis
+on:
+  pull_request:
+    paths:
+      - 'packages/zora-sdk/**'
+      - 'packages/tip-contract/**'
+  push:
+    branches: [main]
+    paths:
+      - 'packages/zora-sdk/**'
+      - 'packages/tip-contract/**'
+
+concurrency:
+  group: contract-audit-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  slither:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+      - name: Forge build (required for Slither)
+        run: cd packages/zora-sdk && forge build --build-info
+      - uses: crytic/slither-action@v0.4.0
+        with:
+          target: packages/zora-sdk/
+          slither-args: >
+            --filter-paths "lib|test|script"
+            --exclude-dependencies
+            --exclude-informational
+
+  aderyn:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: Cyfrin/aderyn-action@v1
+        with:
+          src: packages/zora-sdk/src/
