@@ -692,3 +692,15 @@ jobs:
           curl -sI http://localhost:3456/ | grep -q "X-Content-Type-Options" || exit 1
           curl -sI http://localhost:3456/ | grep -q "X-Frame-Options" || exit 1
           echo "Security headers check passed"
+
+  structure-gate:
+    # Anti-god-module + anti-monkeypatch ratchet (baseline:
+    # scripts/structure-baseline.json). Shrink freely; growth or NEW
+    # offenders fail the build. Regenerate deliberately: --update-baseline.
+    runs-on: docker-x64
+    container:
+      image: nikolaik/python-nodejs:python3.11-nodejs22
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: Structure gate
+        run: python3 scripts/check-code-structure.py
