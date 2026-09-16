@@ -1,0 +1,8 @@
+{
+ "rules": {
+  "bare-except": 7,
+  "god-file": 495,
+  "ts-ignore": 520
+ },
+ "total": 1022
+}
