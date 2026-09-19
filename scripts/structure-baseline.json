@@ -1,7 +1,12 @@
 {
-  "comment": "Grandfathered offenders. Files may SHRINK freely; GROWTH or NEW offenders fail the gate. monkeypatch counts only go down.",
-  "max_file_lines": 1500,
-  "max_func_lines": 150,
-  "files": {},
-  "monkeypatch": {}
+  "thresholds": {
+    "advisory": 150,
+    "fail": 200,
+    "hard": 500
+  },
+  "files": {
+    "scripts/check-antipatterns.py": 211,
+    "scripts/check-structure.py": 205,
+    "scripts/enterprise-firewall.py": 351
+  }
 }
