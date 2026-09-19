@@ -32,7 +32,7 @@ import hashlib
 import math
 import os
 import re
-import subprocess
+import subprocess  # nosec B404 — used for fixed-argv git/hygiene calls
 import sys
 from pathlib import Path
 
@@ -46,7 +46,9 @@ def simhash(text, bits=64):
     v = [0] * bits
     tokens = re.findall(r"[a-zA-Z_]\w+|[0-9]+", text)
     for token in tokens:
-        h = int(hashlib.md5(token.encode()).hexdigest(), 16) % (2**bits)
+        h = int(hashlib.md5(token.encode(), usedforsecurity=False).hexdigest(), 16) % (
+            2**bits
+        )
         for i in range(bits):
             if h & (1 << i):
                 v[i] += 1
@@ -114,7 +116,7 @@ ENCRYPTED_PATTERNS = [
     ("gopass\\s+(?:show|ls|insert)", "SECRET_REFERENCE"),
     ("rmi/(?:codeberg|gitlab|forgejo|github)/", "SECRET_REFERENCE"),
     ("OPENROUTER_API_KEY=|DEEPSEEK_API_KEY=", "SECRET_REFERENCE"),
-    ("/tmp/compete/", "COMPETITOR_INTEL"),
+    ("/tmp/compete/", "COMPETITOR_INTEL"),  # nosec B108 — detection pattern, not a temp path
     ("competitor.*teardown|reverse.engineer.*clone", "COMPETITOR_INTEL"),
     ("\\$0\\.0[0-9]+.*(?:input|token|1M)", "PAYMENT_MODEL"),
     ("\\bfree\\.layers.*provider|payment.*cascade", "PAYMENT_MODEL"),
@@ -274,7 +276,7 @@ def check_file(filepath):
 
 def main():
     # Get staged files
-    result = subprocess.run(
+    result = subprocess.run(  # nosec B603 B607 — fixed argv, no shell
         ["git", "diff", "--cached", "--name-only"],
         capture_output=True,
         text=True,

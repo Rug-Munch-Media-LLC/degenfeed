@@ -17,7 +17,7 @@ WHAT IT BLOCKS:
 
 import os
 import re
-import subprocess
+import subprocess  # nosec B404 — used for fixed-argv git/hygiene calls
 import sys
 
 BLOCKED_PATTERNS = [
@@ -41,7 +41,7 @@ BLOCKED_PATTERNS = [
     (r"talos\.rugmunch\.io", "INTERNAL-HOSTNAME"),
     (r"[INTERNAL-HOSTNAME]", "INTERNAL-HOSTNAME"),
     # Competitor intel
-    (r"/tmp/compete/", "COMPETITOR-INTEL"),
+    (r"/tmp/compete/", "COMPETITOR-INTEL"),  # nosec B108 — detection pattern, not a temp path
     (r"competitor.teardown", "COMPETITOR-INTEL"),
     # Payment/cost
     (r"\$0\.0[0-9]+/M.*(?:input|token)", "PAYMENT-MODEL"),
@@ -74,7 +74,7 @@ def check_file(filepath):
 
 def main():
     # Get staged files
-    result = subprocess.run(
+    result = subprocess.run(  # nosec B603 B607 — fixed argv, no shell
         ["git", "diff", "--cached", "--name-only"],
         capture_output=True,
         text=True,
