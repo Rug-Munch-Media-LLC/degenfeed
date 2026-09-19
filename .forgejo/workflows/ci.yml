@@ -694,15 +694,23 @@ jobs:
           echo "Security headers check passed"
 
   structure-gate:
-    # Anti-god-module + anti-monkeypatch ratchet (baseline:
-    # scripts/structure-baseline.json). Shrink freely; growth or NEW
-    # offenders fail the build. Regenerate deliberately: --update-baseline.
+    # Fleet coding gates (canonical toolkit synced from standards/fleet/gates).
+    # degenfeed-web is a Next.js/TypeScript repo: the only Python surface is
+    # scripts/ (the gate scripts themselves), so the Python structure and
+    # monkeypatch gates scan scripts/ and the antipattern gate (which also
+    # scans TS/JS slop markers) covers the whole repo. All baselines are
+    # shrink-only: files may SHRINK freely; growth or NEW offenders fail.
+    # Regenerate deliberately: --update-baseline.
     runs-on: docker-x64
     container:
       image: nikolaik/python-nodejs:python3.11-nodejs22
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-      - name: Structure gate
-        run: python3 scripts/check-code-structure.py
-      - name: Antipattern gate (per-repo ratchet)
+      - name: Structure gate (<=200 lines, shrink-only allowlist)
+        run: python3 scripts/check-structure.py --repo . --scan-root scripts
+      - name: Monkeypatch gate (decrease-only ratchet)
+        run: python3 scripts/check-monkeypatch.py --repo .
+      - name: Antipattern gate (per-repo ratchet, incl. TS/JS slop markers)
         run: python3 scripts/check-antipatterns.py --repo .
+      - name: Gate self-test (proves each gate catches its violation class)
+        run: bash scripts/ci-gate-selftest.sh
