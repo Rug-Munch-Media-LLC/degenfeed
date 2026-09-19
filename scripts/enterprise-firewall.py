@@ -37,8 +37,7 @@ import sys
 from pathlib import Path
 
 # ─── L1: CONTENT FINGERPRINTING ──────────────────────────────────────────────
-# SimHash implementation — detects near-duplicate proprietary code
-# even after renaming, reordering, or light refactoring
+# SimHash — detects near-duplicate proprietary code after renaming/reordering/refactoring
 
 
 def simhash(text, bits=64):
@@ -46,9 +45,8 @@ def simhash(text, bits=64):
     v = [0] * bits
     tokens = re.findall(r"[a-zA-Z_]\w+|[0-9]+", text)
     for token in tokens:
-        h = int(hashlib.md5(token.encode(), usedforsecurity=False).hexdigest(), 16) % (
-            2**bits
-        )
+        digest = hashlib.md5(token.encode(), usedforsecurity=False).hexdigest()
+        h = int(digest, 16) % (2**bits)
         for i in range(bits):
             if h & (1 << i):
                 v[i] += 1
