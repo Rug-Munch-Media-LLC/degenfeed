@@ -19,7 +19,7 @@ repos:
     hooks:
       - id: mypy
         additional_dependencies: [pydantic, types-requests]
-        args: ['--config-file=pyproject.toml', '--ignore-missing-imports']
+        args: ['--ignore-missing-imports']  # works in repos without pyproject.toml
         types: [python]
 
   # ── Secret scanning (gitleaks) ───────────────────────────────
