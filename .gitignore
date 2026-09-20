@@ -94,3 +94,4 @@ packages/lens-sdk/src/*.map
 # agent session artifacts never get committed
 docs/SESSION_TODO.md
 apps/docs/.docusaurus/
+.methodology-patterns
