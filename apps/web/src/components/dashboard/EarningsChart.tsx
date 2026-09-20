@@ -35,7 +35,7 @@ export function EarningsChart({
     padding: { top: 20, right: 16, bottom: 28, left: 48 },
   };
 
-  const { path, points, yMax, yMin, xScale, yScale } = useMemo(() => {
+  const { path, points, yMax, yMin } = useMemo(() => {
     const { width, height, padding } = chartDimensions;
     const chartW = width - padding.left - padding.right;
     const chartH = height - padding.top - padding.bottom;
@@ -90,13 +90,12 @@ export function EarningsChart({
     const svg = e.currentTarget;
     const rect = svg.getBoundingClientRect();
     const x = e.clientX - rect.left;
-    const { padding } = chartDimensions;
 
     // Find closest data point
     let closest = 0;
     let closestDist = Infinity;
     for (let i = 0; i < points.length; i++) {
-      const dist = Math.abs(points[i].x - x);
+      const dist = Math.abs(points[i]!.x - x);
       if (dist < closestDist) {
         closestDist = dist;
         closest = i;
@@ -257,12 +256,12 @@ export function EarningsChart({
             .map((i) => (
               <text
                 key={i}
-                x={points[i].x}
+                x={points[i]!.x}
                 y={chartDimensions.height - 4}
                 textAnchor="middle"
                 className="fill-[var(--color-muted)] text-[9px]"
               >
-                {points[i].label}
+                {points[i]!.label}
               </text>
             ))}
         </svg>

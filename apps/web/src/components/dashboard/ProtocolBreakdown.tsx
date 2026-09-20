@@ -7,7 +7,7 @@
  * on hover. Falls back to a simple list when no data is available.
  */
 
-import { type PointerEvent, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 
 interface ProtocolBreakdownProps {
   /** Revenue distribution by protocol (protocol name → USD amount) */
@@ -175,13 +175,7 @@ export function ProtocolBreakdown({
               const offsetY = pullDist * Math.sin(midRad);
 
               // Outer arc (full slice)
-              const outerArc = describeArc(
-                cx + offsetX,
-                cy + offsetY,
-                r,
-                seg.startAngle,
-                seg.endAngle,
-              );
+              void describeArc(cx + offsetX, cy + offsetY, r, seg.startAngle, seg.endAngle);
 
               // Inner arc (donut hole — subtract by drawing a smaller arc going the opposite way)
               const innerStart = polarToCartesian(cx + offsetX, cy + offsetY, innerR, seg.endAngle);

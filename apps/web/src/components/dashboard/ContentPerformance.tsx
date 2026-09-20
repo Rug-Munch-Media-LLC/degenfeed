@@ -141,7 +141,7 @@ export function ContentPerformance({ content, loading = false }: ContentPerforma
                     <div className="flex-1 h-2 rounded-full bg-[var(--color-muted)]/10 overflow-hidden">
                       <div
                         className="h-full rounded-full bg-[var(--color-accent)]/40"
-                        style={{ width: `${(content.byWeekday[i] / maxVal) * 100}%` }}
+                        style={{ width: `${((content.byWeekday?.[i] ?? 0) / maxVal) * 100}%` }}
                       />
                     </div>
                     <span className="w-4 text-right text-[var(--color-fg)]">
