@@ -154,7 +154,7 @@ export function CoinStatsPanel({ coin, loading = false }: CoinStatsPanelProps) {
             Top Holders
           </span>
           <div className="mt-1.5 space-y-1">
-            {coin.topHolders.slice(0, 5).map((holder, i) => (
+            {coin.topHolders.slice(0, 5).map((holder) => (
               <div key={holder.address} className="flex items-center justify-between text-[11px]">
                 <span className="font-mono text-[var(--color-muted)] truncate max-w-[140px]">
                   {holder.address.slice(0, 6)}...{holder.address.slice(-4)}
@@ -196,7 +196,6 @@ function MetricBox({ label, value, tooltip }: { label: string; value: string; to
         {tooltip && (
           <span
             className="relative flex h-3.5 w-3.5 cursor-help items-center justify-center rounded-full bg-[var(--color-muted)]/10 text-[8px] text-[var(--color-muted)]"
-            tabIndex={0}
             role="tooltip"
             aria-label={tooltip}
           >
