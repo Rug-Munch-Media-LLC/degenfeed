@@ -58,7 +58,7 @@ describe('ProtocolBadge — Label Mapping', () => {
     expect(PROTOCOL_LABELS.mastodon).toBe('Mastodon');
     expect(PROTOCOL_LABELS.reddit).toBe('Reddit');
     expect(PROTOCOL_LABELS.youtube).toBe('YouTube');
-    expect(PROTOCOL_LABELS.rss).toBe('RSS');
+    expect(PROTOCOL_LABELS.rss).toBe('RSS/News');
   });
 
   it('has labels for video, audio, and photo protocols', () => {

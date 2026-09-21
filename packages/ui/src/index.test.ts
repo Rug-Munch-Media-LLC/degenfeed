@@ -52,7 +52,7 @@ describe('ProtocolBadge', () => {
   });
 
   it('getProtocolColor should return correct colors', () => {
-    expect(getProtocolColor('nostr')).toBe('#8b5cf6');
+    expect(getProtocolColor('nostr')).toBe('#8e30eb');
     expect(getProtocolColor('bluesky')).toBe('#1185fe');
     expect(getProtocolColor('unknown')).toBe('#666');
   });
