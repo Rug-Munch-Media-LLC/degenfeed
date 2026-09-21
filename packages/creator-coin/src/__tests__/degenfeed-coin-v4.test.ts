@@ -17,7 +17,8 @@
  *   python3 /tmp/opencode/cc-gen/gen-v4-artifact.py
  */
 import { existsSync, readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import {
   DEGENFEED_COIN_V4_ABI,
@@ -26,7 +27,7 @@ import {
 } from '../evm/degenfeed-coin-v4';
 
 const ARTIFACT_PATH = resolve(
-  import.meta.dirname ?? __dirname,
+  dirname(fileURLToPath(import.meta.url)),
   '..',
   '..',
   'contracts',
