@@ -556,12 +556,6 @@ export const YOUTUBE_CHANNELS: YouTubeChannel[] = [
     category: 'crypto',
   },
   {
-    channelId: 'UCu7Sre5A1NMV8J3s2FhluCw',
-    name: 'cryptolifer',
-    handle: 'cryptolifer',
-    category: 'crypto',
-  },
-  {
     channelId: 'UC-spvPu7S_-ajV5X0K0JE3w',
     name: 'cryptotips',
     handle: 'cryptotips',

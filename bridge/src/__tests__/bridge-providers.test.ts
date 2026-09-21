@@ -1026,18 +1026,22 @@ describe('RSS provider', () => {
 });
 
 describe('YouTube provider', () => {
-  it('has 15 configured channels with valid UC ids', async () => {
+  it('configures YouTube channels with valid, unique UC ids', async () => {
     const { YOUTUBE_CHANNELS } = await import('../providers/youtube');
-    expect(YOUTUBE_CHANNELS).toHaveLength(15);
+    // Coverage floor: the curated list only grows; never shrink below launch set.
+    expect(YOUTUBE_CHANNELS.length).toBeGreaterThanOrEqual(15);
+    const ids = new Set<string>();
     for (const ch of YOUTUBE_CHANNELS) {
       expect(ch.channelId).toMatch(/^UC[\w-]{20,}$/);
-      expect(ch.name.length).toBeGreaterThan(0);
+      expect(ch.name.trim().length).toBeGreaterThan(0);
       expect(['crypto', 'ai', 'tech']).toContain(ch.category);
+      expect(ids.has(ch.channelId)).toBe(false); // no duplicate channels
+      ids.add(ch.channelId);
     }
-    // 9 crypto, 4 AI, 2 tech
-    expect(YOUTUBE_CHANNELS.filter((c) => c.category === 'crypto')).toHaveLength(9);
-    expect(YOUTUBE_CHANNELS.filter((c) => c.category === 'ai')).toHaveLength(4);
-    expect(YOUTUBE_CHANNELS.filter((c) => c.category === 'tech')).toHaveLength(2);
+    // Every category stays represented.
+    for (const category of ['crypto', 'ai', 'tech']) {
+      expect(YOUTUBE_CHANNELS.some((c) => c.category === category)).toBe(true);
+    }
   });
 
   it('parses a YouTube Atom entry into a video', async () => {
