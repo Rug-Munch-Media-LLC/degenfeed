@@ -1,5 +1,5 @@
 {
-  "name": "@degenfeed/docs",
+  "name": "@degenfeed/docs-vitepress",
   "private": true,
   "type": "module",
   "scripts": {
