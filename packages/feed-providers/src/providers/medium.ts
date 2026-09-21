@@ -241,6 +241,7 @@ export class MediumProvider implements FeedProvider {
   private readonly tags: string[];
   private readonly publications: MediumSource[];
   private readonly flareSolverrUrl: string;
+  private readonly flareSolverrExplicit: boolean;
   private readonly rssBridgeUrl?: string;
   private readonly feedUrlFor: (source: MediumSource) => string;
   private readonly concurrency: number;
@@ -251,6 +252,7 @@ export class MediumProvider implements FeedProvider {
     this.tags = options.tags ?? [...CURATED_MEDIUM_TAGS];
     this.publications = options.publications ?? CURATED_MEDIUM_PUBLICATIONS;
     this.flareSolverrUrl = (options.flareSolverrUrl ?? 'http://127.0.0.1:8192').replace(/\/+$/, '');
+    this.flareSolverrExplicit = options.flareSolverrUrl !== undefined;
     this.rssBridgeUrl = options.rssBridgeUrl?.replace(/\/+$/, '');
     this.feedUrlFor =
       options.feedUrlFor ??
@@ -266,7 +268,10 @@ export class MediumProvider implements FeedProvider {
   getSources(): MediumSource[] {
     return [
       ...this.tags.map((t) => ({ id: t, kind: 'tag' as const })),
-      ...this.publications.map((p) => ({ ...p, kind: (p.kind || 'publication') as 'tag' | 'publication' })),
+      ...this.publications.map((p) => ({
+        ...p,
+        kind: (p.kind || 'publication') as 'tag' | 'publication',
+      })),
     ];
   }
 
@@ -279,25 +284,21 @@ export class MediumProvider implements FeedProvider {
         const posts: UnifiedPost[] = [];
         let failed = 0;
 
-        const results = await withConcurrencyLimit(
-          sources,
-          this.concurrency,
-          async (source) => {
-            try {
-              const feed = await this.fetchMediumSource(source, timeoutMs, opts);
-              if (!feed) {
-                failed++;
-                return [] as UnifiedPost[];
-              }
-              return feed.items.slice(0, this.itemsPerFeed).map((item, index) =>
-                mediumItemToPost(source, feed, item, index),
-              );
-            } catch {
+        const results = await withConcurrencyLimit(sources, this.concurrency, async (source) => {
+          try {
+            const feed = await this.fetchMediumSource(source, timeoutMs, opts);
+            if (!feed) {
               failed++;
               return [] as UnifiedPost[];
             }
-          },
-        );
+            return feed.items
+              .slice(0, this.itemsPerFeed)
+              .map((item, index) => mediumItemToPost(source, feed, item, index));
+          } catch {
+            failed++;
+            return [] as UnifiedPost[];
+          }
+        });
         for (const r of results) posts.push(...r);
 
         const deduped = deduplicateById(posts);
@@ -348,7 +349,12 @@ export class MediumProvider implements FeedProvider {
     // 2) FlareSolverr Cloudflare bypass — fail fast (service often down).
     //    Give it a short, hard cap so a dead service can't eat the whole
     //    feed-generation budget for every source.
-    if (this.flareSolverrUrl && this.flareSolverrUrl !== 'http://127.0.0.1:8192') {
+    // Skip the implicit default FlareSolverr (often down) unless it was
+    // explicitly configured — an explicit opt-in must always be honored.
+    if (
+      this.flareSolverrUrl &&
+      (this.flareSolverrExplicit || this.flareSolverrUrl !== 'http://127.0.0.1:8192')
+    ) {
       try {
         const xml = await this.fetchViaFlareSolverr(url, Math.min(timeoutMs, 4000));
         if (xml && !isChallengePage(xml)) return parseMediumRss(xml, url);

@@ -540,6 +540,8 @@ describe('Protocol Integration: Threads', () => {
     vi.stubEnv('BRIDGY_FED_ENABLED', 'true');
 
     (globalThis.fetch as ReturnType<typeof vi.fn>)
+      // GTS public timeline padding probe (empty — forces ActivityPub path)
+      .mockResolvedValueOnce(mockOkResponse([]))
       // Account lookup
       .mockResolvedValueOnce(
         mockOkResponse({

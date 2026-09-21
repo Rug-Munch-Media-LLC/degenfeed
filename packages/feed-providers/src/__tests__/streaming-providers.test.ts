@@ -9,11 +9,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { AudiusProvider, isAudiusTrack } from '../providers/audius';
 import { isKickChannel, isKickFeaturedVideo, KickProvider } from '../providers/kick';
-import {
-  isTwitchStream,
-  TwitchProvider,
-  twitchThumbnailUrl,
-} from '../providers/twitch';
+import { isTwitchStream, TwitchProvider, twitchThumbnailUrl } from '../providers/twitch';
 
 function mockResponse(
   overrides: Partial<Response> & { json?: () => Promise<unknown>; text?: () => Promise<string> },
@@ -68,7 +64,8 @@ describe('audio/video streaming providers', () => {
           user_name: 'Streamer',
           title: 'Live now',
           viewer_count: 10,
-          thumbnail_url: 'https://static-cdn.jtvnw.net/previews-ttv/live_user_x-{width}x{height}.jpg',
+          thumbnail_url:
+            'https://static-cdn.jtvnw.net/previews-ttv/live_user_x-{width}x{height}.jpg',
         }),
       ).toBe(true);
       expect(isTwitchStream(null)).toBe(false);
@@ -87,7 +84,9 @@ describe('audio/video streaming providers', () => {
   describe('twitchThumbnailUrl', () => {
     it('replaces the {width}x{height} template', () => {
       expect(
-        twitchThumbnailUrl('https://static-cdn.jtvnw.net/previews-ttv/live_user_x-{width}x{height}.jpg'),
+        twitchThumbnailUrl(
+          'https://static-cdn.jtvnw.net/previews-ttv/live_user_x-{width}x{height}.jpg',
+        ),
       ).toBe('https://static-cdn.jtvnw.net/previews-ttv/live_user_x-320x180.jpg');
     });
 
@@ -153,29 +152,31 @@ describe('audio/video streaming providers', () => {
       const provider = new TwitchProvider({});
       const result = await provider.fetchFeed({ timeoutMs: 1000 });
       expect(result.posts).toEqual([]);
-      expect(result.notice).toContain('not configured');
+      // RSS-Bridge is the primary path and needs no auth; when it yields
+      // nothing and Helix is unconfigured the provider reports no content.
+      expect(result.notice).toContain('no content');
     });
 
     it('maps streams to unified posts with a pre-minted token', async () => {
-      (globalThis.fetch as ReturnType<typeof vi.fn>).mockImplementation(
-        (_url: string) =>
-          mockResponse({
-            json: async () => ({
-              data: [
-                {
-                  id: 's1',
-                  user_id: 'u1',
-                  user_login: 'streamer',
-                  user_name: 'Streamer',
-                  game_name: 'Science & Technology',
-                  title: 'Coding live',
-                  viewer_count: 123,
-                  started_at: '2026-08-06T10:00:00Z',
-                  thumbnail_url: 'https://static-cdn.jtvnw.net/previews-ttv/live_user_streamer-{width}x{height}.jpg',
-                },
-              ],
-            }),
+      (globalThis.fetch as ReturnType<typeof vi.fn>).mockImplementation((_url: string) =>
+        mockResponse({
+          json: async () => ({
+            data: [
+              {
+                id: 's1',
+                user_id: 'u1',
+                user_login: 'streamer',
+                user_name: 'Streamer',
+                game_name: 'Science & Technology',
+                title: 'Coding live',
+                viewer_count: 123,
+                started_at: '2026-08-06T10:00:00Z',
+                thumbnail_url:
+                  'https://static-cdn.jtvnw.net/previews-ttv/live_user_streamer-{width}x{height}.jpg',
+              },
+            ],
           }),
+        }),
       );
 
       const provider = new TwitchProvider({
