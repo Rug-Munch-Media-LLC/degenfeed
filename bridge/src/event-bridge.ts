@@ -54,6 +54,18 @@ const pendingRsvps: RSVPCrossProtocol[] = [];
 
 let lastPollTime = 0;
 
+// Periodic sweep: seenEvents entries expire after 24h but were only dropped
+// when re-read — sweep them so the map stays bounded.
+setInterval(
+  () => {
+    const now = Date.now();
+    for (const [key, ts] of seenEvents) {
+      if (now - ts > CACHE_TTL_MS) seenEvents.delete(key);
+    }
+  },
+  30 * 60 * 1000,
+).unref();
+
 // ─── Logging ──────────────────────────────────────────────────────────
 
 function log(_msg: string) {

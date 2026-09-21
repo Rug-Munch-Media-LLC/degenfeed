@@ -14,6 +14,7 @@
  * Rate Limit: self-hosted PDS is local, effectively unlimited
  */
 
+import { BoundedCache } from '../../lib/bounded-cache';
 import { filterFreshPosts } from '../../lib/freshness';
 import { checkRateLimit } from '../../rate-limiter';
 import type { UnifiedPost } from '../../server';
@@ -33,13 +34,18 @@ const BSKY_PUBLIC = 'https://public.api.bsky.app';
 // while still surfacing real avatars on those posts.
 
 const AVATAR_CACHE_TTL_MS = 30 * 60 * 1000;
-const avatarCache = new Map<string, { avatar: string; at: number }>();
+// Bounded: entry cap + TTL sweep (the old Map never evicted stale DIDs).
+const avatarCache = new BoundedCache<string>({
+  maxEntries: 5_000,
+  ttlMs: AVATAR_CACHE_TTL_MS,
+  sweepIntervalMs: 5 * 60 * 1000,
+});
 
 /** Resolve an author's avatar URL from the public AppView (cached). */
 export async function getAvatarForDid(did: string): Promise<string> {
   if (!did) return '';
   const cached = avatarCache.get(did);
-  if (cached && Date.now() - cached.at < AVATAR_CACHE_TTL_MS) return cached.avatar;
+  if (cached !== undefined) return cached;
   try {
     const url = `${BSKY_PUBLIC}/xrpc/app.bsky.actor.getProfile?actor=${encodeURIComponent(did)}`;
     const res = await $fetch(url, {
@@ -49,7 +55,7 @@ export async function getAvatarForDid(did: string): Promise<string> {
     if (!res || !res.ok) return '';
     const data = (await res.json()) as { avatar?: string };
     const avatar = data.avatar || '';
-    avatarCache.set(did, { avatar, at: Date.now() });
+    avatarCache.set(did, avatar);
     return avatar;
   } catch {
     return '';

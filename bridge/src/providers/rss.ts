@@ -15,6 +15,7 @@
  * - Respects TTL/update frequency hints from feeds
  */
 
+import { BoundedCache } from '../lib/bounded-cache';
 import { analyzeNewsSentiment } from '../lib/sentiment';
 import { checkRateLimit } from '../rate-limiter';
 import type { SchemaGuard, UnifiedPost } from '../server/types';
@@ -2690,14 +2691,24 @@ export function extractMediaImage(itemXml: string): string | undefined {
 
 const OG_IMAGE_CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 const OG_IMAGE_NEGATIVE_TTL_MS = 60 * 60 * 1000; // 1 hour
-const ogImageCache = new Map<string, { url: string; expiresAt: number }>();
+// Bounded: entry cap + periodic TTL sweep (the old Map grew unbounded for 7 days).
+const ogImageCache = new BoundedCache<string>({
+  maxEntries: 5_000,
+  ttlMs: OG_IMAGE_CACHE_TTL_MS,
+  sweepIntervalMs: 10 * 60 * 1000,
+});
+const ogImageNegative = new BoundedCache<string>({
+  maxEntries: 5_000,
+  ttlMs: OG_IMAGE_NEGATIVE_TTL_MS,
+  sweepIntervalMs: 10 * 60 * 1000,
+});
 const ogImageInFlight = new Map<string, Promise<string | undefined>>();
 
 function cacheOgImage(url: string, image: string | undefined): void {
-  ogImageCache.set(url, {
-    url: image ?? '',
-    expiresAt: Date.now() + (image ? OG_IMAGE_CACHE_TTL_MS : OG_IMAGE_NEGATIVE_TTL_MS),
-  });
+  ogImageCache.delete(url);
+  ogImageNegative.delete(url);
+  if (image) ogImageCache.set(url, image);
+  else ogImageNegative.set(url, '');
 }
 
 /**
@@ -2708,11 +2719,8 @@ function cacheOgImage(url: string, image: string | undefined): void {
 export async function fetchOpenGraphImage(url: string): Promise<string | undefined> {
   if (!url?.startsWith('http')) return undefined;
 
-  const cached = ogImageCache.get(url);
-  if (cached) {
-    if (cached.expiresAt > Date.now()) return cached.url || undefined;
-    ogImageCache.delete(url);
-  }
+  const cached = ogImageCache.get(url) ?? ogImageNegative.get(url);
+  if (cached !== undefined) return cached || undefined;
 
   const inFlight = ogImageInFlight.get(url);
   if (inFlight) return inFlight;

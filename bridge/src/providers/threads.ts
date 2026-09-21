@@ -703,7 +703,20 @@ interface ApStatus {
 
 // Resolved bridged account ids per handle, cached 1h so we don't re-lookup
 // every 90s feed window.
+const AP_ACCOUNT_CACHE_MAX = 2_000;
 const apAccountCache = new Map<string, { id: string; expiresAt: number }>();
+setInterval(
+  () => {
+    const now = Date.now();
+    for (const [k, v] of apAccountCache) if (v.expiresAt < now) apAccountCache.delete(k);
+    while (apAccountCache.size > AP_ACCOUNT_CACHE_MAX) {
+      const oldest = apAccountCache.keys().next();
+      if (oldest.done) break;
+      apAccountCache.delete(oldest.value);
+    }
+  },
+  10 * 60 * 1000,
+).unref();
 
 async function apJson<T>(url: string, timeoutMs: number): Promise<T | null> {
   try {

@@ -11,6 +11,7 @@
  */
 
 import { npubDecode } from '@degenfeed/nostr-sdk';
+import { BoundedCache } from '../lib/bounded-cache';
 import { checkRateLimit } from '../rate-limiter';
 import type { SchemaGuard, UnifiedPost } from '../server/types';
 
@@ -156,7 +157,12 @@ interface NostrEvent {
  */
 const PROFILE_CACHE_TTL_MS = 10 * 60 * 1000;
 
-const profileCache = new Map<string, { profile: NostrProfile; at: number }>();
+// Bounded: entry cap + TTL sweep (the old Map never evicted stale pubkeys).
+const profileCache = new BoundedCache<NostrProfile>({
+  maxEntries: 5_000,
+  ttlMs: PROFILE_CACHE_TTL_MS,
+  sweepIntervalMs: 5 * 60 * 1000,
+});
 
 interface NostrProfile {
   name?: string;
@@ -168,18 +174,12 @@ interface NostrProfile {
 
 /** Read a cached profile, dropping entries older than the 10-minute TTL. */
 function getProfile(pubkey: string): NostrProfile | undefined {
-  const entry = profileCache.get(pubkey);
-  if (!entry) return undefined;
-  if (Date.now() - entry.at > PROFILE_CACHE_TTL_MS) {
-    profileCache.delete(pubkey);
-    return undefined;
-  }
-  return entry.profile;
+  return profileCache.get(pubkey);
 }
 
 /** Write a profile with the current timestamp. */
 function setProfile(pubkey: string, profile: NostrProfile): void {
-  profileCache.set(pubkey, { profile, at: Date.now() });
+  profileCache.set(pubkey, profile);
 }
 
 /**

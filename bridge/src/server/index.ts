@@ -18,6 +18,7 @@ process.on('uncaughtException', (err) => {
 
 import http from 'node:http';
 import { getCrossPosterStats, startCrossPoster } from '../crossposter';
+import { BoundedCache } from '../lib/bounded-cache';
 import { getIndexerStatus, reindex, startIndexer } from '../search-indexer';
 import { validateAuth } from './auth-middleware';
 import { handleAuthRoute } from './auth-routes';
@@ -340,8 +341,16 @@ async function fetchUnifiedProfile(username: string) {
 // the self-hosted Node bridge a bounded Map with TTL is the equivalent.
 
 const IMAGE_PROXY_CACHE_TTL_MS = 3600 * 1000; // 1 hour
-const imageProxyCache = new Map<string, { body: Buffer; contentType: string; expiresAt: number }>();
 const IMAGE_PROXY_MAX_BYTES = 20 * 1024 * 1024;
+// Byte-bounded (64MB total) + entry-capped + TTL-swept — Buffer bodies made the
+// old Map retain up to 500 x 20MB indefinitely (memory leak #1).
+const imageProxyCache = new BoundedCache<{ body: Buffer; contentType: string }>({
+  maxEntries: 500,
+  ttlMs: IMAGE_PROXY_CACHE_TTL_MS,
+  maxBytes: 64 * 1024 * 1024,
+  sizeOf: (v) => v.body.length,
+  sweepIntervalMs: 60_000,
+});
 
 const BRIDGE_IMAGE_TYPES = [
   'image/jpeg',
@@ -453,7 +462,7 @@ async function handleBridgeImageProxy(
 
     const cacheKey = `${protocol}:${target}`;
     const hit = imageProxyCache.get(cacheKey);
-    if (hit && hit.expiresAt > Date.now()) {
+    if (hit) {
       res.writeHead(200, {
         'Content-Type': hit.contentType,
         'Cache-Control': 'public, max-age=3600',
@@ -474,9 +483,8 @@ async function handleBridgeImageProxy(
       res.end('Image not found');
       return true;
     }
-    const contentType = (upstream.headers.get('Content-Type') || 'image/jpeg')
-      .split(';')[0]
-      ?.trim();
+    const contentType =
+      (upstream.headers.get('Content-Type') || 'image/jpeg').split(';')[0]?.trim() || 'image/jpeg';
     if (!BRIDGE_IMAGE_TYPES.includes(contentType)) {
       res.writeHead(415, { 'Content-Type': 'text/plain' });
       res.end('Not an image');
@@ -496,16 +504,8 @@ async function handleBridgeImageProxy(
       return true;
     }
 
-    // Cache for 1 hour (bounded — evict stale entries opportunistically).
-    if (imageProxyCache.size > 500) {
-      const now = Date.now();
-      for (const [k, v] of imageProxyCache) if (v.expiresAt < now) imageProxyCache.delete(k);
-    }
-    imageProxyCache.set(cacheKey, {
-      body,
-      contentType,
-      expiresAt: Date.now() + IMAGE_PROXY_CACHE_TTL_MS,
-    });
+    // Cache for 1 hour — BoundedCache enforces entry + byte caps and sweeps TTL.
+    imageProxyCache.set(cacheKey, { body, contentType });
 
     res.writeHead(200, {
       'Content-Type': contentType || 'image/jpeg',
