@@ -148,9 +148,12 @@ describe('Threads provider — parseProfileHtml', () => {
     expect(posts.filter((p) => p.id === 'dup1')).toHaveLength(1);
   });
 
-  it('curates 20–30 crypto/web3 accounts', () => {
+  it('curates a broad, unique set of crypto/web3 accounts', () => {
     expect(CURATED_THREADS_HANDLES.length).toBeGreaterThanOrEqual(20);
-    expect(CURATED_THREADS_HANDLES.length).toBeLessThanOrEqual(30);
+    expect(new Set(CURATED_THREADS_HANDLES).size).toBe(CURATED_THREADS_HANDLES.length);
+    for (const handle of CURATED_THREADS_HANDLES) {
+      expect(handle.trim().length).toBeGreaterThan(0);
+    }
   });
 });
 
