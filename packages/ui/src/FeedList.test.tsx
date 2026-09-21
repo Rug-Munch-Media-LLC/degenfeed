@@ -123,7 +123,7 @@ describe('empty state', () => {
 
   it('should show protocol-specific empty message when protocolLabel is set', () => {
     renderFeedList({ state: 'empty', posts: [], protocolLabel: 'Nostr' });
-    expect(screen.getByText('No Nostr posts yet')).toBeDefined();
+    expect(screen.getByText('Nostr feed is quiet')).toBeDefined();
   });
 
   it('should show sign-in button when onSignIn is provided', () => {

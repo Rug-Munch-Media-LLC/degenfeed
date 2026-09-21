@@ -76,7 +76,7 @@ describe('PostCard', () => {
 
   it('should render time ago', () => {
     renderPostCard();
-    expect(screen.getByText('1h')).toBeDefined();
+    expect(screen.getByText('1h ago')).toBeDefined();
   });
 
   it('should render niche tags', () => {
@@ -163,6 +163,6 @@ describe('PostCard', () => {
   it('should render Tip button', () => {
     renderPostCard();
     // QuickTipButton renders ⚡ and Tip as separate spans; find by accessible label
-    expect(screen.getByLabelText('Tip author')).toBeDefined();
+    expect(screen.getByLabelText('Tip this nostr post')).toBeDefined();
   });
 });
