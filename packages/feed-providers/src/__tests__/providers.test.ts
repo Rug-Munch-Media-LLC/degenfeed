@@ -76,9 +76,10 @@ describe('feed providers', () => {
         curatedActors: ['test.bsky.social'],
       });
       const result = await provider.fetchFeed({ timeoutMs: 1000 });
-      // With search-first strategy, all searches fail, then curated actors
-      // also fail (same primary URL). Expect empty posts.
-      expect(result.posts.length).toBe(0);
+      // With search-first strategy, all searches fail on the primary URL,
+      // then succeed via the fallback endpoint (withFallback tries every
+      // configured endpoint per call). Expect the fallback's 1 post.
+      expect(result.posts.length).toBe(1);
     });
   });
 
@@ -252,6 +253,12 @@ describe('feed providers', () => {
 
       // Mock account lookup
       (globalThis.fetch as ReturnType<typeof vi.fn>)
+        // GTS public timeline padding probe (empty — forces ActivityPub path)
+        .mockResolvedValueOnce(
+          mockResponse({
+            json: async () => [],
+          }),
+        )
         // Account lookup for mosseri@threads.net
         .mockResolvedValueOnce(
           mockResponse({

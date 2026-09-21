@@ -19,17 +19,9 @@ import {
   stripArticleHtml,
 } from '../providers/article-media';
 import { isChallengePage, MediumProvider, parseMediumRss } from '../providers/medium';
+import { extractMarkdownImages, MirrorProvider, mirrorArticleToPost } from '../providers/mirror';
+import { bridgePostToPost, ParagraphProvider, parseParagraphRss } from '../providers/paragraph';
 import { parseSubstackRss, SubstackProvider } from '../providers/substack';
-import {
-  bridgePostToPost,
-  ParagraphProvider,
-  parseParagraphRss,
-} from '../providers/paragraph';
-import {
-  extractMarkdownImages,
-  mirrorArticleToPost,
-  MirrorProvider,
-} from '../providers/mirror';
 
 function mockTextResponse(text: string): Response {
   return {
@@ -180,7 +172,10 @@ describe('article-media image extraction', () => {
       {
         embed: {
           images: [{ thumb: 'https://cdn.bsky.app/img/feed_thumbnail/plain/a@jpeg' }],
-          external: { uri: 'https://x.com', thumb: 'https://cdn.bsky.app/img/feed_fullsize/plain/b@jpeg' },
+          external: {
+            uri: 'https://x.com',
+            thumb: 'https://cdn.bsky.app/img/feed_fullsize/plain/b@jpeg',
+          },
         },
       },
       'bluesky',
@@ -218,7 +213,10 @@ describe('article-media image extraction', () => {
   it('extracts farcaster embeds that look like images', () => {
     const urls = extractImagesFromJson(
       {
-        embeds: [{ url: 'https://imagedelivery.net/abc/xyz' }, { url: 'https://example.com/not-an-image' }],
+        embeds: [
+          { url: 'https://imagedelivery.net/abc/xyz' },
+          { url: 'https://example.com/not-an-image' },
+        ],
       },
       'farcaster',
     );
@@ -286,7 +284,9 @@ describe('SubstackProvider', () => {
   });
 
   it('parses a Substack RSS feed into article posts with images', async () => {
-    (globalThis.fetch as ReturnType<typeof vi.fn>).mockResolvedValue(mockTextResponse(SUBSTACK_XML));
+    (globalThis.fetch as ReturnType<typeof vi.fn>).mockResolvedValue(
+      mockTextResponse(SUBSTACK_XML),
+    );
     const provider = new SubstackProvider({
       sources: [{ slug: 'milkroad', name: 'Milk Road' }],
     });
@@ -304,7 +304,9 @@ describe('SubstackProvider', () => {
   });
 
   it('surfaces the first image in post.media and image fields', async () => {
-    (globalThis.fetch as ReturnType<typeof vi.fn>).mockResolvedValue(mockTextResponse(SUBSTACK_XML));
+    (globalThis.fetch as ReturnType<typeof vi.fn>).mockResolvedValue(
+      mockTextResponse(SUBSTACK_XML),
+    );
     const provider = new SubstackProvider({ sources: [{ slug: 'milkroad' }] });
     const result = await provider.fetchFeed({ timeoutMs: 500 });
     const post = result.posts[0];
@@ -354,7 +356,7 @@ describe('MediumProvider', () => {
 
   it('parses a Medium tag RSS feed into article posts', async () => {
     (globalThis.fetch as ReturnType<typeof vi.fn>).mockResolvedValue(mockTextResponse(MEDIUM_XML));
-    const provider = new MediumProvider({ tags: ['cryptocurrency'] });
+    const provider = new MediumProvider({ tags: ['cryptocurrency'], publications: [] });
     const result = await provider.fetchFeed({ timeoutMs: 500 });
 
     expect(result.posts.length).toBe(1);
@@ -381,6 +383,7 @@ describe('MediumProvider', () => {
     });
     const provider = new MediumProvider({
       tags: ['cryptocurrency'],
+      publications: [],
       flareSolverrUrl: 'http://127.0.0.1:8192',
     });
     const result = await provider.fetchFeed({ timeoutMs: 1000 });
@@ -431,7 +434,9 @@ describe('ParagraphProvider', () => {
       ],
       total: 1,
     };
-    (globalThis.fetch as ReturnType<typeof vi.fn>).mockResolvedValue(mockJsonResponse(bridgeResponse));
+    (globalThis.fetch as ReturnType<typeof vi.fn>).mockResolvedValue(
+      mockJsonResponse(bridgeResponse),
+    );
     const provider = new ParagraphProvider({ bridgeUrl: 'http://127.0.0.1:8241' });
     const result = await provider.fetchFeed({ timeoutMs: 500 });
 
@@ -480,7 +485,11 @@ describe('ParagraphProvider', () => {
   });
 
   it('parseParagraphRss extracts posts from a paragraph RSS feed', () => {
-    const posts = parseParagraphRss(SUBSTACK_XML, { slug: 'bankless', name: 'Bankless' }, 'https://paragraph.xyz/api/feeds/rss/@bankless');
+    const posts = parseParagraphRss(
+      SUBSTACK_XML,
+      { slug: 'bankless', name: 'Bankless' },
+      'https://paragraph.xyz/api/feeds/rss/@bankless',
+    );
     expect(posts.length).toBe(1);
     expect(posts[0]?.protocol).toBe('paragraph');
     expect(posts[0]?.contentType).toBe('article');
