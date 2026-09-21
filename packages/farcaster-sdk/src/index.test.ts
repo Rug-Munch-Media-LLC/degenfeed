@@ -36,7 +36,7 @@ describe('@degenfeed/farcaster-sdk', () => {
 
   it('should convert profile to UnifiedIdentity', async () => {
     const { HubClient } = await import('./index');
-    const client = new HubClient();
+    const client = new HubClient('https://hub.example.com');
     const identity = client.profileToIdentity({
       fid: 1,
       username: 'dwr',
