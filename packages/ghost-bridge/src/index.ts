@@ -176,6 +176,7 @@ export class GhostBridge {
         (a) => ({ name: a.name, avatar: a.profile_image || '' }),
       ),
       tippedAmount: (raw as Record<string, string>).tipped_amount || '0',
+      tipAddresses: (raw as Record<string, unknown>).tip_addresses as GhostPost['tipAddresses'],
       subscriberOnly: !!(raw as Record<string, unknown>).subscriber_only,
       minTokenHold: (raw as Record<string, string>).min_token_hold || undefined,
     };

@@ -132,11 +132,11 @@ describe('TierManager.requiredTierFor', () => {
 
 describe('TierManager.checkLimit', () => {
   it('returns true when under limit', () => {
-    expect(TierManager.checkLimit('free', 'connectedProtocols', 3)).toBe(true);
+    expect(TierManager.checkLimit('free', 'connectedProtocols', 3).allowed).toBe(true);
   });
 
   it('returns false when over limit', () => {
-    expect(TierManager.checkLimit('free', 'connectedProtocols', 10)).toBe(false);
+    expect(TierManager.checkLimit('free', 'connectedProtocols', 10).allowed).toBe(false);
   });
 });
 
@@ -155,7 +155,7 @@ describe('TierManager.buildSubscription', () => {
     expect(record.identityId).toBe('user-1');
     expect(record.isYearly).toBe(false);
     expect(record.tier).toBe('pro');
-    expect(record.status).toBe('active');
+    expect(record.status).toBe('trialing');
     expect(record.startedAt).toBeGreaterThan(0);
     expect(record.expiresAt).toBeGreaterThan(record.startedAt);
   });
