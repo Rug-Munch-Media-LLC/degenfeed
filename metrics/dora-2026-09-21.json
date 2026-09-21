@@ -1,0 +1,33 @@
+{
+  "date": "2026-09-21",
+  "repo": "RugMunchMedia/degenfeed",
+  "workflow": "deploy.yml",
+  "window_days": 30,
+  "metrics": {
+    "deployment_frequency": {
+      "value": "0.00/day",
+      "count_7d": 0,
+      "count_30d": 0,
+      "rating": "Low"
+    },
+    "lead_time_for_changes": {
+      "value": "0m",
+      "avg_seconds": 0,
+      "samples": 0,
+      "rating": "N/A"
+    },
+    "mean_time_to_recovery": {
+      "value": "0m",
+      "avg_seconds": 0,
+      "recoveries": 0,
+      "rating": "Elite"
+    },
+    "change_failure_rate": {
+      "value": "0.00%",
+      "percent": 0.00,
+      "failures": 0,
+      "total_deploys": 0,
+      "rating": "Elite"
+    }
+  }
+}
