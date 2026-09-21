@@ -27,7 +27,16 @@ const SC_CACHE_TTL_MS = 90_000;
 let scCache: { posts: UnifiedPost[]; expiresAt: number } | null = null;
 
 /** Memoized username → RSS URL resolution (profile pages are expensive). */
+const RESOLVED_USER_URLS_MAX = 2_000;
 const resolvedUserUrls = new Map<string, string | null>();
+function rememberResolvedUserUrl(username: string, url: string | null): void {
+  resolvedUserUrls.delete(username);
+  resolvedUserUrls.set(username, url);
+  if (resolvedUserUrls.size > RESOLVED_USER_URLS_MAX) {
+    const oldest = resolvedUserUrls.keys().next();
+    if (!oldest.done) resolvedUserUrls.delete(oldest.value);
+  }
+}
 
 const SOUNDCLOUD_FEEDS: Array<{ url: string; label: string; genre: string }> = [
   // Electronic/Dance music curators — verified RSS-enabled 2026-08-06
@@ -135,20 +144,20 @@ async function resolveUserRssUrl(username: string): Promise<string | null> {
       signal: AbortSignal.timeout(6000),
     });
     if (!res.ok) {
-      resolvedUserUrls.set(username, null);
+      rememberResolvedUserUrl(username, null);
       return null;
     }
     const html = await res.text();
     const m = html.match(/soundcloud:users:(\d+)/);
     if (!m?.[1]) {
-      resolvedUserUrls.set(username, null);
+      rememberResolvedUserUrl(username, null);
       return null;
     }
     const url = `https://feeds.soundcloud.com/users/soundcloud:users:${m[1]}/sounds.rss`;
-    resolvedUserUrls.set(username, url);
+    rememberResolvedUserUrl(username, url);
     return url;
   } catch {
-    resolvedUserUrls.set(username, null);
+    rememberResolvedUserUrl(username, null);
     return null;
   }
 }

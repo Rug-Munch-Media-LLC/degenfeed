@@ -88,6 +88,25 @@ interface RateWindow {
 }
 
 const rateWindows = new Map<string, RateWindow>();
+const RATE_WINDOW_MAX_KEYS = 10_000;
+
+// Sweep: drop windows with no recent timestamps and cap total keys — per-IP
+// keys previously accumulated forever (unbounded growth with unique IPs).
+setInterval(
+  () => {
+    const now = Date.now();
+    for (const [k, w] of rateWindows) {
+      const last = w.timestamps[w.timestamps.length - 1];
+      if (last === undefined || now - last > 60 * 60 * 1000) rateWindows.delete(k);
+    }
+    while (rateWindows.size > RATE_WINDOW_MAX_KEYS) {
+      const oldest = rateWindows.keys().next();
+      if (oldest.done) break;
+      rateWindows.delete(oldest.value);
+    }
+  },
+  5 * 60 * 1000,
+).unref();
 
 function checkRateLimit(key: string, maxReqs: number, windowMs: number): boolean {
   const now = Date.now();

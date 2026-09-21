@@ -23,7 +23,22 @@ const MEILI_URL = process.env.MEILISEARCH_URL || 'http://127.0.0.1:7700';
 const MEILI_KEY = process.env.MEILI_MASTER_KEY || '';
 const INDEX_NAME = 'posts';
 
-const indexedIds = new Set<string>();
+// Bounded dedup set: insertion-ordered Map evicts oldest IDs beyond the cap.
+// Evicted IDs may be re-indexed (harmless Meilisearch upsert) but memory stays flat.
+const INDEXED_IDS_MAX = 250_000;
+const indexedIds = new Map<string, true>();
+function rememberIndexed(id: string): void {
+  indexedIds.set(id, true);
+  if (indexedIds.size > INDEXED_IDS_MAX) {
+    const excess = indexedIds.size - INDEXED_IDS_MAX;
+    let removed = 0;
+    for (const k of indexedIds.keys()) {
+      if (removed >= excess) break;
+      indexedIds.delete(k);
+      removed++;
+    }
+  }
+}
 let isRunning = false;
 let lastIndexTime = 0;
 let indexCount = 0;
@@ -391,7 +406,7 @@ async function fullIndex(): Promise<{ count: number; errors: number }> {
       indexed += batch.length;
 
       for (const doc of batch) {
-        indexedIds.add(doc.id);
+        rememberIndexed(doc.id);
       }
     } catch (err) {
       errors += batch.length;
@@ -444,7 +459,7 @@ async function incrementalIndex(): Promise<{ count: number; errors: number }> {
       indexed += batch.length;
 
       for (const doc of batch) {
-        indexedIds.add(doc.id);
+        rememberIndexed(doc.id);
       }
     } catch (err) {
       errors += batch.length;
@@ -470,7 +485,7 @@ export async function indexPost(post: UnifiedPost): Promise<boolean> {
     if (!meili) return false;
     const doc = postToDocument(post);
     await meili.index(INDEX_NAME).addDocuments([doc], { primaryKey: 'id' });
-    indexedIds.add(post.id);
+    rememberIndexed(post.id);
     return true;
   } catch (err) {
     console.error('[indexer] Error indexing single post:', (err as Error).message);
@@ -488,7 +503,7 @@ export async function indexPosts(posts: UnifiedPost[]): Promise<number> {
     await meili.index(INDEX_NAME).addDocuments(docs, { primaryKey: 'id' });
 
     for (const doc of docs) {
-      indexedIds.add(doc.id);
+      rememberIndexed(doc.id);
     }
 
     return docs.length;
