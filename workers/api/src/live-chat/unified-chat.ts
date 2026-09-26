@@ -18,7 +18,7 @@
  *   - Rate-limited send with per-protocol rate tracking
  *   - Message storage in KV with TTL
  *   - WebSocket broadcast to all connected viewers
- *   - Poll-based ingestion from external platforms
+ *   - Poll-based ingestion from external protocols (see ./bridges)
  *   - Webhook-based ingestion (Telegram, Farcaster frames)
  *
  * Every provider integration: error handling, rate limit tracking,
@@ -28,6 +28,29 @@
 import type { Env } from '../index';
 import { broadcastToAll } from '../ws-broadcast';
 import { CHANNELS } from '../ws-channels';
+// Poll bridges live in ./bridges (bound to this module's sendChatMessage)
+// and are re-exported here under their original names, so the public
+// surface of unified-chat is unchanged. The namespace import is also used
+// internally by the polling loop, since a re-export binds no local name.
+import * as bridges from './bridges';
+import {
+  chatBannedKey,
+  chatConfigKey,
+  chatLastKey,
+  chatMessagesKey,
+  chatPinnedKey,
+  chatRateKey,
+  chatSeenKey,
+  chatTimedOutKey,
+} from './chat-keys';
+import { ingestFromProtocol } from './ingest';
+
+export {
+  pollActivityPubChat,
+  pollBlueskyChat,
+  pollFarcasterChat,
+  pollNostrChat,
+} from './bridges';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -210,38 +233,9 @@ export interface StreamChatConfig {
 // ═══════════════════════════════════════════════════════════════════════════
 // KV KEYS
 // ═══════════════════════════════════════════════════════════════════════════
-
-function chatMessagesKey(streamId: string): string {
-  return `livechat:msgs:${streamId}`;
-}
-
-function chatConfigKey(streamId: string): string {
-  return `livechat:config:${streamId}`;
-}
-
-function chatPinnedKey(streamId: string): string {
-  return `livechat:pinned:${streamId}`;
-}
-
-function chatBannedKey(streamId: string): string {
-  return `livechat:banned:${streamId}`;
-}
-
-function chatTimedOutKey(streamId: string): string {
-  return `livechat:timeout:${streamId}`;
-}
-
-function chatRateKey(streamId: string, userId: string): string {
-  return `livechat:rate:${streamId}:${userId}`;
-}
-
-function chatLastKey(streamId: string, protocol: ChatProtocol): string {
-  return `livechat:last:${streamId}:${protocol}`;
-}
-
-function chatSeenKey(streamId: string): string {
-  return `livechat:seen:${streamId}`;
-}
+//
+// Key builders live in ./chat-keys — the storage contract shared by the
+// engine, the poll bridges, and the analytics module.
 
 // ═══════════════════════════════════════════════════════════════════════════
 // UNIFIED CHAT ENGINE
@@ -310,6 +304,12 @@ export interface SendMessageInput {
   replyTo?: string;
   chatColor?: string;
 }
+
+/** The bound signature the bridges and the ingest seam are wired with. */
+export type SendChatMessage = (
+  env: Env,
+  input: SendMessageInput,
+) => Promise<LiveChatMessage | null>;
 
 /**
  * Send a chat message to a stream's unified feed.
@@ -716,391 +716,6 @@ export async function toggleReaction(
   }
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-// PROTOCOL BRIDGES — Ingest from external protocols
-// ═══════════════════════════════════════════════════════════════════════════
-
-/**
- * Ingest a message from an external protocol into the unified chat.
- * Each protocol ingester calls this.
- */
-async function ingestFromProtocol(
-  env: Env,
-  streamId: string,
-  protocol: ChatProtocol,
-  userId: string,
-  displayName: string,
-  message: string,
-  extra?: {
-    avatarUrl?: string;
-    isCreator?: boolean;
-    badges?: string[];
-    gift?: { amount: string; symbol: string; chain?: string };
-    platformMeta?: Record<string, unknown>;
-  },
-): Promise<void> {
-  await sendChatMessage(env, {
-    streamId,
-    userId: `${protocol}:${userId}`,
-    displayName,
-    avatarUrl: extra?.avatarUrl,
-    message,
-    protocol,
-    isCreator: extra?.isCreator,
-    gift: extra?.gift,
-    badges: extra?.badges,
-  });
-}
-
-// ─── Nostr Bridge ───────────────────────────────────────────────────────
-
-/**
- * Poll Nostr relays for new replies to a live event (NIP-53).
- */
-export async function pollNostrChat(env: Env, streamId: string, eventId: string): Promise<number> {
-  const relayUrls = (env.RELAY_URLS || 'wss://relay.damus.io,wss://nos.lol,wss://relay.primal.net')
-    .split(',')
-    .map((s) => s.trim())
-    .filter(Boolean);
-
-  if (relayUrls.length === 0) return 0;
-
-  const sinceKey = chatLastKey(streamId, 'nostr');
-  const sinceStr = await env.CACHE?.get(sinceKey).catch(() => null);
-  const since = sinceStr ? Number(sinceStr) : Date.now() - 60000;
-
-  try {
-    const nostr = await import('@degenfeed/nostr-sdk');
-    const pool = new nostr.RelayPool(relayUrls, { eoseTimeout: 4000 });
-
-    // Fetch kind 1 replies referencing the live event
-    const events = await pool.list({
-      '#e': [eventId],
-      kinds: [1],
-      since: Math.floor(since / 1000),
-      limit: 50,
-    });
-    pool.disconnectAll();
-
-    let count = 0;
-    for (const ev of events) {
-      try {
-        const npub = nostr.npubEncode(ev.pubkey);
-        await ingestFromProtocol(env, streamId, 'nostr', ev.pubkey, npub.slice(0, 16), ev.content, {
-          badges: ['nostr'],
-        });
-        count++;
-      } catch {
-        // Skip individual failures
-      }
-    }
-
-    // Update last-checked timestamp
-    await env.CACHE?.put(sinceKey, String(Date.now()), { expirationTtl: 86400 }).catch(() => {});
-
-    return count;
-  } catch {
-    return 0;
-  }
-}
-
-// ─── Farcaster Bridge ───────────────────────────────────────────────────
-
-/**
- * Poll Farcaster hub for new casts replying to the live stream frame.
- */
-export async function pollFarcasterChat(
-  env: Env,
-  streamId: string,
-  parentCastHash?: string,
-): Promise<number> {
-  const hubUrl = env.FARCASTER_HUB_URL || 'http://127.0.0.1:2281';
-  const sinceKey = chatLastKey(streamId, 'farcaster');
-  const sinceStr = await env.CACHE?.get(sinceKey).catch(() => null);
-  const since = sinceStr ? Number(sinceStr) : Date.now() - 60000;
-
-  try {
-    // Use the hub to fetch replies to a cast or the stream's URL
-    const url = parentCastHash
-      ? `${hubUrl}/v1/castsByParent?hash=${parentCastHash}&limit=50`
-      : `${hubUrl}/v1/castsByParent?parentUrl=${encodeURIComponent(`https://app.degenfeed.xyz/live/${streamId}`)}&limit=50`;
-
-    const res = await fetch(url, { signal: AbortSignal.timeout(5000) });
-    if (!res.ok) return 0;
-
-    const data = (await res.json()) as {
-      messages?: Array<{
-        data?: {
-          fid?: number;
-          timestamp?: number;
-          castAddBody?: { text: string };
-        };
-        hash?: string;
-      }>;
-    };
-
-    let count = 0;
-    for (const msg of data.messages || []) {
-      if (!msg.data?.castAddBody?.text) continue;
-      const msgTime = msg.data.timestamp
-        ? msg.data.timestamp > 1e12
-          ? msg.data.timestamp
-          : msg.data.timestamp * 1000
-        : 0;
-      if (msgTime < since) continue;
-
-      const fid = msg.data.fid || 0;
-      const displayName = `fc:${fid}`;
-      await ingestFromProtocol(
-        env,
-        streamId,
-        'farcaster',
-        `fid:${fid}`,
-        displayName,
-        msg.data.castAddBody.text.slice(0, 500),
-        { badges: ['farcaster'] },
-      );
-      count++;
-    }
-
-    await env.CACHE?.put(sinceKey, String(Date.now()), { expirationTtl: 86400 }).catch(() => {});
-    return count;
-  } catch {
-    return 0;
-  }
-}
-
-// ─── Bluesky Bridge ────────────────────────────────────────────────────
-
-/**
- * Poll Bluesky for replies/mentions related to the live stream post.
- */
-export async function pollBlueskyChat(
-  env: Env,
-  streamId: string,
-  bskyPostUri?: string,
-): Promise<number> {
-  const accessToken = env.BSKY_ACCESS_TOKEN;
-  const senderDid = env.BSKY_DID;
-  if (!accessToken || !senderDid) return 0;
-
-  const sinceKey = chatLastKey(streamId, 'bluesky');
-  const sinceStr = await env.CACHE?.get(sinceKey).catch(() => null);
-  const since = sinceStr ? Number(sinceStr) : Date.now() - 60000;
-
-  try {
-    if (bskyPostUri) {
-      // Fetch replies to the post via getPostThread
-      const threadRes = await fetch(
-        `https://bsky.social/xrpc/app.bsky.feed.getPostThread?uri=${encodeURIComponent(bskyPostUri)}&depth=1`,
-        {
-          headers: { authorization: `Bearer ${accessToken}` },
-          signal: AbortSignal.timeout(5000),
-        },
-      );
-      if (!threadRes.ok) return 0;
-      const threadData = (await threadRes.json()) as {
-        thread?: {
-          replies?: Array<{
-            post?: {
-              uri?: string;
-              author?: { did?: string; displayName?: string; avatar?: string };
-              record?: { text?: string; createdAt?: string };
-            };
-          }>;
-        };
-      };
-
-      let count = 0;
-      for (const reply of threadData.thread?.replies || []) {
-        const author = reply.post?.author;
-        const record = reply.post?.record;
-        if (!author?.did || !record?.text) continue;
-        const replyTime = record.createdAt ? new Date(record.createdAt).getTime() : 0;
-        if (replyTime < since) continue;
-
-        await ingestFromProtocol(
-          env,
-          streamId,
-          'bluesky',
-          author.did,
-          author.displayName || author.did.slice(0, 10),
-          record.text.slice(0, 500),
-          {
-            avatarUrl: author.avatar,
-            badges: ['bluesky'],
-          },
-        );
-        count++;
-      }
-
-      await env.CACHE?.put(sinceKey, String(Date.now()), { expirationTtl: 86400 }).catch(() => {});
-      return count;
-    }
-
-    // Fallback: search for mentions
-    const searchRes = await fetch(
-      `https://bsky.social/xrpc/app.bsky.feed.searchPosts?q=${encodeURIComponent(`degenfeed.xyz/live/${streamId}`)}&limit=20`,
-      {
-        headers: { authorization: `Bearer ${accessToken}` },
-        signal: AbortSignal.timeout(5000),
-      },
-    );
-    if (!searchRes.ok) return 0;
-    const searchData = (await searchRes.json()) as {
-      posts?: Array<{
-        uri?: string;
-        author?: { did?: string; displayName?: string; avatar?: string };
-        record?: { text?: string; createdAt?: string };
-      }>;
-    };
-
-    let count = 0;
-    for (const post of searchData.posts || []) {
-      const author = post.author;
-      const record = post.record;
-      if (!author?.did || !record?.text) continue;
-      const postTime = record.createdAt ? new Date(record.createdAt).getTime() : 0;
-      if (postTime < since) continue;
-
-      await ingestFromProtocol(
-        env,
-        streamId,
-        'bluesky',
-        author.did,
-        author.displayName || author.did.slice(0, 10),
-        record.text.slice(0, 500),
-        {
-          avatarUrl: author.avatar,
-          badges: ['bluesky'],
-        },
-      );
-      count++;
-    }
-
-    await env.CACHE?.put(sinceKey, String(Date.now()), { expirationTtl: 86400 }).catch(() => {});
-    return count;
-  } catch {
-    return 0;
-  }
-}
-
-// ─── Mastodon/ActivityPub Bridge ────────────────────────────────────────
-
-/**
- * Poll Mastodon/ActivityPub for replies to the live stream post.
- */
-export async function pollActivityPubChat(
-  env: Env,
-  streamId: string,
-  apPostId?: string,
-): Promise<number> {
-  const accessToken = env.GTS_ACCESS_TOKEN || env.MASTODON_ACCESS_TOKEN;
-  const instance =
-    env.GTS_INSTANCE_URL || env.MASTODON_INSTANCE_URL || 'https://social.degenfeed.xyz';
-  if (!accessToken) return 0;
-
-  const sinceKey = chatLastKey(streamId, 'activitypub');
-  const sinceStr = await env.CACHE?.get(sinceKey).catch(() => null);
-  const since = sinceStr ? Number(sinceStr) : Date.now() - 60000;
-
-  try {
-    if (apPostId) {
-      // Fetch context/replies to the post
-      const contextRes = await fetch(
-        `${instance}/api/v1/statuses/${encodeURIComponent(apPostId)}/context`,
-        {
-          headers: { authorization: `Bearer ${accessToken}` },
-          signal: AbortSignal.timeout(5000),
-        },
-      );
-      if (!contextRes.ok) return 0;
-      const contextData = (await contextRes.json()) as {
-        descendants?: Array<{
-          id: string;
-          account?: { acct: string; display_name?: string; avatar?: string };
-          content?: string;
-          created_at?: string;
-        }>;
-      };
-
-      let count = 0;
-      for (const reply of contextData.descendants || []) {
-        const replyTime = reply.created_at ? new Date(reply.created_at).getTime() : 0;
-        if (replyTime < since) continue;
-        const plaintext = stripHtml(reply.content || '');
-        if (!plaintext) continue;
-
-        const protocol: ChatProtocol = reply.account?.acct?.includes('threads.net')
-          ? 'activitypub'
-          : 'mastodon';
-
-        await ingestFromProtocol(
-          env,
-          streamId,
-          protocol,
-          reply.account?.acct || reply.id,
-          reply.account?.display_name || reply.account?.acct || 'anon',
-          plaintext.slice(0, 500),
-          {
-            avatarUrl: reply.account?.avatar,
-            badges: [protocol],
-          },
-        );
-        count++;
-      }
-
-      await env.CACHE?.put(sinceKey, String(Date.now()), { expirationTtl: 86400 }).catch(() => {});
-      return count;
-    }
-
-    // Fallback: search recent posts mentioning the stream URL
-    const searchRes = await fetch(
-      `${instance}/api/v2/search?q=${encodeURIComponent(`degenfeed.xyz/live/${streamId}`)}&type=statuses&limit=20`,
-      {
-        headers: { authorization: `Bearer ${accessToken}` },
-        signal: AbortSignal.timeout(5000),
-      },
-    );
-    if (!searchRes.ok) return 0;
-    const searchData = (await searchRes.json()) as {
-      statuses?: Array<{
-        id: string;
-        account?: { acct: string; display_name?: string; avatar?: string };
-        content?: string;
-        created_at?: string;
-      }>;
-    };
-
-    let count = 0;
-    for (const post of searchData.statuses || []) {
-      const postTime = post.created_at ? new Date(post.created_at).getTime() : 0;
-      if (postTime < since) continue;
-      const plaintext = stripHtml(post.content || '');
-      if (!plaintext) continue;
-
-      await ingestFromProtocol(
-        env,
-        streamId,
-        'mastodon',
-        post.account?.acct || post.id,
-        post.account?.display_name || post.account?.acct || 'anon',
-        plaintext.slice(0, 500),
-        {
-          avatarUrl: post.account?.avatar,
-          badges: ['mastodon'],
-        },
-      );
-      count++;
-    }
-
-    await env.CACHE?.put(sinceKey, String(Date.now()), { expirationTtl: 86400 }).catch(() => {});
-    return count;
-  } catch {
-    return 0;
-  }
-}
-
 // ─── Telegram Bridge ────────────────────────────────────────────────────
 
 /**
@@ -1135,6 +750,7 @@ export async function handleTelegramWebhook(
 
     const from = body.message?.from;
     await ingestFromProtocol(
+      sendChatMessage,
       env,
       streamId,
       'telegram',
@@ -1219,14 +835,14 @@ export async function startUnifiedChatPolling(
     try {
       await Promise.allSettled([
         config.nostrEventId
-          ? pollNostrChat(env, config.streamId, config.nostrEventId)
+          ? bridges.pollNostrChat(env, config.streamId, config.nostrEventId)
           : Promise.resolve(0),
-        pollFarcasterChat(env, config.streamId, config.farcasterHash),
+        bridges.pollFarcasterChat(env, config.streamId, config.farcasterHash),
         config.bskyPostUri
-          ? pollBlueskyChat(env, config.streamId, config.bskyPostUri)
+          ? bridges.pollBlueskyChat(env, config.streamId, config.bskyPostUri)
           : Promise.resolve(0),
         config.apPostId
-          ? pollActivityPubChat(env, config.streamId, config.apPostId)
+          ? bridges.pollActivityPubChat(env, config.streamId, config.apPostId)
           : Promise.resolve(0),
       ]);
     } catch {
@@ -1252,17 +868,6 @@ export async function startUnifiedChatPolling(
 // ═══════════════════════════════════════════════════════════════════════════
 // HELPERS
 // ═══════════════════════════════════════════════════════════════════════════
-
-function stripHtml(html: string): string {
-  return html
-    .replace(/<[^>]*>/g, '')
-    .replace(/&amp;/g, '&')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'")
-    .trim();
-}
 
 /**
  * Register a Telegram chat-to-stream mapping (called when a user starts the bot).
