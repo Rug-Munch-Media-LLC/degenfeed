@@ -1,13 +1,8 @@
 #!/usr/bin/env python3
 """check-structure.py — firm per-file size policy (shrink-only ratchet).
 
-Policy: >150 REPORTED · >200 HARD FAIL unless allowlisted · allowlisted files
-may never GROW · >500 HARD FAIL unless allowlisted. ``--update-baseline``
-only ever removes/shrinks; per-repo roots via [tool.fleet-gates].scan-roots.
-
-Usage:
-  python3 scripts/check-structure.py --repo .                 # gate
-  python3 scripts/check-structure.py --repo . --update-baseline
+>150 REPORTED · >200 HARD FAIL unless allowlisted · allowlisted never GROW ·
+>500 HARD FAIL. --update-baseline removes/shrinks; roots via [tool.fleet-gates].
 """
 
 from __future__ import annotations
@@ -201,14 +196,11 @@ def main() -> int:
         return update_baseline(sizes, old, baseline_path)
     failures, reports, shrinks, removals = evaluate(sizes, old)
     print(
-        f"structure gate: {len(sizes)} files > {ADVISORY_THRESHOLD} lines (allowlisted: {len(old)})"
+        f"structure gate: {len(sizes)} over {ADVISORY_THRESHOLD}; allowlisted {len(old)}"
     )
-    for line in reports:
-        print(f"  [report] {line}")
-    for line in shrinks:
-        print(f"  [shrink] {line}")
-    for line in removals:
-        print(f"  [remove] {line}")
+    for tag, rows in (("report", reports), ("shrink", shrinks), ("remove", removals)):
+        for line in rows:
+            print(f"  [{tag}] {line}")
     if failures:
         print("\nFAIL (size ratchet):")
         for line in failures:
