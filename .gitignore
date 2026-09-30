@@ -95,3 +95,8 @@ packages/lens-sdk/src/*.map
 docs/SESSION_TODO.md
 apps/docs/.docusaurus/
 .methodology-patterns
+
+# Serena IDE cache: local project config + .pkl symbol caches, regenerated on open.
+# Same call as contextcrypto a8e9515 / gitleaks allowlist.
+.serena/
+**/.serena/
