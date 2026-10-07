@@ -28,6 +28,8 @@
     "version:ci": "changeset version",
     "release:ci": "changeset publish",
     "test:workers": "vitest run --include \"tests/workers-integration/**\" --reporter=verbose",
+    "test:mutation": "stryker run",
+    "test:mutation:watch": "stryker run --watch",
     "depcruise": "depcruise --config .dependency-cruiser.json apps/web/src packages"
   },
   "devDependencies": {
