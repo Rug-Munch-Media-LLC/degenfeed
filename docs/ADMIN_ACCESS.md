@@ -127,10 +127,10 @@ const http = require('http');
 const qs = require('querystring');
 const data = qs.stringify({
   client_id: '<PT_CLIENT_ID from gopass>',
-  client_secret: '<PT_CLIENT_SECRET from gopass rmi/peertube/oauth_client_secret>',
+  client_secret: '<PT_CLIENT_SECRET from gopass degenfeed/peertube/oauth_client_secret>',
   grant_type: 'password',
   username: 'root',
-  password: '<PT_ADMIN_PASSWORD from gopass rmi/peertube/admin_password>',
+  password: '<PT_ADMIN_PASSWORD from gopass degenfeed/peertube/admin>',
   scope: 'admin'
 });
 const options = {
