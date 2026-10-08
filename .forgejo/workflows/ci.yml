@@ -429,7 +429,7 @@ jobs:
           ./noseyparker-v0.24.0-x86_64-unknown-linux-gnu/noseyparker report || true
       - name: Grype vulnerability match on working tree
         run: |
-          curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh | sh -s -- -b /usr/local/bin
+          curl -sSfL https://github.com/anchore/grype/releases/download/v0.120.1/grype_0.120.1_linux_amd64.tar.gz | tar xz -C /usr/local/bin grype
           grype dir:. --fail-on critical || echo "::warning::critical vulns in tree"
 
   # ── Gate 10: Mutation testing (Stryker) — NIGHTLY ONLY ──────────

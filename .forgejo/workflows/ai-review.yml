@@ -88,9 +88,11 @@ jobs:
           SCRIPT
 
       - name: Get PR diff
+        env:
+          BASE_REF: ${{ github.base_ref }}
         run: |
-          git fetch origin "${{ github.base_ref }}" || true
-          git diff "origin/${{ github.base_ref }}...HEAD" > /tmp/pr.diff || git diff HEAD~1 > /tmp/pr.diff
+          git fetch origin "$BASE_REF" || true
+          git diff "origin/$BASE_REF...HEAD" > /tmp/pr.diff || git diff HEAD~1 > /tmp/pr.diff
 
       - name: Run AI Review
         env:

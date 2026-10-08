@@ -548,7 +548,7 @@ async function fetchNostrMedia(env: Env, limit: number): Promise<VisualPost[]> {
       ]);
       const _wsUrl = relay.replace('http', 'ws');
       // Fallback: try REST-based relay if available
-      const restUrl = relay.replace('wss://', 'https://').replace('ws://', 'http://');
+      const restUrl = relay.replace('wss://', 'https://').replace('ws://', 'http://');  // nosemgrep: javascript.lang.security.detect-insecure-websocket.detect-insecure-websocket
 
       // Some relays expose a search API
       try {

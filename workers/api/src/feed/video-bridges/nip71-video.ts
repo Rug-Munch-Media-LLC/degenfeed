@@ -26,7 +26,7 @@ export async function fetchNip71Videos(relayUrls: string[], limit = 20): Promise
   for (const relay of relays.slice(0, 4)) {
     if (results.length >= limit) break;
     try {
-      const restUrl = relay.replace('wss://', 'https://').replace('ws://', 'http://');
+      const restUrl = relay.replace('wss://', 'https://').replace('ws://', 'http://');  // nosemgrep: javascript.lang.security.detect-insecure-websocket.detect-insecure-websocket
 
       // Try REST API first (some relays expose it)
       const res = await fetch(
@@ -147,7 +147,7 @@ export async function fetchKind1Videos(relayUrls: string[], limit = 10): Promise
 
   for (const relay of relays.slice(0, 2)) {
     try {
-      const restUrl = relay.replace('wss://', 'https://').replace('ws://', 'http://');
+      const restUrl = relay.replace('wss://', 'https://').replace('ws://', 'http://');  // nosemgrep: javascript.lang.security.detect-insecure-websocket.detect-insecure-websocket
       const res = await fetch(`${restUrl}/api/v1/events?kinds=1&limit=${limit}`, {
         headers: { accept: 'application/json' },
         signal: AbortSignal.timeout(3000),

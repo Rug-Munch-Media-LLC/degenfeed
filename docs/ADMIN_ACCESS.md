@@ -126,11 +126,11 @@ PT_TOKEN=$(docker exec peertube-peertube-1 node -e "
 const http = require('http');
 const qs = require('querystring');
 const data = qs.stringify({
-  client_id: '7ur31uojqchjzp6dwb9ld2mkbs2yt9dl',
-  client_secret: 'mZSbfaNh4vShtdhKJLP28PqoayEyBVqI',
+  client_id: '<PT_CLIENT_ID from gopass>',
+  client_secret: '<PT_CLIENT_SECRET from gopass rmi/peertube/oauth_client_secret>',
   grant_type: 'password',
   username: 'root',
-  password: 'degenfeed_admin',
+  password: '<PT_ADMIN_PASSWORD from gopass rmi/peertube/admin_password>',
   scope: 'admin'
 });
 const options = {

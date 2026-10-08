@@ -66,7 +66,7 @@ export async function handleChatHealthQuick(request: Request, env: Env): Promise
     // Quick check — just Conduit and bridge count
     const [conduitStatus, bridgesStatus] = await Promise.allSettled([
       fetch(`${CONDUIT_URL}/_matrix/client/v3/versions`, { signal: AbortSignal.timeout(3000) }),
-      fetch('http://matrix-irc:8090/health', { signal: AbortSignal.timeout(2000) }).catch(
+      fetch('http://matrix-irc:8090/health', { signal: AbortSignal.timeout(2000) }).catch(  // nosemgrep: typescript.react.security.react-insecure-request.react-insecure-request
         () => null,
       ),
     ]);

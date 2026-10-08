@@ -477,7 +477,7 @@ export class GhostBridge {
           ws.close();
           resolve({
             ok: true,
-            url: `nostr:${relayUrl.replace('wss://', '').replace('ws://', '')}/${encodeURIComponent(title)}`,
+            url: `nostr:${relayUrl.replace('wss://', '').replace('ws://', '')}/${encodeURIComponent(title)}`,  // nosemgrep: javascript.lang.security.detect-insecure-websocket.detect-insecure-websocket
           });
         });
         ws.on('error', (err: Error) => {

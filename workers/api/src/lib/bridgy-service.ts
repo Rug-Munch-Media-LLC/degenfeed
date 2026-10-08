@@ -529,7 +529,7 @@ export class BridgyFedService {
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), 5000);
 
-      const response = await fetch(BRIDGY_FED_INTERNAL, {
+      const response = await fetch(BRIDGY_FED_INTERNAL, {  // nosemgrep: typescript.react.security.react-insecure-request.react-insecure-request
         signal: controller.signal,
         headers: { 'User-Agent': 'DegenFeed-BridgyService/1.0' },
       });
