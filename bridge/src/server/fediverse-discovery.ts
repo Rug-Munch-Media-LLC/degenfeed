@@ -202,7 +202,7 @@ export async function discoverPopularCommunities(): Promise<
 
   // Try local Lemmy first
   try {
-    const res = await fetch('http://127.0.0.1:8536/api/v3/community/list?limit=20&sort=Hot', {
+    const res = await fetch('http://127.0.0.1:8536/api/v3/community/list?limit=20&sort=Hot', {  // nosemgrep: typescript.react.security.react-insecure-request.react-insecure-request
       signal: AbortSignal.timeout(5000),
     });
     if (res.ok) {

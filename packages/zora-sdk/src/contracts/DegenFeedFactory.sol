@@ -81,7 +81,7 @@ contract DegenFeedFactory {
         require(creatorAllocationBps <= 1500, "Allocation > 15%");
         require(creatorFeeBps <= MAX_CREATOR_FEE_BPS, "Creator fee > max");
 
-        bytes32 salt = keccak256(abi.encodePacked(msg.sender, name_, symbol_));
+        bytes32 salt = keccak256(abi.encode(msg.sender, name_, symbol_)); // encode, not encodePacked: dynamic types could collide
 
         coin = address(new DegenFeedCoin{salt: salt}(
             name_, symbol_, uri_, msg.sender,

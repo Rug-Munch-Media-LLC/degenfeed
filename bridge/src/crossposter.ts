@@ -1332,7 +1332,7 @@ const failureTracker = new FailureTracker();
 async function fetchLatestPodcastEpisode(): Promise<UnifiedPost | null> {
   try {
     // Try to fetch from the bridge's podcast store via API
-    const res = await fetch('http://127.0.0.1:8787/api/podcast/trending?limit=5', {
+    const res = await fetch('http://127.0.0.1:8787/api/podcast/trending?limit=5', {  // nosemgrep: typescript.react.security.react-insecure-request.react-insecure-request
       signal: AbortSignal.timeout(5000),
     });
     if (res.ok) {

@@ -23,10 +23,12 @@ jobs:
 
       - name: Collect DORA metrics
         id: dora
+        env:
+          DAYS: ${{ inputs.days }}
         run: |
           args=()
-          if [[ -n "${{ inputs.days }}" ]]; then
-            args+=(--days "${{ inputs.days }}")
+          if [[ -n "$DAYS" ]]; then
+            args+=(--days "$DAYS")
           fi
           ./scripts/metrics/dora-track.sh "${args[@]}" \
             | tee /tmp/dora-output.txt

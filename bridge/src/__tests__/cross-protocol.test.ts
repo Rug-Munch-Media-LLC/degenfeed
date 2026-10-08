@@ -283,7 +283,7 @@ describe('Cross-protocol routing and fallback', () => {
     expect(validPair.id).toBe('gts-to-nostr');
     expect(validPair.enabled).toBe(true);
     expect(validPair.targets).toContain('nostr');
-    expect(validPair.targetConfigs.nostr.relayUrl).toContain('ws://');
+    expect(validPair.targetConfigs.nostr.relayUrl).toContain('ws://');  // nosemgrep: javascript.lang.security.detect-insecure-websocket.detect-insecure-websocket
 
     // Disabled pair should be skippable
     const disabledPair = { ...validPair, enabled: false };

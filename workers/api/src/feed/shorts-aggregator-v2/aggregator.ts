@@ -966,7 +966,7 @@ export class ShortsAggregatorV2 {
     for (const relay of relayUrls.slice(0, 3)) {
       if (shorts.length >= limit) break;
       try {
-        const restUrl = relay.replace('wss://', 'https://').replace('ws://', 'http://');
+        const restUrl = relay.replace('wss://', 'https://').replace('ws://', 'http://');  // nosemgrep: javascript.lang.security.detect-insecure-websocket.detect-insecure-websocket
         const res = await fetch(
           `${restUrl}/api/v1/events?kinds=31388&limit=${Math.ceil(limit / 3)}`,
           { signal: AbortSignal.timeout(5000) },

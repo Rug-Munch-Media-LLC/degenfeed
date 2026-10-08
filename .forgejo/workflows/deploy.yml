@@ -124,6 +124,8 @@ jobs:
     needs: [systemd-deploy, smoke-test]
     steps:
       - name: Emit deploy failure
+        env:
+          DEPLOY_REF: ${{ github.ref }}
         run: |
-          echo "::error::Deploy failed for ${{ github.ref }} — see run logs"
+          echo "::error::Deploy failed for $DEPLOY_REF — see run logs"
           exit 1

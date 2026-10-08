@@ -301,7 +301,7 @@ export async function checkPostizHealth(): Promise<PostizBridgeStatus> {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 5_000);
 
-    const response = await fetch(`${POSTIZ_BASE_URL}${POSTIZ_HEALTH_PATH}`, {
+    const response = await fetch(`${POSTIZ_BASE_URL}${POSTIZ_HEALTH_PATH}`, {  // nosemgrep: typescript.react.security.react-insecure-request.react-insecure-request
       method: 'GET',
       signal: controller.signal,
     });

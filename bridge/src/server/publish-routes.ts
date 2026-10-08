@@ -213,7 +213,7 @@ function publishEventToRelay(
             if (ok) {
               resolve({
                 ok: true,
-                url: `nostr:${relayUrl.replace('wss://', '').replace('ws://', '')}/${String(event.id || '').slice(0, 16)}`,
+                url: `nostr:${relayUrl.replace('wss://', '').replace('ws://', '')}/${String(event.id || '').slice(0, 16)}`,  // nosemgrep: javascript.lang.security.detect-insecure-websocket.detect-insecure-websocket
               });
             } else {
               resolve({ ok: false, error: String(msg[3] || 'Relay rejected event') });

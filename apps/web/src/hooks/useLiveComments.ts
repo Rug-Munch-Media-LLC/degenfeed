@@ -40,7 +40,7 @@ interface CommentsResponse {
 const WS_BASE =
   typeof window !== 'undefined' &&
   (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
-    ? `ws://${window.location.host}/ws/token`
+    ? `ws://${window.location.host}/ws/token`  // nosemgrep: javascript.lang.security.detect-insecure-websocket.detect-insecure-websocket
     : `wss://api.degenfeed.xyz/ws/token`;
 
 export function useLiveComments(tokenAddress: string): UseLiveCommentsResult {
