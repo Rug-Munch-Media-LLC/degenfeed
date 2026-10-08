@@ -10,7 +10,7 @@ remnants. Counts may only go DOWN; lower the bar deliberately:
 Rules
   zsh-shebang        #!/bin/zsh, #!/usr/bin/env zsh
   zsh-ism            setopt / zmodload / autoload -U (zsh-only syntax)
-  nested-ssh-quoting ssh host "cmd with \\"escaped\\" quotes"   (SC2029 class)
+  nested-ssh-quoting ssh host "cmd with \"escaped\" quotes"   (SC2029 class)
   ssh-cd-command     ssh host "cd <dir> && <cmd>"               (use P1 argv)
   eval-usage         eval — banned; use arrays / "${cmd[@]}"
   unquoted-ssh-var   ssh host cmd $VAR (expands locally, unquoted)
@@ -19,13 +19,14 @@ Sanctioned patterns: standards/fleet/SHELL-STANDARD.md
 Baseline file (per repo): .fleet-shell-baseline.json
 """
 
-from __future__ import annotations
-
 import argparse
 import json
+import logging
 import re
 import sys
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 
 BASELINE_NAME = ".fleet-shell-baseline.json"
 
@@ -90,7 +91,8 @@ def is_shell_file(p: Path) -> bool:
     try:
         with p.open("rb") as fh:
             first = fh.readline(200).decode("utf-8", "replace")
-    except OSError:
+    except OSError as exc:
+        logger.debug("OSError in is_shell_file: %s", exc)
         return False
     return first.startswith("#!") and ("bash" in first or "/sh" in first)
 
@@ -113,7 +115,8 @@ def scan_file(p: Path) -> list[tuple[str, int, str]]:
     out: list[tuple[str, int, str]] = []
     try:
         text = p.read_text(encoding="utf-8", errors="replace")
-    except OSError:
+    except OSError as exc:
+        logger.debug("OSError reading %s: %s", p, exc)
         return out
     lines = text.splitlines()
     pragma = {i for i, ln in enumerate(lines, 1) if PRAGMA.search(ln)}
@@ -151,7 +154,8 @@ def load_baseline(root: Path) -> dict[str, int]:
     if f.exists():
         try:
             return json.loads(f.read_text())
-        except (OSError, json.JSONDecodeError):
+        except (OSError, json.JSONDecodeError) as exc:
+            logger.debug("failed to load baseline: %s", exc)
             return {}
     return {}
 

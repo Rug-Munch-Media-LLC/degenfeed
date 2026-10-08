@@ -8,8 +8,11 @@ are passed in as arguments, so no gate policy lives here.
 from __future__ import annotations
 
 import ast
+import logging
 import re
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 
 
 def marker_hits(text: str) -> int:
@@ -18,7 +21,11 @@ def marker_hits(text: str) -> int:
     """
     hits = 0
     for line in text.splitlines():
-        if PATCH_LIBRARY.search(line) or line.lstrip().startswith(("#", "//", "/*", "*")) and FIX_MARKER.search(line):
+        if (
+            PATCH_LIBRARY.search(line)
+            or line.lstrip().startswith(("#", "//", "/*", "*"))
+            and FIX_MARKER.search(line)
+        ):
             hits += 1
     return hits
 
@@ -42,14 +49,17 @@ def metric(path: Path) -> dict[str, int]:
         return result
     try:
         tree = ast.parse(body, filename=str(path))
-    except SyntaxError:
+    except SyntaxError as exc:
+        logger.debug("syntax error in %s: %s", path, exc)
         return result
     for node in ast.walk(tree):
         if not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
             continue
         result["functions"] += 1
         span = (node.end_lineno or node.lineno) - node.lineno + 1
-        result["parameters"] = max(result["parameters"], len(node.args.args) + len(node.args.kwonlyargs))
+        result["parameters"] = max(
+            result["parameters"], len(node.args.args) + len(node.args.kwonlyargs)
+        )
         result[f"fn:{node.name}"] = max(result.get(f"fn:{node.name}", 0), span)
     return result
 
@@ -79,7 +89,9 @@ def debt_for(
         "files": int(current["lines"] > hard_lines),
         "excess_lines": max(0, current["lines"] - hard_lines),
         "function_debt": sum(
-            max(0, value - max_function_lines) for key, value in current.items() if key.startswith("fn:")
+            max(0, value - max_function_lines)
+            for key, value in current.items()
+            if key.startswith("fn:")
         ),
         "parameter_debt": max(0, current["parameters"] - max_parameters),
         "marker_debt": current["markers"],

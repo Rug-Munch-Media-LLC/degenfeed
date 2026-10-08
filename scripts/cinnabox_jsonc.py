@@ -4,9 +4,12 @@
 from __future__ import annotations
 
 import json
+import logging
 import os
 from pathlib import Path
 from typing import Any
+
+logger = logging.getLogger(__name__)
 
 __all__ = ["dump", "load", "loads", "provider_host"]
 
@@ -101,7 +104,8 @@ def provider_host() -> str:
     try:
         data = json.loads(values.read_text(encoding="utf-8"))
         return str(data.get("INTERNAL_HOST") or "talos")
-    except (OSError, ValueError, TypeError):
+    except (OSError, ValueError, TypeError) as exc:
+        logger.debug("failed to read fleet values: %s", exc)
         return "talos"
 
 

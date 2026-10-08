@@ -15,10 +15,13 @@ WHAT IT BLOCKS:
 - Private API keys and tokens (gopass references)
 """
 
+import logging
 import os
 import re
 import subprocess  # nosec B404 — used for fixed-argv git/hygiene calls
 import sys
+
+logger = logging.getLogger(__name__)
 
 BLOCKED_PATTERNS = [
     # Private repo names
@@ -67,8 +70,8 @@ def check_file(filepath):
                         findings.append(
                             f"  {filepath}:{lineno} [{rule}] {line.strip()[:80]}"
                         )
-    except OSError:
-        pass
+    except OSError as exc:
+        logger.debug("cannot read %s: %s", filepath, exc)
     return findings
 
 

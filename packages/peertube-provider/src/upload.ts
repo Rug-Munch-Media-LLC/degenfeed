@@ -495,7 +495,6 @@ export async function createPeerTubeUploader(config: {
       response.status,
     );
   }
-
   const data = (await response.json()) as { access_token: string; expires_in?: number };
   return new PeerTubeUploader({ instanceUrl, accessToken: data.access_token });
 }

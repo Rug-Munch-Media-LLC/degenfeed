@@ -12,7 +12,10 @@ Exit:   0 + script on stdout | 1 + reason on stderr
 
 from __future__ import annotations
 
+import logging
 import sys
+
+logger = logging.getLogger(__name__)
 
 HOOK_INDENT = 4  # pre-push hooks are indented 4 spaces under `pre-push:`
 RUN_INDENT = HOOK_INDENT + 2  # `run: |` and its body sit 2 deeper
@@ -56,7 +59,7 @@ def main(argv: list[str]) -> int:
         with open(path, encoding="utf-8") as fh:
             lines = fh.read().splitlines()
     except OSError as exc:
-        print(f"cannot read {path}: {exc}", file=sys.stderr)
+        logger.error("cannot read %s: %s", path, exc)
         return 1
 
     start = find_hook(lines, hook)

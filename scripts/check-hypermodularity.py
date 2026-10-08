@@ -5,13 +5,16 @@ from __future__ import annotations
 
 import argparse
 import json
+import logging
 import subprocess
 import sys
 from pathlib import Path
 from typing import Any
 
+logger = logging.getLogger(__name__)
+
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from hypermodularity_metrics import debt_for, empty_debt, metric, total_debt
+from hypermodularity_metrics import debt_for, empty_debt, metric, total_debt  # noqa: E402
 
 HARD_LINES = 200
 SOFT_LINES = 150
@@ -78,7 +81,8 @@ def _tracked_files(root: Path) -> set[str] | None:
             text=True,
             check=False,
         )
-    except OSError:
+    except OSError as exc:
+        logger.debug("OSError in git_ls_files: %s", exc)
         return None
     if result.returncode != 0:
         return None
@@ -102,7 +106,9 @@ def files_under(root: Path, explicit: list[str] | None) -> list[Path]:
     return [
         p
         for p in root.rglob("*")
-        if p.is_file() and p.suffix in CODE_SUFFIXES and not any(part in SKIP_DIRS for part in p.parts)
+        if p.is_file()
+        and p.suffix in CODE_SUFFIXES
+        and not any(part in SKIP_DIRS for part in p.parts)
     ]
 
 
@@ -114,10 +120,20 @@ def failures_for(path: Path, root: Path, old: dict[str, Any]) -> list[str]:
     if current["lines"] > HARD_LINES and current["lines"] > previous.get("lines", 0):
         errors.append(f"{rel}: {current['lines']} lines exceeds hard cap {HARD_LINES}")
     for key, value in current.items():
-        if key.startswith("fn:") and value > MAX_FUNCTION_LINES and value > previous.get(key, 0):
-            errors.append(f"{rel}: {key[3:]} has {value} lines (max {MAX_FUNCTION_LINES})")
-    if current["parameters"] > MAX_PARAMETERS and current["parameters"] > previous.get("parameters", 0):
-        errors.append(f"{rel}: {current['parameters']} parameters (max {MAX_PARAMETERS})")
+        if (
+            key.startswith("fn:")
+            and value > MAX_FUNCTION_LINES
+            and value > previous.get(key, 0)
+        ):
+            errors.append(
+                f"{rel}: {key[3:]} has {value} lines (max {MAX_FUNCTION_LINES})"
+            )
+    if current["parameters"] > MAX_PARAMETERS and current["parameters"] > previous.get(
+        "parameters", 0
+    ):
+        errors.append(
+            f"{rel}: {current['parameters']} parameters (max {MAX_PARAMETERS})"
+        )
     if current["markers"] > previous.get("markers", 0):
         errors.append(f"{rel}: monkeypatch/HACK/WORKAROUND marker added")
     return errors
@@ -138,7 +154,9 @@ def deficit_for(path: Path, root: Path, old: dict[str, Any]) -> dict[str, int]:
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--repo", default=".")
-    parser.add_argument("--baseline", default="fleet/gates/hypermodularity-baseline.json")
+    parser.add_argument(
+        "--baseline", default="fleet/gates/hypermodularity-baseline.json"
+    )
     parser.add_argument("--files", nargs="*")
     parser.add_argument("--update-baseline", action="store_true")
     parser.add_argument("--report", type=Path)
@@ -149,7 +167,9 @@ def main() -> int:
     targets = files_under(root, args.files)
     if args.update_baseline:
         payload = {p.relative_to(root).as_posix(): metric(p) for p in targets}
-        if old and any(v > old.get(k, {}).get("lines", 0) for k, v in payload.items() if k in old):
+        if old and any(
+            v > old.get(k, {}).get("lines", 0) for k, v in payload.items() if k in old
+        ):
             print("hypermodularity: refusing to grow the baseline", file=sys.stderr)
             return 1
         baseline_path.write_text(json.dumps(payload, indent=1, sort_keys=True) + "\n")
@@ -160,11 +180,16 @@ def main() -> int:
     for error in errors:
         print(f"hypermodularity: FAIL {error}")
     if summary and any(summary.values()):
-        print("hypermodularity: DEFICIT " + " ".join(f"{key}={value}" for key, value in summary.items()))
+        print(
+            "hypermodularity: DEFICIT "
+            + " ".join(f"{key}={value}" for key, value in summary.items())
+        )
     else:
         print("hypermodularity: DEFICIT none")
     if args.report:
-        args.report.write_text(json.dumps({"violations": errors, "deficit": summary}, indent=2) + "\n")
+        args.report.write_text(
+            json.dumps({"violations": errors, "deficit": summary}, indent=2) + "\n"
+        )
     print(f"hypermodularity: {len(targets)} files checked; {len(errors)} violations")
     return 1 if errors else 0
 
