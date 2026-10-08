@@ -112,8 +112,8 @@ Expected output: `['degenfeed']`
 | **Password** | `gopass show degenfeed/peertube/admin` |
 | **Container** | `peertube-peertube-1` |
 | **Local port** | `127.0.0.1:9011` |
-| **OAuth Client ID** | `7ur31uojqchjzp6dwb9ld2mkbs2yt9dl` |
-| **OAuth Client Secret** | `mZSbfaNh4vShtdhKJLP28PqoayEyBVqI` |
+| **OAuth Client ID** | `gopass show degenfeed/peertube/oauth_client_id` |
+| **OAuth Client Secret** | `gopass show degenfeed/peertube/oauth_client_secret` (rotate pending) |
 
 ### Access
 - **Web UI**: https://video.degenfeed.xyz
