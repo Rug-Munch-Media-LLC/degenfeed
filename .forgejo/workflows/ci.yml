@@ -716,3 +716,31 @@ jobs:
         run: python3 scripts/check-antipatterns.py --repo .
       - name: Gate self-test (proves each gate catches its violation class)
         run: bash scripts/ci-gate-selftest.sh
+
+  # ===================================================================
+  # GATE: semgrep SAST (community rules)
+  # ===================================================================
+  semgrep:
+    runs-on: docker-x64
+    container:
+      image: returntocorp/semgrep:latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: Semgrep SAST scan
+        run: |
+          semgrep scan --config=auto --severity=ERROR --error --exclude='node_modules/' --exclude='.venv/'
+
+  # ===================================================================
+  # GATE: shellcheck (shell scripts)
+  # ===================================================================
+  shellcheck:
+    runs-on: docker-x64
+    container:
+      image: node:22-bookworm
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: Shellcheck + bash syntax
+        run: |
+          apt-get update && apt-get install -y shellcheck
+          find . -name '*.sh' ! -path './node_modules/*' -exec shellcheck {} +
+          find . -name '*.sh' ! -path './node_modules/*' -exec bash -n {} \;
