@@ -9,8 +9,11 @@ from __future__ import annotations
 
 import argparse
 import json
+import logging
 import sys
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 
 ADVISORY_THRESHOLD = 150
 FAIL_THRESHOLD = 200
@@ -27,6 +30,7 @@ def count_lines(path: Path) -> int:
     try:
         return len(path.read_text(errors="ignore").splitlines())
     except OSError:
+        sys.stderr.write(f"cannot read {path}\n")
         return 0
 
 
@@ -59,7 +63,8 @@ def resolve_scan_roots(root: Path, explicit: tuple[str, ...]) -> tuple[str, ...]
             import tomllib
 
             tool = tomllib.loads(cfg.read_text(encoding="utf-8")).get("tool", {})
-        except (ImportError, OSError, ValueError):
+        except (ImportError, OSError, ValueError) as exc:
+            logger.debug("failed to load pyproject.toml: %s", exc)
             tool = {}
         roots = (tool.get("fleet-gates") or {}).get("scan-roots")
         if roots:
@@ -96,7 +101,8 @@ def load_baseline(path: Path) -> dict[str, int]:
         return {}
     try:
         return json.loads(path.read_text()).get("files", {})
-    except (OSError, json.JSONDecodeError):
+    except (OSError, json.JSONDecodeError) as exc:
+        logger.debug("failed to load baseline: %s", exc)
         return {}
 
 

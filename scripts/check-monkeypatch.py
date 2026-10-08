@@ -19,9 +19,12 @@ from __future__ import annotations
 
 import argparse
 import json
+import logging
 import re
 import sys
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 
 DEFAULT_BASELINE = "scripts/monkeypatch-baseline.json"
 MONKEY_RE = re.compile(
@@ -56,7 +59,8 @@ def scan(root: Path) -> tuple[int, dict[str, int]]:
             continue
         try:
             lines = p.read_text(errors="ignore").splitlines()
-        except OSError:
+        except OSError as exc:
+            logger.debug("OSError reading %s: %s", p, exc)
             continue
         n = sum(1 for ln in lines if MONKEY_RE.search(ln))
         if n:
