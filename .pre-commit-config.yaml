@@ -30,10 +30,15 @@ repos:
 
   # ── Python security audit (bandit) ───────────────────────────
   - repo: https://github.com/PyCQA/bandit
-    rev: '1.7.10'
+    rev: '1.8.3'
     hooks:
       - id: bandit
-        args: ['-r', '.']
+        # -ll: medium+ only — matches the CI bandit gate. The `exclude`
+        # field is REQUIRED (not just -x): pre-commit passes explicit file
+        # paths as args and -x does not filter explicit args, so tests/
+        # fixtures were scanned and failed the hook (pryscraper audit
+        # 2026-09-12). Glob form matches CI: './tests/*,./.venv/*,...'.
+        args: ['-r', '-ll', '-x', './tests/*,./.venv/*,./__pycache__/*']
         exclude: ^tests/
 
   # ── General file-hygiene checks ──────────────────────────────
