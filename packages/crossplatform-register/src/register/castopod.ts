@@ -134,9 +134,7 @@ export async function registerCastopod(
     // we extract the session ID from the Set-Cookie header
     const setCookie = loginRes.headers.get('set-cookie') || '';
     const sessionMatch = setCookie.match(/ci_session=([^;]+)/);
-    if (sessionMatch) {
-      accessToken = sessionMatch[1];
-    }
+    accessToken = sessionMatch?.[1] ?? '';
 
     // Step 5: Build actor/profile URL
     const actorId = `${instanceUrl}/@${desiredUsername}`;

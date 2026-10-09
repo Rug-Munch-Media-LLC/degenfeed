@@ -88,8 +88,6 @@ export interface Env {
   MATRIX_ACCESS_TOKEN?: string;
   /** Matrix instance URL */
   MATRIX_INSTANCE_URL?: string;
-  /** Bluesky access token for AT Protocol chat */
-  BSKY_ACCESS_TOKEN?: string;
 
   // ─── Matrix / Conduit Chat Hub ────────────────────────────────────────
   /** Conduit admin token for bridge bot registration */
@@ -346,10 +344,6 @@ export interface Env {
   FARCASTER_SIGNER_KEY?: string;
   /** Farcaster FID for the bot account used for live short announcements */
   FARCASTER_FID?: string;
-  /** Bluesky access JWT for AT Protocol live short announcements */
-  BSKY_ACCESS_TOKEN?: string;
-  /** Lens API access token for Lens live short publishing */
-  LENS_ACCESS_TOKEN?: string;
   /** Livepeer Studio API key for Livepeer-backed streaming (Zora, generic) */
   LIVEPEER_API_KEY?: string;
   /** Cloudflare Stream API token for enterprise CDN streaming */
@@ -422,8 +416,12 @@ export interface Env {
   // ─── Video Platform Wrappers ────────────────────────────────────────
   /** Zora API relayer for on-chain operations */
   ZORA_RELAYER_URL?: string;
+  /** Zora indexer URL for on-chain queries */
+  ZORA_INDEXER_URL?: string;
   /** x402 relayer for payment-gated content */
   X402_RELAYER_URL?: string;
+  /** x402 relayer key for payment-gated content */
+  X402_RELAYER_KEY?: string;
   /** Farcaster watchlist for live activity monitoring */
   FARCASTER_WATCHLIST?: string;
 
@@ -458,8 +456,6 @@ export interface Env {
   // ─── Multi-Protocol Coin Announcement ───────────────────────────────
   /** Bluesky app password for bot posting (not the main password) */
   BSKY_APP_PASSWORD?: string;
-  /** Mastodon/GTS access token for bot tooting */
-  MASTODON_ACCESS_TOKEN?: string;
   /** Telegram chat ID for coin launch announcements */
   TELEGRAM_ANNOUNCEMENT_CHAT_ID?: string;
   /** Telegram coin announcement chat ID (overrides TELEGRAM_ANNOUNCEMENT_CHAT_ID) */

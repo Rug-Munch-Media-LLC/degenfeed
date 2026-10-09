@@ -13,6 +13,7 @@
     "@degenfeed/types": "workspace:*"
   },
   "devDependencies": {
+    "@degenfeed/nostr-sdk": "workspace:*",
     "typescript": "^5.9.3",
     "vitest": "^4.1.10"
   },
