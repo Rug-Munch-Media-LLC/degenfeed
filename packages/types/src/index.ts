@@ -864,6 +864,8 @@ export interface Env {
   MASTODON_INSTANCE_URL?: string;
   /** Lens GraphQL API URL */
   LENS_API_URL?: string;
+  /** LiveKit API key */
+  LIVEKIT_API_KEY?: string;
   /** Matrix admin token */
   MATRIX_ADMIN_TOKEN?: string;
   /** XMPP bridge API URL */

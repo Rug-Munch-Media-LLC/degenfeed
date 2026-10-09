@@ -149,12 +149,15 @@ export interface UploadMetadataResult {
 /** Zora Creator contract address on Base (ERC-1155 edition minter). */
 type ZoraMintChain = 'base' | 'zora' | 'optimism' | 'ethereum';
 const ZORA_CREATOR_ADDRESS: Record<ZoraMintChain, Address> = {
-  base: '0x7777777F279eba3d3Ad8F4E708e3a3E3cCbE3e3e',
-  zora: '0x7777777F279eba3d3Ad8F4E708e3a3E3cCbE3e3e',
+  // Zora 1155 factory proxy — same address on all supported networks (context7: ourzora/zora-protocol docs).
+  base: '0x777777C338d93e2C7adf08D102d45CA7CC4Ed021',
+  zora: '0x777777C338d93e2C7adf08D102d45CA7CC4Ed021',
+  optimism: '0x777777C338d93e2C7adf08D102d45CA7CC4Ed021',
+  ethereum: '0x777777C338d93e2C7adf08D102d45CA7CC4Ed021',
 };
 
 /** Zora Protocol Rewards address. */
-const ZORA_PROTOCOL_REWARDS = '0x7777777F279eba3d3Ad8F4E708e3a3E3cCbE3e3e';
+const ZORA_PROTOCOL_REWARDS = '0x7777777F279eba3d3Ad8F4E708545291A6fDBA8B';
 
 /** Default royalty BPS (5%). */
 const DEFAULT_ROYALTY_BPS = 500;
