@@ -208,3 +208,17 @@ be3a7ad45aa67d0df57b1756c5f4cdf4a2ad035f:AGENTS.md:internal-tailscale-ip:286
 be3a7ad45aa67d0df57b1756c5f4cdf4a2ad035f:AGENTS.md:internal-tailscale-ip:335
 aeeefd7c83346b40f67d90a20eaa8114c167e307:GAPS.md:internal-tailscale-ip:69
 aeeefd7c83346b40f67d90a20eaa8114c167e307:REMAINING.md:internal-tailscale-ip:173
+
+# 2026-10-23 — false positives, PROVEN not secret material.
+# Every finding below matched the literal 8-character string "REDACTED"
+# (sha256 prefix b83c7778c23a8d19 == sha256("REDACTED")). The reported
+# "Peertube OAuth client secret 6ad9d432" was a misread COMMIT sha
+# (6ad9d432e15841f9a6c33e3987fee49b7f1fa52b), not a secret value.
+# Live PeerTube credentials live only in gopass (degenfeed/peertube/admin);
+# the repo holds placeholders. No rotation was required for these entries.
+6ad9d432e15841f9a6c33e3987fee49b7f1fa52b:docs/ADMIN_ACCESS.md:generic-oauth-client-secret:129
+b157357ec2e4c9290bfcbd4e4d8c66d55703341d:docs/ADMIN_ACCESS.md:generic-oauth-client-secret:129
+abe890fc04afacc18a3e1a6cd997c96fe91b5c6a:workers/api/wrangler.toml:generic-oauth-client-secret:12
+002c067cb52c041fa9e7895feafa96a0405268af:docs/DEPLOYED.md:ethereum-private-key:70
+13df1548f1db9e2fb9a5d639c32aac927264d7fc:docs/NETWORK_OWNERSHIP.md:ethereum-private-key:106
+13df1548f1db9e2fb9a5d639c32aac927264d7fc:docs/NETWORK_OWNERSHIP.md:ethereum-private-key:294
