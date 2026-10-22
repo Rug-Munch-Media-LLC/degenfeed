@@ -4,20 +4,20 @@ providers:
   # DeepSeek (primary)
   - id: deepseek:deepseek-v4-pro
     config:
-      apiKey: "***REMOVED***"
+      apiKey: "${DEEPSEEK_API_KEY}"
       apiBaseUrl: "https://api.deepseek.com/v1"
   - id: deepseek:deepseek-v4-flash
     config:
-      apiKey: "***REMOVED***"
+      apiKey: "${DEEPSEEK_API_KEY}"
       apiBaseUrl: "https://api.deepseek.com/v1"
   # Groq (free)
   - id: groq:llama-3.3-70b-versatile
     config:
-      apiKey: "***REMOVED***"
+      apiKey: "${GROQ_API_KEY}"
   # OpenRouter (free)
   - id: openrouter:qwen/qwen3-coder
     config:
-      apiKey: "***REMOVED***"
+      apiKey: "${OPENROUTER_API_KEY}"
 
 prompts:
   - file://prompts/code-review.txt
