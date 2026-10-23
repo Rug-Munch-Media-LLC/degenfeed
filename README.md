@@ -1,5 +1,10 @@
 # DegenFeed — The Web3 Social Universe
 
+> One feed across Nostr, Farcaster, Bluesky, Mastodon/ActivityPub, Lens, Threads and RSS.
+
+**License:** [MIT](LICENSE) · **Canonical:** https://git.rugmunch.io/RugMunchMedia/degenfeed
+**Mirrors:** [GitHub](https://github.com/Rug-Munch-Media-LLC) · [GitLab](https://gitlab.com/rug-munch-media-group) · [Codeberg](https://codeberg.org/RugMunchMedia)
+
 [![CI](https://git.rugmunch.io/RugMunchMedia/degenfeed/badges/workflows/ci.yml/badge.svg)](https://git.rugmunch.io/RugMunchMedia/degenfeed/actions?workflow=ci.yml)
 [![Deploy](https://git.rugmunch.io/RugMunchMedia/degenfeed/badges/workflows/deploy.yml/badge.svg)](https://git.rugmunch.io/RugMunchMedia/degenfeed/actions?workflow=deploy.yml)
 [![Playwright E2E](https://img.shields.io/badge/E2E-Playwright-45ba4b?logo=playwright)](https://playwright.dev)
