@@ -321,7 +321,7 @@ tests/                     Integration and E2E tests
 
 ## Standards
 
-This repo follows [Rug Munch Media standards](https://git.rugmunch.io/RugMunchMedia/standards).
+This repo follows [Rug Munch Media standards](https://git.rugmunch.io/RugMunchMedia).
 
 ---
 
@@ -368,7 +368,7 @@ Full documentation site at **[docs.degenfeed.xyz](https://docs.degenfeed.xyz)** 
 - **General:** admin@rugmunch.io
 - **Legal:** legal@rugmunch.io
 - **DMCA:** dmca@degenfeed.xyz
-- **Codeberg Mirror:** [codeberg.org/degenfeed/degenfeed](https://codeberg.org/degenfeed/degenfeed)
+- **Codeberg Mirror:** [codeberg.org/degenfeed/degenfeed](https://codeberg.org/RugMunchMedia/degenfeed)
 - **GitHub Mirror:** [github.com/RugMunchMedia/degenfeed](https://github.com/rugmunchmedia/degenfeed)
 
 ## FAQ
