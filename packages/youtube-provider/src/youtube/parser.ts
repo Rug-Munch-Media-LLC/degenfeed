@@ -19,8 +19,7 @@ function parseYouTubeRss(xml: string, channel: YouTubeChannel): RSSEntry[] {
       const description = decodeXmlEntities(extractXmlTag(entryXml, 'media:description') ?? '');
       const thumbnail = extractThumbnailUrl(entryXml) ?? undefined;
       if (!videoId || !title) continue;
-      const durationStr = extractXmlTag(entryXml, 'yt:duration');
-      const duration = durationStr ? parseDurationAttribute(durationStr) : undefined;
+      const duration = extractDurationSeconds(entryXml);
       const views = extractMediaStatisticsViews(entryXml);
       entries.push({
         videoId,
@@ -40,6 +39,16 @@ function parseYouTubeRss(xml: string, channel: YouTubeChannel): RSSEntry[] {
     }
   }
   return entries;
+}
+
+function extractDurationSeconds(xml: string): number | undefined {
+  // YouTube emits a self-closing tag (<yt:duration seconds="600"/>), so read the
+  // attribute from the tag itself before falling back to element content.
+  const tag = xml.match(/<yt:duration[^>]*>/i)?.[0];
+  const fromTag = tag ? parseDurationAttribute(tag) : undefined;
+  if (fromTag !== undefined) return fromTag;
+  const inner = extractXmlTag(xml, 'yt:duration');
+  return inner ? parseDurationAttribute(inner) : undefined;
 }
 
 function parseDurationAttribute(xml: string): number | undefined {
