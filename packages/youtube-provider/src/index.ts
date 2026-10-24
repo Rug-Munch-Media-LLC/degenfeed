@@ -1,13 +1,28 @@
-// ── God code split: moved to youtube/ directory ─────────────────────────
-// This file is now a thin re-export barrel for backward compatibility.
-// Each concern lives in its own module under youtube/:
-//   types.ts   — ChannelCategory, YouTubeVideoItem, YouTubeChannel, RSSEntry
-//   config.ts  — CRYPTO_CHANNELS data + CHANNEL_BY_NAME lookup
-//   filters.ts — QUALITY_FILTERS, CATEGORY_KEYWORDS, isLowQualityVideo, computeQualityScore, etc.
-//   parser.ts  — parseYouTubeRss, fetchChannelFeed
-//   index.ts   — Circuit breaker, fetchYouTubeFeed, getYouTubeVideoInfo, trending, discovery
+/**
+ * @degenfeed/youtube-provider — public surface.
+ *
+ * `youtube/`  — legacy feed/provider layer (RSS parse, filters, trending).
+ * `ingest/`   — self-hosted ingest: records, extraction, shill candidates.
+ * `catalogue/`— top-250 channel catalogue with provenance + dedupe.
+ */
 
-export { CHANNEL_BY_NAME, CRYPTO_CHANNELS } from './youtube/config';
+export { CURATED_ROWS } from './catalogue/data';
+export {
+  buildCatalogue,
+  buildCatalogueFromRows,
+  buildDefaultCatalogue,
+  normaliseKey,
+} from './catalogue/index';
+export { parseRows } from './catalogue/parse';
+export { CATEGORIES, SUBCATEGORIES } from './catalogue/schema';
+export type { Catalogue, CatalogueEntry, CatalogueProvenance } from './catalogue/types';
+
+// ─── Ingest layer ────────────────────────────────────────────────────
+export * from './ingest';
+export {
+  CHANNEL_BY_NAME,
+  CRYPTO_CHANNELS,
+} from './youtube/config';
 export {
   CATEGORY_KEYWORDS,
   computeEngagementSignals,
