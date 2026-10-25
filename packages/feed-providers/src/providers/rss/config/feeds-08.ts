@@ -1,0 +1,186 @@
+import { cfg } from '../cfg-helpers';
+import type { RssFeedConfig } from '../types';
+
+export const FEEDS_08: RssFeedConfig[] = [
+  cfg('https://www.reddit.com/r/solana/.rss', {
+    tier: 4,
+    weight: 0.7,
+    category: 'social',
+    tags: ['solana'],
+    authority: 1,
+  }),
+  cfg('https://www.reddit.com/r/defi/.rss', {
+    tier: 4,
+    weight: 0.7,
+    category: 'social',
+    tags: ['defi'],
+    authority: 1,
+  }),
+  cfg('https://www.reddit.com/r/ethfinance/.rss', {
+    tier: 4,
+    weight: 0.7,
+    category: 'social',
+    tags: ['ethereum', 'finance'],
+    authority: 1,
+  }),
+  cfg('https://www.reddit.com/r/ethdev/.rss', {
+    tier: 4,
+    weight: 0.7,
+    category: 'social',
+    tags: ['ethereum', 'dev'],
+    authority: 1,
+  }),
+  cfg('https://www.reddit.com/r/Chainlink/.rss', {
+    tier: 4,
+    weight: 0.7,
+    category: 'social',
+    tags: ['chainlink'],
+    authority: 1,
+  }),
+  cfg('https://www.reddit.com/r/Polkadot/.rss', {
+    tier: 4,
+    weight: 0.7,
+    category: 'social',
+    tags: ['polkadot'],
+    authority: 1,
+  }),
+  cfg('https://www.reddit.com/r/cosmosnetwork/.rss', {
+    tier: 4,
+    weight: 0.7,
+    category: 'social',
+    tags: ['cosmos'],
+    authority: 1,
+  }),
+  cfg('https://www.reddit.com/r/Arbitrum/.rss', {
+    tier: 4,
+    weight: 0.7,
+    category: 'social',
+    tags: ['arbitrum'],
+    authority: 1,
+  }),
+  cfg('https://www.reddit.com/r/optimismCollective/.rss', {
+    tier: 4,
+    weight: 0.7,
+    category: 'social',
+    tags: ['optimism'],
+    authority: 1,
+  }),
+  cfg('https://www.reddit.com/r/Avax/.rss', {
+    tier: 4,
+    weight: 0.7,
+    category: 'social',
+    tags: ['avalanche'],
+    authority: 1,
+  }),
+  cfg('https://www.reddit.com/r/Cardano/.rss', {
+    tier: 4,
+    weight: 0.7,
+    category: 'social',
+    tags: ['cardano'],
+    authority: 1,
+  }),
+  cfg('https://www.reddit.com/r/Monero/.rss', {
+    tier: 4,
+    weight: 0.7,
+    category: 'social',
+    tags: ['monero'],
+    authority: 1,
+  }),
+  cfg('https://www.reddit.com/r/0xPolygon/.rss', {
+    tier: 4,
+    weight: 0.7,
+    category: 'social',
+    tags: ['polygon'],
+    authority: 1,
+  }),
+  cfg('https://old.reddit.com/r/CryptoCurrency/hot.rss?limit=25', {
+    tier: 4,
+    weight: 0.7,
+    category: 'social',
+    tags: ['crypto', 'discussion'],
+    authority: 1,
+  }),
+  cfg('https://old.reddit.com/r/Bitcoin/hot.rss?limit=25', {
+    tier: 4,
+    weight: 0.7,
+    category: 'social',
+    tags: ['bitcoin'],
+    authority: 1,
+  }),
+  cfg('https://old.reddit.com/r/ethereum/hot.rss?limit=25', {
+    tier: 4,
+    weight: 0.7,
+    category: 'social',
+    tags: ['ethereum'],
+    authority: 1,
+  }),
+  cfg('https://old.reddit.com/r/solana/hot.rss?limit=25', {
+    tier: 4,
+    weight: 0.7,
+    category: 'social',
+    tags: ['solana'],
+    authority: 1,
+  }),
+  cfg('https://old.reddit.com/r/defi/hot.rss?limit=25', {
+    tier: 4,
+    weight: 0.7,
+    category: 'social',
+    tags: ['defi'],
+    authority: 1,
+  }),
+  cfg('https://www.reddit.com/r/ArtificialInteligence/.rss', {
+    tier: 5,
+    weight: 0.6,
+    category: 'social',
+    tags: ['ai'],
+    authority: 1,
+  }),
+  cfg('https://www.reddit.com/r/MachineLearning/.rss', {
+    tier: 5,
+    weight: 0.6,
+    category: 'social',
+    tags: ['ml', 'ai'],
+    authority: 1,
+  }),
+
+  // ═══════════════════════════════════════════════════════════════════
+  // Social: Reddit — EXPANSION (2026-08-06)
+  // 30+ more subreddits across crypto/tech/gaming/science/news/general.
+  // ═══════════════════════════════════════════════════════════════════
+  // ── Crypto / DeFi / Web3 (requested set) ──
+  cfg('https://www.reddit.com/r/altcoin/.rss?limit=100', {
+    tier: 4,
+    weight: 0.7,
+    category: 'social',
+    tags: ['crypto', 'altcoin'],
+    authority: 1,
+  }),
+  cfg('https://www.reddit.com/r/ethdev/.rss?limit=100', {
+    tier: 4,
+    weight: 0.7,
+    category: 'social',
+    tags: ['ethereum', 'dev'],
+    authority: 1,
+  }),
+  cfg('https://www.reddit.com/r/solidity/.rss?limit=100', {
+    tier: 4,
+    weight: 0.7,
+    category: 'social',
+    tags: ['solidity', 'dev'],
+    authority: 1,
+  }),
+  cfg('https://www.reddit.com/r/cryptodevs/.rss?limit=100', {
+    tier: 4,
+    weight: 0.7,
+    category: 'social',
+    tags: ['crypto', 'dev'],
+    authority: 1,
+  }),
+  cfg('https://www.reddit.com/r/web3/.rss?limit=100', {
+    tier: 4,
+    weight: 0.7,
+    category: 'social',
+    tags: ['web3'],
+    authority: 1,
+  }),
+];
