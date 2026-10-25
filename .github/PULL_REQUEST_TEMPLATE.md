@@ -21,4 +21,3 @@
 
 ## Verification
 <!-- Show proof: screenshots, CLI output, URLs — not just "I tested it" -->
-

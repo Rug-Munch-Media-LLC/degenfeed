@@ -1,7 +1,7 @@
 # DegenFeed — Testing Plan
 
-> **Last updated:** 2026-07-24  
-> **Owner:** Engineering Team  
+> **Last updated:** 2026-07-24
+> **Owner:** Engineering Team
 > **Status:** Active
 
 ---
@@ -68,8 +68,8 @@
 
 ### 3.1 Unit Tests
 
-**Where:** Pure functions, utilities, data mappers  
-**Pattern:** Function in → expected output out  
+**Where:** Pure functions, utilities, data mappers
+**Pattern:** Function in → expected output out
 **No mocks** (or minimal mocks)
 
 **Test Suite** | **Functions Tested**
@@ -86,8 +86,8 @@
 
 ### 3.2 Integration Tests
 
-**Where:** Hooks × Services, Components × Context, API Handlers  
-**Pattern:** Render hook/component → simulate interaction → assert behavior  
+**Where:** Hooks × Services, Components × Context, API Handlers
+**Pattern:** Render hook/component → simulate interaction → assert behavior
 **Mocks:** Module-level via `vi.mock()`
 
 **Test Suite** | **What It Tests**
@@ -103,7 +103,7 @@
 
 ### 3.3 E2E Tests (Playwright)
 
-**Where:** `apps/web/e2e/`  
+**Where:** `apps/web/e2e/`
 **Pattern:** Page → user action → assert DOM/URL changes
 
 | Suite | Flow |

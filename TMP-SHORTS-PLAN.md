@@ -7,7 +7,7 @@ Build a complete short-form vertical video aggregation system with TikTok-style 
 
 ### Backend (4 files)
 1. `packages/shorts-provider/src/index.ts` — **MODIFY**: Add TikTok RSS + Instagram oEmbed fetchers
-2. `workers/api/src/feed/shorts-aggregator.ts` — **CREATE**: Class-based ShortsAggregator  
+2. `workers/api/src/feed/shorts-aggregator.ts` — **CREATE**: Class-based ShortsAggregator
 3. `workers/api/src/routes/shorts.ts` — **MODIFY**: Add trending, for-you, source-filtered, create routes
 4. `workers/api/src/app.ts` — **MODIFY**: Register new shorts API routes
 

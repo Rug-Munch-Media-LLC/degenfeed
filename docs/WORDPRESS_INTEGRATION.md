@@ -4,8 +4,8 @@ Embed your DegenFeed cross-protocol content feed directly into any WordPress sit
 Display your unified Nostr + Farcaster + Bluesky + Lens + RSS feed as a WordPress
 widget, shortcode, or full-page embed.
 
-> **Status:** Concept / Design Doc  
-> **Target:** WordPress plugin published on WordPress.org + GitHub  
+> **Status:** Concept / Design Doc
+> **Target:** WordPress plugin published on WordPress.org + GitHub
 > **License:** GPL v2+
 
 ---
@@ -54,7 +54,7 @@ updates, interactive posts, tip buttons, media previews.
 
 ```html
 <!-- WordPress shortcode renders: -->
-<div id="degenfeed-feed" 
+<div id="degenfeed-feed"
      data-instance="https://alice.xyz"
      data-theme="dark"
      data-filters="nostr,farcaster"
@@ -63,7 +63,7 @@ updates, interactive posts, tip buttons, media previews.
 <script src="https://alice.xyz/embed.js" async></script>
 ```
 
-**Pros:** Full interactivity, real-time, theming  
+**Pros:** Full interactivity, real-time, theming
 **Cons:** Heavier page load, requires JS
 
 #### Option B: Server-Side Render (Lightweight)
@@ -77,7 +77,7 @@ renders HTML directly. No JavaScript required for basic display.
 
 Renders as static HTML with links to DegenFeed for interactivity.
 
-**Pros:** Lightweight, works without JS, SEO-friendly  
+**Pros:** Lightweight, works without JS, SEO-friendly
 **Cons:** Static content (no real-time updates), fewer interactions
 
 ---
@@ -203,7 +203,7 @@ For non-WordPress sites, the embed script can be used standalone:
 
 ```html
 <!-- Any website -->
-<div id="degenfeed-feed" 
+<div id="degenfeed-feed"
      data-instance="https://alice.xyz"
      data-filters="nostr,farcaster">
 </div>

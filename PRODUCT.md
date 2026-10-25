@@ -1,8 +1,8 @@
 # DegenFeed Web — Product Charter
 
-**Product:** DegenFeed Web Client  
-**Repo:** git.rugmunch.io/RugMunchMedia/degenfeed  
-**Status:** Pre-launch — invite-only beta target  
+**Product:** DegenFeed Web Client
+**Repo:** git.rugmunch.io/RugMunchMedia/degenfeed
+**Status:** Pre-launch — invite-only beta target
 **Last Updated:** 2026-07-27
 
 ## Problem

@@ -1,7 +1,7 @@
 # DAO Security Audit — DegenFeed Governance Contracts
 
-**Audit Date:** 2026-07-25  
-**Scope:** Full on-chain governance stack + API layer  
+**Audit Date:** 2026-07-25
+**Scope:** Full on-chain governance stack + API layer
 **Contracts Audited:**
 1. `DegenFeedGovernor.sol` — Voting & proposal management (485 lines)
 2. `DegenFeedTimelock.sol` — Timelock controller (342 lines)
@@ -43,9 +43,9 @@
 
 ## G-01 [CRITICAL] — Flash Loan Voting Attack
 
-**File:** `DegenFeedGovernor.sol` (lines 138-159)  
-**CVSS 3.1:** 9.3 (AV:N/AC:L/PR:N/UI:N/S:C/C:H/I:H/A:N)  
-**CWE:** CWE-799 — Improper Control of Interaction Frequency  
+**File:** `DegenFeedGovernor.sol` (lines 138-159)
+**CVSS 3.1:** 9.3 (AV:N/AC:L/PR:N/UI:N/S:C/C:H/I:H/A:N)
+**CWE:** CWE-799 — Improper Control of Interaction Frequency
 **OWASP:** API8 — Injection (governance manipulation)
 
 ### Description
@@ -62,19 +62,19 @@ The contract does NOT check how long the voter has held the tokens. There is no 
 // Attacker contract
 function flashLoanAttack(address governor, address token, bytes memory maliciousCalldata) external {
     uint256 loan = flashLoan(FLASH_LOAN_POOL, 100_000_000e18);
-    
+
     // Create malicious proposal with full voting power
     address[] memory targets = new address[](1);
     targets[0] = address(victim);
     uint256[] memory values = new uint256[](1);
     bytes[] memory calldatas = new bytes[](1);
     calldatas[0] = maliciousCalldata;
-    
+
     uint256 propId = DegenFeedGovernor(governor).propose(targets, values, calldatas, "Malicious");
-    
+
     // Vote with full flash loaned power
     DegenFeedGovernor(governor).castVote(propId, 1); // For
-    
+
     // Return loan
     flashLoanRepay(FLASH_LOAN_POOL, loan);
 }
@@ -102,9 +102,9 @@ function _getVotes(address account, uint256 timepoint, bytes memory params)
 
 ## G-02 [CRITICAL] — Veto Creator Can Permanently Block Proposals
 
-**File:** `DegenFeedGovernor.sol` (lines 292-300)  
-**CVSS 3.1:** 8.6 (AV:N/AC:L/PR:L/UI:N/S:C/C:H/I:H/A:H)  
-**CWE:** CWE-862 — Missing Authorization  
+**File:** `DegenFeedGovernor.sol` (lines 292-300)
+**CVSS 3.1:** 8.6 (AV:N/AC:L/PR:L/UI:N/S:C/C:H/I:H/A:H)
+**CWE:** CWE-862 — Missing Authorization
 
 ### Description
 The `veto()` function can only be called by `onlyCreator`. A single creator (who may be compromised or malicious) can veto ANY proposal in Pending or Active state. Treasury and Constitutional proposals are excluded (line 295), but standard proposals and signaling proposals are vulnerable.
@@ -136,9 +136,9 @@ function veto(uint256 proposalId) external {
 
 ## G-03 [CRITICAL] — Emergency Bypass Can Drain Treasury via Single Executor
 
-**File:** `DegenFeedTimelock.sol` (lines 191-217, 219-229)  
-**CVSS 3.1:** 9.0 (AV:N/AC:L/PR:L/UI:N/S:C/C:H/I:H/A:H)  
-**CWE:** CWE-284 — Improper Access Control  
+**File:** `DegenFeedTimelock.sol` (lines 191-217, 219-229)
+**CVSS 3.1:** 9.0 (AV:N/AC:L/PR:L/UI:N/S:C/C:H/I:H/A:H)
+**CWE:** CWE-284 — Improper Access Control
 
 ### Description
 The `emergencyExecutor` (default: `creator`) can:
@@ -189,9 +189,9 @@ function approveBypass() external onlyEmergencyExecutor {
 
 ## G-04 [HIGH] — Reentrancy in executeTransaction
 
-**File:** `MultiSigTreasury.sol` (lines 287-306)  
-**CVSS 3.1:** 7.5 (AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H)  
-**CWE:** CWE-1077 — Insertion of Sensitive Information Into Debugging Code  
+**File:** `MultiSigTreasury.sol` (lines 287-306)
+**CVSS 3.1:** 7.5 (AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H)
+**CWE:** CWE-1077 — Insertion of Sensitive Information Into Debugging Code
 
 ### Description
 The `executeTransaction` function sets `txn.executed = true` BEFORE the external call (line 300), which is good for CEI pattern. However, the `nonReentrant` modifier is used (line 292). The call is a generic `call{value: txn.value}(txn.data)` which could invoke attacker-controlled fallback functions.
@@ -216,9 +216,9 @@ for (uint256 i = 0; i < signers.length; i++) {
 
 ## G-05 [HIGH] — Signature Replay via Nonce Increment Before _castVote
 
-**File:** `DegenFeedGovernor.sol` (lines 410-426)  
-**CVSS 3.1:** 7.0 (AV:N/AC:L/PR:N/UI:N/S:U/C:L/I:H/A:L)  
-**CWE:** CWE-347 — Improper Verification of Cryptographic Signature  
+**File:** `DegenFeedGovernor.sol` (lines 410-426)
+**CVSS 3.1:** 7.0 (AV:N/AC:L/PR:N/UI:N/S:U/C:L/I:H/A:L)
+**CWE:** CWE-347 — Improper Verification of Cryptographic Signature
 
 ### Description
 The `castVoteBySig` function increments the nonce BEFORE calling `_castVote`. If `_castVote` reverts (proposal not active, voter already voted, etc.), the nonce is already consumed. The voter loses their ability to use that nonce but the vote was never cast.
@@ -246,7 +246,7 @@ governor.castVoteBySig(v); // Reverts: "G: invalid nonce"
 function castVoteBySig(SigVote calldata sigVote) external notPaused returns (uint256) {
     require(sigVote.deadline >= block.timestamp, "G: expired");
     require(sigVote.voter != address(0), "G: invalid voter");
-    
+
     // EIP-712 typed data
     bytes32 domainSeparator = keccak256(abi.encode(
         keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"),
@@ -262,15 +262,15 @@ function castVoteBySig(SigVote calldata sigVote) external notPaused returns (uin
     bytes32 digest = keccak256(abi.encodePacked("\x19\x01", domainSeparator, structHash));
     address recovered = ECDSA.recover(digest, sigVote.v, sigVote.r, sigVote.s);
     require(recovered == sigVote.voter, "G: bad signature");
-    
+
     ProposalInfo storage info = proposals[sigVote.proposalId];
     bytes memory params = info.quadraticVoting ? abi.encode(true) : bytes("");
-    
+
     uint256 result = super._castVote(sigVote.proposalId, sigVote.voter, sigVote.support, "", params);
-    
+
     // Only increment nonce AFTER successful vote
     sigNonces[sigVote.voter]++;
-    
+
     emit VoteCastWithSignature(sigVote.voter, sigVote.proposalId, sigVote.support);
     return result;
 }
@@ -280,9 +280,9 @@ function castVoteBySig(SigVote calldata sigVote) external notPaused returns (uin
 
 ## G-06 [HIGH] — getPastTotalSupply Returns Current Total Supply
 
-**File:** `DAOTokenWrapper.sol` (lines 246-250)  
-**CVSS 3.1:** 7.2 (AV:N/AC:L/PR:N/UI:N/S:C/C:L/I:H/A:L)  
-**CWE:** CWE-682 — Incorrect Calculation  
+**File:** `DAOTokenWrapper.sol` (lines 246-250)
+**CVSS 3.1:** 7.2 (AV:N/AC:L/PR:N/UI:N/S:C/C:L/I:H/A:L)
+**CWE:** CWE-682 — Incorrect Calculation
 
 ### Description
 The `getPastTotalSupply` function is supposed to return the total supply at a historical timepoint (for quorum calculations). However, it uses `upperLookupRecent` which returns the latest checkpoint at or before the timepoint — but only if `exists` is false, it falls through to `totalSupply()` which returns CURRENT supply.
@@ -311,9 +311,9 @@ function getPastTotalSupply(uint256 timepoint) public view returns (uint256) {
 
 ## G-07 [HIGH] — Emergency Pause Can Permanently Brick Governance
 
-**File:** `DegenFeedGovernor.sol` (lines 334-354)  
-**CVSS 3.1:** 6.8 (AV:N/AC:L/PR:L/UI:N/S:U/C:N/I:N/A:H)  
-**CWE:** CWE-400 — Uncontrolled Resource Consumption  
+**File:** `DegenFeedGovernor.sol` (lines 334-354)
+**CVSS 3.1:** 6.8 (AV:N/AC:L/PR:L/UI:N/S:U/C:N/I:N/A:H)
+**CWE:** CWE-400 — Uncontrolled Resource Consumption
 
 ### Description
 The emergency pause, once activated by 3-of-N guardians or an EMERGENCY_PAUSER_ROLE holder:
@@ -349,9 +349,9 @@ function unpause() external {
 
 ## G-08 [MEDIUM] — Veto Extension Can Be Extended Indefinitely
 
-**File:** `DegenFeedGovernor.sol` (lines 308-312)  
-**CVSS 3.1:** 5.6 (AV:N/AC:L/PR:L/UI:N/S:U/C:N/I:N/A:H)  
-**CWE:** CWE-754 — Improper Check for Unusual or Exceptional Conditions  
+**File:** `DegenFeedGovernor.sol` (lines 308-312)
+**CVSS 3.1:** 5.6 (AV:N/AC:L/PR:L/UI:N/S:U/C:N/I:N/A:H)
+**CWE:** CWE-754 — Improper Check for Unusual or Exceptional Conditions
 
 ### Description
 The `extendVeto` function allows extending the veto period by up to 90 days, and can be called repeatedly by `onlyGovernance`. Since `onlyGovernance` requires a governance vote, this is partially mitigated — but if the creator controls a majority, they can perpetually extend veto.
@@ -377,9 +377,9 @@ function extendVeto(uint256 additionalSeconds) external onlyGovernance {
 
 ## G-09 [MEDIUM] — No Minimum Proposal Delay
 
-**File:** `DegenFeedGovernor.sol`  
-**CVSS 3.1:** 5.0 (AV:N/AC:L/PR:L/UI:N/S:U/C:N/I:N/A:L)  
-**CWE:** CWE-829 — Inclusion of Functionality from Untrusted Control Sphere  
+**File:** `DegenFeedGovernor.sol`
+**CVSS 3.1:** 5.0 (AV:N/AC:L/PR:L/UI:N/S:U/C:N/I:N/A:L)
+**CWE:** CWE-829 — Inclusion of Functionality from Untrusted Control Sphere
 
 ### Description
 The contract allows `votingDelay` to be set to 0 in the constructor and via `GovernorSettings.setVotingDelay`. This means proposals can go from creation to active voting immediately, allowing:
@@ -400,9 +400,9 @@ function setVotingDelay(uint48 newVotingDelay) public override onlyGovernance {
 
 ## G-10 [MEDIUM] — hasRole Overly Permissive — EIP-7201 Conflict
 
-**File:** `DegenFeedGovernor.sol` (lines 356-358)  
-**CVSS 3.1:** 5.2 (AV:N/AC:L/PR:N/UI:N/S:U/C:L/I:L/A:N)  
-**CWE:** CWE-862 — Missing Authorization  
+**File:** `DegenFeedGovernor.sol` (lines 356-358)
+**CVSS 3.1:** 5.2 (AV:N/AC:L/PR:N/UI:N/S:U/C:L/I:L/A:N)
+**CWE:** CWE-862 — Missing Authorization
 
 ### Description
 The custom `hasRole` function hardcodes a check for `EMERGENCY_PAUSER_ROLE` and returns true if `account == creator` or `guardians[account].active`. This is a custom implementation that:
@@ -434,9 +434,9 @@ for (uint256 i = 0; i < guardianList.length; i++) {
 
 ## G-11 [MEDIUM] — Spending Limit Double-Spend on Day Boundary
 
-**File:** `MultiSigTreasury.sol` (lines 573-588)  
-**CVSS 3.1:** 4.9 (AV:N/AC:L/PR:L/UI:N/S:U/C:L/I:L/A:N)  
-**CWE:** CWE-682 — Incorrect Calculation  
+**File:** `MultiSigTreasury.sol` (lines 573-588)
+**CVSS 3.1:** 4.9 (AV:N/AC:L/PR:L/UI:N/S:U/C:L/I:L/A:N)
+**CWE:** CWE-682 — Incorrect Calculation
 
 ### Description
 The spending limit mechanism resets daily using `block.timestamp / 1 days`. If a user executes a transfer at the boundary of a day (just before midnight), and another follows immediately after midnight, the second transfer can reuse the daily limit because:
@@ -449,18 +449,18 @@ Use a more robust tracking mechanism:
 function transferWithLimit(IERC20 token, address to, uint256 amount) external nonReentrant {
     SpendingLimit storage limit = spendingLimits[msg.sender][token];
     require(limit.dailyLimit > 0, "Treasury: no limit set");
-    
+
     uint256 today = block.timestamp / 86400;
     if (today > limit.lastResetDay) {
         limit.spentToday = 0;
         limit.lastResetDay = today;
     }
-    
+
     // Use checked arithmetic
     require(limit.spentToday + amount >= limit.spentToday, "Treasury: overflow");
     require(limit.spentToday + amount <= limit.dailyLimit, "Treasury: limit exceeded");
     limit.spentToday += amount;
-    
+
     token.safeTransfer(to, amount);
 }
 ```
@@ -469,9 +469,9 @@ function transferWithLimit(IERC20 token, address to, uint256 amount) external no
 
 ## G-12 [MEDIUM] — Stream Arithmetic Rounding Can Lock Tiny Funds
 
-**File:** `MultiSigTreasury.sol` (lines 348, 396-404)  
-**CVSS 3.1:** 4.5 (AV:N/AC:L/PR:L/UI:N/S:U/C:N/I:N/A:L)  
-**CWE:** CWE-682 — Incorrect Calculation  
+**File:** `MultiSigTreasury.sol` (lines 348, 396-404)
+**CVSS 3.1:** 4.5 (AV:N/AC:L/PR:L/UI:N/S:U/C:N/I:N/A:L)
+**CWE:** CWE-682 — Incorrect Calculation
 
 ### Description
 `amountPerSecond = totalAmount / durationSeconds` uses integer division. If `totalAmount` is not perfectly divisible by `durationSeconds`, the remainder is lost. Over time, `vested = elapsed * amountPerSecond` may never reach `totalAmount`, leaving small amounts permanently locked.
@@ -504,9 +504,9 @@ function _streamWithdrawable(PaymentStream storage stream) internal view returns
 
 ## G-13 [LOW] — No Dynamic Quorum (Static % Invites Low-Turnout Attacks)
 
-**File:** `DegenFeedGovernor.sol` (lines 252-270)  
-**CVSS 3.1:** 3.7 (AV:N/AC:L/PR:L/UI:N/S:U/C:N/I:L/A:N)  
-**CWE:** CWE-682 — Incorrect Calculation  
+**File:** `DegenFeedGovernor.sol` (lines 252-270)
+**CVSS 3.1:** 3.7 (AV:N/AC:L/PR:L/UI:N/S:U/C:N/I:L/A:N)
+**CWE:** CWE-682 — Incorrect Calculation
 
 ### Description
 Quorum is calculated as a static percentage of total supply. In periods of low participation, an attacker with a small but highly motivated group can pass proposals. Compound Governor v2 introduced dynamic quorum based on historical participation — this contract doesn't have it.
@@ -521,14 +521,14 @@ mapping(uint256 => uint256) public quorumHistory; // proposalId => quorum used
 function _quorumReached(uint256 proposalId) internal view override returns (bool) {
     GovernorProposalType pType = proposals[proposalId].proposalType;
     if (pType == GovernorProposalType.Signaling) return true;
-    
+
     (uint256 aV, uint256 fV, uint256 abV) = proposalVotes(proposalId);
     uint256 totalWeight = aV + fV + abV;
     uint256 supply = token().getPastTotalSupply(proposalSnapshot(proposalId));
-    
+
     // Dynamic quorum based on last N proposals' turnout
     uint256 q = _calculateDynamicQuorum(supply);
-    
+
     return totalWeight >= q;
 }
 ```
@@ -537,9 +537,9 @@ function _quorumReached(uint256 proposalId) internal view override returns (bool
 
 ## G-14 [LOW] — Factory setPaused Uses platformFeeReceiver Not Access Control
 
-**File:** `DegenFeedDAOFactory.sol` (lines 155-159)  
-**CVSS 3.1:** 3.2 (AV:N/AC:L/PR:L/UI:N/S:U/C:N/I:N/A:L)  
-**CWE:** CWE-862 — Missing Authorization  
+**File:** `DegenFeedDAOFactory.sol` (lines 155-159)
+**CVSS 3.1:** 3.2 (AV:N/AC:L/PR:L/UI:N/S:U/C:N/I:N/A:L)
+**CWE:** CWE-862 — Missing Authorization
 
 ### Description
 `setPaused` checks `msg.sender == platformFeeReceiver` instead of using OpenZeppelin's `Ownable` or `AccessControl`. If the platform fee receiver changes, this access control may become incorrect or the pause function might become stuck.
@@ -560,9 +560,9 @@ contract DegenFeedDAOFactory is Ownable {
 
 ## G-15 [LOW] — Token Recovery Calls Can Be Replayed
 
-**File:** `DegenFeedTimelock.sol` (lines 330-341)  
-**CVSS 3.1:** 3.0 (AV:N/AC:L/PR:L/UI:N/S:U/C:N/I:L/A:N)  
-**CWE:** CWE-123 — Write-what-where  
+**File:** `DegenFeedTimelock.sol` (lines 330-341)
+**CVSS 3.1:** 3.0 (AV:N/AC:L/PR:L/UI:N/S:U/C:N/I:L/A:N)
+**CWE:** CWE-123 — Write-what-where
 
 ### Description
 `recoverTokens` and `recoverNative` use only `DEFAULT_ADMIN_ROLE` protection but no nonce or state tracking. If an admin role is granted to a malicious address (due to governance attack), they can drain all tokens.
@@ -587,9 +587,9 @@ function recoverTokens(IERC20 token, address to, uint256 amount) external {
 
 ### A-01 [HIGH] — No Rate Limiting on Proposal Creation
 
-**File:** `dao-proposals.ts` (lines 58-103)  
-**CVSS 3.1:** 7.0 (AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H)  
-**CWE:** CWE-770 — Allocation of Resources Without Limits or Throttling  
+**File:** `dao-proposals.ts` (lines 58-103)
+**CVSS 3.1:** 7.0 (AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H)
+**CWE:** CWE-770 — Allocation of Resources Without Limits or Throttling
 
 ### Description
 The `handleDaoProposalCreate` handler has no rate limiting. An attacker can create unlimited proposals, filling the KV store and causing out-of-memory or excessive billing.
@@ -608,9 +608,9 @@ if (lastHour.length >= 5) {
 
 ### A-02 [HIGH] — computeFinalStatus Fetches Entire Vote Record
 
-**File:** `dao-proposals.ts` (lines 293-310)  
-**CVSS 3.1:** 6.5 (AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:L)  
-**CWE:** CWE-1059 — Inefficient Algorithm  
+**File:** `dao-proposals.ts` (lines 293-310)
+**CVSS 3.1:** 6.5 (AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:L)
+**CWE:** CWE-1059 — Inefficient Algorithm
 
 ### Description
 `computeFinalStatus` is called on EVERY proposal list fetch and fetches the full vote record from KV. With 100+ proposals, this causes N+1 reads per request.
@@ -628,8 +628,8 @@ if (proposal.status === 'active' && now > proposal.endAt && !proposal._statusCom
 
 ### A-03 [MEDIUM] — Treasury Endpoints Don't Verify Wallet Ownership
 
-**File:** `dao-treasury.ts` (multiple handlers)  
-**CVSS 3.1:** 5.8  
+**File:** `dao-treasury.ts` (multiple handlers)
+**CVSS 3.1:** 5.8
 
 ### Description
 Endpoints like `handleMultisigSign`, `handleStreamCancel`, etc. accept the signer/canceller address as a request body parameter rather than deriving it from the session. This allows a user to impersonate another address if they know it.
@@ -648,8 +648,8 @@ export async function handleMultisigSign(request: Request, env: Env): Promise<Re
 
 ### A-04 [MEDIUM] — Execute Uses Fake Transaction Hash
 
-**File:** `dao-proposals.ts` (line 281)  
-**CVSS 3.1:** 5.0  
+**File:** `dao-proposals.ts` (line 281)
+**CVSS 3.1:** 5.0
 
 ### Description
 `executionTxHash` is generated as a random UUID, not an actual on-chain transaction hash. This breaks auditability:
@@ -666,15 +666,15 @@ proposal.executionTxHash = onChainTxHash ?? null;
 
 ### A-05 [LOW] — No Voting Delay Enforcement at API Level
 
-**File:** `dao-crud.ts` (line 380)  
-**CVSS 3.1:** 3.5  
+**File:** `dao-crud.ts` (line 380)
+**CVSS 3.1:** 3.5
 
 ### Description
 The API allows `votingDelay: 0` which means voting starts immediately after proposal creation. This should be enforced at the API level to be at least 1 hour.
 
 ### Fix
 ```typescript
-votingDelay: typeof govRaw?.votingDelay === 'number' 
+votingDelay: typeof govRaw?.votingDelay === 'number'
   ? Math.max(3600000, govRaw.votingDelay) // Min 1 hour in ms
   : governanceDefaults.votingDelay,
 ```

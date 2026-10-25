@@ -15,8 +15,8 @@ No email/password login is needed. The app is designed to be pseudonymous — us
 
 CRYPTO CONTENT NOTICE
 ---------------------
-DegenFeed aggregates public posts from decentralized social protocols (Nostr, Farcaster, Lens, Bluesky). 
-Content is user-generated and may include discussion of cryptocurrencies, NFTs, and blockchain projects. 
+DegenFeed aggregates public posts from decentralized social protocols (Nostr, Farcaster, Lens, Bluesky).
+Content is user-generated and may include discussion of cryptocurrencies, NFTs, and blockchain projects.
 The app does not facilitate financial transactions, gambling, or trading.
 
 AGE RATING: 17+

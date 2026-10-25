@@ -1,6 +1,6 @@
 # DegenFeed — Code Quality Standards
 
-> **Last updated:** 2026-07-24  
+> **Last updated:** 2026-07-24
 > **Owner:** Engineering Team
 
 ---

@@ -1,9 +1,9 @@
 # DegenFeed — OWASP Top 10 (2025/2026) Security Audit
 
-**Audit Date:** 2026-07-25  
-**Auditor:** Security Specialist — Rug Munch Media  
-**Scope:** Full stack: Next.js 16 app, middleware, auth, storage, web3 packages, Docker infrastructure  
-**Type:** Automated + Manual code review  
+**Audit Date:** 2026-07-25
+**Auditor:** Security Specialist — Rug Munch Media
+**Scope:** Full stack: Next.js 16 app, middleware, auth, storage, web3 packages, Docker infrastructure
+**Type:** Automated + Manual code review
 
 ---
 
@@ -57,7 +57,7 @@ if (method !== 'GET' && _authMethod === 'wallet') {
 }
 ```
 
-**CWE:** CWE-352 (Cross-Site Request Forgery)  
+**CWE:** CWE-352 (Cross-Site Request Forgery)
 **CVSS 3.1:** 8.8 (AV:N/AC:L/PR:N/UI:R/S:U/C:H/I:H/A:H)
 
 ---
@@ -87,8 +87,8 @@ if (args.secret) {
 - Comment explicitly says "encryption with hardcoded passphrase provides no additional security"
 - Any XSS can exfiltrate ALL protocol credentials
 
-**Impact:** Compromise of all linked protocol accounts if XSS is achieved  
-**CWE:** CWE-312 (Cleartext Storage of Sensitive Information)  
+**Impact:** Compromise of all linked protocol accounts if XSS is achieved
+**CWE:** CWE-312 (Cleartext Storage of Sensitive Information)
 **CVSS 3.1:** 9.1 (AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:N)
 
 ### 2.4 ❌ SESSION_SECRET/AUTH_SECRET Key Rotation
@@ -115,7 +115,7 @@ if (args.secret) {
 - `unsafe-inline` allows inline script execution — bypasses CSP protections
 - These are **required** by Next.js for dev mode but should be removed in production
 
-**CWE:** CWE-79 (Cross-site Scripting)  
+**CWE:** CWE-79 (Cross-site Scripting)
 **CVSS 3.1:** 7.6 (AV:N/AC:L/PR:N/UI:R/S:U/C:H/I:L/A:L)
 
 ### 3.3 ✅ API Request Validation

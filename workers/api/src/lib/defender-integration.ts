@@ -13,8 +13,8 @@
  * @see https://docs.openzeppelin.com/defender/
  */
 
-import type { Env } from '../types';
 import { badRequest, notFound, ok, serverError } from '../response-helpers';
+import type { Env } from '../types';
 
 // ─── Types ───────────────────────────────────────────────────────────────
 
@@ -134,13 +134,13 @@ export function generateProposalExecutorAutotaskCode(params: {
 }): string {
   return `/**
  * DegenFeed Proposal Executor — OpenZeppelin Defender Autotask
- * 
+ *
  * Auto-executes passed proposals after timelock expires.
  * Deployed for DAO: ${params.daoId}
  * Governor: ${params.governorAddress}
  * Chain ID: ${params.chainId}
  * Relayer: ${params.relayerAddress}
- * 
+ *
  * @see https://docs.openzeppelin.com/defender/autotasks
  */
 
@@ -175,7 +175,7 @@ exports.handler = async function (event) {
   // In production, scan from a stored block number
   const latestBlock = await provider.getBlockNumber();
   const fromBlock = Math.max(0, latestBlock - 10000);
-  
+
   const filter = governor.filters.ProposalCreated();
   const events = await governor.queryFilter(filter, fromBlock, latestBlock);
 
@@ -225,7 +225,7 @@ export function generateSuspiciousProposalMonitorCode(params: {
 
 exports.handler = async function (event) {
   const { transaction, matchedAddresses, type } = event;
-  
+
   //   console.log('Proposal event detected:', {
   //     txHash: transaction.hash,
   //     from: transaction.from,

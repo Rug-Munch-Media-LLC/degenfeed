@@ -131,18 +131,18 @@ interface IDegenFeedCoin {
     function decimals() external view returns (uint8);
     function totalSupply() external view returns (uint256);
     function balanceOf(address account) external view returns (uint256);
-    
+
     // Zora 2026 Coins Protocol
     function creator() external view returns (address);
     function uri() external view returns (string memory);
     function getPrice() external view returns (uint256);
     function poolAddress() external view returns (address);
     function isGraduated() external view returns (bool);
-    
+
     // Trading
     function buy(address recipient, uint256 minAmount) external payable returns (uint256);
     function sell(uint256 amount, uint256 minEth) external returns (uint256);
-    
+
     // DegenFeed extensions
     function vestingConfig() external view returns (
         uint256 initialUnlockBps,

@@ -131,8 +131,8 @@ A 10-minute-old post gets:
 
 ### Change 1: Source Weight Increased (20 → 40) — `unified-scorer.ts`
 
-**Before:** source weight = 20/340 = 5.9% of base score  
-**After:** source weight = 40/360 = 11.1% of base score  
+**Before:** source weight = 20/340 = 5.9% of base score
+**After:** source weight = 40/360 = 11.1% of base score
 
 **Impact:** Protocol tier differentiation now meaningfully affects ranking. Tier-1 protocols (Nostr, Mastodon) get up to 2× the source contribution of tier-0.5 protocols (webhook, email).
 
@@ -158,14 +158,14 @@ older  → 1.0x
 
 ### Change 3: Quality Multiplier Range Widened — `unified-scorer.ts`
 
-**Before:** `Math.max(0.05, qualityScore / 100)` — linear 0.05-1.0  
+**Before:** `Math.max(0.05, qualityScore / 100)` — linear 0.05-1.0
 **After:** `Math.max(0.3, Math.min(1.0, qualityScore / 70))` — squashed curve
 
 **Impact:** A quality score of 90 maps to 1.0×, a quality score of 30 maps to 0.43×. The effective range is now **2.3×** (vs 1.29× before), rewarding original content with media much more than short reposts.
 
 ### Change 4: Reputation Baseline Added — `scorer.ts`
 
-**Before:** `let score = 0` — 88% of posts got zero reputation  
+**Before:** `let score = 0` — 88% of posts got zero reputation
 **After:** `let score = 0.05` — all authors start with a tiny baseline
 
 **Impact:** Unverified/new authors no longer get completely zeroed out on reputation. Verified authors still get +1.0 (20× the baseline), so verification remains a strong signal.
@@ -181,8 +181,8 @@ older  → 1.0x
 
 ### Change 6: FRESH_CONTENT_BOOST Reduced — `ranking-weights.ts`
 
-**Before:** `FRESH_CONTENT_BOOST = 1.2`  
-**After:** `FRESH_CONTENT_BOOST = 1.08`  
+**Before:** `FRESH_CONTENT_BOOST = 1.2`
+**After:** `FRESH_CONTENT_BOOST = 1.08`
 **After:** `MODERATELY_FRESH_BOOST = 1.05` (was 1.1)
 
 ---

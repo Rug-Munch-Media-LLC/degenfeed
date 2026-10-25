@@ -1,0 +1,154 @@
+{
+ "rules": {
+  "magic-threshold": 68,
+  "signal-list": 3,
+  "weight-map": 7
+ },
+ "total": 78,
+ "reasons": [
+  {
+   "date": "2026-10-25",
+   "rules": {
+    "magic-threshold": [
+     0,
+     68
+    ],
+    "signal-list": [
+     0,
+     3
+    ],
+    "weight-map": [
+     0,
+     7
+    ]
+   },
+   "reason": "Legacy findings measured on 2026-10-25 and captured as the shrink-only ceiling so the ratchet measures GROWTH, not history. No finding is allowlisted beyond today's count; this number may only go down."
+  }
+ ],
+ "files": {
+  "apps/web/src/app/admin/feed-health/page.tsx": {
+   "magic-threshold": 2
+  },
+  "apps/web/src/app/admin/content/page.tsx": {
+   "magic-threshold": 1
+  },
+  "apps/web/src/app/admin/sources/page.tsx": {
+   "magic-threshold": 4
+  },
+  "apps/web/src/lib/source-engine.ts": {
+   "magic-threshold": 1
+  },
+  "apps/web/src/lib/topAlgo.ts": {
+   "magic-threshold": 2
+  },
+  "packages/ui/src/FeedWhyCard.tsx": {
+   "magic-threshold": 2
+  },
+  "packages/feed-providers/src/source-discovery/quality.ts": {
+   "magic-threshold": 1
+  },
+  "packages/feed-providers/src/providers/mastodon-data.ts": {
+   "magic-threshold": 1
+  },
+  "packages/feed-providers/src/providers/rss/config/feeds-16.ts": {
+   "signal-list": 1
+  },
+  "packages/creator-coin/src/creator-controls.ts": {
+   "magic-threshold": 2
+  },
+  "packages/feed-core/src/diversity.ts": {
+   "magic-threshold": 1
+  },
+  "packages/feed-core/src/spam.ts": {
+   "magic-threshold": 4
+  },
+  "packages/feed-core/src/quality-v3.ts": {
+   "weight-map": 1,
+   "magic-threshold": 3
+  },
+  "packages/feed-core/src/protocol-quality.ts": {
+   "magic-threshold": 1
+  },
+  "packages/feed-core/src/dedup-similarity.ts": {
+   "magic-threshold": 1
+  },
+  "packages/feed-core/src/categorization-v3.ts": {
+   "magic-threshold": 3
+  },
+  "packages/feed-core/src/personalization-v2.ts": {
+   "weight-map": 1,
+   "magic-threshold": 3
+  },
+  "packages/feed-core/src/fingerprints.ts": {
+   "magic-threshold": 1
+  },
+  "packages/source-discovery/src/quality.ts": {
+   "magic-threshold": 1
+  },
+  "packages/ranking/src/video-scorer.ts": {
+   "magic-threshold": 2
+  },
+  "packages/shorts-provider/src/scorer.ts": {
+   "magic-threshold": 1
+  },
+  "packages/youtube-provider/src/youtube/index.ts": {
+   "magic-threshold": 1
+  },
+  "workers/api/src/lib/alerts.ts": {
+   "magic-threshold": 1
+  },
+  "workers/api/src/lib/global-dedup.ts": {
+   "magic-threshold": 2
+  },
+  "workers/api/src/lib/recommendation-engine.ts": {
+   "weight-map": 1,
+   "magic-threshold": 6
+  },
+  "workers/api/src/feed/youtube-algorithm.ts": {
+   "weight-map": 1
+  },
+  "workers/api/src/feed/video-discovery.ts": {
+   "weight-map": 1
+  },
+  "workers/api/src/feed/news-helpers.ts": {
+   "magic-threshold": 2,
+   "signal-list": 1
+  },
+  "workers/api/src/feed/shorts-algorithm.ts": {
+   "magic-threshold": 1
+  },
+  "workers/api/src/feed/feed-categories.ts": {
+   "magic-threshold": 3
+  },
+  "workers/api/src/feed/engagement-predictor-v2.ts": {
+   "weight-map": 1,
+   "magic-threshold": 4
+  },
+  "workers/api/src/feed/news-processor.ts": {
+   "magic-threshold": 2,
+   "signal-list": 1
+  },
+  "workers/api/src/feed/feed-enricher.ts": {
+   "magic-threshold": 3
+  },
+  "workers/api/src/live-chat/chat-analytics.ts": {
+   "magic-threshold": 1
+  },
+  "workers/api/src/ranking/ranking-weights.ts": {
+   "weight-map": 1
+  },
+  "bridge/src/providers/newsletter.ts": {
+   "magic-threshold": 1
+  },
+  "bridge/src/providers/rss.ts": {
+   "magic-threshold": 2
+  },
+  "bridge/src/providers/rss/rss-dedup.ts": {
+   "magic-threshold": 1
+  },
+  "bridge/src/providers/rss/rss-ranking.ts": {
+   "magic-threshold": 1
+  }
+ },
+ "generated_on": "2026-10-25"
+}

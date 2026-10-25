@@ -1,7 +1,7 @@
 # DegenFeed — Infrastructure & Web3 Security Audit
 
-**Date:** 2026-07-25  
-**Scope:** Cloudflare, Docker containers, Web3/Solidity, key management  
+**Date:** 2026-07-25
+**Scope:** Cloudflare, Docker containers, Web3/Solidity, key management
 
 ---
 
@@ -228,7 +228,7 @@ mergedKeys._secret = args.secret; // Farcaster signer key, Nostr nsec in plainte
 The code comment admits the issue:
 > "Browser-local IndexedDB is inherently accessible to any script on the page — encryption with a hardcoded passphrase provides no additional security."
 
-**Impact:** Any XSS vulnerability in the app exfiltrates ALL stored protocol credentials.  
+**Impact:** Any XSS vulnerability in the app exfiltrates ALL stored protocol credentials.
 **Fix Required:**
 1. Use WebAuthn for passphrase-bound encryption
 2. Never store raw private keys — derive session tokens instead
@@ -246,28 +246,28 @@ The code comment admits the issue:
 | Lens API | Public GraphQL endpoint |
 | Farcaster Hubble | Local only (`127.0.0.1:2281`) |
 
-✅ Public RPCs used where possible — no API key leakage  
-✅ Hubble runs locally — validates Farcaster data without external RPC  
+✅ Public RPCs used where possible — no API key leakage
+✅ Hubble runs locally — validates Farcaster data without external RPC
 ⚠️ Alchemy keys in `.env` — should be in gopass
 
 ### 5.4 Wallet Interaction Safety
 
 **File:** `packages/web3/src/tipContract.ts`
 
-✅ **Chain switching:** `wallet_switchEthereumChain` with `wallet_addEthereumChain` fallback  
-✅ **Value encoding:** `BigInt` for precise wei conversion — no floating point  
-✅ **Transaction flow:** Standard EIP-1193 provider pattern  
-✅ **Gas estimation:** `eth_estimateGas` called before transaction  
+✅ **Chain switching:** `wallet_switchEthereumChain` with `wallet_addEthereumChain` fallback
+✅ **Value encoding:** `BigInt` for precise wei conversion — no floating point
+✅ **Transaction flow:** Standard EIP-1193 provider pattern
+✅ **Gas estimation:** `eth_estimateGas` called before transaction
 ⚠️ **No slippage protection** — tips are direct ETH transfers, not DEX swaps (acceptable)
 
 ### 5.5 SIWE / Sign-In Security
 
 **File:** `packages/auth/src/providers/wallet.ts`
 
-✅ **EIP-4361 compliance:** Proper message format with domain, chain ID, nonce, URI  
-✅ **Nonce generation:** Server-generated per request  
-✅ **Expiration:** 300 seconds (5 minutes) — reasonable window  
-✅ **Domain binding:** `window.location.host` — prevents replay on different origins  
+✅ **EIP-4361 compliance:** Proper message format with domain, chain ID, nonce, URI
+✅ **Nonce generation:** Server-generated per request
+✅ **Expiration:** 300 seconds (5 minutes) — reasonable window
+✅ **Domain binding:** `window.location.host` — prevents replay on different origins
 ⚠️ **No chain ID verification** in middleware — only in SIWE message
 
 ### 5.6 MEV & Frontrunning Protection

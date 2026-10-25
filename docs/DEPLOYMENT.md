@@ -8,7 +8,7 @@
 > Cloudflare Workers, Pages, KV, and GitHub Actions is retained as historical
 > reference only — do not follow it for current deploys.
 
-**Status:** historical reference (superseded by `../DEPLOYMENT.md`)  
+**Status:** historical reference (superseded by `../DEPLOYMENT.md`)
 **Last updated:** 2026-07-20
 
 This doc covers deploying the full DegenFeed stack: Cloudflare Workers + Pages frontend, self-hosted infrastructure (GoToSocial, AT Protocol PDS, PeerTube, Prosody XMPP), and smart contracts (Base + Solana).

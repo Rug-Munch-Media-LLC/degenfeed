@@ -68,7 +68,7 @@ For **commenters** specifically, the method auto-detects based on the **comment 
 3. **Method selection**: User picks currency/method, enters amount (or quick-amount)
 4. **Send tip**: `useTip().createTip()` → `POST /api/tip/create` → returns intent (contract address + value)
 5. **Wallet sign**: User confirms in wallet (MetaMask, Phantom, Alby, etc.)
-6. **On-chain/Ledger**: 
+6. **On-chain/Ledger**:
    - On-chain tips go straight to `DegenFeedTips.sol` contract → `TipSent` event emitted
    - Lightning tips fetch invoice → user pays via LN wallet
    - ERC-20 tips call `tipERC20()` after approval
@@ -98,13 +98,13 @@ Deployed on **Base, Optimism, and Arbitrum** (L2s only; no mainnet to keep gas n
 contract DegenFeedTips {
     uint256 public totalTips;
     uint256 public totalEthTipped;
-    
+
     function tip(address recipient) external payable;
     function tipWithMessage(address recipient, string message) external payable;
     function tipWithSplit(address recipient, address community) external payable;
     function batchTip(address[] recipients, uint256[] amounts) external payable;
     function tipERC20(address token, address recipient, uint256 amount) external;
-    
+
     event TipSent(address indexed from, address indexed to, uint256 amount, string message);
 }
 ```
@@ -116,7 +116,7 @@ contract DegenFeedTips {
 - Total supply tracking after send to prevent reentrant manipulation
 - `receive()` allows direct ETH for emergency recovery
 
-**Deployment:** `packages/tip-contract/src/DegenFeedTips.sol`  
+**Deployment:** `packages/tip-contract/src/DegenFeedTips.sol`
 **Status:** Compiled and ready. NOT YET DEPLOYED (addresses are zeroed). Run `pnpm deploy:tip-contract --all`.
 
 ### 4.2 Address Book
@@ -261,7 +261,7 @@ The `CommentNode` currently passes `postAuthorEvmAddress` and `postAuthorSolanaA
 When a user opens the tip modal for a commenter:
 
 1. **Client-side** (`TipModal.tsx`): calls `resolveMethods(recipientProtocol, recipientAuthorId, postContext)`
-2. **Server-side** (`tip.ts:handleTipResolve`): 
+2. **Server-side** (`tip.ts:handleTipResolve`):
    - Looks up identity KV for the recipient wallet address
    - Resolves linked protocols: evmAddress, solanaAddress, farcasterCustodyAddress, lensProfile, nostrPubkey, lightningAddress
    - Builds method list with availability flags
@@ -359,8 +359,8 @@ When resolving tipping methods for an unknown wallet address, the server perform
 
 This enables cross-registered users to receive tips on any protocol they've linked.
 
-**Identity KV key:** `identityKey(authorId)` → `identity:{normalizedAddress}`  
-**Storage:** `env.IDENTITIES` KV namespace  
+**Identity KV key:** `identityKey(authorId)` → `identity:{normalizedAddress}`
+**Storage:** `env.IDENTITIES` KV namespace
 **Best-effort:** Identity lookup failures never block tip resolution.
 
 ## 12. Filing Tips for Missing Comment Author Wallet Support

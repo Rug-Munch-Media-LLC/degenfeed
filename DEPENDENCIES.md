@@ -1,7 +1,7 @@
 # DegenFeed Web — Dependency Version Manifest
 
-> **Last Updated:** 2026-07-25  
-> **Node:** 22.23.1 | **pnpm:** 11.17.0 | **Package Manager:** pnpm@11.7.0  
+> **Last Updated:** 2026-07-25
+> **Node:** 22.23.1 | **pnpm:** 11.17.0 | **Package Manager:** pnpm@11.7.0
 > **Repository:** `/path/to/degenfeed`
 
 ## Node.js Dependencies

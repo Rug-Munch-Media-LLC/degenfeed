@@ -478,13 +478,13 @@ import { createRaribleSdk } from '@rarible/sdk';
 const sdk = createRaribleSdk(undefined, 'prod', { apiKey: 'XXXXX' });
 
 // Get NFT info
-const nft = await sdk.apis.item.getItemById({ 
-  itemId: 'ETHEREUM:0xbc4ca0eda7647a8ab7c2061c2e118a18a936f13d:1' 
+const nft = await sdk.apis.item.getItemById({
+  itemId: 'ETHEREUM:0xbc4ca0eda7647a8ab7c2061c2e118a18a936f13d:1'
 });
 
 // Get collection info
-const collection = await sdk.apis.collection.getCollectionById({ 
-  collection: 'ETHEREUM:0xbc4ca0eda7647a8ab7c2061c2e118a18a936f13d' 
+const collection = await sdk.apis.collection.getCollectionById({
+  collection: 'ETHEREUM:0xbc4ca0eda7647a8ab7c2061c2e118a18a936f13d'
 });
 ```
 
@@ -587,8 +587,8 @@ export class AudiusProvider implements ProtocolProvider {
       duration: track.duration,
       genre: track.genre,
       plays: track.play_count,
-      streamUrl: track.audio_upload_id 
-        ? `https://audius.co/tracks/${track.id}/stream` 
+      streamUrl: track.audio_upload_id
+        ? `https://audius.co/tracks/${track.id}/stream`
         : null,
     }));
   }
@@ -625,8 +625,8 @@ export class RaribleProvider implements ProtocolProvider {
   private sdk: ReturnType<typeof createRaribleSdk>;
 
   constructor() {
-    this.sdk = createRaribleSdk(undefined, 'prod', { 
-      apiKey: process.env.RARIBLE_API_KEY 
+    this.sdk = createRaribleSdk(undefined, 'prod', {
+      apiKey: process.env.RARIBLE_API_KEY
     });
   }
 

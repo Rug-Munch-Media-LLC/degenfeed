@@ -1,7 +1,7 @@
 # DegenFeed Design System
 
-> **Version:** 1.0.0  
-> **Last updated:** 2026-07-24  
+> **Version:** 1.0.0
+> **Last updated:** 2026-07-24
 > **Status:** ⚠️ Audit in progress — documenting current state + planned improvements
 
 ---
@@ -257,7 +257,7 @@ Defined in `globals.css` `@layer components`:
 
 ### 4.5 ⚠️ Audit Findings
 
-**✅ Good:** All components export typed interfaces. Barrel export via `index.ts`. 
+**✅ Good:** All components export typed interfaces. Barrel export via `index.ts`.
 
 **🔴 Issue:** `PostCard.tsx` is **1,578 lines** — violates Single Responsibility, mixes concerns (engagement, context menus, media rendering, protocol-specific logic).
 
