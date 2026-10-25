@@ -1,7 +1,7 @@
 # Feed Ranking Engine Consolidation
 
-> **Date:** 2026-07-26  
-> **Author:** AI Architect (automated survey)  
+> **Date:** 2026-07-26
+> **Author:** AI Architect (automated survey)
 > **Status:** Design Proposal — Implementation Ready
 
 ---
@@ -70,7 +70,7 @@ Note: Even the `PLATFORM_TIER`, `RECENCY_HALF_LIFE_HOURS`, and `WEIGHTS_V2` cons
 
 ```
 quality.ts (v2) ← active, used by ranking/
-quality-v3.ts    ← active, used by feed-quality-dashboard  
+quality-v3.ts    ← active, used by feed-quality-dashboard
 quality-v4.ts    ← unused, test file only
 ```
 

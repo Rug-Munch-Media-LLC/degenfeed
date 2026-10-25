@@ -1,7 +1,7 @@
 # DegenFeed — Dependency Security Audit
 
-**Date:** 2026-07-25  
-**Tools:** `pnpm audit --audit-level=high`, manual review  
+**Date:** 2026-07-25
+**Tools:** `pnpm audit --audit-level=high`, manual review
 
 ---
 
@@ -26,8 +26,8 @@ critical  │ vitest <3.2.6
           │       packages/__peertube-provider>vitest
           │ Fix: Update vitest to >=3.2.6
 ```
-**Impact:** When Vitest UI server is listening, arbitrary files can be read and executed.  
-**Mitigation:** Vitest is a dev dependency — not exposed in production. But still a risk in CI/development.  
+**Impact:** When Vitest UI server is listening, arbitrary files can be read and executed.
+**Mitigation:** Vitest is a dev dependency — not exposed in production. But still a risk in CI/development.
 **Action:** `pnpm up -r vitest@^3.2.6`
 
 ### 2.2 🟠 CVE-2026-XXXX: valibot ReDoS
@@ -37,8 +37,8 @@ high      │ valibot >=0.31.0 <1.2.0
           │ Path: @telegram-apps/sdk → @telegram-apps/transformers → valibot
           │ Fix: Update valibot to >=1.2.0
 ```
-**Impact:** ReDoS via `EMOJI_REGEX` — can cause denial of service.  
-**Mitigation:** Telegram SDK usage may not trigger the vulnerable regex path.  
+**Impact:** ReDoS via `EMOJI_REGEX` — can cause denial of service.
+**Mitigation:** Telegram SDK usage may not trigger the vulnerable regex path.
 **Action:** Update `@telegram-apps/sdk` which should pull updated valibot.
 
 ### 2.3 🟠 CVE-2026-XXXX: bigint-buffer Buffer Overflow
@@ -49,7 +49,7 @@ high      │ bigint-buffer <=1.1.5
           │       (packages/creator-coin, packages/zora-sdk)
           │ Fix: Update bigint-buffer to >=1.1.6
 ```
-**Impact:** Buffer overflow via `toBigIntLE()` function.  
+**Impact:** Buffer overflow via `toBigIntLE()` function.
 **Action:** Update Solana dependency chain.
 
 ### 2.4 🟠 CVE-2026-XXXX: vite fs.deny Bypass
@@ -59,8 +59,8 @@ high      │ vite <=6.4.2
           │ Path: docs, vitest, various dev deps
           │ Fix: Update vite to >=6.4.3
 ```
-**Impact:** `server.fs.deny` bypass on Windows alternate paths.  
-**Mitigation:** Dev-only dependency, Windows-specific.  
+**Impact:** `server.fs.deny` bypass on Windows alternate paths.
+**Mitigation:** Dev-only dependency, Windows-specific.
 **Action:** `pnpm up -r vite@^6.4.3`
 
 ### 2.5 🟠 CVE-2026-XXXX: sharp/libvips
@@ -69,7 +69,7 @@ high      │ sharp
           │ Path: image processing
           │ Fix: Update sharp to latest version
 ```
-**Impact:** libvips inherited vulnerabilities.  
+**Impact:** libvips inherited vulnerabilities.
 **Action:** `pnpm up -r sharp`
 
 ---

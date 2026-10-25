@@ -2,8 +2,8 @@
 
 > Welcome to the Web3 Social Universe. This guide walks you through everything you need to know — from your first visit to becoming a power user.
 
-**Live app:** [app.degenfeed.xyz](https://app.degenfeed.xyz)  
-**Docs:** [docs.degenfeed.xyz](https://docs.degenfeed.xyz)  
+**Live app:** [app.degenfeed.xyz](https://app.degenfeed.xyz)
+**Docs:** [docs.degenfeed.xyz](https://docs.degenfeed.xyz)
 **Protocols integrated:** 44+ decentralized social protocols and services
 
 ---

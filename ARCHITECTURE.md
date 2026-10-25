@@ -1,11 +1,11 @@
 # DegenFeed Web — Architecture
 
-**Status:** canonical  
-**Last updated:** 2026-07-25  
-**Protocols:** 44+ (11 standardized bridge providers + Matrix bridge hub + ActivityPub federation + API integrations)  
-**Docker Services:** 48+ across the fleet ([HOST-1] + [HOST-2])  
-**Monorepo Packages:** 43+  
-**Worker API Routes:** ~500+ (200+ route modules in 90+ major route groups)  
+**Status:** canonical
+**Last updated:** 2026-07-25
+**Protocols:** 44+ (11 standardized bridge providers + Matrix bridge hub + ActivityPub federation + API integrations)
+**Docker Services:** 48+ across the fleet ([HOST-1] + [HOST-2])
+**Monorepo Packages:** 43+
+**Worker API Routes:** ~500+ (200+ route modules in 90+ major route groups)
 **TypeScript Source Files:** 1,419+
 
 ## Overview
@@ -61,7 +61,7 @@ workers/
                               routes/        ~100 route modules (see Protocol Integration Map below)
                               __tests__/     Vitest test suite
 
-packages/  
+packages/
   43+ shared workspaces — see full list below
 
 bridge/

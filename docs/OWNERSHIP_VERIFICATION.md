@@ -1,8 +1,8 @@
 # DegenFeed Network Ownership Verification
 
-**Verification Date:** 2026-07-24  
-**Verifier:** DevOps SRE (Deep Verification Audit)  
-**Method:** Hands-on testing — every claim verified with actual commands  
+**Verification Date:** 2026-07-24
+**Verifier:** DevOps SRE (Deep Verification Audit)
+**Method:** Hands-on testing — every claim verified with actual commands
 **Status:** 🟢 11/13 protocols self-hosted, ownership quantified by scorecard
 
 ---
@@ -67,7 +67,7 @@ This document provides **deep, evidence-based verification** of ownership and co
 | Can change config? | Config at `/path/to/degenfeed/gotosocial/config.yaml` — edited and restarted | ✅ Verified | Config file bind-mounted; restart picks up changes |
 | Can shutdown/restart? | `docker restart gotosocial` → service recovered | ✅ Verified | Restarted and returned healthy; API responded correctly |
 
-**Admin users:** `cryptorugmunch` (admin), `degenfeed_bot` (non-admin)  
+**Admin users:** `cryptorugmunch` (admin), `degenfeed_bot` (non-admin)
 **Registration:** Open (approval required)
 
 #### Data Ownership — 🟢 **5/5**
@@ -104,7 +104,7 @@ This document provides **deep, evidence-based verification** of ownership and co
 
 ### 1.2 Lemmy — `talk.degenfeed.xyz` (port 8536)
 
-**Verified Claim:** Full admin access to ActivityPub link aggregator.  
+**Verified Claim:** Full admin access to ActivityPub link aggregator.
 **NEW FINDING:** Lemmy IS federating — prior docs incorrectly said "0 linked instances."
 
 #### Admin Access — 🟢 **5/5**
@@ -117,7 +117,7 @@ This document provides **deep, evidence-based verification** of ownership and co
 | Can change config? | `.env` and docker-compose.yml | Full stack in our control |
 | Can shutdown/restart? | Docker compose | Verified container management |
 
-**Admin user:** `degenfeed` (actor_id: https://talk.degenfeed.xyz/u/degenfeed)  
+**Admin user:** `degenfeed` (actor_id: https://talk.degenfeed.xyz/u/degenfeed)
 **Communities:** `!degenfeed@talk.degenfeed.xyz`, `!main@lemmy.ml`, `!crypto@lemmy.world`
 
 #### Data Ownership — 🟢 **5/5**
@@ -200,7 +200,7 @@ This document provides **deep, evidence-based verification** of ownership and co
 
 ### 1.4 WriteFreely — `blog.degenfeed.xyz` (port 8086)
 
-**Verified Claim:** ActivityPub blog instance.  
+**Verified Claim:** ActivityPub blog instance.
 **NEW FINDING:** DNS now resolves (was NXDOMAIN in prior docs), blog is externally accessible.
 
 #### Admin Access — 🟡 **3/5**
@@ -304,7 +304,7 @@ This document provides **deep, evidence-based verification** of ownership and co
 | Can shutdown/restart? | ✅ Docker compose | Verified |
 | API verified? | ✅ Instance info, WebFinger, NodeInfo all respond | Confirmed |
 
-**Admin users:** `photos_admin` (admin), `testphoto` (regular)  
+**Admin users:** `photos_admin` (admin), `testphoto` (regular)
 **WebFinger:** `acct:photos_admin@photos.degenfeed.xyz` resolves correctly
 
 #### Data Ownership — 🟡 **4/5**
@@ -371,8 +371,8 @@ This document provides **deep, evidence-based verification** of ownership and co
 | Can change config? | ✅ `/path/to/degenfeed/pds/.env` | JWT secret, admin password, rotation key |
 | Can shutdown/restart? | ✅ Docker compose | Verified |
 
-**DID:** `did:web:pds.degenfeed.xyz`  
-**Version:** 0.4.5009  
+**DID:** `did:web:pds.degenfeed.xyz`
+**Version:** 0.4.5009
 **Invite codes:** NOT required
 
 #### Data Ownership — 🟢 **5/5**
@@ -411,7 +411,7 @@ This document provides **deep, evidence-based verification** of ownership and co
 
 ### Nostr Relay — `ws://127.0.0.1:8085`
 
-**Verified Claim:** Self-hosted Nostr relay.  
+**Verified Claim:** Self-hosted Nostr relay.
 **CORRECTION:** Prior docs said "not deployed" — it has been running the entire time.
 
 #### Admin Access — 🟢 **5/5**

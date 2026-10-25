@@ -224,7 +224,7 @@ Note: feed-providers actually does use full `*Provider` classes for Nostr, Farca
 ```
 Phase 1 (Week 1) — Shared Utilities
 ├── Extract stripHtml() → @degenfeed/utils
-├── Extract guessNiches() → @degenfeed/utils  
+├── Extract guessNiches() → @degenfeed/utils
 ├── Extract parseRssItems() → @degenfeed/utils
 ├── Update 7+ adapter imports
 └── Verify: yarn lint && yarn typecheck && yarn test

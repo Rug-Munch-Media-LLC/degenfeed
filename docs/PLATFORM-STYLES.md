@@ -171,15 +171,15 @@ Boost/Favourite action labels.
 <article class="post-card protocol-mastodon">
   <!-- 4px left border via CSS -->
   <div class="protocol-left-border" style="--protocol-accent: #6364ff"></div>
-  
+
   <PostHeader>
     <div class="mastodon-instance-row">
       🐘 mastodon.social
     </div>
   </PostHeader>
-  
+
   <PostBody class="bg-protocol-mastodon" />
-  
+
   <PostCardEngagement>
     <Action verb="favourite" />   <!-- "Favourite" not "Like" -->
     <Action verb="boost" />       <!-- "Boost" not "Repost" -->

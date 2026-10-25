@@ -91,4 +91,3 @@ export function renderNewsletterHtml(params: NewsletterTemplateParams): string {
 
   return emailDocument(body, preheader || subject);
 }
-

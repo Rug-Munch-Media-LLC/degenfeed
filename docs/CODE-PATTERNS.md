@@ -1,8 +1,8 @@
 # DegenFeed — Code Patterns & Conventions
 
-> **Status:** canonical  
-> **Last updated:** 2026-07-26  
-> **Owner:** Engineering Team  
+> **Status:** canonical
+> **Last updated:** 2026-07-26
+> **Owner:** Engineering Team
 > **Applies to:** All TypeScript source files in `workers/`, `bridge/`, `packages/`, `apps/`
 
 ---
@@ -126,7 +126,7 @@ import { ok, serverError } from '../response-helpers';
 Use the error classes from `lib/errors.ts`:
 
 ```typescript
-import { 
+import {
   ValidationError,     // 400
   AuthError,           // 401
   PaymentRequiredError,// 402
@@ -321,7 +321,7 @@ export async function handler() {
 
 // ✅ GOOD — accepts dependencies
 export async function handler(
-  request: Request, 
+  request: Request,
   env: Env,
   deps?: { someService?: SomeService }
 ) {

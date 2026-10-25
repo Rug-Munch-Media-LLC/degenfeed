@@ -1,15 +1,15 @@
 # Open Source DAO Framework Research
 
-**Research Date:** 2026-07-25  
+**Research Date:** 2026-07-25
 **Objective:** Extract best security patterns, missing features, and anti-patterns from the DAO ecosystem
 
 ---
 
 ## 1. Aragon OSx
 
-**Repo:** [aragon/osx](https://github.com/aragon/osx)  
-**Type:** Plugin-based modular DAO framework  
-**Language:** Solidity  
+**Repo:** [aragon/osx](https://github.com/aragon/osx)
+**Type:** Plugin-based modular DAO framework
+**Language:** Solidity
 
 ### Best Patterns to Adopt
 
@@ -41,9 +41,9 @@
 
 ## 2. Compound Governor (Bravo)
 
-**Repo:** [compound-finance/compound-protocol](https://github.com/compound-finance/compound-protocol)  
-**Type:** De facto standard for on-chain governance  
-**Language:** Solidity  
+**Repo:** [compound-finance/compound-protocol](https://github.com/compound-finance/compound-protocol)
+**Type:** De facto standard for on-chain governance
+**Language:** Solidity
 
 ### Best Patterns to Adopt
 
@@ -76,9 +76,9 @@
 
 ## 3. OpenZeppelin Governor v5
 
-**Repo:** [OpenZeppelin/openzeppelin-contracts](https://github.com/OpenZeppelin/openzeppelin-contracts)  
-**Type:** Reference implementation — inherited by our contracts  
-**Language:** Solidity  
+**Repo:** [OpenZeppelin/openzeppelin-contracts](https://github.com/OpenZeppelin/openzeppelin-contracts)
+**Type:** Reference implementation — inherited by our contracts
+**Language:** Solidity
 
 ### Best Patterns to Adopt
 
@@ -103,9 +103,9 @@
 
 ## 4. Realms / SPL Governance (Solana)
 
-**Repo:** [solana-labs/solana-program-library](https://github.com/solana-labs/solana-program-library)  
-**Type:** Solana-native governance standard  
-**Language:** Rust (Solana BPF)  
+**Repo:** [solana-labs/solana-program-library](https://github.com/solana-labs/solana-program-library)
+**Type:** Solana-native governance standard
+**Language:** Rust (Solana BPF)
 
 ### Best Patterns to Adopt (Conceptual)
 
@@ -132,9 +132,9 @@ Realms' architecture of separating execution council (multi-sig) from governance
 
 ## 5. Moloch v3 (Baal)
 
-**Repo:** [Moloch-Mystics/Baal](https://github.com/Moloch-Mystics/Baal)  
-**Type:** Minimal Viable DAO  
-**Language:** Solidity  
+**Repo:** [Moloch-Mystics/Baal](https://github.com/Moloch-Mystics/Baal)
+**Type:** Minimal Viable DAO
+**Language:** Solidity
 
 ### Best Patterns to Adopt
 
@@ -172,9 +172,9 @@ function rageQuit(uint256 tokenAmount) external {
 
 ## 6. Nouns DAO
 
-**Repo:** [nounsDAO/nouns-monorepo](https://github.com/nounsDAO/nouns-monorepo)  
-**Type:** Auction-based DAO with fork mechanism  
-**Language:** Solidity  
+**Repo:** [nounsDAO/nouns-monorepo](https://github.com/nounsDAO/nouns-monorepo)
+**Type:** Auction-based DAO with fork mechanism
+**Language:** Solidity
 
 ### Best Patterns to Adopt
 
@@ -201,9 +201,9 @@ The fork mechanism is Nouns' standout innovation. For creator coin DAOs with sig
 
 ## 7. Safe (formerly Gnosis Safe)
 
-**Repo:** [safe-global/safe-contracts](https://github.com/safe-global/safe-contracts)  
-**Type:** Multi-signature wallet standard  
-**Language:** Solidity  
+**Repo:** [safe-global/safe-contracts](https://github.com/safe-global/safe-contracts)
+**Type:** Multi-signature wallet standard
+**Language:** Solidity
 
 ### Best Patterns to Adopt
 
@@ -230,9 +230,9 @@ The fork mechanism is Nouns' standout innovation. For creator coin DAOs with sig
 
 ## 8. Tally
 
-**URL:** [tally.xyz](https://tally.xyz)  
-**Type:** Governance UI / dashboard  
-**Language:** TypeScript  
+**URL:** [tally.xyz](https://tally.xyz)
+**Type:** Governance UI / dashboard
+**Language:** TypeScript
 
 ### Best Patterns to Adopt
 
@@ -258,9 +258,9 @@ The fork mechanism is Nouns' standout innovation. For creator coin DAOs with sig
 
 ## 9. Snapshot
 
-**URL:** [snapshot.org](https://snapshot.org)  
-**Type:** Off-chain voting platform  
-**Language:** TypeScript  
+**URL:** [snapshot.org](https://snapshot.org)
+**Type:** Off-chain voting platform
+**Language:** TypeScript
 
 ### Best Patterns to Adopt
 

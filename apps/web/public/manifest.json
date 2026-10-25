@@ -7,20 +7,11 @@
   "background_color": "#0a0a0a",
   "theme_color": "#1d9bf0",
   "orientation": "portrait",
-  "categories": [
-    "social",
-    "news",
-    "cryptocurrency",
-    "productivity",
-    "communication"
-  ],
+  "categories": ["social", "news", "cryptocurrency", "productivity", "communication"],
   "lang": "en-US",
   "dir": "ltr",
   "scope": "/",
-  "display_override": [
-    "standalone",
-    "minimal-ui"
-  ],
+  "display_override": ["standalone", "minimal-ui"],
   "icons": [
     {
       "src": "/icon.svg",

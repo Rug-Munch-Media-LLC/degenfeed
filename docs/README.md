@@ -4,9 +4,9 @@
 
 Welcome to the DegenFeed documentation hub. This index links every document in the project — from user guides to architecture deep dives to the press kit.
 
-**Live app:** [app.degenfeed.xyz](https://app.degenfeed.xyz)  
-**Docs site:** [docs.degenfeed.xyz](https://docs.degenfeed.xyz)  
-**Source:** [git.rugmunch.io/RugMunchMedia/degenfeed](https://git.rugmunch.io/RugMunchMedia/degenfeed)  
+**Live app:** [app.degenfeed.xyz](https://app.degenfeed.xyz)
+**Docs site:** [docs.degenfeed.xyz](https://docs.degenfeed.xyz)
+**Source:** [git.rugmunch.io/RugMunchMedia/degenfeed](https://git.rugmunch.io/RugMunchMedia/degenfeed)
 **License:** AGPL-3.0
 
 ---
@@ -208,3 +208,5 @@ docs/
 > *"DegenFeed exists to unify the fragmented decentralized social web. We don't own your content — we give you the tools to own it yourself."*
 >
 > — DegenFeed Mission Statement
+
+_Last docs sweep verified against the tree on 2026-10-25._

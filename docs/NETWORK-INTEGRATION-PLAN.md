@@ -1,8 +1,8 @@
 # DegenFeed — Network Ownership & Cross-Protocol Integration Strategy
 
-> **Last updated:** 2026-07-25  
-> **Owner:** DegenFeed Engineering <admin@degenfeed.xyz>  
-> **Status:** Living Document — Updated as bridges deploy  
+> **Last updated:** 2026-07-25
+> **Owner:** DegenFeed Engineering <admin@degenfeed.xyz>
+> **Status:** Living Document — Updated as bridges deploy
 > **Version:** 2.0 (Cross-Protocol Interoperability)
 
 ---
@@ -216,7 +216,7 @@ import { adaptForProtocols } from '../adapters/index';
 
 /**
  * Peertube → Nostr Bridge
- * 
+ *
  * When a new video is published on PeerTube:
  * 1. Normalize the video post
  * 2. Create a Nostr event (kind 1) with video link + description
@@ -330,7 +330,7 @@ import { BridgeAdapter, NormalizedContent } from '../types';
 
 /**
  * Farcaster → Mastodon Bridge
- * 
+ *
  * When a Farcaster cast is published or found in our Hubble:
  * 1. Normalize the cast (text, embeds, mentions)
  * 2. Convert to Mastodon-compatible HTML
@@ -345,7 +345,7 @@ export const farcasterToMastodon: BridgeAdapter = {
 
   async transform(content: NormalizedContent) {
     let text = content.text;
-    
+
     // Farcaster supports embeds (links, images) — convert to Mastodon format
     for (const link of content.links) {
       text += `\n${link}`;
@@ -370,7 +370,7 @@ export const farcasterToMastodon: BridgeAdapter = {
 
     // Add cross-protocol attribution
     const attribution = `\n\n[Cross-posted from Farcaster]`;
-    const finalText = text.length + attribution.length > 500 
+    const finalText = text.length + attribution.length > 500
       ? text + `\n[via Farcaster]`
       : text + attribution;
 
@@ -454,7 +454,7 @@ import { BridgeAdapter, NormalizedContent } from '../types';
 
 /**
  * Bluesky → Lemmy Bridge
- * 
+ *
  * When a Bluesky post (skeet) is published:
  * 1. Normalize skeet content
  * 2. Determine target Lemmy community from hashtags or config
@@ -474,8 +474,8 @@ export const blueskyToLemmy: BridgeAdapter = {
     const body = lines.slice(1).join('\n\n') || title;
 
     // Find community from hashtags or default config
-    const community = content.hashtags.find(t => BRIDGE_COMMUNITIES[t]) 
-      ? BRIDGE_COMMUNITIES[content.hashtags.find(t => BRIDGE_COMMUNITIES[t])!] 
+    const community = content.hashtags.find(t => BRIDGE_COMMUNITIES[t])
+      ? BRIDGE_COMMUNITIES[content.hashtags.find(t => BRIDGE_COMMUNITIES[t])!]
       : DEFAULT_LEMMY_COMMUNITY;
 
     // Add media links to body
@@ -586,9 +586,9 @@ The cross-post page at `/creator/cross-post` already implements basic platform s
 ```typescript
 // packages/cross-protocol-bridge/src/transforms/one-click-all.ts
 /**
- * One-Click "Publish to All" — Cross-posts a master post to every 
+ * One-Click "Publish to All" — Cross-posts a master post to every
  * protocol that has an enabled bridge path from the source protocol.
- * 
+ *
  * This is the high-level orchestrator that:
  * 1. Takes a MasterPost from the DegenFeed composer
  * 2. Adapts it for every supported target protocol
@@ -1013,7 +1013,7 @@ The "Publish to All" feature enables users to post content to every supported pr
 2. User clicks "Publish to All" toggle
 3. UI shows preview for each protocol:
    ✓ Nostr (420 chars, plaintext)
-   ✓ Farcaster (320 chars, plaintext) 
+   ✓ Farcaster (320 chars, plaintext)
    ✓ Bluesky (300 chars, plaintext)
    ✓ Mastodon (500 chars, markdown)
    ✓ Lemmy (community post)

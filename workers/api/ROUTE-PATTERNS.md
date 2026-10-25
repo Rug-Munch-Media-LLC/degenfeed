@@ -1,8 +1,8 @@
 # Route Patterns — API Worker Standards & Audit
 
-> Last updated: 2026-07-25  
-> Total route files: 171  
-> Total exported handler functions: ~130  
+> Last updated: 2026-07-25
+> Total route files: 171
+> Total exported handler functions: ~130
 
 ## Standard Pattern (MUST FOLLOW)
 
@@ -106,7 +106,7 @@ These ~50 route files still use the legacy `jsonResponse()` from `index.ts` inst
 | `routes/cross-protocol-bridge.ts` | Uses `jsonResponse()` |
 | `routes/reputation.ts` | Uses `jsonResponse()` |
 
-**Total**: ~27 files with mixed or full `jsonResponse()` usage.  
+**Total**: ~27 files with mixed or full `jsonResponse()` usage.
 **Migration progress**: 1 of ~130+ handler files fully migrated (health.ts).
 
 ### Routes Using Default Exports

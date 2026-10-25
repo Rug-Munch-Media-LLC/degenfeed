@@ -1,6 +1,6 @@
 # DegenFeed Web — Architecture
 
-**Status:** canonical  
+**Status:** canonical
 **Last updated:** 2026-07-06
 
 ## Overview

@@ -151,7 +151,7 @@ All provider API keys/tokens: `DISCORD_BOT_TOKEN`, `TELEGRAM_BOT_TOKEN`, `GITHUB
 - ✅ Enumeration protection with exponential backoff
 - ✅ Admin endpoints rate limited per wallet
 - ✅ Global DDoS protection: 1000 req/min per IP
-- ✅ Rate limit bypass protection: 
+- ✅ Rate limit bypass protection:
   - CSRF validation on state-changing methods
   - API key authentication for v1 routes
   - Cache-Control: no-store on sensitive endpoints

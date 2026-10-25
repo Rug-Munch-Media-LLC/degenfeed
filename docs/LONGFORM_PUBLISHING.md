@@ -1,8 +1,8 @@
 # Longform Publishing — Platform Research & Integration Plan
 
-**Status:** research / proposal  
-**Last updated:** 2026-07-20  
-**Owner:** Product  
+**Status:** research / proposal
+**Last updated:** 2026-07-20
+**Owner:** Product
 **Related docs:** `BRIDGY-FED-INTEGRATION.md`, `TIPPING-ARCHITECTURE.md`, `INTEGRATIONS.md`, `PRODUCT.md`
 
 ---
@@ -750,27 +750,27 @@ DegenFeed Unified Post
 
 export interface ArticlePost extends BasePost {
   type: 'article';
-  
+
   // Ghost-native fields
   ghostId?: string;
   ghostUrl?: string;
   mobiledoc?: string;       // Ghost's rich text format
   excerpt?: string;
-  
+
   // Content fields
   title: string;
   body: string;              // Markdown or HTML
   bodyFormat: 'markdown' | 'html' | 'mobiledoc';
   readingTime: number;       // Minutes
   coverImage?: string;
-  
+
   // Monetization
   access: 'free' | 'paid' | 'token-gated';
   tierId?: string;           // Ghost tier ID
   tokenMint?: string;        // Solana token mint for gating
   tokenChain?: string;
   tokenAmount?: string;
-  
+
   // Protocol cross-links
   crossPosts: {
     protocol: string;
@@ -778,7 +778,7 @@ export interface ArticlePost extends BasePost {
     postId: string;
     publishedAt: number;
   }[];
-  
+
   // Bridged interactions
   remoteComments: {
     protocol: string;
@@ -787,7 +787,7 @@ export interface ArticlePost extends BasePost {
     body: string;
     publishedAt: number;
   }[];
-  
+
   // Tipping (extends existing)
   tipStats: {
     totalUsd: number;

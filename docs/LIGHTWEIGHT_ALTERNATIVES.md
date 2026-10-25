@@ -850,10 +850,10 @@ docker compose -f docker-compose.piefed.yml exec piefed flask user create admin 
 
 > **Bottom Line:** The lightest Fediverse stack possible today is:
 > **Snac2** (5 MB, microblog) + **WriteFreely** (18 MB, blog) + **Owncast** (88 MB, live video) = **111 MB total**
-> 
+>
 > But for a full-featured social platform requiring communities, photo sharing, and VOD:
 > **GoToSocial** (125 MB) + **Lemmy/PieFed** (93-170 MB) + **PeerTube** (213 MB) + **Pixelfed** (295 MB) + **WriteFreely** (18 MB) + **Owncast** (88 MB) = **832 MB → ~650 MB optimized**
-> 
+>
 > **The biggest win:** Pixelfed optimization (save ~100 MB) and replacing Lemmy with PieFed if it's more efficient for our use case.
 >
 > **The 2027 dream:** Smallhold replaces 4 services in one 100 MB binary.

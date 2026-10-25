@@ -8,34 +8,55 @@ edge cases. **Licence:** MIT, see [LICENSE](LICENSE).
 
 Canonical: https://git.rugmunch.io/RugMunchMedia/degenfeed-web
 
-## Quickstart
+## Run it yourself
 
-Node 20+ (`.node-version` pins the CI version), pnpm 9+, Postgres and Redis.
+**Needs:** Node 20+ (`.node-version` pins the CI version), pnpm 9+, Postgres, Redis
+and Meilisearch. Read-only browsing works against public protocol endpoints;
+posting needs real credentials.
+**Minimal env:** `DATABASE_URL`, `REDIS_URL`, `NEXT_PUBLIC_API_URL`,
+`MEILI_MASTER_KEY`.
 
 ```bash
 git clone https://git.rugmunch.io/RugMunchMedia/degenfeed-web.git
 cd degenfeed-web
 corepack enable && pnpm install
-cp .env.example .env      # DATABASE_URL, REDIS_URL, NEXT_PUBLIC_API_URL
+cp .env.example .env      # DATABASE_URL, REDIS_URL, NEXT_PUBLIC_API_URL, MEILI_MASTER_KEY
 pnpm --filter degenfeed dev
 ```
 
-The web app is on `http://localhost:3000`. Compose needs Meilisearch's key
-exported or it stops at startup:
+The web app is on `http://localhost:3000`. Compose needs Meilisearch's key exported
+or it stops at startup:
 
 ```bash
 export MEILI_MASTER_KEY='...'
 docker compose up -d
 ```
 
-Workspace-wide checks:
+Check it works:
 
 ```bash
-pnpm lint        # turbo run lint
-pnpm typecheck
-pnpm test
-pnpm health      # scripts/health-check.sh — service reachability
+pnpm health       # scripts/health-check.sh — service reachability, no browser
 ```
+
+That script probes the app, Postgres, Redis and Meilisearch together, so one exit
+status covers the stack. Workspace-wide checks are separate:
+
+```bash
+pnpm lint && pnpm typecheck && pnpm test
+```
+
+## What it needs
+
+| Component | Role | Where it comes from |
+|---|---|---|
+| Postgres | accounts, posts, creator coins | your own |
+| Redis | queues and rate limiting | your own |
+| Meilisearch | feed and profile search | your own, or `meilisearch` in this compose file |
+| Protocol credentials | writes to Farcaster, Bluesky, Lens, Lemmy | **bring your own** app credentials; reads work without them |
+| `rmi-backend` | premium features only | separate repo; optional, and the app runs with it unset |
+
+Nothing is pre-seeded: a fresh database is an empty feed until you follow someone
+or connect a protocol account.
 
 ## What it does
 

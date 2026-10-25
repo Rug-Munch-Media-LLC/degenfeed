@@ -1,8 +1,8 @@
 # DegenFeed Protocol Deep-Dive Research
 
-**Author:** AI Protocol Research Agent  
-**Date:** 2026-07-28  
-**Status:** Comprehensive — covers ActivityPub/Mastodon (GTS), AT Protocol/Bluesky, Nostr, and Farcaster  
+**Author:** AI Protocol Research Agent
+**Date:** 2026-07-28
+**Status:** Comprehensive — covers ActivityPub/Mastodon (GTS), AT Protocol/Bluesky, Nostr, and Farcaster
 **Research Method:** Primary spec reading (W3C ActivityPub, atproto.com, Nostr NIPs, Farcaster protocol) + codebase audit of bridge implementations
 
 ---
@@ -216,12 +216,12 @@
 - **PDS (Personal Data Server):** Hosts user repositories, handles auth, proxies client requests
 - **Relay:** Subscribes to PDS hosts, aggregates all repo events into a **firehose** (WebSocket, `com.atproto.sync.subscribeRepos`)
 - **AppView:** Indexes the firehose, provides application-specific views (feeds, search, notifications)
-- **Content propagation:** 
+- **Content propagation:**
   1. User posts to PDS → PDS stores record in repo, creates signed commit
   2. PDS emits event on its firehose
   3. Relay subscribes to PDS firehose, aggregates, emits combined firehose
   4. AppView subscribes to relay firehose, indexes records, serves client requests
-- **Sync mechanism:** 
+- **Sync mechanism:**
   - Full repo export: `com.atproto.sync.getRepo` returns CAR file
   - Diff: `com.atproto.sync.subscribeRepos` sends commit diffs
   - Record-level sync with MST inversion for verification
@@ -237,7 +237,7 @@
 ### 2.4 API Patterns
 
 **XRPC (Cross-system RPC):**
-- All endpoints under `/xrpc/<NSID>` 
+- All endpoints under `/xrpc/<NSID>`
 - **Query** (GET): Cacheable, no side effects. Params as URL query string
 - **Procedure** (POST): Mutable state
 - Authentication: OAuth (primary, with `atproto-proxy` header for service proxying) or legacy JWT (access + refresh tokens)
@@ -458,7 +458,7 @@
 - **Replies/threads:** `parentCastId` or `parentUrl` in CastAddBody. `parentCastId` references the parent cast by FID + hash. Threads are reconstructed by following parent references
 - **Media attachments:** Embeds are URLs in the `embeds` array (max 2). Images/videos hosted externally (IPFS, Arweave, or traditional CDN)
 - **Mentions:** `mentions` array (FIDs) + `mentionsPositions` array (byte offsets into text)
-- **Content size limits:** 
+- **Content size limits:**
   - `text`: max 1024 bytes (UTF-8)
   - 320 bytes for `CAST` type, 321-1024 for `LONG_CAST`, >1024 for `TEN_K_CAST`
   - `embeds`: max 2 entries
@@ -669,11 +669,11 @@ interface ProtocolAwareUnifiedPost extends UnifiedPost {
   // Thread context (currently missing)
   replyTo?: { protocol: string; id: string; author?: string };
   threadRoot?: { protocol: string; id: string };
-  
+
   // Tags/annotations (currently lost)
   mentions: Array<{ id: string; protocol: string; displayName?: string; byteOffset?: number }>;
   hashtags: string[];
-  
+
   // Rich facets (currently stripped)
   facets?: Array<{
     type: 'link' | 'mention' | 'hashtag';
@@ -681,7 +681,7 @@ interface ProtocolAwareUnifiedPost extends UnifiedPost {
     byteEnd: number;
     value: string; // URL, pubkey/DID, or tag name
   }>;
-  
+
   // Protocol-native media (beyond just URL embeds)
   attachments?: Array<{
     type: 'image' | 'video' | 'audio' | 'document' | 'link-card';
@@ -693,7 +693,7 @@ interface ProtocolAwareUnifiedPost extends UnifiedPost {
     thumbnail?: string;
     duration?: number;
   }>;
-  
+
   // Protocol-native identity
   nativeIdentity: {
     activitypub?: { actorUri: string; inbox: string };

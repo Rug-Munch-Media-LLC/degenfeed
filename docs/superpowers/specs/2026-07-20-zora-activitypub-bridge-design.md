@@ -1,9 +1,9 @@
 # Zora ↔ ActivityPub Cross-Protocol Bridge
 
-**Status:** Draft  
-**Last updated:** 2026-07-20  
-**Owner:** Architecture  
-**Code paths:** `packages/zora-sdk/`, `packages/activitypub-bridge/`, `packages/identity/` (extend), `workers/zora-bridge/`, `workers/api/` (extend)  
+**Status:** Draft
+**Last updated:** 2026-07-20
+**Owner:** Architecture
+**Code paths:** `packages/zora-sdk/`, `packages/activitypub-bridge/`, `packages/identity/` (extend), `workers/zora-bridge/`, `workers/api/` (extend)
 
 ---
 
@@ -279,7 +279,7 @@ packages/activitypub-bridge/
 // Content Formatter — ZoraEvent → AP Activity
 class EventFormatter {
   format(event: ZoraEvent, context: BridgeContext): APActivity | null;
-  
+
   private formatCoinDeployed(event: ZoraCoinDeployed, ctx: BridgeContext): APCreate;
   private formatCoinTrade(event: ZoraCoinTrade, ctx: BridgeContext): APAnnounce;
   private formatNFTMint(event: ZoraNFTMinted, ctx: BridgeContext): APCreate;
@@ -339,7 +339,7 @@ workers/zora-bridge/
   wrangler.toml
   src/
     index.ts                  # Entry point + router
-    outbound/poller.ts        # Cron-triggered Zora event poller  
+    outbound/poller.ts        # Cron-triggered Zora event poller
     outbound/poster.ts        # Format + post to GoToSocial
     outbound/state.ts         # Last-seen event tracking (KV)
     inbound/webhook.ts        # GtS webhook receiver

@@ -450,4 +450,3 @@ a custom ActivityPub server component. This would be a larger engineering effort
 | PeerTube | `peertube-peertube-1` | `chocobozzz/peertube` | ActivityPub/Video | 9011 | ✅ |
 | Lemmy | `degenfeed-lemmy` | `dessalines/lemmy` | ActivityPub/Forum | 8536 | ✅ |
 | Activity Relay | `degenfeed-relay` | `kanishka/activity-relay` | ActivityPub | 8084 | ✅ |
-

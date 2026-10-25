@@ -82,7 +82,7 @@ For production, set up a cron job:
 
 ```bash
 # Check every 5 minutes
-*/5 * * * * /path/to/degenfeed/scripts/health-check.sh || curl -X POST https://hooks.slack.com/... 
+*/5 * * * * /path/to/degenfeed/scripts/health-check.sh || curl -X POST https://hooks.slack.com/...
 ```
 
 ## Adding New Monitoring
