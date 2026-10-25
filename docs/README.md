@@ -208,3 +208,5 @@ docs/
 > *"DegenFeed exists to unify the fragmented decentralized social web. We don't own your content — we give you the tools to own it yourself."*
 >
 > — DegenFeed Mission Statement
+
+_Last docs sweep verified against the tree on 2026-10-25._
