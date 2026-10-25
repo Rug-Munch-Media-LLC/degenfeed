@@ -23,18 +23,17 @@ export function detectTokens(text: string): TokenRef[] {
   const tokens: TokenRef[] = [];
 
   // Match $TICKER patterns
-  let match: RegExpExecArray | null;
-  while ((match = TICKER_RE.exec(text)) !== null) {
+  for (const match of text.matchAll(TICKER_RE)) {
     tokens.push({ symbol: match[1] });
   }
 
   // Match EVM addresses (0x...40 chars)
-  while ((match = EVM_RE.exec(text)) !== null) {
+  for (const match of text.matchAll(EVM_RE)) {
     tokens.push({ address: match[0].toLowerCase(), chain: 'ethereum' });
   }
 
   // Match Solana addresses (base58, 32-44 chars)
-  while ((match = SOL_RE.exec(text)) !== null) {
+  for (const match of text.matchAll(SOL_RE)) {
     // Avoid matching EVM addresses (already caught by EVM_RE) or hashes
     if (!match[0].startsWith('0x')) {
       tokens.push({ address: match[0], chain: 'solana' });

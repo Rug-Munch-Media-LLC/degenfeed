@@ -2,191 +2,89 @@
  * @degenfeed/utils — Shared utilities used across the worker API, web app,
  * and provider packages. Keep this package dependency-free so it can be
  * imported from anywhere.
+ *
+ * This module is a BARREL ONLY: it re-exports single-purpose modules and
+ * declares no logic of its own. Add behaviour to the owning module and
+ * re-export it here.
  */
 
-import type { Protocol } from '@degenfeed/types';
-
-// ─── Time formatting ─────────────────────────────────────────────────
-
-export function formatTimeAgo(ts: number): string {
-  const diff = Date.now() - ts;
-  const mins = Math.floor(diff / 60000);
-  if (mins < 1) return 'now';
-  if (mins < 60) return `${mins}m ago`;
-  const hours = Math.floor(mins / 60);
-  if (hours < 24) return `${hours}h ago`;
-  const days = Math.floor(hours / 24);
-  if (days < 7) return `${days}d ago`;
-  return new Date(ts).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-}
-
-export function formatCount(n: number): string {
-  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
-  if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`;
-  return String(n);
-}
-export function formatDate(ts: number, style: 'relative' | 'short' | 'long' = 'short'): string {
-  if (style === 'relative') return formatTimeAgo(ts);
-  const d = new Date(ts);
-  const now = new Date();
-  const isToday = d.toDateString() === now.toDateString();
-  const isThisYear = d.getFullYear() === now.getFullYear();
-  if (isToday) return d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-  if (isThisYear) return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-}
-
-export function formatDuration(seconds: number): string {
-  if (seconds < 0) return '0:00';
-  const h = Math.floor(seconds / 3600);
-  const m = Math.floor((seconds % 3600) / 60);
-  const s = Math.floor(seconds % 60);
-  if (h > 0) return `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
-  return `${m}:${String(s).padStart(2, '0')}`;
-}
-
-export function formatTimestamp(ts: number): string {
-  const d = new Date(ts);
-  return d.toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
-}
-
-// ─── HTML sanitization ────────────────────────────────────────────────
-
-const HTML_ENTITIES: Record<string, string> = {
-  '&amp;': '&',
-  '&lt;': '<',
-  '&gt;': '>',
-  '&quot;': '"',
-  '&#39;': "'",
-  '&apos;': "'",
-  '&nbsp;': ' ',
-};
-
-export function decodeXmlEntities(str: string): string {
-  return str
-    .replace(/<!\[CDATA\[(.*?)\]\]>/gs, '$1')
-    .replace(/&amp;|&lt;|&gt;|&quot;|&apos;/g, (m) => HTML_ENTITIES[m] ?? m)
-    .replace(/&#(\d+);/g, (_m, d) => String.fromCodePoint(Number(d)))
-    .replace(/&#x([0-9a-fA-F]+);/g, (_m, h) => String.fromCodePoint(Number.parseInt(h, 16)))
-    .trim();
-}
-
-// ─── Protocol parsing ────────────────────────────────────────────────
-
-const VALID_PROTOCOLS: Protocol[] = [
-  'nostr',
-  'farcaster',
-  'lens',
-  'bluesky',
-  'threads',
-  'rss',
-  'mastodon',
-  'reddit',
-  'ethereum',
-  'solana',
-  'lemmy',
-  'peertube',
-  'youtube',
-  'atproto',
-  'zora',
-  'telegram',
-  'ens',
-  'unstoppable',
-  'ion',
-  'keri',
-  'veramo',
-  'storj',
-  'sia',
-  'filecoin',
-  'swarm-eth',
-  'orbis',
-  'snapshot',
-  'tally',
-  'syndicate',
-  'juicebox',
-  'coinvise',
-  'unlock',
-  'mintgate',
-  'bonfida',
-];
-
-export function parseProtocols(
-  raw: string | null,
-  allowed: Protocol[] = VALID_PROTOCOLS,
-): Protocol[] {
-  if (!raw) return allowed;
-  const valid = new Set<Protocol>(allowed);
-  return raw
-    .split(',')
-    .map((p) => p.trim() as Protocol)
-    .filter((p): p is Protocol => valid.has(p));
-}
-
-// ─── Environment helpers ─────────────────────────────────────────────
-
-export function rmiUrl(env: { RMI_BACKEND_URL?: string }): string {
-  return env.RMI_BACKEND_URL || 'http://127.0.0.1:8000';
-}
-
-// ─── URL building ────────────────────────────────────────────────────
-
-export function buildUrl(
-  base: string,
-  path: string,
-  params?: Record<string, string | undefined>,
-): string {
-  const url = new URL(path, base);
-  if (params) {
-    for (const [k, v] of Object.entries(params)) {
-      if (v !== undefined) url.searchParams.set(k, v);
-    }
-  }
-  return url.toString();
-}
-
+// ─── Cross-protocol communities ────────────────────────────────────────
+export type { CrossProtocolCommunity } from './community';
+export {
+  COMMUNITY_INDEX_KEY,
+  COMMUNITY_KV_PREFIX,
+  communityFeedKey,
+  communityKey,
+  communityMembersKey,
+  slugifyCommunity,
+} from './community';
 // ─── Concurrency control ──────────────────────────────────────────────
+export { withConcurrencyLimit } from './concurrency';
+// ─── Universal Content Addressing (df:// URIs) ─────────────────────────
+export type { ProtocolSource } from './contentUri';
+export { decodeContentUri, encodeContentUri, getPostContentUri } from './contentUri';
+// ─── Cross-protocol identity resolution ────────────────────────────────
+export type { CrossProtocolIdentity, ProtocolId } from './crossProtocolIdentity';
+export { IDENTITY_KV_PREFIX, identityKey, PROTOCOL_ID_REGISTRY } from './crossProtocolIdentity';
+// ─── Token detection ──────────────────────────────────────────────────
+export type { TokenRef } from './detectTokens';
+export { detectTokens } from './detectTokens';
+// ─── Video detection ─────────────────────────────────────────────────────
+export type {
+  DirectVideoInfo,
+  EmbedLike,
+  PeerTubeInfo,
+  PeerTubeVideoData,
+  VideoInfo,
+  YouTubeInfo,
+} from './detectVideo';
+export {
+  detectVideoFromEmbeds,
+  fetchPeerTubeVideo,
+  isShortFormVideo,
+  parseDirectVideoUrl,
+  parsePeerTubeUrl,
+  parseVideoUrl,
+  parseYouTubeUrl,
+} from './detectVideo';
+// ─── HTML / XML entity handling ───────────────────────────────────────
+export { decodeXmlEntities } from './entities';
+// ─── Environment helpers ──────────────────────────────────────────────
+export { rmiUrl } from './env';
+// ─── Formatting ───────────────────────────────────────────────────────
+export { formatCount, formatDate, formatDuration, formatTimeAgo, formatTimestamp } from './format';
+// ─── Handle resolution ─────────────────────────────────────────────────
+export type { HandleResolution } from './identity';
+export { resolveFediverseHandle, resolveHandle } from './identity';
+// ─── Media proxy (image-proxy URL helper) ─────────────────────────────
+export { proxyMediaUrl, proxyUrl } from './mediaProxy';
+// ─── Content parsing (shared adapter utilities) ────────────────────────
+export { guessNiches } from './niches';
 
-export async function withConcurrencyLimit<T, R>(
-  items: T[],
-  limit: number,
-  fn: (item: T) => Promise<R>,
-): Promise<R[]> {
-  const results: R[] = Array.from({ length: items.length });
-  const queue = items.map((item, index) => ({ item, index }));
-  const runners = new Set<Promise<void>>();
-
-  while (queue.length > 0 || runners.size > 0) {
-    while (runners.size < limit && queue.length > 0) {
-      const next = queue.shift();
-      if (!next) break;
-      const { item, index } = next;
-      const promise = fn(item)
-        .then((result) => {
-          results[index] = result;
-        })
-        .catch(() => {})
-        .finally(() => {
-          runners.delete(promise);
-        });
-      runners.add(promise);
-    }
-    if (runners.size > 0) {
-      await Promise.race(runners);
-    }
-  }
-  return results;
-}
-
+// ─── Profile URL generation ────────────────────────────────────────────
+export {
+  getAuthorProfileHref,
+  getExternalProfileUrl,
+  getInternalProfileId,
+  getInternalProfilePath,
+  getProfileUrlFromParts,
+  getProtocolFeedPath,
+} from './profileUrl';
+// ─── Protocol → currency mapping for tipping ──────────────────────────
+export {
+  CURRENCY_META,
+  type CurrencyKey,
+  type CurrencyMeta,
+  getCurrencyMeta,
+  getDefaultCurrency,
+  PROTOCOL_DEFAULT_CURRENCY,
+} from './protocolCurrency';
+// ─── Protocol parsing ─────────────────────────────────────────────────
+export { parseProtocols } from './protocolParsing';
 // ─── Protocol registry (canonical) ──────────────────────────────────
 // Colors, labels, icons and metadata now live in ./protocols — the single
 // source of truth for protocol config. Local maps in app/UI packages must
 // derive from here instead of redefining protocol colors.
-
 export type { ExtraProtocolConfig, ProtocolCategory, ProtocolConfig } from './protocols';
 export {
   CATEGORIES,
@@ -205,117 +103,17 @@ export {
   PROTOCOLS,
   SIDEBAR_ORDER,
 } from './protocols';
-
-// ─── String utilities ────────────────────────────────────────────────
-
-export function safeKey(s: string): string {
-  return s.toLowerCase().replace(/[^a-z0-9@._-]/g, '_');
-}
-
-export function shortenAddress(addr: string, head = 6, tail = 4): string {
-  if (addr.length < head + tail + 3) return addr;
-  return `${addr.slice(0, head)}...${addr.slice(-tail)}`;
-}
-
-// ─── Token detection ──────────────────────────────────────────────────
-
-export type { TokenRef } from './detectTokens';
-export { detectTokens } from './detectTokens';
-
-// ─── Validation ───────────────────────────────────────────────────────
-
-export function isValidEmail(s: string): boolean {
-  if (typeof s !== 'string' || s.length > 254) return false;
-  return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(s);
-}
-
-// ─── Protocol → currency mapping for tipping ──────────────────────────
-
-export {
-  CURRENCY_META,
-  type CurrencyKey,
-  type CurrencyMeta,
-  getCurrencyMeta,
-  getDefaultCurrency,
-  PROTOCOL_DEFAULT_CURRENCY,
-} from './protocolCurrency';
-
-// ─── Cross-protocol identity resolution ────────────────────────────────
-
-export type { CrossProtocolIdentity, ProtocolId } from './crossProtocolIdentity';
-export { IDENTITY_KV_PREFIX, identityKey, PROTOCOL_ID_REGISTRY } from './crossProtocolIdentity';
-
-// ─── Handle resolution ─────────────────────────────────────────────────
-
-export type { HandleResolution } from './identity';
-export { resolveFediverseHandle, resolveHandle } from './identity';
-
-// ─── Profile URL generation ────────────────────────────────────────────
-
-export {
-  getAuthorProfileHref,
-  getExternalProfileUrl,
-  getInternalProfileId,
-  getInternalProfilePath,
-  getProfileUrlFromParts,
-  getProtocolFeedPath,
-} from './profileUrl';
-
-// ─── Universal Content Addressing (df:// URIs) ─────────────────────────
-
-export type { ProtocolSource } from './contentUri';
-export {
-  decodeContentUri,
-  encodeContentUri,
-  getPostContentUri,
-} from './contentUri';
-
-// ─── Error reporting (lightweight Sentry) ─────────────────────────────
-
-export { reportError } from './sentry';
-
-// ─── Video detection ─────────────────────────────────────────────────────
-
-export type {
-  DirectVideoInfo,
-  EmbedLike,
-  PeerTubeInfo,
-  PeerTubeVideoData,
-  VideoInfo,
-  YouTubeInfo,
-} from './detectVideo';
-export {
-  detectVideoFromEmbeds,
-  fetchPeerTubeVideo,
-  isShortFormVideo,
-  parseDirectVideoUrl,
-  parsePeerTubeUrl,
-  parseVideoUrl,
-  parseYouTubeUrl,
-} from './detectVideo';
-
-// ─── Media proxy (image-proxy URL helper) ─────────────────────────────
-
-export { proxyMediaUrl, proxyUrl } from './mediaProxy';
-
 // ─── Protocol content translation ─────────────────────────────────────
-
 export type { TranslationResult } from './protocolTranslator';
 export { estimateTranslationLoss, PROTOCOL_FORMATS, translateContent } from './protocolTranslator';
-
-// ─── Content parsing (shared adapter utilities) ────────────────────────
-
-export type { RssItem } from './content';
-export { guessNiches, parseRssItems, stripHtml } from './content';
-
-// ─── Cross-protocol communities ────────────────────────────────────────
-
-export type { CrossProtocolCommunity } from './community';
-export {
-  COMMUNITY_INDEX_KEY,
-  COMMUNITY_KV_PREFIX,
-  communityFeedKey,
-  communityKey,
-  communityMembersKey,
-  slugifyCommunity,
-} from './community';
+export type { RssItem } from './rss';
+export { parseRssItems } from './rss';
+// ─── Error reporting (lightweight Sentry) ─────────────────────────────
+export { reportError } from './sentry';
+// ─── String utilities ────────────────────────────────────────────────
+export { safeKey, shortenAddress } from './strings';
+export { stripHtml } from './stripHtml';
+// ─── URL building ─────────────────────────────────────────────────────
+export { buildUrl } from './url';
+// ─── Validation ───────────────────────────────────────────────────────
+export { isValidEmail } from './validation';
