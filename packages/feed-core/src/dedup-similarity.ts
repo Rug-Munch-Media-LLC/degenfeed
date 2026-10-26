@@ -3,9 +3,9 @@
 import type { UnifiedPost } from '@degenfeed/types';
 import type { PostSignals } from './dedup-state';
 import { markCrossPosted } from './dedup-state';
+import { JACCARD_THRESHOLD } from './dedup-thresholds';
 import { jaccardSimilarity, normalizedLevenshtein } from './text-similarity';
 
-const JACCARD_THRESHOLD = 0.7;
 const MIN_TEXT_LENGTH = 20;
 
 export interface Candidate {
