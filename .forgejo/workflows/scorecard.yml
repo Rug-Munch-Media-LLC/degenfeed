@@ -14,6 +14,10 @@ permissions: read-all
 
 jobs:
   scorecard:
+    # Disabled 2026-10-26: Scorecard needs GitHub OIDC (id-token) + SARIF code-scanning
+    # upload; neither exists on Forgejo, so the job can never pass and blocks every PR.
+    # Re-enable only if an equivalent Forgejo-native supply-chain scanner lands.
+    if: false
     runs-on: docker-x64
     permissions:
       security-events: write
