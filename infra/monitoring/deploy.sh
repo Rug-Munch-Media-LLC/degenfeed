@@ -4,18 +4,13 @@ set -euo pipefail
 # DegenFeed Fleet Monitoring Stack — Deploy to [HOST-2]
 # Usage: ./deploy.sh
 
-HYDRA_SSH="${HYDRA_SSH:-contabo}"
-HYDRA_HOST="${HYDRA_HOST:-[INTERNAL_HOST]}"
+MON_SSH="${MON_SSH:?set MON_SSH}"
+MON_HOST="${MON_HOST:-[INTERNAL_HOST]}"
 REMOTE_DIR="${REMOTE_DIR:-/path/to/degenfeed-monitoring}"
-SSH_USER="${SSH_USER:-root}"
 
-if [[ "${HYDRA_SSH}" == "contabo" ]]; then
-    HYDRA_TARGET="${SSH_USER}@${HYDRA_HOST}"
-else
-    HYDRA_TARGET="${HYDRA_SSH}"
-fi
+MON_TARGET="${MON_SSH}"
 
-echo "==> Deploying DegenFeed monitoring stack to [HOST-2] (${HYDRA_TARGET})"
+echo "==> Deploying DegenFeed monitoring stack to [HOST-2] (${MON_TARGET})"
 
 # Copy infrastructure files
 echo "==> Copying compose + config..."
@@ -23,12 +18,12 @@ rsync -avz --delete \
     docker-compose.yml \
     prometheus.yml \
     grafana/ \
-    "${HYDRA_TARGET}:${REMOTE_DIR}/"
+    "${MON_TARGET}:${REMOTE_DIR}/"
 
 # Start the stack
 echo "==> Starting stack via docker compose..."
 # shellcheck disable=SC2087  # ${REMOTE_DIR} expands client-side, \$(...) server-side
-ssh "${HYDRA_TARGET}" <<-SSH
+ssh "${MON_TARGET}" <<-SSH
   set -euo pipefail
   cd "${REMOTE_DIR}"
   docker compose pull
@@ -58,8 +53,8 @@ echo "============================================"
 echo "  DegenFeed Fleet Monitoring"
 echo "============================================"
 echo ""
-echo "  Grafana:    http://${HYDRA_HOST}"
-echo "  Prometheus: http://${HYDRA_HOST}"
+echo "  Grafana:    http://${MON_HOST}"
+echo "  Prometheus: http://${MON_HOST}"
 echo "  Login:      admin / admin"
 echo ""
 echo "  Dashboards provisioned automatically."

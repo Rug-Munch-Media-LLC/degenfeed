@@ -84,7 +84,7 @@
   - Verify: `curl http://localhost:3001/api/health` (Grafana)
   - Verify: `curl http://localhost:9090/-/ready` (Prometheus)
 - [ ] **Fix Prometheus scrape targets**
-  - `talos-node` (Tailscale route), `hydra-node` (port 9100 path)
+  - `talos-node` (Tailscale route), a retired host's node exporter (port 9100 path)
   - `degenfeed-worker` (`/api/health`), `degenfeed-social` (`/api/v1/instance`)
 - [ ] **Configure alert rules**
   - Rules: disk >85%, target down, backup age >26h, cert expiry <14d, swap >90%
@@ -118,8 +118,8 @@
   - Prune docker images/volumes
   - Rotate ClickHouse/Loki retention
   - Move cold backups off-box
-- [ ] **Free disk space on Hydra (100% → <80%)** ❌ Blocking
-  - Prune old `/backups/hydra` archives
+- [ ] **Free disk space on the fleet (100% → <80%)** ❌ Blocking
+  - Prune old backup archives
   - `docker system prune`
   - Add retention cap + disk alert at 85%
 - [ ] **Fix swap pressure on Talos**
@@ -315,7 +315,7 @@
 
 | # | Blocker | Phase | Owner | Status |
 |---|---------|-------|-------|--------|
-| B1 | Hydra disk 100% full | Foundation | DevOps | ❌ |
+| B1 | Secondary-host disk 100% full | Foundation | DevOps | ❌ |
 | B2 | Off-site R2 sync broken (0 bytes) | Foundation | DevOps | ❌ |
 | B3 | Neo4j backup silent failure | Foundation | DevOps | ❌ |
 | B4 | Home feed latency 10–23s | Beta | Backend | ❌ |
@@ -348,7 +348,7 @@ Rollback: `make rollback` or `./scripts/deploy/rollback.sh`
 - [ ] Verify wallet sign-in (Solana + EVM)
 - [ ] Verify creator coin deploy on testnet
 - [ ] Verify cross-chain tip flow on testnet
-- [ ] Check disk space on Talos + Hydra
+- [ ] Check disk space on Talos
 - [ ] Verify off-site backups complete
 - [ ] Check GlitchTip for recent errors
 - [ ] Run `make ci` one last time

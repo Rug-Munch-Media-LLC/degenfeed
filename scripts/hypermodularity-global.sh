@@ -5,7 +5,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 GATE="${HYPERMODULARITY_GATE:-$SCRIPT_DIR/check-hypermodularity.py}"
 BASELINE_ROOT="${HYPERMODULARITY_BASELINE_ROOT:-$HOME/.config/opencode/hypermodularity-baselines}"
-REPO_ROOT="/srv/work/repos"
+REPO_ROOT="${REPO_ROOT:?set REPO_ROOT}"
 BOOTSTRAP=0
 ALL=0
 REPO=""

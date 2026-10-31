@@ -33,8 +33,3 @@ scrape_configs:
         labels:
           instance: 'talos'
 
-  - job_name: 'hydra-node'
-    static_configs:
-      - targets: ['localhost:9100']
-        labels:
-          instance: 'hydra'

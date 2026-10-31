@@ -46,7 +46,7 @@ jobs:
                   "Agents write most diffs, so verify aggressively. Review the diff for:",
                   "1. Hallucinated imports, fake APIs, calls to functions that don't exist",
                   "2. Type safety violations (any in public APIs, unsafe casts)",
-                  "3. React/Vue/Astro rule violations (hooks order, list keys, hydration mismatches)",
+                  "3. React/Vue/Astro rule violations (hooks order, list keys, SSR mismatches)",
                   "4. Accessibility regressions (missing alt/aria-labels, contrast, keyboard traps)",
                   "5. Security (hardcoded secrets, dangerouslySetInnerHTML on untrusted input, XSS)",
                   "6. Performance (unbunded assets, N+1 fetches, missing memoization on hot paths)",
