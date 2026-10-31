@@ -46,6 +46,10 @@ _ENGINE_FILES = {
     "check-antipatterns.py",
     "check_antipatterns.py",
     "antipattern_rules.py",
+    # split siblings (2026-10-31) carry the rule PATTERNS as literals too
+    "antipattern_patterns.py",
+    "antipattern_wildcard.py",
+    "antipattern_ts.py",
 }
 
 

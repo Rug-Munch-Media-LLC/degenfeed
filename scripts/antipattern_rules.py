@@ -1,81 +1,41 @@
-"""antipattern_rules.py — rule detection for the anti-pattern ratchet gate.
+"""antipattern_rules.py — Python scanner for the anti-pattern ratchet gate.
 
-Extracted from check-antipatterns.py (2026-09-19) to keep the CLI under the
-200-line structure gate. TEXT IS NOT CODE: slop-markers reads real COMMENT
-tokens and wildcard-import skips string literals. DELIBERATE RE-EXPORTS: the
-REEXPORT_ALLOWLIST keepers star-import siblings as their public API; a wildcard
-in a dead `except ImportError:` fallback is unreachable and still counts.
+One purpose: scan one PYTHON file with the house anti-pattern checks. The rule
+REGEXES and skip policy live in antipattern_patterns.py, the wildcard-import
+judgement in antipattern_wildcard.py, the TS scanner in antipattern_ts.py.
+TEXT IS NOT CODE: slop-markers reads real COMMENT tokens and wildcard-import
+skips string literals. DELIBERATE RE-EXPORTS: the REEXPORT_ALLOWLIST keepers
+star-import siblings as their public API; a wildcard in a dead
+`except ImportError:` fallback is unreachable and still counts.
+
+Split from check-antipatterns.py (2026-09-19); trimmed to the Python scanner
+(2026-10-31) by the split described above. scan_python / scan_ts are the CLI's
+detection entry points.
 """
 
 from __future__ import annotations
 
 import ast
 import io
-import re
 import tokenize
 from pathlib import Path
 
-# Directories never scanned (vendored/generated/cache trees).
-SKIP_DIRS = {
-    ".git",
-    "node_modules",
-    "__pycache__",
-    ".venv",
-    "venv",
-    "dist",
-    "build",
-    ".next",
-    ".nuxt",
-    "coverage",
-    ".mypy_cache",
-    ".ruff_cache",
-    ".pytest_cache",
-    "site-packages",
-    "mutants",
-    ".tox",
-    ".nox",
-    "htmlcov",
-    ".output",
-    "crypto-skills",
-}
-
-# Deliberate public re-export surfaces: holders that merge split siblings into one
-# namespace so callers keep the historical `from <keeper> import Name` API. Narrow
-# and reviewable; dead `except ImportError` fallbacks are NOT exempt (below).
-REEXPORT_ALLOWLIST = frozenset(
-    [
-        "server.py",
-        "chunker.py",
-        "ingest_keeper.py",
-        "ingest_runner.py",
-        "ingest_scan.py",
-        "server_tools_a.py",
-        "server_tools_b.py",
-    ]
+from antipattern_patterns import (  # noqa: F401 — re-exported constants
+    EVAL_RE,
+    FSTRING_LOG_RE,
+    LOGGING_RE,
+    MONKEY_RE,
+    REEXPORT_ALLOWLIST,
+    SECRET_RE,
+    SKIP_DIRS,
+    SLOP_RE,
+    SYNC_IO_RE,
+    WILDCARD_RE,
 )
 
-MONKEY_RE = re.compile(
-    r"monkeypatch\.|mock\.patch|@patch\(|patch\.object|del sys\.modules"
-)
-SLOP_RE = re.compile(
-    r"#\s*(HACK|WORKAROUND|TEMP|XXX|!!!|FIX ME|DO NOT SHIP)\b", re.IGNORECASE
-)
-FSTRING_LOG_RE = re.compile(
-    r"log(?:ger)?\.(?:debug|info|warning|error|critical)\(\s*f[\"']"
-)
-WILDCARD_RE = re.compile(r"^\s*from\s+([\w.]+)\s+import\s+\*")
-EVAL_RE = re.compile(r"(?<![\w.])eval\(|(?<![\w.])exec\(")
-TS_IGNORE_RE = re.compile(r"@ts-ignore|@ts-nocheck|:\s*any\b|as any\b")
-SECRET_RE = re.compile(
-    r"(?i)\b(api[_-]?key|secret|password|private[_-]?key)\b\s*[:=]\s*[\"'][A-Za-z0-9_\-]{16,}[\"']"
-)
-SYNC_IO_RE = re.compile(
-    r"\b(requests\.(get|post|put|delete)|urllib\.request|time\.sleep)\("
-)
-LOGGING_RE = re.compile(
-    r"log(?:ger)?\.(debug|info|warning|error|critical|exception)\(|raise\b|logging\."
-)
-IMPORT_ERRORS = frozenset({"ImportError", "ModuleNotFoundError"})
+# Deliberate re-export: callers keep `from antipattern_rules import scan_ts`.
+from antipattern_ts import scan_ts  # noqa: F401 — API compat after split
+from antipattern_wildcard import _dead_fallback_lines, _is_own_module
 
 
 def _token_maps(src: str) -> tuple[list[str], set[int]]:
@@ -96,55 +56,6 @@ def _token_maps(src: str) -> tuple[list[str], set[int]]:
     except (tokenize.TokenError, IndentationError, SyntaxError):
         return [], set()
     return comments, strings
-
-
-def _is_own_module(dotted: str, root: Path | None, src_dir: Path | None = None) -> bool:
-    """True when a star-import targets OUR code that exists on disk.
-
-    `from <our_module> import *` is this repo's hub idiom, not the namespace
-    pollution this rule exists for (third-party: `from os import *`). A module
-    that does not resolve (a dead `scripts.does_not_exist` fallback) keeps
-    counting.
-    """
-    if dotted.startswith("."):
-        return True  # relative import — by definition our code
-    parts = dotted.split(".")
-    if root is None:
-        return len(parts) == 1
-    cands = [root.joinpath(*parts).with_suffix(".py"), root / f"{parts[-1]}.py"]
-    if src_dir is not None:
-        cands.append(src_dir / f"{parts[-1]}.py")
-    return any(c.exists() for c in cands) or root.joinpath(*parts).is_dir()
-
-
-def _dead_fallback_lines(tree: ast.AST, root: Path) -> set[int]:
-    """Wildcard imports in an `except ImportError:` whose module is absent.
-
-    The branch can never run, so the wildcard stays counted against the
-    ratchet even inside an allowlisted keeper.
-    """
-    dead: set[int] = set()
-    for handler in ast.walk(tree):
-        if not isinstance(handler, ast.ExceptHandler):
-            continue
-        exc = handler.type
-        elts = exc.elts if isinstance(exc, ast.Tuple) else [exc]
-        if not {e.id for e in elts if isinstance(e, ast.Name)} & IMPORT_ERRORS:
-            continue
-        for node in ast.walk(handler):
-            if not isinstance(node, ast.ImportFrom) or not node.module:
-                continue
-            if not any(a.name == "*" for a in node.names):
-                continue
-            rel, tail = node.module.replace(".", "/"), node.module.rsplit(".", 1)[-1]
-            cands = (
-                root / f"{rel}.py",
-                root / rel / "__init__.py",
-                root / f"{tail}.py",
-            )
-            if not any(c.exists() for c in cands):
-                dead.add(node.lineno)
-    return dead
 
 
 def scan_python(path: Path, counts: dict[str, int], root: Path | None = None) -> None:
@@ -205,16 +116,3 @@ def scan_python(path: Path, counts: dict[str, int], root: Path | None = None) ->
             counts["_wildcard-import-reexport-exempt"] = (
                 counts.get("_wildcard-import-reexport-exempt", 0) + exempt
             )
-
-
-def scan_ts(path: Path, counts: dict[str, int]) -> None:
-    """Scan one TS/JS file for slop markers."""
-    try:
-        src = path.read_text(errors="ignore")
-    except OSError:
-        return
-    if len(src.splitlines()) > 500:
-        counts["god-file"] = counts.get("god-file", 0) + 1
-    for ln in src.splitlines():
-        if TS_IGNORE_RE.search(ln):
-            counts["ts-ignore"] = counts.get("ts-ignore", 0) + 1

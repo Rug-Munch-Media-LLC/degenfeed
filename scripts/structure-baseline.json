@@ -5,8 +5,6 @@
     "hard": 500
   },
   "files": {
-    "scripts/check-antipatterns.py": 211,
-    "scripts/check-structure.py": 205,
     "scripts/enterprise-firewall.py": 351
   }
 }

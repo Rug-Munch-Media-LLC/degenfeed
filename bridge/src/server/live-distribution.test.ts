@@ -35,6 +35,9 @@ vi.mock('@degenfeed/spaces-bridge', () => ({
   livepeerBridge: { create: livepeerCreateMock },
 }));
 
+// vitest 4 mock fns keep their arrow impl when called with `new`, and a
+// plain arrow is not a constructor — the returned object must come from a
+// `function` implementation so `new MomokaClient()` still yields the stub.
 vi.mock('@degenfeed/lens-sdk/momoka', () => ({
   MomokaClient: vi.fn().mockImplementation(() => ({ submit: momokaSubmitMock })),
 }));

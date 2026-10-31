@@ -9,7 +9,16 @@ export default defineConfig({
     testTimeout: 15_000,
     // Default environment (packages override per their needs)
     environment: 'node',
-    include: ['src/**/*.{test,spec}.{ts,tsx}', 'tests/**/*.{test,spec}.{ts,tsx}'],
+    // Workspace-shaped: the coverage gate runs ONCE from the repo ROOT
+    // (pnpm coverage), so thresholds (60/50) evaluate on the WORKSPACE
+    // aggregate exactly as intended, not per package. turbo `test` runs the
+    // same suite per package without coverage.
+    include: [
+      'apps/**/src/**/*.{test,spec}.{ts,tsx}',
+      'packages/**/src/**/*.{test,spec}.{ts,tsx}',
+      'src/**/*.{test,spec}.{ts,tsx}',
+      'tests/**/*.{test,spec}.{ts,tsx}',
+    ],
     // Quarantined harnesses — each has its own runner:
     //   tests/e2e, tests/perf, tests/smoke  → Playwright / explicit scripts
     //   tests/a11y                          → axe runner
