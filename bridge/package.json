@@ -23,12 +23,12 @@
     "@degenfeed/utils": "workspace:*",
     "meilisearch": "^0.60.0",
     "sentiment": "^5.0.2",
-    "ws": "^8.21.1"
+    "ws": "^8.22.0"
   },
   "devDependencies": {
-    "@types/ws": "^8.18.1",
-    "tsx": "^4",
-    "typescript": "^5.5.0",
-    "vitest": "^4.1.10"
+    "@types/ws": "^8.18.2",
+    "tsx": "^4.23.15",
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.12"
   }
 }

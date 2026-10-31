@@ -39,7 +39,11 @@ vi.mock('@degenfeed/spaces-bridge', () => ({
 // plain arrow is not a constructor — the returned object must come from a
 // `function` implementation so `new MomokaClient()` still yields the stub.
 vi.mock('@degenfeed/lens-sdk/momoka', () => ({
-  MomokaClient: vi.fn().mockImplementation(() => ({ submit: momokaSubmitMock })),
+  // vitest 4 calls this with `new`, so the implementation must be constructible;
+  // an arrow-returning mockImplementation is not ("... is not a constructor").
+  MomokaClient: class {
+    submit = momokaSubmitMock;
+  },
 }));
 
 // Farcaster SDK is imported dynamically inside the distributor.

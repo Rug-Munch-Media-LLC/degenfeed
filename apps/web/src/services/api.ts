@@ -37,7 +37,12 @@ async function dedupedFetch(url: string, init?: RequestInit): Promise<Response> 
   const promise = retryFetch(url, { fetchOptions: init });
   if (isGet) {
     inflightRequests.set(key, promise);
-    promise.finally(() => inflightRequests.delete(key));
+    // Clean the dedup entry on BOTH settle paths. `promise.finally(...)` returns a
+    // new promise that re-rejects, and nothing awaited it — every failed GET leaked
+    // an unhandled rejection (vitest reported it as "1 error" and Node 22 can abort
+    // the process). `then(onSettle, onSettle)` keeps the chain handled.
+    const clear = () => inflightRequests.delete(key);
+    void promise.then(clear, clear);
   }
   return promise;
 }
