@@ -25,19 +25,19 @@ Also have ready:
 - Your Reddit **username** (the one you're logged in with)
 - Your Reddit **password**
 
-## Step 3: Store in gopass
+## Step 3: Store in <secrets-manager>
 
 ```bash
-gopass insert degenfeed/reddit/client_id
+<secrets-manager> insert degenfeed/reddit/client_id
 # Paste the client_id string
 
-gopass insert degenfeed/reddit/client_secret
+<secrets-manager> insert degenfeed/reddit/client_secret
 # Paste the client secret
 
-gopass insert degenfeed/reddit/username
+<secrets-manager> insert degenfeed/reddit/username
 # Your Reddit username
 
-gopass insert degenfeed/reddit/password
+<secrets-manager> insert degenfeed/reddit/password
 # Your Reddit password
 ```
 
@@ -54,10 +54,10 @@ Create `/etc/systemd/system/degenfeed-bridge.service.d/override.conf`:
 
 ```ini
 [Service]
-Environment="REDDIT_CLIENT_ID=$(gopass show degenfeed/reddit/client_id)"
-Environment="REDDIT_CLIENT_SECRET=$(gopass show degenfeed/reddit/client_secret)"
-Environment="REDDIT_USERNAME=$(gopass show degenfeed/reddit/username)"
-Environment="REDDIT_PASSWORD=$(gopass show degenfeed/reddit/password)"
+Environment="REDDIT_CLIENT_ID=$(<secrets-manager>)"
+Environment="REDDIT_CLIENT_SECRET=$(<secrets-manager>)"
+Environment="REDDIT_USERNAME=$(<secrets-manager>)"
+Environment="REDDIT_PASSWORD=$(<secrets-manager>)"
 ```
 
 Then reload and restart:

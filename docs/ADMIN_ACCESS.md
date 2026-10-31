@@ -2,8 +2,8 @@
 
 > **Last updated:** 2026-07-24
 >
-> All credentials stored in **gopass** — never commit secrets to git.
-> Access gopass: `gopass show degenfeed/<service>/admin`
+> All credentials stored in **<secrets-manager>** — never commit secrets to git.
+> Access <secrets-manager>: `<secrets-manager><service>/admin`
 
 ---
 
@@ -21,7 +21,7 @@
 10. [Farcaster](#10-farcaster)
 11. [DegenFeed Web App](#11-degenfeed-app)
 12. [Emergency Procedures](#12-emergency-procedures)
-13. [Gopass Setup](#13-gopass-setup)
+13. [Gopass Setup](#13-<secrets-manager>-setup)
 
 ---
 
@@ -31,7 +31,7 @@
 |-------|-------|
 | **Service** | social.degenfeed.xyz |
 | **Admin user** | `cryptorugmunch` |
-| **Password** | `gopass show degenfeed/gotosocial/admin` |
+| **Password** | `<secrets-manager>` |
 | **Container** | `gotosocial` |
 | **Local port** | `127.0.0.1:8082` |
 
@@ -74,7 +74,7 @@ curl -s http://127.0.0.1:8082/api/v1/instance | python3 -c \
 |-------|-------|
 | **Service** | talk.degenfeed.xyz |
 | **Admin user** | `degenfeed` |
-| **Password** | `gopass show degenfeed/lemmy/admin` |
+| **Password** | `<secrets-manager>` |
 | **Container** | `degenfeed-lemmy` |
 | **Local port** | `127.0.0.1:8536` |
 
@@ -86,7 +86,7 @@ curl -s http://127.0.0.1:8082/api/v1/instance | python3 -c \
 ```bash
 JWT=$(curl -s -X POST http://127.0.0.1:8536/api/v3/user/login \
   -H "Content-Type: application/json" \
-  -d "{\"username_or_email\":\"degenfeed\",\"password\":\"$(gopass show degenfeed/lemmy/admin)\"}" \
+  -d "{\"username_or_email\":\"degenfeed\",\"password\":\"$(<secrets-manager>)\"}" \
   | python3 -c "import sys,json; print(json.load(sys.stdin)['jwt'])")
 
 # Use token
@@ -109,11 +109,11 @@ Expected output: `['degenfeed']`
 |-------|-------|
 | **Service** | video.degenfeed.xyz |
 | **Admin user** | `root` |
-| **Password** | `gopass show degenfeed/peertube/admin` |
+| **Password** | `<secrets-manager>` |
 | **Container** | `peertube-peertube-1` |
 | **Local port** | `127.0.0.1:9011` |
-| **OAuth Client ID** | `gopass show degenfeed/peertube/oauth_client_id` |
-| **OAuth Client Secret** | `gopass show degenfeed/peertube/oauth_client_secret` (rotate pending) |
+| **OAuth Client ID** | `<secrets-manager>` |
+| **OAuth Client Secret** | `<secrets-manager>` (rotate pending) |
 
 ### Access
 - **Web UI**: https://video.degenfeed.xyz
@@ -126,11 +126,11 @@ PT_TOKEN=$(docker exec peertube-peertube-1 node -e "
 const http = require('http');
 const qs = require('querystring');
 const data = qs.stringify({
-  client_id: '<PT_CLIENT_ID from gopass>',
-  client_secret: '<PT_CLIENT_SECRET from gopass degenfeed/peertube/oauth_client_secret>',
+  client_id: '<PT_CLIENT_ID from <secrets-manager>>',
+  client_secret: '<PT_CLIENT_SECRET from <secrets-manager> degenfeed/peertube/oauth_client_secret>',
   grant_type: 'password',
   username: 'root',
-  password: '<PT_ADMIN_PASSWORD from gopass degenfeed/peertube/admin>',
+  password: '<PT_ADMIN_PASSWORD from <secrets-manager> degenfeed/peertube/admin>',
   scope: 'admin'
 });
 const options = {
@@ -168,7 +168,7 @@ docker exec peertube-postgres-1 psql -U peertube -d peertube \
 |-------|-------|
 | **Service** | photos.degenfeed.xyz |
 | **Admin user** | `photos_admin` |
-| **Password** | Set during initial `artisan` user creation (not stored in gopass) |
+| **Password** | Set during initial `artisan` user creation (not stored in <secrets-manager>) |
 | **Container** | `degenfeed-pixelfed` |
 | **Local port** | `127.0.0.1:8087` |
 
@@ -210,7 +210,7 @@ docker exec degenfeed-pixelfed php artisan user:admin NEWUSERNAME
 |-------|-------|
 | **Service** | blog.degenfeed.xyz |
 | **Admin user** | `degenfeed` |
-| **Password** | `gopass show degenfeed/writefreely/admin` |
+| **Password** | `<secrets-manager>` |
 | **Container** | `degenfeed-writefreely` |
 | **Local port** | `127.0.0.1:8086` |
 
@@ -222,7 +222,7 @@ docker exec degenfeed-pixelfed php artisan user:admin NEWUSERNAME
 ```bash
 TOKEN=$(curl -s -X POST http://127.0.0.1:8086/api/auth/login \
   -H "Content-Type: application/json" \
-  -d "{\"alias\":\"degenfeed\",\"pass\":\"$(gopass show degenfeed/writefreely/admin)\"}" \
+  -d "{\"alias\":\"degenfeed\",\"pass\":\"$(<secrets-manager>)\"}" \
   | python3 -c "import sys,json; print(json.load(sys.stdin)['data']['access_token'])")
 echo "Token: $TOKEN"
 ```
@@ -247,9 +247,9 @@ docker exec degenfeed-writefreely /go/cmd/writefreely/writefreely user create \
 | Field | Value |
 |-------|-------|
 | **Service** | pds.degenfeed.xyz |
-| **Admin password** | `gopass show degenfeed/bluesky/admin` |
-| **PDS JWT Secret** | `gopass show degenfeed/bluesky/admin.meta` (JWT_SECRET field) |
-| **PLC Rotation Key** | Stored in gopass |
+| **Admin password** | `<secrets-manager>` |
+| **PDS JWT Secret** | `<secrets-manager>.meta` (JWT_SECRET field) |
+| **PLC Rotation Key** | Stored in <secrets-manager> |
 | **Container** | `degenfeed-pds` |
 | **Local port** | `127.0.0.1:3012` |
 
@@ -260,7 +260,7 @@ docker exec degenfeed-writefreely /go/cmd/writefreely/writefreely user create \
 ```bash
 SESSION=$(curl -s -X POST http://127.0.0.1:3012/xrpc/com.atproto.server.createSession \
   -H "Content-Type: application/json" \
-  -d "{\"identifier\":\"admin@degenfeed.xyz\",\"password\":\"$(gopass show degenfeed/bluesky/admin)\"}")
+  -d "{\"identifier\":\"admin@degenfeed.xyz\",\"password\":\"$(<secrets-manager>)\"}")
 ACCESS_JWT=$(echo $SESSION | python3 -c "import sys,json; print(json.load(sys.stdin)['accessJwt'])")
 echo "Access JWT: $ACCESS_JWT"
 ```
@@ -285,7 +285,7 @@ curl -s -X POST http://127.0.0.1:3012/xrpc/com.atproto.server.createAccount \
 | Field | Value |
 |-------|-------|
 | **Service** | live.degenfeed.xyz |
-| **Admin password** | `gopass show degenfeed/owncast/admin` |
+| **Admin password** | `<secrets-manager>` |
 | **Stream key** | `degenfeed_stream` |
 | **RTMP endpoint** | `rtmp://live.degenfeed.xyz/live` |
 | **Container** | `owncast-owncast-1` |
@@ -328,7 +328,7 @@ docker restart owncast-owncast-1
 | Field | Value |
 |-------|-------|
 | **Service** | relay.degenfeed.xyz |
-| **Admin key** | `gopass show degenfeed/relay/admin` |
+| **Admin key** | `<secrets-manager>` |
 | **Type** | ActivityPub relay admin key |
 | **Container** | `degenfeed-relay` |
 | **Local port** | `127.0.0.1:8084` |
@@ -354,7 +354,7 @@ to sign ActivityPub activities. This is set automatically — no manual API call
 | Field | Value |
 |-------|-------|
 | **Service** | nostr.degenfeed.xyz |
-| **Admin pubkey** | `gopass show degenfeed/nostr/admin` |
+| **Admin pubkey** | `<secrets-manager>` |
 | **Container** | `degenfeed-nostr-relay` |
 | **Local port** | `127.0.0.1:8085` |
 
@@ -517,11 +517,11 @@ If you lose admin access to any service, use Docker exec to reset:
 # Emergency access checklist:
 # 1. SSH into [HOST-1] (internal IP) or run locally
 # 2. For each service, use the password reset commands listed above
-# 3. Store new passwords in gopass
+# 3. Store new passwords in <secrets-manager>
 
-# Quick-access credential dump (requires gopass)
+# Quick-access credential dump (requires <secrets-manager>)
 for entry in gotosocial lemmy peertube writefreely bluesky owncast relay; do
-  echo "$entry: $(gopass show degenfeed/$entry/admin 2>/dev/null | head -1)"
+  echo "$entry: $(<secrets-manager>$entry/admin 2>/dev/null | head -1)"
 done
 ```
 
@@ -565,33 +565,33 @@ docker start owncast-owncast-1
 
 ### Initialize
 ```bash
-gopass setup  # Interactive setup
+<secrets-manager> setup  # Interactive setup
 ```
 
 ### Store Admin Credentials
 ```bash
-gopass insert degenfeed/gotosocial/admin
-gopass insert degenfeed/lemmy/admin
-gopass insert degenfeed/peertube/admin
-gopass insert degenfeed/pixelfed/admin
-gopass insert degenfeed/writefreely/admin
-gopass insert degenfeed/bluesky/admin
-gopass insert degenfeed/owncast/admin
-gopass insert degenfeed/relay/admin
-gopass insert degenfeed/nostr/admin
+<secrets-manager> insert degenfeed/gotosocial/admin
+<secrets-manager> insert degenfeed/lemmy/admin
+<secrets-manager> insert degenfeed/peertube/admin
+<secrets-manager> insert degenfeed/pixelfed/admin
+<secrets-manager> insert degenfeed/writefreely/admin
+<secrets-manager> insert degenfeed/bluesky/admin
+<secrets-manager> insert degenfeed/owncast/admin
+<secrets-manager> insert degenfeed/relay/admin
+<secrets-manager> insert degenfeed/nostr/admin
 ```
 
 ### Retrieve
 ```bash
-gopass show degenfeed/gotosocial/admin
-gopass ls degenfeed/
+<secrets-manager>
+<secrets-manager> ls degenfeed/
 ```
 
 ### Troubleshooting
-- If gopass fails with git push error, disable auto-push:
+- If <secrets-manager> fails with git push error, disable auto-push:
   ```bash
-  # Edit ~/.config/gopass/config and add:
+  # Edit ~/.config/<secrets-manager>/config and add:
   # autopush = false
   ```
-- The gopass store is at `[GOPASS_STORE]`
+- The <secrets-manager> store is at `[GOPASS_STORE]`
 - Remote: `[INTERNAL]` (SSH key required)

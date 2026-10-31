@@ -20,7 +20,7 @@ pages_build_output_dir = ".vercel/output/static"
 - ✅ Environment variables set for production/preview
 
 ### 2.2 Cloudflare Tunnel (cloudflared)
-**File:** `/srv/work/repos/fleet-infra/cloudflared/config.example.yml`
+**File:** `<internal-repo>/cloudflared/config.example.yml`
 - Still in example state — needs to be deployed as actual config
 - Tunnel managed via fleet-infra repo
 
@@ -248,7 +248,7 @@ The code comment admits the issue:
 
 ✅ Public RPCs used where possible — no API key leakage
 ✅ Hubble runs locally — validates Farcaster data without external RPC
-⚠️ Alchemy keys in `.env` — should be in gopass
+⚠️ Alchemy keys in `.env` — should be in <secrets-manager>
 
 ### 5.4 Wallet Interaction Safety
 

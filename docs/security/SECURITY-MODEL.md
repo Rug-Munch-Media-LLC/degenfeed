@@ -178,7 +178,7 @@ See [§4 Authentication Flow](#4-authentication-flow) below.
 | API signing keys | Cloudflare Workers Secrets | Every 180 days | Worker runtime only |
 | Premium wallet key | Cloudflare Workers Secrets + HSM | Per-transaction signing | Transaction service only |
 | Database credentials | Docker secrets (tmpfs) | Every 30 days | Container init |
-| Cloudflare API tokens | gopass (operator machines) | Every 90 days | CI/CD pipelines |
+| Cloudflare API tokens | <secrets-manager> (operator machines) | Every 90 days | CI/CD pipelines |
 | R2 bucket keys | Cloudflare API tokens | Every 90 days | Worker runtime |
 | HSM master key | Hardware Security Module (YubiHSM) | Physical rotation | Admin operations |
 

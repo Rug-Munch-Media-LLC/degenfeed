@@ -57,7 +57,7 @@
 
 ## Security — 6/6 ✅
 
-- [x] Secrets in gopass ✅ — `degenfeed/` tree populated (auth, email, SMTP); hardcoded-secret grep over apps/workers/packages: clean. (Note: REMAINING.md lists 4 legacy external keys pending rotation — track separately.)
+- [x] Secrets in <secrets-manager> ✅ — `degenfeed/` tree populated (auth, email, SMTP); hardcoded-secret grep over apps/workers/packages: clean. (Note: REMAINING.md lists 4 legacy external keys pending rotation — track separately.)
 - [x] npm audit clean ✅ — `pnpm audit --prod`: **0 critical, 0 high**, 2 moderate
 - [x] API endpoints authenticated ✅ — `apiKeyMiddleware` on `/v1/*`, OAuth flows for auth routes
 - [x] Rate limiting active ✅ — `rateLimit(c.env, ip, path, maxReq, windowMs)` in worker
@@ -120,7 +120,7 @@
 | F6 | Restart policy `no` on rmi-backend/rmi-anvil | `docker update --restart unless-stopped rmi-backend rmi-anvil` + fix compose | 15m |
 | F7 | Prometheus: 3 targets down | Fix hydra-node port (404 → node-exporter path), talos-node Tailscale route, decide degenfeed /metrics exposure (or drop job) | 1–2h |
 | F8 | fleet-prometheus 0 alert rules | Add rule pack (disk >85%, target down, backup age >26h, cert expiry <14d, swap >90%); deploy Alertmanager or route via Kuma/n8n | 3–5h |
-| F9 | Healthchecks.io not pinged | Source `/srv/work/repos/fleet-infra/.env` at top of `dead-mans-switch.sh` (or set vars in crontab); confirm "Pinged healthchecks.io" in log | 30m |
+| F9 | Healthchecks.io not pinged | Source `<internal-repo>/.env` at top of `dead-mans-switch.sh` (or set vars in crontab); confirm "Pinged healthchecks.io" in log | 30m |
 | F10 | Lemmy 0 communities | Create 5–8 seed communities (memecoins, defi, nfts, security, general) + seed 3–5 posts each; fix container healthcheck (`wget` → `curl`) | 2–3h |
 | F11 | PeerTube 0 videos | Upload 3–5 launch videos or import via yt-dlp federation; fix container healthcheck | 2–4h |
 | F12 | RSS provider 403 | Upstream blocks default UA — set custom User-Agent in rss-bridge/fetcher or proxy via FlareSolverr | 1–2h |

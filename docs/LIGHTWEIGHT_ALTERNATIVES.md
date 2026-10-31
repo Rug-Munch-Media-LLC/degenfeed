@@ -386,11 +386,11 @@ services:
     container_name: degenfeed-snac
     restart: unless-stopped
     volumes:
-      - snac-data:/srv/snac
+      - snac-data:<internal-path>
     ports:
       - "127.0.0.1:8001:8001"
     environment:
-      - SNAC_BASEDIR=/srv/snac
+      - SNAC_BASEDIR=<internal-path>
     deploy:
       resources:
         limits:
@@ -414,7 +414,7 @@ make
 sudo make install
 
 # Init (answers prompts)
-sudo snac init /srv/snac
+sudo snac init <internal-path>
 
 # Systemd unit
 cat > /etc/systemd/system/snac.service << 'EOF'
@@ -425,7 +425,7 @@ After=network.target
 [Service]
 Type=simple
 User=snac
-ExecStart=/usr/local/bin/snac httpd /srv/snac
+ExecStart=/usr/local/bin/snac httpd <internal-path>
 Restart=on-failure
 
 [Install]
@@ -439,12 +439,12 @@ systemctl enable --now snac
 #### Multiple Instances for Bots
 ```bash
 # Each bot gets its own basedir
-sudo snac init /srv/snac-bot1   # instance at bot1.degenfeed.xyz
-sudo snac init /srv/snac-bot2   # instance at bot2.degenfeed.xyz
+sudo snac init <internal-path>   # instance at bot1.degenfeed.xyz
+sudo snac init <internal-path>   # instance at bot2.degenfeed.xyz
 
 # Run with different ports
-snac httpd /srv/snac-bot1 -p 8002
-snac httpd /srv/snac-bot2 -p 8003
+snac httpd <internal-path> -p 8002
+snac httpd <internal-path> -p 8003
 ```
 
 **Nginx reverse proxy config:**
@@ -465,7 +465,7 @@ server {
 
 #### Add User
 ```bash
-sudo snac adduser /srv/snac myusername
+sudo snac adduser <internal-path> myusername
 # Follow prompts for password, etc.
 ```
 
@@ -821,10 +821,10 @@ curl https://owncast.degenfeed.xyz/api/status
 git clone https://codeberg.org/grunfink/snac2.git && cd snac2 && make && sudo make install
 
 # Init instance
-sudo snac init /srv/snac
+sudo snac init <internal-path>
 
 # Add user
-sudo snac adduser /srv/snac myuser
+sudo snac adduser <internal-path> myuser
 
 # --- PieFed ---
 # Deploy with docker

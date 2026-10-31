@@ -5,7 +5,7 @@
 # Everything else (degenfeed-web/api, lens/zora indexers, pixelfed, castopod,
 # hubble, arena/firehose/mirror/paragraph bridges) is RETIRED — app runs via
 # systemd from the repo; the bridge is its own systemd unit.
-# MEILI_MASTER_KEY comes from /srv/degenfeed/.env (compose default env file).
+# MEILI_MASTER_KEY comes from <internal-path>/.env (compose default env file).
 
 services:
   meilisearch:

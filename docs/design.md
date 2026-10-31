@@ -578,7 +578,7 @@ We can run this for ten years on the cost of one dinner.
 | Nginx vhost | `/etc/nginx/sites-available/degenfeed.xyz` | **Remove.** |
 | Mastodon theme assets | `/path/to/degenfeed-akkoma/migration-archive/mastodon-theme/` | **Keep.** Can mine for inspiration. |
 | Backup scripts | `/path/to/scripts/degenfeed-backup.sh` | **Replace** with new site backup. |
-| gopass entries | All `degenfeed-akkoma-*` entries | **Keep** (audit trail), add new entries for v2. |
+| <secrets-manager> entries | All `degenfeed-akkoma-*` entries | **Keep** (audit trail), add new entries for v2. |
 | Email forwarding / SMTP | Gmail SMTP setup | **Keep** for `@degenfeed.xyz` if needed. |
 | ActivityPub followers | Any external followers we had | **They'll be stranded.** We'll post a farewell on the new site explaining. |
 
@@ -626,13 +626,13 @@ nginx -t && systemctl reload nginx
 echo "Cleaning DNS / tunnel..."
 # tunnel will be repointed in v2 setup
 
-echo "Removing gopass entries (keeping audit log)..."
-gopass rm -f LOCAL_SERVICES_PATH/akkoma-admin-password
-gopass rm -f LOCAL_SERVICES_PATH/akkoma-admin-token
-gopass rm -f LOCAL_SERVICES_PATH/akkoma-oauth-client-id
-gopass rm -f LOCAL_SERVICES_PATH/akkoma-oauth-client-secret
-gopass rm -f LOCAL_SERVICES_PATH/akkoma-postgres-password
-gopass rm -f LOCAL_SERVICES_PATH/web3-bridge-secret
+echo "Removing <secrets-manager> entries (keeping audit log)..."
+<secrets-manager> rm -f LOCAL_SERVICES_PATH/akkoma-admin-password
+<secrets-manager> rm -f LOCAL_SERVICES_PATH/akkoma-admin-token
+<secrets-manager> rm -f LOCAL_SERVICES_PATH/akkoma-oauth-client-id
+<secrets-manager> rm -f LOCAL_SERVICES_PATH/akkoma-oauth-client-secret
+<secrets-manager> rm -f LOCAL_SERVICES_PATH/akkoma-postgres-password
+<secrets-manager> rm -f LOCAL_SERVICES_PATH/web3-bridge-secret
 
 echo "Done. Total cold-storage footprint:"
 du -sh /path/to/backups/degenfeed-v1-final
@@ -787,10 +787,10 @@ Use the existing `fleet-template` to scaffold `apps/web` with all the standard p
 
 ### 8.3 Secrets management
 
-- Cloudflare API token in gopass: `CLOUDFLARE_API_TOKEN_PATH`.
+- Cloudflare API token in <secrets-manager>: `CLOUDFLARE_API_TOKEN_PATH`.
 - Cloudflare account ID: `[CLOUDFLARE_ACCOUNT_ID]` (already in notes).
 - Tunnel ID: `9f428b88-5a57-4b28-a7dc-1368f4f32811` (re-use or recreate).
-- DegenFeed signing keys (Nostr, Farcaster, Lens, Bluesky) generated during deploy, encrypted with passphrase, stored in gopass.
+- DegenFeed signing keys (Nostr, Farcaster, Lens, Bluesky) generated during deploy, encrypted with passphrase, stored in <secrets-manager>.
 
 ---
 
@@ -841,7 +841,7 @@ Use the existing `fleet-template` to scaffold `apps/web` with all the standard p
 1. **The graph already exists.** 6M+ accounts. We don't have to grow it.
 2. **The clients today are bad.** Damus, Amethyst, Farcaster clients, Lens clients — all have the design quality of 2014 Twitter. There's room.
 3. **Zero marginal cost.** Static site + edge workers. We can't lose money on this.
-4. **The team already has the infra.** [HOST-1] for backups, Plausible, MeiliSearch, Cloudflare account, Tailscale, gopass, fleet-template. Nothing new to buy.
+4. **The team already has the infra.** [HOST-1] for backups, Plausible, MeiliSearch, Cloudflare account, Tailscale, <secrets-manager>, fleet-template. Nothing new to buy.
 5. **The aggregator idea is validated by every successful aggregator in history.** TweetDeck → Tweetbot. Feedly. Reeder. Algorithmic feeds. People want a better window, not a new network.
 6. **We can pivot further.** If a new protocol emerges, we add a client. If the landscape consolidates, we don't care — we read whatever exists.
 

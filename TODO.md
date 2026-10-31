@@ -11,7 +11,7 @@
 - [x] **nginx 502s** — `deploy/nginx/` now routes `/api/feed`, `/api/rss`, `=/api/health` (+ `/v1`, `/health`) to the live bridge (:8787) instead of dead GoToSocial (:8082) / retired api container (:3101); live `app.degenfeed.xyz` vhost versioned into the repo.
 - [x] **Cosmetic gates** — `pnpm audit` pipefail fixed; duplicate `smoke:` key removed; fake `contract`/`fuzz`/`visual-regression` jobs removed (nonexistent scripts / no baselines); `sign-image` removed; Trivy → filesystem scan; coverage gate = vitest thresholds.
 - [x] **Workers build gate** — literal `echo` → real `wrangler deploy --dry-run --outdir dist`; `deploy` script injects `POSTIZ_API_KEY` from env (fails fast if unset).
-- [x] **Stoat secrets** — `stoat_changeme` / `stoat_secret_key_change_in_production` defaults removed; compose now requires `STOAT_DB_PASSWORD` + `STOAT_SECRET_KEY` from env (gopass).
+- [x] **Stoat secrets** — `stoat_changeme` / `stoat_secret_key_change_in_production` defaults removed; compose now requires `STOAT_DB_PASSWORD` + `STOAT_SECRET_KEY` from env (<secrets-manager>).
 - [x] **`ignoreBuildErrors`** — flag already removed from next.config.mjs; `pnpm typecheck` now actually runs as a blocking CI job (runner label was the blocker).
 
 ## 🔴 BLOCKING
@@ -40,7 +40,7 @@
 - [ ] **Fix `playwright.config.ts` webServer port** — hardcodes 3000; the Forgejo runner uses host networking where 127.0.0.1:3000 is Forgejo → EADDRINUSE. Change to `process.env.CI ? 3456 : 3000` (+ baseURL), then remove `continue-on-error` from the CI `e2e`/`a11y` jobs. *(apps/web owners)*
 - [ ] **Freeze Dockerfile lockfile** — `apps/web/Dockerfile:22` runs `pnpm install --no-frozen-lockfile`; change to `--frozen-lockfile`. *(apps/web owners)*
 - [ ] **Move `POSTIZ_API_KEY` out of `workers/api/wrangler.toml:202` `[vars]`** — still carries the literal `"${POSTIZ_API_KEY}"` placeholder; `wrangler secret put POSTIZ_API_KEY` + delete the var line. *(workers owners)*
-- [ ] **LIVE nginx re-point (lead)** — copy `deploy/nginx/{app,api,social}.degenfeed.xyz` → `/srv/degenfeed/nginx/`, symlink into `/etc/nginx/sites-enabled/`, `nginx -t && systemctl reload nginx`.
+- [ ] **LIVE nginx re-point (lead)** — copy `deploy/nginx/{app,api,social}.degenfeed.xyz` → `<internal-path>/nginx/`, symlink into `/etc/nginx/sites-enabled/`, `nginx -t && systemctl reload nginx`.
 - [ ] **Validate deploy pipeline (lead)** — set `DEPLOY_HOST`/`DEPLOY_USER`/`DEPLOY_SSH_KEY` Forgejo secrets + passwordless sudo for `systemctl restart degenfeed-web`, then run `.forgejo/workflows/deploy.yml` once via `workflow_dispatch`.
 - [ ] **Optional (lead)** — add an `ubuntu-latest` alias label to `/etc/forgejo-runner/config.yaml` (not required while jobs target `docker-x64`).
 
