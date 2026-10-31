@@ -50,7 +50,7 @@ overrides:
   ws: ^8.21.1
   undici: '>=6.27.0'
   valibot: ^1.2.0
-  sharp: ^0.35.3
+  sharp: ^0.35.5
   postcss: ^8.5.22
 
   # 2026-08-21 OSV hardening (migrated from package.json pnpm.overrides)
@@ -65,7 +65,7 @@ overrides:
   "uuid": "^11.1.1"
   "brace-expansion": "^5.0.9"
   "cookie": "^0.7.0"
-  "dompurify": "^3.4.13"
+  "dompurify": "^3.4.17"
   "vite@5.4.21": "^6.4.3"
   "uuid@8.3.2": "^11.1.1"
   "uuid@9.0.1": "^11.1.1"
@@ -73,3 +73,14 @@ overrides:
   # GHSA-67mh-4wv8-2f99 / GHSA-g7r4-m6w7-qqqr: esbuild dev-server vulnerabilities
   "esbuild@0.15.18": "^0.25.0"
   "esbuild@0.27.7": "^0.28.1"
+
+  # 2026-10-31 audit triage — transitive advisories with no direct dependency.
+  "tinypool": "^2.1.2"        # prototype-pollution gadget to RCE
+  "proxy-addr": "^2.0.8"      # IP spoofing via IPv4-mapped IPv6
+  "shell-quote": "^1.11.0"    # quote() command injection
+  # patch-level floors (no major bumps)
+  "source-map-js": "^1.2.2"
+  "compression": "^1.8.2"
+  "follow-redirects": "^1.16.2"
+  "launch-editor": "^2.14.2"
+  "body-parser": "^1.20.9"

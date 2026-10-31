@@ -22,9 +22,9 @@
     "@noble/hashes": "^1.8.0"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.5.5",
+    "@biomejs/biome": "^2.6.4",
     "typescript": "^5.9.3",
-    "vitest": "^4.1.10"
+    "vitest": "^4.1.12"
   },
   "exports": {
     ".": "./src/index.ts",

@@ -6,6 +6,6 @@
     "watch": "style-dictionary build --watch"
   },
   "devDependencies": {
-    "style-dictionary": "^5.5.0"
+    "style-dictionary": "^5.7.1"
   }
 }

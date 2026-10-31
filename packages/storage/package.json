@@ -12,11 +12,11 @@
   },
   "dependencies": {
     "@degenfeed/types": "workspace:*",
-    "idb": "^8.0.3"
+    "idb": "^8.0.4"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.5.5",
+    "@biomejs/biome": "^2.6.4",
     "typescript": "^5.9.3",
-    "vitest": "^4.1.10"
+    "vitest": "^4.1.12"
   }
 }

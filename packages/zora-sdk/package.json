@@ -14,7 +14,7 @@
     "@coral-xyz/anchor": "^0.30.1",
     "@degenfeed/web3": "workspace:*",
     "@solana/spl-token": "^0.4.15",
-    "@solana/web3.js": "^1.98.4",
+    "@solana/web3.js": "^1.99.0",
     "@zoralabs/coins-sdk": "^0.8.0"
   },
   "peerDependencies": {
@@ -23,7 +23,7 @@
   "devDependencies": {
     "@degenfeed/farcaster-sdk": "workspace:*",
     "typescript": "^5.9.3",
-    "viem": "^2.55.8"
+    "viem": "^2.57.13"
   },
   "exports": {
     ".": "./src/index.ts",
