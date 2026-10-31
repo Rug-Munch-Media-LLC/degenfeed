@@ -5,6 +5,10 @@ packages:
   - docs
   - packages/*
   - workers/*
+# 2026-10-31 fix/ci-green: approved core-js-pure + msw postinstall scripts.
+# core-js-pure's postinstall prints the core-js funding banner only (no network,
+# no build); msw's copies its bundled service-worker assets. Decided with
+# `pnpm approve-builds` to unblock pnpm 11's ERR_PNPM_IGNORED_BUILDS hard fail.
 allowBuilds:
   '@biomejs/biome': true
   '@bundled-es-modules/glob': false
@@ -14,9 +18,9 @@ allowBuilds:
   blake-hash: true
   bufferutil: true
   core-js: false
-  core-js-pure: set this to true or false
+  core-js-pure: true
   esbuild: true
-  msw: set this to true or false
+  msw: true
   protobufjs: true
   sharp: true
   style-dictionary: false

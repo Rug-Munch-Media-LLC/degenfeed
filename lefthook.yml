@@ -1,0 +1,33 @@
+# lefthook.yml - minimal hook contract committed so the gate self-test and the
+# lefthook-gate wrapper resolve in ANY checkout. Structure gates run the
+# repo-local scripts directly; the fleet gate tree is optional (warn-only).
+pre-commit:
+  commands:
+    gate-source-note:
+      run: |
+        _std="${STANDARDS_DIR:-${FLEET_STANDARDS_ROOT:-$HOME/.fleet-gate-tree}}"
+        [ -f "$_std/scripts/gate-source.sh" ] || \
+          echo "gate-source: note - no fleet gate tree at $_std; repo-local gates only" >&2
+        exit 0
+commit-msg:
+  commands:
+    gate-source-note:
+      run: |
+        exit 0
+pre-push:
+  commands:
+    structure-gate:
+      run: |
+        rc=0
+        if [ -f scripts/check-code-structure.py ]; then
+          python3 scripts/check-code-structure.py || rc=$?
+        fi
+        if [ -f scripts/check-baseline-freshness.py ]; then
+          python3 scripts/check-baseline-freshness.py || rc=$?
+        fi
+        exit "$rc"
+post-commit:
+  commands:
+    gate-source-note:
+      run: |
+        exit 0

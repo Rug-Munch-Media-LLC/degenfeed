@@ -1,224 +1,39 @@
-# ══════════════════════════════════════════════════════════════════════════════
-# Gitleaks Ignore — DegenFeed Web
-# ══════════════════════════════════════════════════════════════════════════════
-# Pattern: one SHA1 fingerprint per line.
-#   <commit>:<file>:<rule-id>:<line>
-#
-# REVIEW THESE (potential real secrets in docs — needs investigation):
-#   docs/NETWORK_OWNERSHIP.md — ethereum-private-key (JWT secrets in docs)
-#   docs/DEPLOYED.md — ethereum-private-key
-# ══════════════════════════════════════════════════════════════════════════════
-
-# ⚠️  REAL SECRETS NOT YET FIXED — Pipeline will flag these until resolved:
-#   docs/NETWORK_OWNERSHIP.md:106  — ethereum-private-key
-#   docs/NETWORK_OWNERSHIP.md:294  — ethereum-private-key
-#   docs/DEPLOYED.md:70            — ethereum-private-key
-#   TODO: Redact these JWT secrets from docs. They are NOT added to this
-#   ignore file — the pipeline WILL fail on them until fixed.
-
-# ── gopass-reference: documented workflows, not secrets ─────────────────────
-8fbb05f7308a6494861ad2158b3ab0c8e31a2d3e:docs/ADMIN_ACCESS.md:gopass-reference:409
-a40f104296f2778680567a5c3e8677d7bce9f81f:docs/CLOUDFLARE_SETUP.md:gopass-reference:232
-b336c2ac0e10ce2b8d53266982c0d3553c5c6fb2:scripts/health-check.sh:gopass-reference:323
-11a78eaaa4dc44ff3fdf707ce108752811e9e503:docker/DNS.md:gopass-reference:34
-11a78eaaa4dc44ff3fdf707ce108752811e9e503:docs/stripe-setup.md:gopass-reference:72
-11a78eaaa4dc44ff3fdf707ce108752811e9e503:docs/stripe-setup.md:gopass-reference:73
-11a78eaaa4dc44ff3fdf707ce108752811e9e503:docs/stripe-setup.md:gopass-reference:74
-11a78eaaa4dc44ff3fdf707ce108752811e9e503:docs/stripe-setup.md:gopass-reference:75
-11a78eaaa4dc44ff3fdf707ce108752811e9e503:docs/stripe-setup.md:gopass-reference:76
-ad75aa5912132efc2d083ada7213eaaef01af097:CLOUDFLARE.md:gopass-reference:116
-ad75aa5912132efc2d083ada7213eaaef01af097:scripts/deploy/rollback.sh:gopass-reference:71
-ad75aa5912132efc2d083ada7213eaaef01af097:scripts/deploy/rollback.sh:gopass-reference:72
-ad75aa5912132efc2d083ada7213eaaef01af097:scripts/deploy/rollback.sh:gopass-reference:86
-ad75aa5912132efc2d083ada7213eaaef01af097:scripts/deploy/rollback.sh:gopass-reference:87
-860a153c4c26e02dcb10097d99a11b87cec2fae7:scripts/deploy/setup-cloudflare.sh:gopass-reference:50
-860a153c4c26e02dcb10097d99a11b87cec2fae7:scripts/deploy/setup-cloudflare.sh:gopass-reference:55
-860a153c4c26e02dcb10097d99a11b87cec2fae7:scripts/deploy/setup-cloudflare.sh:gopass-reference:66
-860a153c4c26e02dcb10097d99a11b87cec2fae7:scripts/deploy/setup-cloudflare.sh:gopass-reference:72
-860a153c4c26e02dcb10097d99a11b87cec2fae7:scripts/deploy/setup-cloudflare.sh:gopass-reference:73
-5b394f6c92e959f84aa8a800e95a4af05695e605:scripts/deploy/setup-cloudflare.sh:gopass-reference:50
-5b394f6c92e959f84aa8a800e95a4af05695e605:scripts/deploy/setup-cloudflare.sh:gopass-reference:55
-5b394f6c92e959f84aa8a800e95a4af05695e605:scripts/deploy/setup-cloudflare.sh:gopass-reference:66
-5b394f6c92e959f84aa8a800e95a4af05695e605:scripts/deploy/setup-cloudflare.sh:gopass-reference:72
-5b394f6c92e959f84aa8a800e95a4af05695e605:scripts/deploy/setup-cloudflare.sh:gopass-reference:73
-aeeefd7c83346b40f67d90a20eaa8114c167e307:REMAINING.md:gopass-reference:25
-aeeefd7c83346b40f67d90a20eaa8114c167e307:REMAINING.md:gopass-reference:26
-aeeefd7c83346b40f67d90a20eaa8114c167e307:REMAINING.md:gopass-reference:27
-aeeefd7c83346b40f67d90a20eaa8114c167e307:REMAINING.md:gopass-reference:28
-aeeefd7c83346b40f67d90a20eaa8114c167e307:REMAINING.md:gopass-reference:29
-aeeefd7c83346b40f67d90a20eaa8114c167e307:REMAINING.md:gopass-reference:30
-aeeefd7c83346b40f67d90a20eaa8114c167e307:REMAINING.md:gopass-reference:36
-
-# ── internal-hostname: infrastructure docs in an internal repo ─────────────
-5652aeb10503c809e005b37baf3268501db9eeba:docs/DEPLOYMENT.md:internal-hostname:565
-5652aeb10503c809e005b37baf3268501db9eeba:docs/DEPLOYMENT.md:internal-hostname:566
-b336c2ac0e10ce2b8d53266982c0d3553c5c6fb2:docs/PRODUCTION_ARCHITECTURE.md:internal-hostname:62
-b336c2ac0e10ce2b8d53266982c0d3553c5c6fb2:docs/PRODUCTION_ARCHITECTURE.md:internal-hostname:101
-b336c2ac0e10ce2b8d53266982c0d3553c5c6fb2:docs/PRODUCTION_ARCHITECTURE.md:internal-hostname:122
-b336c2ac0e10ce2b8d53266982c0d3553c5c6fb2:docs/PRODUCTION_ARCHITECTURE.md:internal-hostname:166
-b336c2ac0e10ce2b8d53266982c0d3553c5c6fb2:docs/PRODUCTION_ARCHITECTURE.md:internal-hostname:228
-b336c2ac0e10ce2b8d53266982c0d3553c5c6fb2:workers/api/.dev.vars.example:internal-hostname:153
-ba4a87b723a1d306f02b839e50f2ae7f2baeecb9:apps/web/.env.example:internal-hostname:172
-ba4a87b723a1d306f02b839e50f2ae7f2baeecb9:apps/web/.env.example:internal-hostname:175
-ba4a87b723a1d306f02b839e50f2ae7f2baeecb9:DEPLOYMENT.md:internal-hostname:565
-ba4a87b723a1d306f02b839e50f2ae7f2baeecb9:DEPLOYMENT.md:internal-hostname:566
-11a78eaaa4dc44ff3fdf707ce108752811e9e503:docs/monitoring.md:internal-hostname:89
-11a78eaaa4dc44ff3fdf707ce108752811e9e503:packages/feed-providers/src/providers/threads.ts:internal-hostname:51
-11a78eaaa4dc44ff3fdf707ce108752811e9e503:packages/feed-providers/src/providers/threads.ts:internal-hostname:52
-ad75aa5912132efc2d083ada7213eaaef01af097:infra/monitoring/deploy.sh:internal-hostname:8
-ad75aa5912132efc2d083ada7213eaaef01af097:infra/monitoring/prometheus.yml:internal-hostname:32
-ad75aa5912132efc2d083ada7213eaaef01af097:infra/monitoring/README.md:internal-hostname:50
-ad75aa5912132efc2d083ada7213eaaef01af097:infra/monitoring/README.md:internal-hostname:80
-ad75aa5912132efc2d083ada7213eaaef01af097:infra/monitoring/README.md:internal-hostname:81
-ad75aa5912132efc2d083ada7213eaaef01af097:scripts/git/radicle-setup.sh:internal-hostname:3
-27be37aa97c233181474cc8959a7f3559b1d25de:workers/api/wrangler.toml:internal-hostname:81
-27be37aa97c233181474cc8959a7f3559b1d25de:workers/api/wrangler.toml:internal-hostname:82
-3af390925ee0ab0e615ef84507179ac55f63d6d2:workers/api/wrangler.toml:internal-hostname:61
-552fba8ac37e558ac4e99bd651afdd76d902ae3e:packages/feed-providers/src/providers/threads.ts:internal-hostname:11
-552fba8ac37e558ac4e99bd651afdd76d902ae3e:packages/feed-providers/src/providers/threads.ts:internal-hostname:22
-543c6bf53455a7e6c3a7a2956b5c29ad0a313861:GAPS.md:internal-hostname:45
-be3a7ad45aa67d0df57b1756c5f4cdf4a2ad035f:AGENTS.md:internal-hostname:29
-be3a7ad45aa67d0df57b1756c5f4cdf4a2ad035f:AGENTS.md:internal-hostname:30
-be3a7ad45aa67d0df57b1756c5f4cdf4a2ad035f:AGENTS.md:internal-hostname:31
-be3a7ad45aa67d0df57b1756c5f4cdf4a2ad035f:AGENTS.md:internal-hostname:36
-be3a7ad45aa67d0df57b1756c5f4cdf4a2ad035f:AGENTS.md:internal-hostname:36
-be3a7ad45aa67d0df57b1756c5f4cdf4a2ad035f:AGENTS.md:internal-hostname:97
-be3a7ad45aa67d0df57b1756c5f4cdf4a2ad035f:AGENTS.md:internal-hostname:98
-be3a7ad45aa67d0df57b1756c5f4cdf4a2ad035f:AGENTS.md:internal-hostname:100
-be3a7ad45aa67d0df57b1756c5f4cdf4a2ad035f:AGENTS.md:internal-hostname:101
-be3a7ad45aa67d0df57b1756c5f4cdf4a2ad035f:AGENTS.md:internal-hostname:286
-be3a7ad45aa67d0df57b1756c5f4cdf4a2ad035f:AGENTS.md:internal-hostname:286
-be3a7ad45aa67d0df57b1756c5f4cdf4a2ad035f:AGENTS.md:internal-hostname:335
-aeeefd7c83346b40f67d90a20eaa8114c167e307:REMAINING.md:internal-hostname:173
-aeeefd7c83346b40f67d90a20eaa8114c167e307:REMAINING.md:internal-hostname:173
-
-# ── ethereum-private-key: test fixture (not a real key) ────────────────────
-cc6ea5035f5000a775e394dcf4388e70b9412256:workers/api/src/__tests__/integration/publish-all-protocols.test.ts:ethereum-private-key:89
-
-# ── Pre-existing documentation references (--no-git mode, no commit hash) ──
-CLOUDFLARE.md:gopass-reference:116
-GAPS.md:internal-hostname:45
-DEPLOYMENT.md:internal-hostname:565
-DEPLOYMENT.md:internal-hostname:566
-REMAINING.md:gopass-reference:25
-REMAINING.md:gopass-reference:26
-REMAINING.md:gopass-reference:27
-REMAINING.md:gopass-reference:28
-REMAINING.md:gopass-reference:29
-REMAINING.md:gopass-reference:30
-REMAINING.md:gopass-reference:36
-REMAINING.md:internal-hostname:173
-apps/web/.env.example:internal-hostname:172
-apps/web/.env.example:internal-hostname:175
-docs/ADMIN_ACCESS.md:gopass-reference:409
-docs/CLOUDFLARE_SETUP.md:gopass-reference:232
-docs/DEPLOYMENT.md:internal-hostname:565
-docs/DEPLOYMENT.md:internal-hostname:566
-docs/NETWORK_OWNERSHIP.md:ethereum-private-key:109
-docs/NETWORK_OWNERSHIP.md:ethereum-private-key:362
-infra/monitoring/deploy.sh:internal-hostname:8
-infra/monitoring/README.md:internal-hostname:50
-infra/monitoring/README.md:internal-hostname:80
-infra/monitoring/README.md:internal-hostname:81
-infra/monitoring/prometheus.yml:internal-hostname:32
-packages/spaces-bridge/src/owncast.ts:internal-hostname:10
-packages/spaces-bridge/src/owncast.ts:internal-hostname:27
-scripts/deploy/rollback.sh:gopass-reference:71
-scripts/deploy/rollback.sh:gopass-reference:72
-scripts/deploy/rollback.sh:gopass-reference:86
-scripts/deploy/rollback.sh:gopass-reference:87
-scripts/deploy/setup-cloudflare.sh:gopass-reference:50
-scripts/deploy/setup-cloudflare.sh:gopass-reference:55
-scripts/deploy/setup-cloudflare.sh:gopass-reference:66
-scripts/deploy/setup-cloudflare.sh:gopass-reference:72
-scripts/deploy/setup-cloudflare.sh:gopass-reference:73
-scripts/git/radicle-setup.sh:internal-hostname:3
-workers/api/wrangler.toml:internal-hostname:196
-workers/api/wrangler.toml:internal-hostname:197
-
-# ── Historic leaks (now fixed in working tree / branch HEADs) ──────────────
-# These commits are NOT ancestors of main. They exist only on stale branches
-# (fix/de-god-files-routes, feat/live-streaming). Both branches have been
-# fixed at their HEADs. These historic fingerprints are ignored to prevent
-# CI noise until branches are force-pushed or GC'd.
-
-# fix/de-god-files-routes branch: internal IP redacted in HEAD commit 32871d62
-0d277a2773e002bf1971f441766a2dad22db1a68:packages/spaces/src/owncast.ts:internal-hostname:10
-0d277a2773e002bf1971f441766a2dad22db1a68:packages/spaces/src/owncast.ts:internal-hostname:27
-
-# fix/de-god-files-routes branch: test mnemonic replaced with placeholder in HEAD commit 32871d62
-b19d428c461b34cd6d5984f77d1dd469ad2e1159:bridge/src/web2-onboarding/index.ts:wallet-mnemonic:236
-
-# main branch (ancestor): internal IP redacted in current working tree
-c79a18a792cbab30fb58fd11ac5d1c3f0cb59e69:packages/spaces-bridge/src/owncast.ts:internal-hostname:10
-c79a18a792cbab30fb58fd11ac5d1c3f0cb59e69:packages/spaces-bridge/src/owncast.ts:internal-hostname:27
-
-# main branch (ancestor): JWT secrets redacted in current working tree
-0f81b61f17246c018cfb68e98ec4bcf4b1b3e318:docs/NETWORK_OWNERSHIP.md:ethereum-private-key:106
-0f81b61f17246c018cfb68e98ec4bcf4b1b3e318:docs/NETWORK_OWNERSHIP.md:ethereum-private-key:294
-
-# feat/live-streaming branch: JWT secret redacted in HEAD commit 71ab10f4
-11a78eaaa4dc44ff3fdf707ce108752811e9e503:docs/DEPLOYED.md:ethereum-private-key:70
-
-# ── internal-tailscale-ip: historic leaks (redacted from working tree) ──────
-# These Tailscale 100.x.x.x IPs were committed in docs/config files and have
-# since been redacted from the working tree. The old commits remain in history.
-0d277a2773e002bf1971f441766a2dad22db1a68:packages/spaces/src/owncast.ts:internal-tailscale-ip:10
-0d277a2773e002bf1971f441766a2dad22db1a68:packages/spaces/src/owncast.ts:internal-tailscale-ip:27
-8fe61c2f0593432cb8486bdba01be7afd50739f1:NEXT-WINS.md:internal-tailscale-ip:91
-5652aeb10503c809e005b37baf3268501db9eeba:docs/DEPLOYMENT.md:internal-tailscale-ip:565
-5652aeb10503c809e005b37baf3268501db9eeba:docs/DEPLOYMENT.md:internal-tailscale-ip:566
-b336c2ac0e10ce2b8d53266982c0d3553c5c6fb2:workers/api/.dev.vars.example:internal-tailscale-ip:153
-b336c2ac0e10ce2b8d53266982c0d3553c5c6fb2:docs/PRODUCTION_ARCHITECTURE.md:internal-tailscale-ip:62
-b336c2ac0e10ce2b8d53266982c0d3553c5c6fb2:docs/PRODUCTION_ARCHITECTURE.md:internal-tailscale-ip:101
-b336c2ac0e10ce2b8d53266982c0d3553c5c6fb2:docs/PRODUCTION_ARCHITECTURE.md:internal-tailscale-ip:122
-b336c2ac0e10ce2b8d53266982c0d3553c5c6fb2:docs/PRODUCTION_ARCHITECTURE.md:internal-tailscale-ip:166
-b336c2ac0e10ce2b8d53266982c0d3553c5c6fb2:docs/PRODUCTION_ARCHITECTURE.md:internal-tailscale-ip:228
-b336c2ac0e10ce2b8d53266982c0d3553c5c6fb2:workers/api/wrangler.toml:internal-tailscale-ip:220
-b336c2ac0e10ce2b8d53266982c0d3553c5c6fb2:workers/api/wrangler.toml:internal-tailscale-ip:221
-ba4a87b723a1d306f02b839e50f2ae7f2baeecb9:apps/web/.env.example:internal-tailscale-ip:172
-ba4a87b723a1d306f02b839e50f2ae7f2baeecb9:apps/web/.env.example:internal-tailscale-ip:175
-ba4a87b723a1d306f02b839e50f2ae7f2baeecb9:DEPLOYMENT.md:internal-tailscale-ip:565
-ba4a87b723a1d306f02b839e50f2ae7f2baeecb9:DEPLOYMENT.md:internal-tailscale-ip:566
-11a78eaaa4dc44ff3fdf707ce108752811e9e503:docs/monitoring.md:internal-tailscale-ip:89
-11a78eaaa4dc44ff3fdf707ce108752811e9e503:packages/feed-providers/src/providers/threads.ts:internal-tailscale-ip:51
-11a78eaaa4dc44ff3fdf707ce108752811e9e503:packages/feed-providers/src/providers/threads.ts:internal-tailscale-ip:52
-ad75aa5912132efc2d083ada7213eaaef01af097:infra/monitoring/deploy.sh:internal-tailscale-ip:8
-ad75aa5912132efc2d083ada7213eaaef01af097:infra/monitoring/README.md:internal-tailscale-ip:50
-ad75aa5912132efc2d083ada7213eaaef01af097:infra/monitoring/README.md:internal-tailscale-ip:80
-ad75aa5912132efc2d083ada7213eaaef01af097:infra/monitoring/README.md:internal-tailscale-ip:81
-ad75aa5912132efc2d083ada7213eaaef01af097:infra/monitoring/prometheus.yml:internal-tailscale-ip:32
-ad75aa5912132efc2d083ada7213eaaef01af097:scripts/git/radicle-setup.sh:internal-tailscale-ip:3
-27be37aa97c233181474cc8959a7f3559b1d25de:workers/api/wrangler.toml:internal-tailscale-ip:81
-27be37aa97c233181474cc8959a7f3559b1d25de:workers/api/wrangler.toml:internal-tailscale-ip:82
-3af390925ee0ab0e615ef84507179ac55f63d6d2:workers/api/wrangler.toml:internal-tailscale-ip:61
-552fba8ac37e558ac4e99bd651afdd76d902ae3e:packages/feed-providers/src/providers/threads.ts:internal-tailscale-ip:11
-552fba8ac37e558ac4e99bd651afdd76d902ae3e:packages/feed-providers/src/providers/threads.ts:internal-tailscale-ip:22
-543c6bf53455a7e6c3a7a2956b5c29ad0a313861:GAPS.md:internal-tailscale-ip:45
-543c6bf53455a7e6c3a7a2956b5c29ad0a313861:GAPS.md:internal-tailscale-ip:90
-be3a7ad45aa67d0df57b1756c5f4cdf4a2ad035f:AGENTS.md:internal-tailscale-ip:29
-be3a7ad45aa67d0df57b1756c5f4cdf4a2ad035f:AGENTS.md:internal-tailscale-ip:30
-be3a7ad45aa67d0df57b1756c5f4cdf4a2ad035f:AGENTS.md:internal-tailscale-ip:31
-be3a7ad45aa67d0df57b1756c5f4cdf4a2ad035f:AGENTS.md:internal-tailscale-ip:36
-be3a7ad45aa67d0df57b1756c5f4cdf4a2ad035f:AGENTS.md:internal-tailscale-ip:97
-be3a7ad45aa67d0df57b1756c5f4cdf4a2ad035f:AGENTS.md:internal-tailscale-ip:98
-be3a7ad45aa67d0df57b1756c5f4cdf4a2ad035f:AGENTS.md:internal-tailscale-ip:100
-be3a7ad45aa67d0df57b1756c5f4cdf4a2ad035f:AGENTS.md:internal-tailscale-ip:101
-be3a7ad45aa67d0df57b1756c5f4cdf4a2ad035f:AGENTS.md:internal-tailscale-ip:286
-be3a7ad45aa67d0df57b1756c5f4cdf4a2ad035f:AGENTS.md:internal-tailscale-ip:335
-aeeefd7c83346b40f67d90a20eaa8114c167e307:GAPS.md:internal-tailscale-ip:69
-aeeefd7c83346b40f67d90a20eaa8114c167e307:REMAINING.md:internal-tailscale-ip:173
-
-# 2026-10-23 — false positives, PROVEN not secret material.
-# Every finding below matched the literal 8-character string "REDACTED"
-# (sha256 prefix b83c7778c23a8d19 == sha256("REDACTED")). The reported
-# "Peertube OAuth client secret 6ad9d432" was a misread COMMIT sha
-# (6ad9d432e15841f9a6c33e3987fee49b7f1fa52b), not a secret value.
-# Live PeerTube credentials live only in gopass (degenfeed/peertube/admin);
-# the repo holds placeholders. No rotation was required for these entries.
-6ad9d432e15841f9a6c33e3987fee49b7f1fa52b:docs/ADMIN_ACCESS.md:generic-oauth-client-secret:129
-b157357ec2e4c9290bfcbd4e4d8c66d55703341d:docs/ADMIN_ACCESS.md:generic-oauth-client-secret:129
-abe890fc04afacc18a3e1a6cd997c96fe91b5c6a:workers/api/wrangler.toml:generic-oauth-client-secret:12
-002c067cb52c041fa9e7895feafa96a0405268af:docs/DEPLOYED.md:ethereum-private-key:70
-13df1548f1db9e2fb9a5d639c32aac927264d7fc:docs/NETWORK_OWNERSHIP.md:ethereum-private-key:106
-13df1548f1db9e2fb9a5d639c32aac927264d7fc:docs/NETWORK_OWNERSHIP.md:ethereum-private-key:294
+002c067cb52c041fa9e7895feafa96a0405268af:docs/monitoring.md:internal-tailscale-ip:89
+002c067cb52c041fa9e7895feafa96a0405268af:packages/feed-providers/src/providers/threads.ts:internal-tailscale-ip:51
+002c067cb52c041fa9e7895feafa96a0405268af:packages/feed-providers/src/providers/threads.ts:internal-tailscale-ip:52
+03aef3f0a4b88307b2ce452b93cb68821dc0733a:AGENTS.md:internal-tailscale-ip:100
+03aef3f0a4b88307b2ce452b93cb68821dc0733a:AGENTS.md:internal-tailscale-ip:101
+03aef3f0a4b88307b2ce452b93cb68821dc0733a:AGENTS.md:internal-tailscale-ip:286
+03aef3f0a4b88307b2ce452b93cb68821dc0733a:AGENTS.md:internal-tailscale-ip:29
+03aef3f0a4b88307b2ce452b93cb68821dc0733a:AGENTS.md:internal-tailscale-ip:30
+03aef3f0a4b88307b2ce452b93cb68821dc0733a:AGENTS.md:internal-tailscale-ip:31
+03aef3f0a4b88307b2ce452b93cb68821dc0733a:AGENTS.md:internal-tailscale-ip:335
+03aef3f0a4b88307b2ce452b93cb68821dc0733a:AGENTS.md:internal-tailscale-ip:36
+03aef3f0a4b88307b2ce452b93cb68821dc0733a:AGENTS.md:internal-tailscale-ip:97
+03aef3f0a4b88307b2ce452b93cb68821dc0733a:AGENTS.md:internal-tailscale-ip:98
+0e7337044c116fbf29d6f0dff332c553968f31af:infra/monitoring/README.md:internal-tailscale-ip:50
+0e7337044c116fbf29d6f0dff332c553968f31af:infra/monitoring/README.md:internal-tailscale-ip:80
+0e7337044c116fbf29d6f0dff332c553968f31af:infra/monitoring/README.md:internal-tailscale-ip:81
+0e7337044c116fbf29d6f0dff332c553968f31af:infra/monitoring/deploy.sh:internal-tailscale-ip:8
+0e7337044c116fbf29d6f0dff332c553968f31af:infra/monitoring/prometheus.yml:internal-tailscale-ip:32
+0e7337044c116fbf29d6f0dff332c553968f31af:scripts/git/radicle-setup.sh:internal-tailscale-ip:3
+2060b578d3f6635941d31eeb1c3f3b6a762120a6:GAPS.md:internal-tailscale-ip:45
+2060b578d3f6635941d31eeb1c3f3b6a762120a6:GAPS.md:internal-tailscale-ip:90
+261af0a08543d6e9a871082dda65941547763890:packages/spaces/src/owncast.ts:internal-tailscale-ip:10
+261af0a08543d6e9a871082dda65941547763890:packages/spaces/src/owncast.ts:internal-tailscale-ip:27
+61068eeae0b4b4916205bdfac143dfab6e601e7c:workers/api/wrangler.toml:internal-tailscale-ip:61
+67433853c38aa9f87e755b9d7190cd669e8b29bf:docs/PRODUCTION_ARCHITECTURE.md:internal-tailscale-ip:101
+67433853c38aa9f87e755b9d7190cd669e8b29bf:docs/PRODUCTION_ARCHITECTURE.md:internal-tailscale-ip:122
+67433853c38aa9f87e755b9d7190cd669e8b29bf:docs/PRODUCTION_ARCHITECTURE.md:internal-tailscale-ip:166
+67433853c38aa9f87e755b9d7190cd669e8b29bf:docs/PRODUCTION_ARCHITECTURE.md:internal-tailscale-ip:228
+67433853c38aa9f87e755b9d7190cd669e8b29bf:docs/PRODUCTION_ARCHITECTURE.md:internal-tailscale-ip:62
+67433853c38aa9f87e755b9d7190cd669e8b29bf:workers/api/.dev.vars.example:internal-tailscale-ip:153
+67433853c38aa9f87e755b9d7190cd669e8b29bf:workers/api/wrangler.toml:internal-tailscale-ip:220
+67433853c38aa9f87e755b9d7190cd669e8b29bf:workers/api/wrangler.toml:internal-tailscale-ip:221
+dbfc6db3a778f215fb402f302a6d9debcd46b5f4:NEXT-WINS.md:internal-tailscale-ip:91
+dc4d09e9eb9e71def09a86d82c04d466339b03ae:docs/DEPLOYMENT.md:internal-tailscale-ip:565
+dc4d09e9eb9e71def09a86d82c04d466339b03ae:docs/DEPLOYMENT.md:internal-tailscale-ip:566
+fe5e403049d6e525eab718f364f3f67ea8e39217:DEPLOYMENT.md:internal-tailscale-ip:565
+fe5e403049d6e525eab718f364f3f67ea8e39217:DEPLOYMENT.md:internal-tailscale-ip:566
+fe5e403049d6e525eab718f364f3f67ea8e39217:apps/web/.env.example:internal-tailscale-ip:172
+fe5e403049d6e525eab718f364f3f67ea8e39217:apps/web/.env.example:internal-tailscale-ip:175
