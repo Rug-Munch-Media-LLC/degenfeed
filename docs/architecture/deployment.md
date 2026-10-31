@@ -7,7 +7,7 @@
 | Landing page | Cloudflare Pages | Global edge |
 | Web client | Cloudflare Pages | Global edge |
 | Edge API | Cloudflare Worker | Global edge |
-| Social server | [HOST-1] (bare metal via Docker) | Germany (netcup) |
+| Social server | [HOST-1] (bare metal via Docker) | Germany (EU hosting provider) |
 | DNS | Cloudflare DNS | — |
 
 ## CI/CD

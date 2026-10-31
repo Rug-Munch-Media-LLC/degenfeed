@@ -42,7 +42,7 @@
 > sudo for `systemctl restart degenfeed-web`):
 >
 > ```bash
-> cd /srv/work/repos/degenfeed-web
+> cd <repo-root>
 > git fetch origin main && git reset --hard origin/main
 > pnpm install --frozen-lockfile
 > bash deploy/build-standalone.sh            # build + copy public/ + .next/static
@@ -61,7 +61,7 @@
 > ```
 >
 > **Repo naming note:** the production checkout directory is `degenfeed-web`
-> (`/srv/work/repos/degenfeed-web`) but the git repo / package scope is
+> (`<repo-root>`) but the git repo / package scope is
 > `degenfeed` (`pnpm --filter degenfeed build`). They are the SAME repo — do not
 > create a second checkout.
 >
@@ -378,7 +378,7 @@ anchor verify $PROGRAM_ID --provider.cluster mainnet
 
 ## Self-Hosted Infrastructure
 
-All services run as Docker containers on [HOST-1] (netcup). See `infra/` for compose files.
+All services run as Docker containers on [HOST-1] (EU hosting provider). See `infra/` for compose files.
 
 ### GoToSocial + Elk (ActivityPub / Mastodon) — `social.degenfeed.xyz`
 

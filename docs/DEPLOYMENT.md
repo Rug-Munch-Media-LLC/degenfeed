@@ -320,7 +320,7 @@ anchor verify $PROGRAM_ID --provider.cluster mainnet
 
 ## Self-Hosted Infrastructure
 
-All services run as Docker containers on [HOST-1] (netcup). See `infra/` for compose files.
+All services run as Docker containers on [HOST-1] (EU hosting provider). See `infra/` for compose files.
 
 ### GoToSocial (ActivityPub)
 

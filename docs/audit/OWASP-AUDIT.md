@@ -190,7 +190,7 @@ limit_req_zone $binary_remote_addr zone=search:10m rate=10r/m;
 ### 5.3 ❌ .env File Exposed
 **File:** `/path/to/degenfeed/.env`
 - Contains credentials: `MEILI_MASTER_KEY`, `LEMMY_DB_PASSWORD`, `LEMMY_ADMIN_PASSWORD`, `LEMMY_PICTRS_KEY`
-- Comment at top: `TODO: move ALL secrets to gopass — do not store plaintext in .env`
+- Comment at top: `TODO: move ALL secrets to <secrets-manager> — do not store plaintext in .env`
 - File is readable by Docker containers via `env_file:` directive
 
 ### 5.4 ❌ NEXT_PUBLIC_ADMIN_WALLETS Hardcoded in Dockerfile
@@ -419,7 +419,7 @@ const res = await fetch(`${pdsUrl}/xrpc/com.atproto.server.createAccount`, {
 1. Remove `'unsafe-eval'` from CSP and use strict CSP with nonces
 2. Update vitest, valibot, bigint-buffer, vite, sharp
 3. Pin all Docker images to specific versions
-4. Add `.env` to `.gitignore` and migrate secrets to gopass
+4. Add `.env` to `.gitignore` and migrate secrets to <secrets-manager>
 
 ### Short Term (1 week)
 1. Implement CSRF protection with double-submit cookie pattern

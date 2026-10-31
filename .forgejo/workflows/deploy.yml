@@ -3,7 +3,7 @@
 #   nginx → degenfeed-web.service (Next.js standalone, 127.0.0.1:3100)
 #         → degenfeed-bridge.service (feed API, 0.0.0.0:8787)
 #   The systemd unit runs FROM this repo's checkout:
-#     WorkingDirectory=/srv/work/repos/degenfeed-web/apps/web/.next/standalone/apps/web
+#     WorkingDirectory=<repo-root>/apps/web/.next/standalone/apps/web
 #   so "deploy" = update the checkout → rebuild → restart the unit.
 #
 # The previous Docker path (docker/build-and-push-action@v6 — an action that
@@ -50,7 +50,7 @@ jobs:
           script_stop: true
           script: |
             set -euo pipefail
-            APP_DIR=/srv/work/repos/degenfeed-web
+            APP_DIR=<repo-root>
             SERVICE=degenfeed-web
             cd "$APP_DIR"
             echo "=== Updating checkout to ${{ github.sha }} ==="

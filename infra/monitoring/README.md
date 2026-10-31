@@ -1,6 +1,6 @@
 # DegenFeed Fleet Monitoring Stack
 
-Grafana + Prometheus + Node Exporter for the DegenFeed fleet, deployed on [HOST-2] (Contabo).
+Grafana + Prometheus + Node Exporter for the DegenFeed fleet, deployed on [HOST-2] (EU hosting provider).
 
 ## Architecture
 

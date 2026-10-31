@@ -211,7 +211,7 @@ All SSL certificates valid. All DNS records resolving. All nginx routes active.
 | Check | Status | Details |
 |-------|--------|---------|
 | Container running | 🟢 | `owncast-owncast-1` — Up, healthy |
-| Admin access | 🟢 | Admin password set (`gopass show degenfeed/peertube/admin`) |
+| Admin access | 🟢 | Admin password set (`<secrets-manager>`) |
 | Name configured | 🟢 | **FIX APPLIED:** `DegenFeed Live` |
 | External URL | 🟢 | **FIX APPLIED:** `https://live.degenfeed.xyz` |
 | Signup/stream | 🟢 | Stream key configured (`degenfeed_stream`), chat enabled |

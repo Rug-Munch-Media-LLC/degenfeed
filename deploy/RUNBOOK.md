@@ -38,8 +38,8 @@ search is empty. Until a compose service or unit exists, start it manually:
 ```bash
 docker run -d --name degenfeed-meilisearch --restart unless-stopped \
   -p 127.0.0.1:7700:7700 \
-  -v /srv/degenfeed/meili_data:/meili_data \
-  -e MEILI_MASTER_KEY="$(gopass show -o <store>/degenfeed/meili-master-key)" \
+  -v <internal-path>/meili_data:/meili_data \
+  -e MEILI_MASTER_KEY="$(<secrets-manager>-o <store>/degenfeed/meili-master-key)" \
   getmeili/meilisearch:v1.12
 ```
 
@@ -57,14 +57,14 @@ symlink, validate, reload — **in this order**:
 
 ```bash
 # 1a. Copy the three vhosts to the server's nginx staging dir
-cp deploy/nginx/app.degenfeed.xyz    /srv/degenfeed/nginx/app.degenfeed.xyz.conf
-cp deploy/nginx/api.degenfeed.xyz    /srv/degenfeed/nginx/api.degenfeed.xyz.conf
-cp deploy/nginx/social.degenfeed.xyz /srv/degenfeed/nginx/social.degenfeed.xyz.conf
+cp deploy/nginx/app.degenfeed.xyz    <internal-path>/nginx/app.degenfeed.xyz.conf
+cp deploy/nginx/api.degenfeed.xyz    <internal-path>/nginx/api.degenfeed.xyz.conf
+cp deploy/nginx/social.degenfeed.xyz <internal-path>/nginx/social.degenfeed.xyz.conf
 
 # 1b. Symlink into sites-enabled (app + api: direct; social: via sites-available)
-ln -sf /srv/degenfeed/nginx/app.degenfeed.xyz.conf    /etc/nginx/sites-enabled/app.degenfeed.xyz
-ln -sf /srv/degenfeed/nginx/api.degenfeed.xyz.conf    /etc/nginx/sites-enabled/api.degenfeed.xyz
-ln -sf /srv/degenfeed/nginx/social.degenfeed.xyz.conf /etc/nginx/sites-available/social.degenfeed.xyz
+ln -sf <internal-path>/nginx/app.degenfeed.xyz.conf    /etc/nginx/sites-enabled/app.degenfeed.xyz
+ln -sf <internal-path>/nginx/api.degenfeed.xyz.conf    /etc/nginx/sites-enabled/api.degenfeed.xyz
+ln -sf <internal-path>/nginx/social.degenfeed.xyz.conf /etc/nginx/sites-available/social.degenfeed.xyz
 ln -sf /etc/nginx/sites-available/social.degenfeed.xyz /etc/nginx/sites-enabled/social.degenfeed.xyz
 
 # 1c. Validate BEFORE reloading — never reload on a broken config
@@ -75,7 +75,7 @@ systemctl reload nginx
 ```
 
 **Preflight gotchas** (these make `nginx -t` fail if missing on the host):
-- `social.degenfeed.xyz` includes `/srv/degenfeed/nginx/security-headers.conf`
+- `social.degenfeed.xyz` includes `<internal-path>/nginx/security-headers.conf`
   and uses the `gts_fed` rate-limit zone — both must already exist in the live
   nginx config (they do on the current host; verify on any new host).
 - TLS certs at `/etc/ssl/certs/degenfeed-origin-ca.pem` +
@@ -209,8 +209,8 @@ cp deploy/systemd/degenfeed-meili-reindex.timer   /etc/systemd/system/
 # NOTE: verify the store entry actually holds the LIVE bridge key — compare
 # against the BRIDGE_API_KEY in the service's environment, not just the name.
 cat > /etc/default/degenfeed-meili-reindex <<EOF
-BRIDGE_API_KEY=$(gopass show -o <store>/degenfeed/bridge-api-key)
-MEILI_KEY=$(gopass show -o <store>/degenfeed/meili-master-key)
+BRIDGE_API_KEY=$(<secrets-manager>-o <store>/degenfeed/bridge-api-key)
+MEILI_KEY=$(<secrets-manager>-o <store>/degenfeed/meili-master-key)
 EOF
 chmod 0600 /etc/default/degenfeed-meili-reindex
 
@@ -253,7 +253,7 @@ is a no-op) and only mutates through the bridge's own
 ## Rollback
 
 - **nginx:** `rm /etc/nginx/sites-enabled/<vhost>` (or restore the previous
-  `.conf` in `/srv/degenfeed/nginx/`), `nginx -t && systemctl reload nginx`.
+  `.conf` in `<internal-path>/nginx/`), `nginx -t && systemctl reload nginx`.
 - **web service:** `git -C <checkout> reset --hard <previous-sha> &&
   pnpm install --frozen-lockfile && pnpm --filter degenfeed build &&
   sudo systemctl restart degenfeed-web` — or `git revert` the offending commit
