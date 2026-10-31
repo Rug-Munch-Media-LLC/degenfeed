@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ═══════════════════════════════════════════════════════════════════════════
-# forgejo-set-secrets.sh — set Forgejo repo CI secrets from the password store
+# forgejo-set-secrets.sh — set Forgejo repo CI secrets from the secrets provider
 # ═══════════════════════════════════════════════════════════════════════════
 #
 # Populates the secrets required by .forgejo/workflows/deploy.yml:
@@ -8,8 +8,9 @@
 #
 # SAFETY: DRY-RUN BY DEFAULT. Without --apply this script only prints what it
 # WOULD set (secret name + value length, never the value). Pass --apply to
-# actually send. Values are read from the local password store at run time
-# and are never echoed, logged, or written to disk by this script.
+# actually send. Values are read through SECRETS_CMD (a command that prints a
+# secret for a given store path) and are never echoed, logged, or written to
+# disk by this script.
 #
 # Usage:
 #   scripts/forgejo-set-secrets.sh                 # dry-run (default)
@@ -17,7 +18,7 @@
 #   scripts/forgejo-set-secrets.sh --repo Org/Name # override repo (default: derived from git remote)
 #   scripts/forgejo-set-secrets.sh --url https://forgejo.example.com
 #
-# Password-store layout (override any path via env):
+# Secrets-provider paths (printed via SECRETS_CMD <path>):
 #   <mount>/forgejo/api_token        Forgejo API token (scope: repo admin —
 #                                    needs write access to repo settings)
 #   <mount>/degenfeed/deploy-host    SSH host CI deploys to
@@ -62,17 +63,18 @@ while [ $# -gt 0 ]; do
     shift
 done
 
-for dep in curl jq gopass; do
+for dep in curl jq; do
     command -v "$dep" >/dev/null 2>&1 || {
         echo "ERROR: required dependency '$dep' not found" >&2
         exit 2
     }
 done
 
-# ── Password-store mount (assembled from fragments so this public file never
+# ── Secrets-provider mount (assembled from fragments so this public file never
 #    contains a matchable secret-store path on a single line) ───────────────
 SECRET_MOUNT="${SECRET_MOUNT:-$(printf '%s%s' "r" "mi")}"
-gp() { gopass show -o "${SECRET_MOUNT}/$1" 2>/dev/null | head -n 1; }
+: "${SECRETS_CMD:?set SECRETS_CMD (command that prints a secret for a given path)}"
+gp() { "$SECRETS_CMD" "${SECRET_MOUNT}/$1" 2>/dev/null | head -n 1; }
 
 # ── Derive owner/repo from git remote if not given ─────────────────────────
 if [ -z "$REPO" ]; then
@@ -91,7 +93,7 @@ missing_names=()
 
 token="$(gp forgejo/api_token)" || token=""
 [ -n "$token" ] || {
-    echo "ERROR: API token not found in store at <mount>/forgejo/api_token" >&2
+    echo "ERROR: API token not provided by SECRETS_CMD (<mount>/forgejo/api_token)" >&2
     exit 3
 }
 
@@ -107,11 +109,11 @@ for name in DEPLOY_HOST DEPLOY_USER DEPLOY_SSH_KEY; do
 done
 
 if [ ${#missing[@]} -gt 0 ]; then
-    echo "ERROR: missing password-store entries (mount: ${SECRET_MOUNT}):" >&2
+    echo "ERROR: missing secrets-provider entries (mount: ${SECRET_MOUNT}):" >&2
     for i in "${!missing[@]}"; do
         echo "  - ${missing_names[$i]} → ${SECRET_MOUNT}/${missing[$i]}" >&2
     done
-    echo "Create them first, e.g.: gopass insert ${SECRET_MOUNT}/degenfeed/deploy-host" >&2
+    echo "Create them first with the secrets provider, e.g. entry ${SECRET_MOUNT}/degenfeed/deploy-host" >&2
     exit 3
 fi
 

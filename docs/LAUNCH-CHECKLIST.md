@@ -1,6 +1,6 @@
 # DegenFeed — Launch Readiness Checklist
 
-> Final QA pass executed 2026-07-18 (Talos + Hydra + live endpoints).
+> Final QA pass executed 2026-07-18 (Talos + live endpoints).
 > Legend: ✅ pass · ⚠️ partial/degraded · ❌ fail
 > **Readiness score: 30/50 checks passing** (10 ⚠️ partial, 10 ❌ failing)
 > **Verdict: NOT READY — 5 launch blockers (B1–B5 below)**
@@ -23,9 +23,9 @@
   - 75 containers up. `degenfeed-lemmy` + `peertube-peertube-1` report **unhealthy**, but the cause is broken healthchecks (`wget` missing inside containers) — both services respond over HTTPS. Fix the healthcheck commands.
 - [ ] Disk usage <85% ❌ **CRITICAL**
   - Talos `/`: **94–95%** (937G/1007G, 61G free)
-  - Hydra `/`: **100% FULL** (193G/193G, 0 free) — next backup run will fail
+  - Retired secondary host `/`: **100% FULL** — that host is since decommissioned
 - [ ] Memory within limits ⚠️
-  - Talos RAM OK (17/31 GiB) but **swap 100% used (8/8 GiB)** — memory pressure. Hydra fine (7.9/23 GiB).
+  - Talos RAM OK (17/31 GiB) but **swap 100% used (8/8 GiB)** — memory pressure at the time on the primary host.
 - [ ] All services restart automatically ❌
   - `rmi-backend` and `rmi-anvil` have restart policy **`no`**. Everything else is `always`/`unless-stopped`.
 
@@ -37,8 +37,8 @@
 - [ ] Off-site B2 sync ❌ **CRITICAL**
   - `offsite-backup.sh` logs `Off-site backup replication FAILED (multi-dest)` — B2 destination not confirmed.
   - Root cause verified: **`b2-crypt:backups` contains 0 files / 0 bytes.** A plaintext `backups/` dir sits inside `b2:fleet-backup`, which the crypt remote (directory_name_encryption=true) cannot decrypt → "Skipping undecryptable dir name". Nothing is actually replicated off-site.
-- [ ] Hydra backups working ⚠️
-  - `hydra-backup.sh` completed 2026-07-18 01:17 (5.8G in /backups/hydra) — but **disk is now 100% full**, so tonight's run will fail.
+- [ ] Backups on the now-retired secondary host ⚠️
+  - Its backup job completed 2026-07-18 01:17 (5.8G archived) — but the disk was 100% full, so the final runs failed. (Host since decommissioned.)
 - [ ] Backup alerting active ⚠️
   - `backup-monitor.sh` (hourly) + dead-man's-switch (30 min) running; email alert path only. Healthchecks.io/Kuma push not wired (see Monitoring).
 - [x] Sentinel file recent (<24h) ✅ — `/backups/.last-successful-backup` at 2026-07-17 18:49 (~17h)
@@ -46,7 +46,7 @@
 ## Monitoring — 2/5 (3 ❌)
 
 - [ ] Prometheus scraping all targets ❌
-  - fleet-prometheus (:9091): **7 up / 3 down** — `degenfeed-http` (/metrics timeout), `hydra-node` (9100 → 404), `talos-node` (timeout via Tailscale IP)
+  - fleet-prometheus (:9091): **7 up / 3 down** — `degenfeed-http` (/metrics timeout), a retired host's node exporter (9100 → 404), `talos-node` (timeout via Tailscale IP)
 - [x] Grafana dashboards showing data ✅ — 5 dashboards (DegenFeed Fleet Health, DegenFeed Metrics, Agent Fleet, CI/CD, LLM Costs); datasource query verified live
 - [ ] Alert rules configured ❌
   - **fleet-prometheus has 0 rule groups / 0 rules.**
@@ -112,13 +112,13 @@
 
 | # | Failure | Fix | Effort |
 |---|---------|-----|--------|
-| B1 | **Hydra disk 100% full** | Prune old /backups/hydra archives + docker system prune; add retention cap; add disk alert at 85% | 1–2h |
+| B1 | **Retired secondary-host disk 100% full** | Historical — resolved by decommissioning that host; add disk alert at 85% fleet-wide | resolved |
 | B2 | **Off-site B2 sync broken (0 bytes replicated)** | Remove plaintext `backups/` dir from `b2:fleet-backup`, re-run `offsite-backup.sh`, verify `rclone lsf b2-crypt:backups` non-empty; add file-count check to multi-dest confirm | 2–4h |
 | B3 | **Neo4j backup silently failing** | Debug `db-backup.sh` Neo4j section (likely `neo4j-admin dump` hang or disk pressure); add per-DB timeout + failure exit code | 2–3h |
 | B4 | **/api/feed/home 10–23s latency** | Profile aggregator: parallelize provider fetches, cap per-provider timeout (~2s), serve stale-while-revalidate from KV/cache | 1–2d |
 | B5 | **Talos disk 94–95%** | Prune docker images/volumes, rotate ClickHouse/Loki retention, move cold backups off-box (after B2) | 2–4h |
 | F6 | Restart policy `no` on rmi-backend/rmi-anvil | `docker update --restart unless-stopped rmi-backend rmi-anvil` + fix compose | 15m |
-| F7 | Prometheus: 3 targets down | Fix hydra-node port (404 → node-exporter path), talos-node Tailscale route, decide degenfeed /metrics exposure (or drop job) | 1–2h |
+| F7 | Prometheus: 3 targets down | Drop the dead scrape job for the retired host, fix talos-node Tailscale route, decide degenfeed /metrics exposure (or drop job) | 1–2h |
 | F8 | fleet-prometheus 0 alert rules | Add rule pack (disk >85%, target down, backup age >26h, cert expiry <14d, swap >90%); deploy Alertmanager or route via Kuma/n8n | 3–5h |
 | F9 | Healthchecks.io not pinged | Source `<internal-repo>/.env` at top of `dead-mans-switch.sh` (or set vars in crontab); confirm "Pinged healthchecks.io" in log | 30m |
 | F10 | Lemmy 0 communities | Create 5–8 seed communities (memecoins, defi, nfts, security, general) + seed 3–5 posts each; fix container healthcheck (`wget` → `curl`) | 2–3h |
@@ -135,7 +135,7 @@
 # Pre-Launch Action Items (prioritized)
 
 ## P0 — Launch blockers (do first, ~2 days)
-1. **B1 Hydra disk 100%** — backups die tonight without this. (1–2h)
+1. **B1 retired secondary-host disk full** — historical; host decommissioned. (–)
 2. **B2 Off-site R2 replication** — currently zero off-site copies of DB backups; single-server data-loss risk. (2–4h)
 3. **B5 Talos disk 94%** — at 100% every DB and container on the box degrades. (2–4h)
 4. **B3 Neo4j backup** — restore untested data = data at risk. (2–3h)

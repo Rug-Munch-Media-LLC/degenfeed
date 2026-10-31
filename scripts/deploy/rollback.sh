@@ -67,27 +67,11 @@ echo
 
 # ── 1. Resolve auth ────────────────────────────────────────────────────
 if [[ -z "${CLOUDFLARE_API_TOKEN:-}" && -z "${CLOUDFLARE_API_KEY:-}" ]]; then
-  if command -v gopass >/dev/null 2>&1; then
-    if gopass show CLOUDFLARE_API_KEY_PATH >/dev/null 2>&1; then
-      # shellcheck disable=SC2155
-      export CLOUDFLARE_API_KEY="$(gopass show -o CLOUDFLARE_API_KEY_PATH)"
-    fi
-  fi
-fi
-
-if [[ -z "${CLOUDFLARE_API_TOKEN:-}" && -z "${CLOUDFLARE_API_KEY:-}" ]]; then
   red "ERROR: no Cloudflare credentials found."
   red "Set one of:"
   red "  CLOUDFLARE_API_TOKEN=cfat_xxxxx $0"
   red "  CLOUDFLARE_API_KEY=xxxxx $0"
   exit 1
-fi
-
-if [[ -z "${CLOUDFLARE_ACCOUNT_ID:-}" ]]; then
-  if command -v gopass >/dev/null 2>&1 && gopass show CLOUDFLARE_ACCOUNT_ID_PATH >/dev/null 2>&1; then
-    # shellcheck disable=SC2155
-    export CLOUDFLARE_ACCOUNT_ID="$(gopass show -o CLOUDFLARE_ACCOUNT_ID_PATH)"
-  fi
 fi
 
 if [[ -z "${CLOUDFLARE_ACCOUNT_ID:-}" ]]; then

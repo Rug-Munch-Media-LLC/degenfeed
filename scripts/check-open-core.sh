@@ -11,13 +11,13 @@
 #
 # Usage:  bash scripts/check-open-core.sh [--hosts]
 #         --hosts  also query Forgejo/GitLab/Codeberg/GitHub and diff visibility
-#                 against the policy (needs gopass + network; skipped otherwise)
+#                 against the policy (needs FORGEJO_TOKEN; skipped otherwise)
 #
 # Exit:   0 clean · 1 violations found
 set -uo pipefail
 
-POLICY="${OPEN_CORE_POLICY:-/srv/work/repos/standards/OPEN-CORE-POLICY.json}"
-WORK_ROOT="${WORK_ROOT:-/srv/work/repos}"
+POLICY="${OPEN_CORE_POLICY:?set OPEN_CORE_POLICY}"
+WORK_ROOT="${WORK_ROOT:?set WORK_ROOT}"
 WITH_HOSTS=0
 [ "${1:-}" = "--hosts" ] && WITH_HOSTS=1
 
@@ -147,15 +147,21 @@ else
 fi
 
 # --- 5. adopted code must not be indexed as our own code ---------------------
-if [ -x /srv/zoekt/zoekt-repos.sh ] || [ -f /srv/zoekt/zoekt-repos.sh ]; then
+ZOEKT_REPOS="${ZOEKT_REPOS:-}"
+if [ -n "$ZOEKT_REPOS" ] && [ -x "$ZOEKT_REPOS" ]; then
     # Compare PATHS, not basenames. A name collision is not a mis-tagging:
-    # our own curated /srv/work/repos/awesome-x402 legitimately shares a name with
-    # the third-party fork at _adopted/upstream-awesome-x402, and only the path
+    # our own curated checkout of a project legitimately shares a name with the
+    # third-party fork at _adopted/upstream-<project>, and only the path
     # tells them apart. A basename gate false-positives on exactly that.
-    mis=$(bash /srv/zoekt/zoekt-repos.sh 2>/dev/null | awk -F'\t' '$1 ~ /^own-/ {print $4}' |
+    mis=$(bash "$ZOEKT_REPOS" 2>/dev/null | awk -F'\t' '$1 ~ /^own-/ {print $4}' |
         grep -F "$ADOPTED_ROOT" | sed 's#.*/##' | sort -u || true)
-    [ -n "$mis" ] && v "third-party indexed as own-* (own code): $(echo "$mis" | tr '\n' ' ')" ||
+    if [ -n "$mis" ]; then
+        v "third-party indexed as own-* (own code): $(echo "$mis" | tr '\n' ' ')"
+    else
         ok "no third-party indexed under the own-* namespace"
+    fi
+else
+    w "ZOEKT_REPOS not set or not executable — skipping the adopted-code indexing check"
 fi
 
 # --- 5a. Radicle: serve yes, publish only the public tier --------------------
@@ -237,9 +243,9 @@ fi
 
 # --- 6. host visibility vs policy (opt-in) -----------------------------------
 if [ "$WITH_HOSTS" = "1" ]; then
-    FT=$(gopass show -o rmi/forgejo/api_token 2>/dev/null | head -1 | tr -d '[:space:]')
+    FT="${FORGEJO_TOKEN:-}"
     if [ -z "$FT" ]; then
-        w "no forgejo token in gopass — skipping visibility diff"
+        w "no forgejo token provided — skipping visibility diff"
     else
         for n in "${PUB[@]}"; do
             c=$(curl -sS -m 20 -o /tmp/oc.$$ -w '%{http_code}' -H "Authorization: token $FT" \

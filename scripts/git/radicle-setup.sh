@@ -83,7 +83,7 @@ declare -A REPOS=(
   ["rugbrain"]="RugBrain — Retrieval-Augmented Generation for RMI knowledge base."
 )
 
-BASE_PATH="/srv/work/repos"
+BASE_PATH="${BASE_PATH:?set BASE_PATH}"
 
 for repo in "${!REPOS[@]}"; do
   repo_path="$BASE_PATH/$repo"
@@ -116,5 +116,5 @@ echo ""
 echo "Repos can be cloned via:"
 echo "  rad clone rad:<rid>"
 echo ""
-echo "See gopass RADICLE_PATH for RIDs and keys."
+echo "See the secrets manager entry RADICLE_PATH for RIDs and keys."
 echo "Sync schedule: weekly cron (Sun 06:00 UTC) via /etc/cron.d/radicle-sync on [HOST-2]."

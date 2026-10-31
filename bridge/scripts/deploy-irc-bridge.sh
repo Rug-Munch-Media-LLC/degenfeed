@@ -5,7 +5,7 @@
 # Prerequisites:
 #   - Docker and Docker Compose
 #   - Synapse homeserver running at matrix.degenfeed.xyz
-#   - IRC_AS_TOKEN and IRC_HS_TOKEN set in environment or gopass
+#   - IRC_AS_TOKEN and IRC_HS_TOKEN set in environment or secrets manager
 #
 # Usage:
 #   bash deploy-irc-bridge.sh [--generate-registration]

@@ -4,7 +4,7 @@
 #
 # First-time Cloudflare setup for DegenFeed. Operator must run this once
 # after creating a Cloudflare account, adding the degenfeed.xyz zone,
-# and uploading the Global API Key (or a scoped API token) to gopass.
+# and storing the Global API Key (or a scoped API token) in its secrets manager.
 #
 # This script:
 #   1. Validates that wrangler can authenticate.
@@ -16,10 +16,10 @@
 #
 # Requirements:
 #   - wrangler 4.x installed on the host running this script.
-#   - gopass entries (see the user guide in DEPLOYMENT.md):
-#       CLOUDFLARE_ACCOUNT_ID_PATH  (32-hex account id)
-#       CLOUDFLARE_API_KEY_PATH          (Global API Key)
-#       — OR an API token (recommended) that we'll set as
+#   - secrets-manager-backed environment variables:
+#       CLOUDFLARE_ACCOUNT_ID    (32-hex account id)
+#       CLOUDFLARE_API_KEY           (Global API Key)
+#       — OR an API token (recommended) set as
 #         CLOUDFLARE_API_TOKEN via environment.
 #   - jq (for JSON parsing).
 #
@@ -45,38 +45,21 @@ hr()    { printf -- "----------------------------------------\n"; }
 hr; bold "DegenFeed — Cloudflare first-time setup"; hr
 
 # ── 1. Resolve auth ────────────────────────────────────────────────
-if [[ -z "${CLOUDFLARE_API_TOKEN:-}" ]]; then
-  if command -v gopass >/dev/null 2>&1; then
-    if gopass show CLOUDFLARE_API_KEY_PATH >/dev/null 2>&1; then
-      # Global API key. wrangler 4.x doesn't accept it via CLOUDFLARE_API_KEY
-      # for token operations; only scoped tokens work. So we also ask the
-      # operator to set CLOUDFLARE_API_TOKEN manually if they have one.
-      if [[ -z "${CLOUDFLARE_API_KEY:-}" ]]; then
-        # shellcheck disable=SC2155
-        export CLOUDFLARE_API_KEY="$(gopass show -o CLOUDFLARE_API_KEY_PATH)"
-      fi
-    fi
-  fi
-fi
+# Note: wrangler 4.x doesn't accept the Global API Key via CLOUDFLARE_API_KEY
+# for token operations; only scoped tokens work. Prefer CLOUDFLARE_API_TOKEN,
+# set from the secrets manager via the environment.
 
 if [[ -z "${CLOUDFLARE_API_TOKEN:-}" && -z "${CLOUDFLARE_API_KEY:-}" ]]; then
   red "ERROR: no Cloudflare credentials found."
   red "Set one of:"
   red "  CLOUDFLARE_API_TOKEN=cfat_xxxxx ./scripts/deploy/setup-cloudflare.sh"
   red "  CLOUDFLARE_API_KEY=xxxxx ./scripts/deploy/setup-cloudflare.sh"
-  red "  export CLOUDFLARE_API_KEY=\$(gopass show -o CLOUDFLARE_API_KEY_PATH)"
   exit 1
 fi
 
 # Resolve account id
 if [[ -z "${CLOUDFLARE_ACCOUNT_ID:-}" ]]; then
-  if command -v gopass >/dev/null 2>&1 && gopass show CLOUDFLARE_ACCOUNT_ID_PATH >/dev/null 2>&1; then
-    # shellcheck disable=SC2155
-    export CLOUDFLARE_ACCOUNT_ID="$(gopass show -o CLOUDFLARE_ACCOUNT_ID_PATH)"
-  fi
-fi
-if [[ -z "${CLOUDFLARE_ACCOUNT_ID:-}" ]]; then
-  red "ERROR: CLOUDFLARE_ACCOUNT_ID not set and gopass entry CLOUDFLARE_ACCOUNT_ID_PATH not found."
+  red "ERROR: CLOUDFLARE_ACCOUNT_ID not set."
   exit 1
 fi
 
@@ -106,34 +89,30 @@ blue "[2/5] Creating KV namespaces (CACHE, SUBSCRIPTIONS × prod/preview)..."
 
 create_kv() {
   local binding="$1"
-  local id_var="KV_ID_${binding}_PROD"
-  local preview_id_var="KV_ID_${binding}_PREVIEW"
+  # Bash namerefs assign the caller-level KV_ID_* variables directly.
+  local -n id_var="KV_ID_${binding}_PROD"
+  local -n preview_id_var="KV_ID_${binding}_PREVIEW"
 
-  if [[ -n "${!id_var:-}" ]]; then
-    green "  ✓ $binding: using provided prod id ${!id_var}"
-    eval "$id_var='${!id_var}'"
-  else
-    eval "$id_var=$(wrangler kv:namespace create "$binding" --config "$TOML" 2>/dev/null \
+  if [[ -z "${id_var:-}" ]]; then
+    id_var="$(wrangler kv:namespace create "$binding" --config "$TOML" 2>/dev/null \
       | grep -oE 'id = "[^"]+"' | head -1 | sed -E 's/.*"([^"]+)"/\1/')"
-    if [[ -z "${!id_var:-}" ]]; then
+    if [[ -z "$id_var" ]]; then
       red "  ✗ failed to create KV $binding (production)."
       red "    Check wrangler output above."
       exit 1
     fi
-    green "  ✓ $binding prod: ${!id_var}"
   fi
+  green "  ✓ $binding prod: $id_var"
 
-  if [[ -n "${!preview_id_var:-}" ]]; then
-    green "  ✓ $binding: using provided preview id ${!preview_id_var}"
-  else
-    eval "$preview_id_var=$(wrangler kv:namespace create "$binding" --preview --config "$TOML" 2>/dev/null \
+  if [[ -z "${preview_id_var:-}" ]]; then
+    preview_id_var="$(wrangler kv:namespace create "$binding" --preview --config "$TOML" 2>/dev/null \
       | grep -oE 'id = "[^"]+"' | head -1 | sed -E 's/.*"([^"]+)"/\1/')"
-    if [[ -z "${!preview_id_var:-}" ]]; then
+    if [[ -z "$preview_id_var" ]]; then
       red "  ✗ failed to create KV $binding (preview)."
       exit 1
     fi
-    green "  ✓ $binding preview: ${!preview_id_var}"
   fi
+  green "  ✓ $binding preview: $preview_id_var"
 }
 
 create_kv CACHE
